@@ -1,0 +1,26 @@
+name: EasyCTF
+version: ${version}
+main: com.hacklab.ctf.Main
+api-version: 1.20
+author: CTF Developer
+description: Simple Capture The Flag plugin
+
+commands:
+  ctf:
+    description: Main CTF command
+    usage: /<command> [start|stop|join|leave|setflag|setspawn|setteam|status]
+    permission: ctf.use
+
+permissions:
+  ctf.use:
+    description: Allows use of basic CTF commands
+    default: true
+  ctf.admin:
+    description: Allows use of admin CTF commands
+    default: op
+  ctf.*:
+    description: Gives access to all CTF permissions
+    default: op
+    children:
+      ctf.use: true
+      ctf.admin: true

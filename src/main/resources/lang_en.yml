@@ -1,0 +1,121 @@
+# English Language File for EasyCTF
+
+# Game Phase Messages
+phase:
+  build-start: "&a=== BUILD PHASE STARTED ==="
+  build-info: "&yBuild your defenses! Combat will start in {time} minutes!"
+  combat-start: "&c=== COMBAT PHASE STARTED ==="
+  combat-info: "&yCapture the enemy flag! Phase ends in {time} minutes!"
+  result-start: "&6=== GAME RESULTS ==="
+  result-winner: "&yWinner: {color}{team} TEAM!"
+  result-score: "&yFinal Score - Red: {red} | Blue: {blue}"
+
+# Team Messages
+team:
+  join: "&aYou joined the {color}{team}&a team!"
+  leave: "&cYou left your team!"
+  full: "&cThat team is full!"
+  set-success: "&aSuccessfully set {player} to {color}{team} Team&a!"
+  set-notification: "&yAn administrator has set you to the {color}{team} Team&y!"
+  set-failed: "&cFailed to set team for {player}. The team might be full."
+
+# Command Messages
+command:
+  no-permission: "&cYou don't have permission to do that!"
+  game-already-running: "&cGame is already running or ending!"
+  player-not-found: "&cPlayer '{player}' not found!"
+  invalid-team: "&cInvalid team! Use 'red' or 'blue'"
+  usage-setteam: "&cUsage: /ctf setteam <player> <red|blue>"
+
+# Game Messages
+game:
+  build-phase-player: "&aBuild Phase! You are on {color}{team}&a team!"
+  build-phase-info: "&yBuild your defenses and prepare for combat!"
+  combat-phase-player: "&aCombat Phase! You are on {color}{team}&a team!"
+  combat-phase-info: "&cCapture the enemy flag!"
+  
+# Block Messages
+block:
+  cannot-place-combat: "&cYou cannot place blocks during combat phase!"
+  cannot-place-result: "&cYou cannot place blocks during result phase!"
+  cannot-break-combat: "&cYou cannot break blocks during combat phase!"
+  cannot-break-result: "&cYou cannot break blocks during result phase!"
+  only-break-placed: "&cYou can only break blocks you placed!"
+
+# Armor Messages
+armor:
+  cannot-remove: "&cYou cannot remove your armor during the game!"
+  cannot-drop: "&cYou cannot drop armor during the game!"
+
+# Time Warnings
+time:
+  warning: "&y⚠ {phase} ends in {time} seconds!"
+
+# General
+general:
+  enabled: "EasyCTF has been enabled!"
+  disabled: "EasyCTF has been disabled!"
+
+# Result Phase - MVP and Rankings
+result:
+  mvp-title: "&6=== 🏆 MVP 🏆 ==="
+  mvp-kills: "&e⚔ Kill MVP: {color}{player} &7({kills}K/{deaths}D, K/D: {kd})"
+  mvp-captures: "&e⚑ Capture MVP: {color}{player} &7({captures} captures)"
+  ranking-title: "&6=== 📊 RANKINGS ==="
+  ranking-kills-header: "&c⚔ Kill Rankings:"
+  ranking-kills-entry: "&f{rank}. {color}{player} &7- {kills}K/{deaths}D (K/D: {kd})"
+  ranking-captures-header: "&9⚑ Capture Rankings:"
+  ranking-captures-entry: "&f{rank}. {color}{player} &7- {captures} captures"
+
+# UI Messages - Scoreboard, BossBar, etc.
+ui:
+  scoreboard-title: "&6✦ Capture The Flag ✦"
+  bossbar-waiting: "&eCTF - Waiting for players"
+  bossbar-build: "&eBUILD PHASE"
+  bossbar-combat: "&cCOMBAT PHASE"
+  bossbar-result: "&dRESULT PHASE"
+  phase-build: "BUILD"
+  phase-combat: "COMBAT"
+  phase-result: "RESULT"
+  time-format: "{minutes}:{seconds}"
+  
+# Team Status Messages
+teams:
+  welcome-title: "&6=== Welcome to CTF! ==="
+  welcome-status: "&7Current team status:"
+  welcome-instruction: "&eUse '/ctf join <red|blue>' to join a team!"
+  team-status-title: "&e=== Team Status ==="
+  team-size-format: "&7Current teams: &cRed: {red}/{max} &7| &9Blue: {blue}/{max}"
+  red-team-size: "&cRed Team: {size}/{max} players"
+  blue-team-size: "&9Blue Team: {size}/{max} players"
+  player-joined: "&e{player} joined the {color}{team}&e team!"
+  player-left: "&e{player} left their team!"
+
+# Command Messages Extended
+command-extended:
+  status-title: "&6═════ CTF Status ═════"
+  status-game-state: "&fGame State: {color}{state}"
+  status-current-phase: "&fCurrent Phase: &e{phase}"
+  status-team-sizes: "&fTeam Sizes:"
+  status-your-team: "&fYour Team: {team}"
+  status-footer: "&6═══════════════════"
+  
+  help-title: "&6═════ CTF Commands ═════"
+  help-join-show: "&e/ctf join&f - Show team sizes"
+  help-join-team: "&e/ctf join <red|blue>&f - Join a team"
+  help-leave: "&e/ctf leave&f - Leave your current team"
+  help-status: "&e/ctf status&f - Check game status and team info"
+  help-admin-title: "&6Admin Commands:"
+  help-start: "&e/ctf start&f - Start the game"
+  help-stop: "&e/ctf stop&f - Stop the game"
+  help-setflag: "&e/ctf setflag <team>&f - Set flag location"
+  help-setspawn: "&e/ctf setspawn <team>&f - Set team spawn"
+  help-setteam: "&e/ctf setteam <player> <team>&f - Set player's team"
+  help-footer: "&6═══════════════════════"
+
+# Game State Names
+game-states:
+  waiting: "WAITING"
+  starting: "STARTING"
+  running: "RUNNING"
+  ending: "ENDING"

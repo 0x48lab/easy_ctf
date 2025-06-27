@@ -1,0 +1,154 @@
+# EasyCTF Configuration File
+
+# Language Settings
+language: "ja"  # Available: "en" (English), "ja" (Japanese)
+
+# Game Settings
+game:
+  # Game duration in seconds (default: 10 minutes) - DEPRECATED, use phases instead
+  time-limit: 600
+  
+  # Minimum players required to start a game
+  min-players: 2
+  
+  # Maximum players per team
+  max-players-per-team: 10
+  
+  # Respawn delay in seconds
+  respawn-delay: 5
+
+# Phase Settings
+phases:
+  # Phase 1: Build phase duration in seconds (default: 5 minutes)
+  build-duration: 300
+  
+  # Phase 2: Combat phase duration in seconds (default: 10 minutes)
+  combat-duration: 600
+  
+  # Phase 3: Result phase duration in seconds (default: 1 minute)
+  result-duration: 60
+
+# Equipment Settings
+equipment:
+  # Build phase equipment
+  build-phase:
+    tools:
+      - "WOODEN_PICKAXE"
+      - "WOODEN_AXE"
+      - "WOODEN_SHOVEL"
+    blocks:
+      - "COBBLESTONE:64"
+      - "OAK_PLANKS:64"
+      - "DIRT:32"
+  
+  # Combat phase equipment
+  combat-phase:
+    weapons:
+      - "IRON_SWORD"
+      - "BOW"
+    ammunition:
+      - "ARROW:64"
+    food:
+      - "COOKED_BEEF:16"
+    armor:
+      enable: true
+      type: "LEATHER"  # LEATHER, CHAINMAIL, IRON, DIAMOND, NETHERITE
+      unbreakable: true
+
+# Team Settings
+teams:
+  red:
+    # Display name for red team
+    display-name: "&cRed Team"
+    
+  blue:
+    # Display name for blue team
+    display-name: "&9Blue Team"
+
+# Messages
+messages:
+  # Prefix for all plugin messages
+  prefix: "&6[CTF] &r"
+  
+  # Game messages
+  game-start: "&aThe game has started!"
+  game-end: "&cThe game has ended!"
+  
+  # Team messages
+  team-join: "&aYou joined the {team} team!"
+  team-leave: "&cYou left your team!"
+  team-full: "&cThat team is full!"
+  
+  # Flag messages
+  flag-pickup: "&e{player} picked up the {team} flag!"
+  flag-capture: "&6{player} captured the {team} flag!"
+  flag-drop: "&cThe {team} flag has been dropped!"
+  flag-return: "&aThe {team} flag has been returned!"
+  
+  # Error messages
+  no-permission: "&cYou don't have permission to do that!"
+  game-running: "&cCannot do that while game is running!"
+  not-in-team: "&cYou are not in a team!"
+  already-in-team: "&cYou are already in a team!"
+
+# Scoreboard Settings
+scoreboard:
+  # Title of the scoreboard
+  title: "&6&l✦ Capture The Flag ✦"
+  
+  # Update interval in ticks (20 ticks = 1 second)
+  update-interval: 20
+
+# Boss Bar Settings
+bossbar:
+  # Enable boss bar
+  enabled: true
+  
+  # Boss bar color when game starts
+  color: "YELLOW"
+  
+  # Boss bar style
+  style: "SOLID"
+
+# Effects Settings
+effects:
+  # Flag beacon effects
+  flag-beacon:
+    # Enable beacon effects for flags
+    enabled: true
+    
+    # Particle effects for flags
+    particles:
+      enabled: true
+      type: "DUST"
+      count: 5
+      
+  # Flag carrier effects
+  flag-carrier:
+    # Make flag carriers glow
+    glow: true
+    
+    # Particle trail for flag carriers
+    particles:
+      enabled: true
+      type: "DUST"
+      count: 5
+
+# World Settings
+world:
+  # Disable block breaking during games
+  disable-block-break: true
+  
+  # Disable block placing during games
+  disable-block-place: true
+  
+  # Disable item dropping (except flags)
+  disable-item-drop: true
+
+# Debug Settings
+debug:
+  # Enable debug messages
+  enabled: false
+  
+  # Log level (INFO, WARNING, SEVERE)
+  log-level: "INFO"

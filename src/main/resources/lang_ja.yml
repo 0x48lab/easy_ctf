@@ -1,0 +1,121 @@
+# Japanese Language File for EasyCTF
+
+# Game Phase Messages
+phase:
+  build-start: "&a=== 建築フェーズ開始 ==="
+  build-info: "&y防御設備を建築してください！ {time}分後に戦闘が開始されます！"
+  combat-start: "&c=== 戦闘フェーズ開始 ==="
+  combat-info: "&y敵の旗を奪取しよう！フェーズ終了まで{time}分！"
+  result-start: "&6=== ゲーム結果 ==="
+  result-winner: "&y勝利: {color}{team} チーム!"
+  result-score: "&y最終スコア - 赤: {red} | 青: {blue}"
+
+# Team Messages
+team:
+  join: "&a{color}{team}&aチームに参加しました！"
+  leave: "&cチームから離脱しました！"
+  full: "&cそのチームは満員です！"
+  set-success: "&a{player}を{color}{team}チーム&aに設定しました！"
+  set-notification: "&y管理者によって{color}{team}チーム&yに設定されました！"
+  set-failed: "&c{player}のチーム設定に失敗しました。チームが満員の可能性があります。"
+
+# Command Messages
+command:
+  no-permission: "&cその操作を行う権限がありません！"
+  game-already-running: "&cゲームはすでに実行中または終了中です！"
+  player-not-found: "&cプレイヤー'{player}'が見つかりません！"
+  invalid-team: "&c無効なチームです！'red'または'blue'を使用してください"
+  usage-setteam: "&c使用法: /ctf setteam <プレイヤー> <red|blue>"
+
+# Game Messages
+game:
+  build-phase-player: "&a建築フェーズ！あなたは{color}{team}&aチームです！"
+  build-phase-info: "&y防御設備を建築して戦闘に備えましょう！"
+  combat-phase-player: "&a戦闘フェーズ！あなたは{color}{team}&aチームです！"
+  combat-phase-info: "&c敵の旗を奪取しよう！"
+
+# Block Messages
+block:
+  cannot-place-combat: "&c戦闘フェーズ中はブロックを設置できません！"
+  cannot-place-result: "&cリザルトフェーズ中はブロックを設置できません！"
+  cannot-break-combat: "&c戦闘フェーズ中はブロックを破壊できません！"
+  cannot-break-result: "&cリザルトフェーズ中はブロックを破壊できません！"
+  only-break-placed: "&c自分が設置したブロックのみ破壊できます！"
+
+# Armor Messages
+armor:
+  cannot-remove: "&cゲーム中は防具を外すことができません！"
+  cannot-drop: "&cゲーム中は防具をドロップできません！"
+
+# Time Warnings
+time:
+  warning: "&y⚠ {phase}終了まで{time}秒！"
+
+# General
+general:
+  enabled: "EasyCTFが有効になりました！"
+  disabled: "EasyCTFが無効になりました！"
+
+# Result Phase - MVP and Rankings
+result:
+  mvp-title: "&6=== 🏆 MVP 🏆 ==="
+  mvp-kills: "&e⚔ キルMVP: {color}{player} &7({kills}K/{deaths}D, K/D: {kd})"
+  mvp-captures: "&e⚑ 旗奪取MVP: {color}{player} &7({captures}回奪取)"
+  ranking-title: "&6=== 📊 ランキング ==="
+  ranking-kills-header: "&c⚔ キルランキング:"
+  ranking-kills-entry: "&f{rank}位: {color}{player} &7- {kills}K/{deaths}D (K/D: {kd})"
+  ranking-captures-header: "&9⚑ 旗奪取ランキング:"
+  ranking-captures-entry: "&f{rank}位: {color}{player} &7- {captures}回奪取"
+
+# UI Messages - Scoreboard, BossBar, etc.
+ui:
+  scoreboard-title: "&6✦ Capture The Flag ✦"
+  bossbar-waiting: "&eCTF - プレイヤー待機中"
+  bossbar-build: "&e建築フェーズ"
+  bossbar-combat: "&c戦闘フェーズ"
+  bossbar-result: "&d結果フェーズ"
+  phase-build: "建築"
+  phase-combat: "戦闘"
+  phase-result: "結果"
+  time-format: "{minutes}:{seconds}"
+  
+# Team Status Messages
+teams:
+  welcome-title: "&6=== CTFへようこそ! ==="
+  welcome-status: "&7現在のチーム状況:"
+  welcome-instruction: "&eチームに参加するには '/ctf join <red|blue>' を使用してください!"
+  team-status-title: "&e=== チーム状況 ==="
+  team-size-format: "&7現在のチーム: &cRed: {red}/{max} &7| &9Blue: {blue}/{max}"
+  red-team-size: "&cRedチーム: {size}/{max} プレイヤー"
+  blue-team-size: "&9Blueチーム: {size}/{max} プレイヤー"
+  player-joined: "&e{player}が{color}{team}&eチームに参加しました!"
+  player-left: "&e{player}がチームを離脱しました!"
+
+# Command Messages Extended
+command-extended:
+  status-title: "&6═════ CTF ステータス ═════"
+  status-game-state: "&fゲーム状態: {color}{state}"
+  status-current-phase: "&f現在のフェーズ: &e{phase}"
+  status-team-sizes: "&fチーム人数:"
+  status-your-team: "&fあなたのチーム: {team}"
+  status-footer: "&6═══════════════════"
+  
+  help-title: "&6═════ CTF コマンド ═════"
+  help-join-show: "&e/ctf join&f - チーム人数を表示"
+  help-join-team: "&e/ctf join <red|blue>&f - チームに参加"
+  help-leave: "&e/ctf leave&f - 現在のチームから離脱"
+  help-status: "&e/ctf status&f - ゲーム状況とチーム情報を確認"
+  help-admin-title: "&6管理者コマンド:"
+  help-start: "&e/ctf start&f - ゲーム開始"
+  help-stop: "&e/ctf stop&f - ゲーム停止"
+  help-setflag: "&e/ctf setflag <team>&f - 旗の位置設定"
+  help-setspawn: "&e/ctf setspawn <team>&f - チームスポーン設定"
+  help-setteam: "&e/ctf setteam <player> <team>&f - プレイヤーのチーム設定"
+  help-footer: "&6═══════════════════════"
+
+# Game State Names
+game-states:
+  waiting: "待機中"
+  starting: "開始中"
+  running: "実行中"
+  ending: "終了中"
