@@ -100,3 +100,10 @@ pids
 server/
 plugins/
 logs/
+run/world/
+run/world_nether/
+run/world_the_end/
+run/cache/
+run/logs/
+run/usercache.json
+run/*.log
