@@ -158,6 +158,20 @@ class GameListener(private val plugin: Main) : Listener {
             return
         }
         
+        // スポーン保護エリア内での破壊を禁止
+        if (gameManager.isInSpawnProtection(event.block.location)) {
+            event.setCancelled(true)
+            val protectedTeam = gameManager.getSpawnProtectionTeam(event.block.location)
+            if (protectedTeam != null) {
+                val teamColor = if (protectedTeam == Team.RED) ChatColor.RED else ChatColor.BLUE
+                val teamName = if (protectedTeam == Team.RED) "RED" else "BLUE"
+                player.sendMessage("${ChatColor.RED}You cannot break blocks in the ${teamColor}${teamName}${ChatColor.RED} team spawn area!")
+            } else {
+                player.sendMessage("${ChatColor.RED}You cannot break blocks in spawn protected areas!")
+            }
+            return
+        }
+        
         when (gameManager.getCurrentPhase()) {
             GamePhase.BUILD -> {
                 // 建築フェーズでは、プレイヤーが配置したブロックのみ破壊可能
@@ -219,6 +233,20 @@ class GameListener(private val plugin: Main) : Listener {
         // プレイヤーがチームに所属していない場合は禁止
         if (gameManager.getPlayerTeam(player) == null) {
             event.setCancelled(true)
+            return
+        }
+        
+        // スポーン保護エリア内での設置を禁止
+        if (gameManager.isInSpawnProtection(event.block.location)) {
+            event.setCancelled(true)
+            val protectedTeam = gameManager.getSpawnProtectionTeam(event.block.location)
+            if (protectedTeam != null) {
+                val teamColor = if (protectedTeam == Team.RED) ChatColor.RED else ChatColor.BLUE
+                val teamName = if (protectedTeam == Team.RED) "RED" else "BLUE"
+                player.sendMessage("${ChatColor.RED}You cannot place blocks in the ${teamColor}${teamName}${ChatColor.RED} team spawn area!")
+            } else {
+                player.sendMessage("${ChatColor.RED}You cannot place blocks in spawn protected areas!")
+            }
             return
         }
         

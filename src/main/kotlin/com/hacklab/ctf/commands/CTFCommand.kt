@@ -150,9 +150,19 @@ class CTFCommand(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
 
-        gameManager.setFlagBase(team, sender.location)
-        val teamColor = if (team == Team.RED) "${ChatColor.RED}RED" else "${ChatColor.BLUE}BLUE"
-        sender.sendMessage("${ChatColor.GREEN}Flag base for $teamColor${ChatColor.GREEN} team set at your location!")
+        // 距離検証を実行
+        val (isValid, errorMessage) = gameManager.validateLocationDistance(sender.location, team, true)
+        if (!isValid) {
+            sender.sendMessage("${ChatColor.RED}${errorMessage}")
+            return true
+        }
+        
+        if (gameManager.setFlagBase(team, sender.location)) {
+            val teamColor = if (team == Team.RED) "${ChatColor.RED}RED" else "${ChatColor.BLUE}BLUE"
+            sender.sendMessage("${ChatColor.GREEN}Flag base for $teamColor${ChatColor.GREEN} team set at your location!")
+        } else {
+            sender.sendMessage("${ChatColor.RED}Failed to set flag base! Check server logs for details.")
+        }
         return true
     }
 
@@ -179,9 +189,19 @@ class CTFCommand(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
 
-        gameManager.setTeamSpawn(team, sender.location)
-        val teamColor = if (team == Team.RED) "${ChatColor.RED}RED" else "${ChatColor.BLUE}BLUE"
-        sender.sendMessage("${ChatColor.GREEN}Spawn for $teamColor${ChatColor.GREEN} team set at your location!")
+        // 距離検証を実行
+        val (isValid, errorMessage) = gameManager.validateLocationDistance(sender.location, team, false)
+        if (!isValid) {
+            sender.sendMessage("${ChatColor.RED}${errorMessage}")
+            return true
+        }
+        
+        if (gameManager.setTeamSpawn(team, sender.location)) {
+            val teamColor = if (team == Team.RED) "${ChatColor.RED}RED" else "${ChatColor.BLUE}BLUE"
+            sender.sendMessage("${ChatColor.GREEN}Spawn for $teamColor${ChatColor.GREEN} team set at your location!")
+        } else {
+            sender.sendMessage("${ChatColor.RED}Failed to set spawn location! Check server logs for details.")
+        }
         return true
     }
 

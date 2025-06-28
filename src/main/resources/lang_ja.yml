@@ -26,6 +26,9 @@ command:
   player-not-found: "&cプレイヤー'{player}'が見つかりません！"
   invalid-team: "&c無効なチームです！'red'または'blue'を使用してください"
   usage-setteam: "&c使用法: /ctf setteam <プレイヤー> <red|blue>"
+  flag-too-close-spawn: "&c旗の位置がスポーン地点に近すぎます！距離: {distance}、必要最小距離: {minimum}"
+  spawn-too-close-flag: "&cスポーン地点が旗に近すぎます！距離: {distance}、必要最小距離: {minimum}"
+  location-too-close: "&c設定位置が他の重要地点に近すぎます！適切な距離を保ってください。"
 
 # Game Messages
 game:
@@ -55,6 +58,7 @@ time:
 general:
   enabled: "EasyCTFが有効になりました！"
   disabled: "EasyCTFが無効になりました！"
+  spawn-not-set: "&c警告: あなたのチームのスポーン地点が設定されていません！管理者に連絡してください。"
 
 # Result Phase - MVP and Rankings
 result:

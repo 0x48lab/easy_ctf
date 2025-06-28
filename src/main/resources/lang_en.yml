@@ -26,6 +26,9 @@ command:
   player-not-found: "&cPlayer '{player}' not found!"
   invalid-team: "&cInvalid team! Use 'red' or 'blue'"
   usage-setteam: "&cUsage: /ctf setteam <player> <red|blue>"
+  flag-too-close-spawn: "&cFlag location is too close to spawn point! Distance: {distance}, minimum required: {minimum}"
+  spawn-too-close-flag: "&cSpawn location is too close to flag! Distance: {distance}, minimum required: {minimum}"
+  location-too-close: "&cLocation is too close to other important points! Please maintain proper distance."
 
 # Game Messages
 game:
@@ -55,6 +58,7 @@ time:
 general:
   enabled: "EasyCTF has been enabled!"
   disabled: "EasyCTF has been disabled!"
+  spawn-not-set: "&cWarning: Your team spawn location is not set! Please contact an administrator."
 
 # Result Phase - MVP and Rankings
 result:

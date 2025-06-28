@@ -31,6 +31,8 @@ class GameManager(private val plugin: Main) {
     val teamSpawns = mutableMapOf<Team, Location>()
     private val flagLocations = mutableMapOf<Team, Location>()
     private val flagBases = mutableMapOf<Team, Location>()
+    private val spawnProtectionAreas = mutableMapOf<Team, Location>()
+    private val spawnBeacons = mutableMapOf<Team, Location>()
     private var redFlagCarrier: UUID? = null
     private var blueFlagCarrier: UUID? = null
     
@@ -82,8 +84,13 @@ class GameManager(private val plugin: Main) {
                 prepareBuildPhasePlayer(player)
                 player.scoreboard = scoreboard
                 gameBar.addPlayer(player)
+                updatePlayerTabListName(player)
+                updatePlayerTabListHeaderFooter(player)
             }
         }
+        
+        // スポーンエリアのビーコンとカラーブロックを設置
+        setupSpawnAreas()
         
         startPhaseTimer()
         updateScoreboard()
@@ -137,17 +144,26 @@ class GameManager(private val plugin: Main) {
     private fun prepareBuildPhasePlayer(player: Player) {
         val team = playerTeams[player.uniqueId] ?: return
         
+        // config.ymlから建築フェーズのゲームモードを取得
+        val buildGameMode = getBuildPhaseGameMode()
+        
         with(player) {
             health = 20.0
             foodLevel = 20
             saturation = 20.0f
-            gameMode = GameMode.ADVENTURE
+            gameMode = buildGameMode
         }
         
         equipmentManager.giveBuildPhaseEquipment(player)
         
-        teamSpawns[team]?.let { spawn ->
+        // プレイヤーを自陣のリスポン地点に転送
+        val spawn = teamSpawns[team]
+        if (spawn != null) {
             player.teleport(spawn)
+            plugin.logger.info("Player ${player.name} teleported to ${team} team spawn")
+        } else {
+            plugin.logger.warning("No spawn location set for ${team} team! Player ${player.name} was not teleported.")
+            player.sendMessage(languageManager.getGeneralMessage("spawn-not-set"))
         }
         
         val teamColor = if (team == Team.RED) ChatColor.RED else ChatColor.BLUE
@@ -168,8 +184,14 @@ class GameManager(private val plugin: Main) {
         
         equipmentManager.giveCombatPhaseEquipment(player, team)
         
-        teamSpawns[team]?.let { spawn ->
+        // プレイヤーを自陣のリスポン地点に転送
+        val spawn = teamSpawns[team]
+        if (spawn != null) {
             player.teleport(spawn)
+            plugin.logger.info("Player ${player.name} teleported to ${team} team spawn for combat phase")
+        } else {
+            plugin.logger.warning("No spawn location set for ${team} team! Player ${player.name} was not teleported.")
+            player.sendMessage(languageManager.getGeneralMessage("spawn-not-set"))
         }
         
         val teamColor = if (team == Team.RED) ChatColor.RED else ChatColor.BLUE
@@ -282,6 +304,8 @@ class GameManager(private val plugin: Main) {
         Bukkit.getOnlinePlayers().forEach { player ->
             if (playerTeams.containsKey(player.uniqueId)) {
                 prepareCombatPhasePlayer(player)
+                updatePlayerTabListName(player)
+                updatePlayerTabListHeaderFooter(player)
             }
         }
         
@@ -298,9 +322,17 @@ class GameManager(private val plugin: Main) {
         Bukkit.getOnlinePlayers().forEach { player ->
             if (playerTeams.containsKey(player.uniqueId)) {
                 player.inventory.clear()
-                teamSpawns[playerTeams[player.uniqueId]]?.let { spawn ->
+                val team = playerTeams[player.uniqueId]!!
+                val spawn = teamSpawns[team]
+                if (spawn != null) {
                     player.teleport(spawn)
+                    plugin.logger.info("Player ${player.name} teleported to ${team} team spawn for result phase")
+                } else {
+                    plugin.logger.warning("No spawn location set for ${team} team! Player ${player.name} was not teleported.")
+                    player.sendMessage(languageManager.getGeneralMessage("spawn-not-set"))
                 }
+                updatePlayerTabListName(player)
+                updatePlayerTabListHeaderFooter(player)
             }
         }
         
@@ -440,6 +472,9 @@ class GameManager(private val plugin: Main) {
         
         respawnFlag(capturedTeam)
         updateScoreboard()
+        
+        // 統計更新後にタブリストを更新
+        updateAllPlayersTabList()
     }
 
     private fun respawnFlag(team: Team) {
@@ -543,10 +578,19 @@ class GameManager(private val plugin: Main) {
     fun stopGame() {
         gameState = GameState.WAITING
         
+        // タイマーをキャンセル
+        gameTimer?.cancel()
+        gameTimer = null
+        
         Bukkit.getOnlinePlayers().forEach { player ->
             player.scoreboard = Bukkit.getScoreboardManager()!!.newScoreboard
             player.setGlowing(false)
             gameBar.removePlayer(player)
+            // タブリストの名前をリセット
+            resetPlayerTabListName(player)
+            // ヘッダー・フッターもクリア
+            player.setPlayerListHeader("")
+            player.setPlayerListFooter("")
         }
         
         playerTeams.clear()
@@ -556,6 +600,9 @@ class GameManager(private val plugin: Main) {
         blueFlagCarrier = null
         clearStatistics()
         
+        // スポーンエリアの設置物をクリア
+        clearSpawnAreas()
+        
         updateScoreboard()
     }
 
@@ -563,6 +610,10 @@ class GameManager(private val plugin: Main) {
         playerTeams[player.uniqueId] = team
         val teamColor = if (team == Team.RED) ChatColor.RED else ChatColor.BLUE
         val teamName = if (team == Team.RED) "RED" else "BLUE"
+        
+        // タブリストの名前を更新
+        updatePlayerTabListName(player)
+        updatePlayerTabListHeaderFooter(player)
         
         // チーム人数を取得
         val (redSize, blueSize) = getTeamSizes()
@@ -605,6 +656,11 @@ class GameManager(private val plugin: Main) {
         }
         
         playerTeams[player.uniqueId] = team
+        
+        // タブリストの名前を更新
+        updatePlayerTabListName(player)
+        updatePlayerTabListHeaderFooter(player)
+        
         return true
     }
 
@@ -613,6 +669,10 @@ class GameManager(private val plugin: Main) {
         if (player.uniqueId == redFlagCarrier || player.uniqueId == blueFlagCarrier) {
             dropFlag(player)
         }
+        
+        // タブリストの名前をリセット
+        resetPlayerTabListName(player)
+        updatePlayerTabListHeaderFooter(player)
         
         // チーム離脱後の人数を表示
         val (redSize, blueSize) = getTeamSizes()
@@ -638,12 +698,24 @@ class GameManager(private val plugin: Main) {
         }
     }
 
-    fun setTeamSpawn(team: Team, location: Location) {
+    fun setTeamSpawn(team: Team, location: Location): Boolean {
+        // 旗との距離をチェック
+        if (!validateFlagSpawnDistance(location, team, false)) {
+            return false
+        }
+        
         teamSpawns[team] = location
+        return true
     }
 
-    fun setFlagBase(team: Team, location: Location) {
+    fun setFlagBase(team: Team, location: Location): Boolean {
+        // スポーンとの距離をチェック
+        if (!validateFlagSpawnDistance(location, team, true)) {
+            return false
+        }
+        
         flagBases[team] = location
+        return true
     }
 
     fun getGameState() = gameState
@@ -687,6 +759,10 @@ class GameManager(private val plugin: Main) {
         
         playerKills[killer.uniqueId] = (playerKills[killer.uniqueId] ?: 0) + 1
         playerDeaths[victim.uniqueId] = (playerDeaths[victim.uniqueId] ?: 0) + 1
+        
+        // キル・デス統計更新後にタブリストを更新
+        updatePlayerTabListName(killer)
+        updatePlayerTabListName(victim)
     }
     
     fun recordDeath(player: Player) {
@@ -694,6 +770,9 @@ class GameManager(private val plugin: Main) {
         if (!playerTeams.containsKey(player.uniqueId)) return
         
         playerDeaths[player.uniqueId] = (playerDeaths[player.uniqueId] ?: 0) + 1
+        
+        // デス統計更新後にタブリストを更新
+        updatePlayerTabListName(player)
     }
     
     fun getPlayerKills(player: Player): Int {
@@ -816,5 +895,353 @@ class GameManager(private val plugin: Main) {
         }
         
         Bukkit.broadcastMessage("")
+    }
+    
+    // タブリストの名前を更新
+    fun updatePlayerTabListName(player: Player) {
+        val team = playerTeams[player.uniqueId]
+        if (team != null) {
+            val teamColor = if (team == Team.RED) ChatColor.RED else ChatColor.BLUE
+            val teamPrefix = if (team == Team.RED) "[R] " else "[B] "
+            
+            // 統計情報を取得
+            val kills = getPlayerKills(player)
+            val deaths = getPlayerDeaths(player)
+            val captures = getPlayerFlagCaptures(player)
+            
+            // 戦闘フェーズ中は詳細統計を表示
+            val statsDisplay = if (currentPhase == GamePhase.COMBAT || currentPhase == GamePhase.RESULT) {
+                " ${ChatColor.GRAY}(${ChatColor.GREEN}${kills}K${ChatColor.GRAY}/${ChatColor.RED}${deaths}D${ChatColor.GRAY})"
+            } else {
+                ""
+            }
+            
+            player.setPlayerListName("${teamColor}${teamPrefix}${player.name}${statsDisplay}")
+        } else {
+            player.setPlayerListName("${ChatColor.WHITE}${player.name}")
+        }
+    }
+    
+    // タブリストの名前をリセット
+    fun resetPlayerTabListName(player: Player) {
+        player.setPlayerListName(player.name)
+    }
+    
+    // 全プレイヤーのタブリストを更新
+    fun updateAllPlayersTabList() {
+        Bukkit.getOnlinePlayers().forEach { player ->
+            updatePlayerTabListName(player)
+            updatePlayerTabListHeaderFooter(player)
+        }
+    }
+    
+    // タブリストのヘッダーとフッターを更新
+    fun updatePlayerTabListHeaderFooter(player: Player) {
+        // ヘッダー: ゲーム状況
+        val phaseDisplayName = when(currentPhase) {
+            GamePhase.BUILD -> languageManager.getUIMessage("phase-build")
+            GamePhase.COMBAT -> languageManager.getUIMessage("phase-combat")
+            GamePhase.RESULT -> languageManager.getUIMessage("phase-result")
+        }
+        
+        val gameStateDisplayName = when(gameState) {
+            GameState.WAITING -> languageManager.getGameStateMessage("waiting")
+            GameState.STARTING -> languageManager.getGameStateMessage("starting")
+            GameState.RUNNING -> languageManager.getGameStateMessage("running")
+            GameState.ENDING -> languageManager.getGameStateMessage("ending")
+        }
+        
+        val header = when(gameState) {
+            GameState.WAITING -> {
+                "${ChatColor.GOLD}✦ Capture The Flag ✦\n" +
+                "${ChatColor.WHITE}Status: ${ChatColor.YELLOW}${gameStateDisplayName}\n" +
+                "${ChatColor.GRAY}Waiting for players..."
+            }
+            GameState.STARTING -> {
+                "${ChatColor.GOLD}✦ Capture The Flag ✦\n" +
+                "${ChatColor.WHITE}Status: ${ChatColor.GREEN}${gameStateDisplayName}\n" +
+                "${ChatColor.GRAY}Game starting..."
+            }
+            GameState.RUNNING -> {
+                "${ChatColor.GOLD}✦ Capture The Flag ✦\n" +
+                "${ChatColor.WHITE}Phase: ${getPhaseColor()}${phaseDisplayName}\n" +
+                "${ChatColor.WHITE}Time: ${ChatColor.GREEN}${formatTime(timeRemaining)}"
+            }
+            GameState.ENDING -> {
+                "${ChatColor.GOLD}✦ Capture The Flag ✦\n" +
+                "${ChatColor.WHITE}Status: ${ChatColor.RED}${gameStateDisplayName}\n" +
+                "${ChatColor.GRAY}Game ending..."
+            }
+        }
+        
+        // フッター: チームスコア
+        val footer = when(gameState) {
+            GameState.RUNNING, GameState.ENDING -> {
+                "${ChatColor.RED}Red Team: ${scores[Team.RED]} ${ChatColor.GRAY}| ${ChatColor.BLUE}Blue Team: ${scores[Team.BLUE]}\n" +
+                "${ChatColor.GRAY}Your Team: ${getPlayerTeamDisplay(player)}"
+            }
+            GameState.WAITING, GameState.STARTING -> {
+                val (redSize, blueSize) = getTeamSizes()
+                val maxPlayersPerTeam = plugin.config.getInt("game.max-players-per-team", 10)
+                "${ChatColor.RED}Red: ${redSize}/${maxPlayersPerTeam} ${ChatColor.GRAY}| ${ChatColor.BLUE}Blue: ${blueSize}/${maxPlayersPerTeam}\n" +
+                "${ChatColor.YELLOW}Use '/ctf join <red|blue>' to join a team!"
+            }
+        }
+        
+        player.setPlayerListHeader(header)
+        player.setPlayerListFooter(footer)
+    }
+    
+    // フェーズに応じた色を取得
+    private fun getPhaseColor(): ChatColor {
+        return when(currentPhase) {
+            GamePhase.BUILD -> ChatColor.YELLOW
+            GamePhase.COMBAT -> ChatColor.RED
+            GamePhase.RESULT -> ChatColor.GOLD
+        }
+    }
+    
+    // プレイヤーのチーム表示を取得
+    private fun getPlayerTeamDisplay(player: Player): String {
+        val team = playerTeams[player.uniqueId]
+        return if (team != null) {
+            val teamColor = if (team == Team.RED) ChatColor.RED else ChatColor.BLUE
+            val teamName = if (team == Team.RED) "RED" else "BLUE"
+            "${teamColor}${teamName}"
+        } else {
+            "${ChatColor.GRAY}None"
+        }
+    }
+    
+    // 建築フェーズのゲームモードを取得
+    private fun getBuildPhaseGameMode(): GameMode {
+        val gameModeString = plugin.config.getString("phases.build-phase-gamemode", "ADVENTURE")
+        
+        return try {
+            when (gameModeString?.uppercase()) {
+                "SURVIVAL" -> GameMode.SURVIVAL
+                "CREATIVE" -> GameMode.CREATIVE
+                "ADVENTURE" -> GameMode.ADVENTURE
+                "SPECTATOR" -> GameMode.SPECTATOR
+                else -> {
+                    plugin.logger.warning("Invalid build-phase-gamemode '${gameModeString}' in config.yml. Using ADVENTURE as default.")
+                    GameMode.ADVENTURE
+                }
+            }
+        } catch (e: Exception) {
+            plugin.logger.warning("Error parsing build-phase-gamemode from config.yml: ${e.message}. Using ADVENTURE as default.")
+            GameMode.ADVENTURE
+        }
+    }
+    
+    // スポーンエリアのビーコンとカラーブロックを設置
+    private fun setupSpawnAreas() {
+        Team.values().forEach { team ->
+            teamSpawns[team]?.let { spawnLocation ->
+                setupTeamSpawnArea(team, spawnLocation)
+            }
+        }
+    }
+    
+    // チームスポーンエリアの設置
+    private fun setupTeamSpawnArea(team: Team, spawnLocation: Location) {
+        val world = spawnLocation.world ?: return
+        
+        // チーム色のブロック材質を決定
+        val teamBlock = if (team == Team.RED) Material.RED_WOOL else Material.BLUE_WOOL
+        val teamConcrete = if (team == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
+        
+        // スポーン地点の足元にチーム色ブロックを設置（3x3エリア）
+        for (x in -1..1) {
+            for (z in -1..1) {
+                val blockLocation = spawnLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
+                blockLocation.block.type = teamConcrete
+            }
+        }
+        
+        // ビーコンを設置（スポーン地点の1ブロック上）
+        val beaconLocation = spawnLocation.clone().add(0.0, 1.0, 0.0)
+        beaconLocation.block.type = Material.BEACON
+        spawnBeacons[team] = beaconLocation
+        
+        // ビーコンベースを設置（チーム色ブロックで）
+        for (x in -1..1) {
+            for (z in -1..1) {
+                val baseLocation = spawnLocation.clone().add(x.toDouble(), 0.0, z.toDouble())
+                baseLocation.block.type = teamBlock
+            }
+        }
+        
+        // 保護エリアとして登録
+        spawnProtectionAreas[team] = spawnLocation
+        
+        plugin.logger.info("Setup spawn area for ${team} team at ${spawnLocation.blockX}, ${spawnLocation.blockY}, ${spawnLocation.blockZ}")
+    }
+    
+    // スポーンエリアの設置物をクリア
+    private fun clearSpawnAreas() {
+        spawnBeacons.values.forEach { beaconLocation ->
+            // ビーコンを削除
+            beaconLocation.block.type = Material.AIR
+            
+            // ベースブロックを削除（3x3）
+            for (x in -1..1) {
+                for (z in -1..1) {
+                    val baseLocation = beaconLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
+                    if (baseLocation.block.type == Material.RED_WOOL || 
+                        baseLocation.block.type == Material.BLUE_WOOL) {
+                        baseLocation.block.type = Material.AIR
+                    }
+                }
+            }
+            
+            // 足元のコンクリートブロックを削除（3x3）
+            for (x in -1..1) {
+                for (z in -1..1) {
+                    val floorLocation = beaconLocation.clone().add(x.toDouble(), -2.0, z.toDouble())
+                    if (floorLocation.block.type == Material.RED_CONCRETE || 
+                        floorLocation.block.type == Material.BLUE_CONCRETE) {
+                        floorLocation.block.type = Material.AIR
+                    }
+                }
+            }
+        }
+        
+        spawnBeacons.clear()
+        spawnProtectionAreas.clear()
+        
+        plugin.logger.info("Cleared all spawn areas")
+    }
+    
+    // スポーン保護エリア内かどうかをチェック
+    fun isInSpawnProtection(location: Location): Boolean {
+        if (!plugin.config.getBoolean("world.spawn-protection.enabled", true)) {
+            return false
+        }
+        
+        val radius = plugin.config.getInt("world.spawn-protection.radius", 5)
+        val height = plugin.config.getInt("world.spawn-protection.height", 3)
+        
+        return spawnProtectionAreas.values.any { spawnLocation ->
+            location.world == spawnLocation.world &&
+            location.distance(spawnLocation) <= radius &&
+            Math.abs(location.blockY - spawnLocation.blockY) <= height
+        }
+    }
+    
+    // どのチームのスポーン保護エリアかを取得
+    fun getSpawnProtectionTeam(location: Location): Team? {
+        if (!plugin.config.getBoolean("world.spawn-protection.enabled", true)) {
+            return null
+        }
+        
+        val radius = plugin.config.getInt("world.spawn-protection.radius", 5)
+        val height = plugin.config.getInt("world.spawn-protection.height", 3)
+        
+        return spawnProtectionAreas.entries.find { (_, spawnLocation) ->
+            location.world == spawnLocation.world &&
+            location.distance(spawnLocation) <= radius &&
+            Math.abs(location.blockY - spawnLocation.blockY) <= height
+        }?.key
+    }
+    
+    // 旗とスポーンの距離を検証
+    private fun validateFlagSpawnDistance(newLocation: Location, team: Team, isFlag: Boolean): Boolean {
+        val minDistance = plugin.config.getDouble("world.spawn-protection.min-flag-spawn-distance", 15.0)
+        
+        if (isFlag) {
+            // 旗を設定する場合、スポーンとの距離をチェック
+            val spawnLocation = teamSpawns[team]
+            if (spawnLocation != null && spawnLocation.world == newLocation.world) {
+                val distance = newLocation.distance(spawnLocation)
+                if (distance < minDistance) {
+                    plugin.logger.warning("Flag location too close to spawn (distance: ${String.format("%.1f", distance)}, minimum: ${minDistance})")
+                    return false
+                }
+            }
+            
+            // 他のチームのスポーンとの距離もチェック
+            teamSpawns.entries.forEach { (otherTeam, otherSpawn) ->
+                if (otherTeam != team && otherSpawn.world == newLocation.world) {
+                    val distance = newLocation.distance(otherSpawn)
+                    if (distance < minDistance) {
+                        plugin.logger.warning("Flag location too close to ${otherTeam} team spawn (distance: ${String.format("%.1f", distance)}, minimum: ${minDistance})")
+                        return false
+                    }
+                }
+            }
+        } else {
+            // スポーンを設定する場合、旗との距離をチェック
+            val flagLocation = flagBases[team]
+            if (flagLocation != null && flagLocation.world == newLocation.world) {
+                val distance = newLocation.distance(flagLocation)
+                if (distance < minDistance) {
+                    plugin.logger.warning("Spawn location too close to flag (distance: ${String.format("%.1f", distance)}, minimum: ${minDistance})")
+                    return false
+                }
+            }
+            
+            // 他のチームの旗との距離もチェック
+            flagBases.entries.forEach { (otherTeam, otherFlag) ->
+                if (otherTeam != team && otherFlag.world == newLocation.world) {
+                    val distance = newLocation.distance(otherFlag)
+                    if (distance < minDistance) {
+                        plugin.logger.warning("Spawn location too close to ${otherTeam} team flag (distance: ${String.format("%.1f", distance)}, minimum: ${minDistance})")
+                        return false
+                    }
+                }
+            }
+        }
+        
+        return true
+    }
+    
+    // 距離検証用のパブリックメソッド（コマンドから使用）
+    fun validateLocationDistance(location: Location, team: Team, isFlag: Boolean): Pair<Boolean, String?> {
+        val minDistance = plugin.config.getDouble("world.spawn-protection.min-flag-spawn-distance", 15.0)
+        
+        if (isFlag) {
+            // 旗設定の場合
+            val spawnLocation = teamSpawns[team]
+            if (spawnLocation != null && spawnLocation.world == location.world) {
+                val distance = location.distance(spawnLocation)
+                if (distance < minDistance) {
+                    return Pair(false, "Flag location is too close to spawn point! Distance: ${String.format("%.1f", distance)}, minimum required: ${minDistance}")
+                }
+            }
+            
+            // 他チームスポーンとの距離チェック
+            teamSpawns.entries.forEach { (otherTeam, otherSpawn) ->
+                if (otherTeam != team && otherSpawn.world == location.world) {
+                    val distance = location.distance(otherSpawn)
+                    if (distance < minDistance) {
+                        val teamName = if (otherTeam == Team.RED) "RED" else "BLUE"
+                        return Pair(false, "Flag location is too close to ${teamName} team spawn! Distance: ${String.format("%.1f", distance)}, minimum required: ${minDistance}")
+                    }
+                }
+            }
+        } else {
+            // スポーン設定の場合
+            val flagLocation = flagBases[team]
+            if (flagLocation != null && flagLocation.world == location.world) {
+                val distance = location.distance(flagLocation)
+                if (distance < minDistance) {
+                    return Pair(false, "Spawn location is too close to flag! Distance: ${String.format("%.1f", distance)}, minimum required: ${minDistance}")
+                }
+            }
+            
+            // 他チーム旗との距離チェック
+            flagBases.entries.forEach { (otherTeam, otherFlag) ->
+                if (otherTeam != team && otherFlag.world == location.world) {
+                    val distance = location.distance(otherFlag)
+                    if (distance < minDistance) {
+                        val teamName = if (otherTeam == Team.RED) "RED" else "BLUE"
+                        return Pair(false, "Spawn location is too close to ${teamName} team flag! Distance: ${String.format("%.1f", distance)}, minimum required: ${minDistance}")
+                    }
+                }
+            }
+        }
+        
+        return Pair(true, null)
     }
 }
