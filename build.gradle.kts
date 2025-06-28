@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.hacklab"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -41,6 +41,19 @@ tasks.build {
     dependsOn("shadowJar")
 }
 
+tasks.shadowJar {
+    archiveBaseName.set("EasyCTF")
+    archiveClassifier.set("")
+    archiveVersion.set(project.version.toString())
+    
+    // Relocate Kotlin stdlib to avoid conflicts
+    relocate("kotlin", "com.hacklab.ctf.libs.kotlin")
+    relocate("org.jetbrains", "com.hacklab.ctf.libs.jetbrains")
+    
+    // Minimize JAR size by removing unused classes
+    minimize()
+}
+
 tasks.processResources {
     val props = mapOf("version" to version)
     inputs.properties(props)
@@ -48,4 +61,28 @@ tasks.processResources {
     filesMatching("plugin.yml") {
         expand(props)
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+// Archive task for distribution
+tasks.register<Zip>("createDistribution") {
+    group = "distribution"
+    description = "Creates a distribution archive with plugin and documentation"
+    
+    from(tasks.shadowJar.get().outputs)
+    from("README.md") { into("docs") }
+    from("CLAUDE.md") { into("docs") }
+    from("src/main/resources/config.yml") { into("config") }
+    from("src/main/resources/lang_ja.yml") { into("config") }
+    from("src/main/resources/lang_en.yml") { into("config") }
+    
+    archiveBaseName.set("EasyCTF-Distribution")
+    archiveVersion.set(project.version.toString())
+    destinationDirectory.set(file("$buildDir/distributions"))
 }

@@ -29,6 +29,10 @@ command:
   flag-too-close-spawn: "&c旗の位置がスポーン地点に近すぎます！距離: {distance}、必要最小距離: {minimum}"
   spawn-too-close-flag: "&cスポーン地点が旗に近すぎます！距離: {distance}、必要最小距離: {minimum}"
   location-too-close: "&c設定位置が他の重要地点に近すぎます！適切な距離を保ってください。"
+  phase-skipped: "&y管理者が{phase}フェーズをスキップしました！"
+  skip-no-permission: "&cフェーズをスキップする権限がありません！"
+  skip-no-game: "&c現在実行中のゲームがありません！"
+  skip-cannot: "&c現在フェーズをスキップできません！"
 
 # Game Messages
 game:
@@ -112,6 +116,7 @@ command-extended:
   help-admin-title: "&6管理者コマンド:"
   help-start: "&e/ctf start&f - ゲーム開始"
   help-stop: "&e/ctf stop&f - ゲーム停止"
+  help-skipphase: "&e/ctf skipphase&f - 現在のフェーズをスキップ"
   help-setflag: "&e/ctf setflag <team>&f - 旗の位置設定"
   help-setspawn: "&e/ctf setspawn <team>&f - チームスポーン設定"
   help-setteam: "&e/ctf setteam <player> <team>&f - プレイヤーのチーム設定"

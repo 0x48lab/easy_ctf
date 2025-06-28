@@ -29,6 +29,10 @@ command:
   flag-too-close-spawn: "&cFlag location is too close to spawn point! Distance: {distance}, minimum required: {minimum}"
   spawn-too-close-flag: "&cSpawn location is too close to flag! Distance: {distance}, minimum required: {minimum}"
   location-too-close: "&cLocation is too close to other important points! Please maintain proper distance."
+  phase-skipped: "&yAdministrator skipped {phase} phase!"
+  skip-no-permission: "&cYou don't have permission to skip phases!"
+  skip-no-game: "&cNo game is currently running!"
+  skip-cannot: "&cCannot skip phase at this time!"
 
 # Game Messages
 game:
@@ -112,6 +116,7 @@ command-extended:
   help-admin-title: "&6Admin Commands:"
   help-start: "&e/ctf start&f - Start the game"
   help-stop: "&e/ctf stop&f - Stop the game"
+  help-skipphase: "&e/ctf skipphase&f - Skip current phase"
   help-setflag: "&e/ctf setflag <team>&f - Set flag location"
   help-setspawn: "&e/ctf setspawn <team>&f - Set team spawn"
   help-setteam: "&e/ctf setteam <player> <team>&f - Set player's team"

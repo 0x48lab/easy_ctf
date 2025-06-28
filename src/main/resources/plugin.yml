@@ -8,7 +8,7 @@ description: Simple Capture The Flag plugin
 commands:
   ctf:
     description: Main CTF command
-    usage: /<command> [start|stop|join|leave|setflag|setspawn|setteam|status]
+    usage: /<command> [start|stop|skipphase|join|leave|setflag|setspawn|setteam|status]
     permission: ctf.use
 
 permissions:

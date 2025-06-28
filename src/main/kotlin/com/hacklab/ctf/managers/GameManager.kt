@@ -297,6 +297,29 @@ class GameManager(private val plugin: Main) {
         }
     }
 
+    fun skipCurrentPhase(): Boolean {
+        if (gameState != GameState.RUNNING) {
+            return false
+        }
+        
+        // 現在のタイマーをキャンセル
+        gameTimer?.cancel()
+        gameTimer = null
+        
+        val phaseName = when (currentPhase) {
+            GamePhase.BUILD -> "Build"
+            GamePhase.COMBAT -> "Combat"
+            GamePhase.RESULT -> "Result"
+        }
+        
+        Bukkit.broadcastMessage("${ChatColor.YELLOW}⚠ Administrator skipped ${phaseName} phase!")
+        
+        // 次のフェーズに移行
+        nextPhase()
+        
+        return true
+    }
+
     private fun startCombatPhase() {
         clearBuildPhaseBlocks()
         spawnFlags()

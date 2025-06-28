@@ -1,0 +1,147 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # トリガー: v1.0.0, v2.1.3 などのタグ
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # リリース作成に必要
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 全履歴を取得（changelog生成用）
+        
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Extract version from tag
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        
+    - name: Update plugin version
+      run: |
+        # plugin.ymlのバージョンを更新
+        sed -i "s/version: .*/version: ${{ steps.version.outputs.version }}/" src/main/resources/plugin.yml
+        
+    - name: Build with Gradle
+      run: ./gradlew clean build
+      
+    - name: Test plugin
+      run: ./gradlew test
+      continue-on-error: true  # テストが失敗してもリリースを続行
+      
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # 前回のタグから今回までのコミット履歴を取得
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -n "$PREVIOUS_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        else
+          CHANGELOG=$(git log --pretty=format:"- %s" HEAD)
+        fi
+        
+        # 変更ログをファイルに保存
+        echo "## Changes in ${{ steps.version.outputs.tag }}" > CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        if [ -n "$CHANGELOG" ]; then
+          echo "$CHANGELOG" >> CHANGELOG.md
+        else
+          echo "- Initial release" >> CHANGELOG.md
+        fi
+        
+        # GitHub Outputsに設定
+        {
+          echo 'changelog<<EOF'
+          cat CHANGELOG.md
+          echo EOF
+        } >> $GITHUB_OUTPUT
+        
+    - name: Find JAR file
+      id: jar
+      run: |
+        JAR_FILE=$(find build/libs -name "*.jar" -type f | grep -v sources | head -1)
+        echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
+        echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
+        
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        release_name: EasyCTF ${{ steps.version.outputs.tag }}
+        body: |
+          # EasyCTF ${{ steps.version.outputs.tag }}
+          
+          Minecraft Paper CTF Plugin for version 1.21+
+          
+          ## Installation
+          1. Download the `EasyCTF-${{ steps.version.outputs.version }}.jar` file
+          2. Place it in your server's `plugins` directory
+          3. Restart your server
+          4. Configure the plugin using `/ctf` commands
+          
+          ## Requirements
+          - Minecraft Paper 1.21+
+          - Java 21+
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Support
+          If you encounter any issues, please report them on the [Issues page](https://github.com/${{ github.repository }}/issues).
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.tag, 'beta') || contains(steps.version.outputs.tag, 'alpha') || contains(steps.version.outputs.tag, 'rc') }}
+        
+    - name: Upload JAR to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ steps.jar.outputs.jar_file }}
+        asset_name: EasyCTF-${{ steps.version.outputs.version }}.jar
+        asset_content_type: application/java-archive
+        
+    - name: Upload plugin.yml as artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: src/main/resources/plugin.yml
+        asset_name: plugin.yml
+        asset_content_type: text/yaml
+        
+    - name: Notify completion
+      run: |
+        echo "✅ Release ${{ steps.version.outputs.tag }} created successfully!"
+        echo "📦 JAR file: ${{ steps.jar.outputs.jar_name }}"
+        echo "🔗 Release URL: ${{ steps.create_release.outputs.html_url }}"

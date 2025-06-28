@@ -26,6 +26,7 @@ class CTFCommand(private val plugin: Main) : CommandExecutor, TabCompleter {
         when (args[0].lowercase()) {
             "start" -> return handleStartCommand(sender)
             "stop" -> return handleStopCommand(sender)
+            "skipphase" -> return handleSkipPhaseCommand(sender)
             "join" -> return handleJoinCommand(sender, args)
             "leave" -> return handleLeaveCommand(sender)
             "setflag" -> return handleSetFlagCommand(sender, args)
@@ -68,6 +69,34 @@ class CTFCommand(private val plugin: Main) : CommandExecutor, TabCompleter {
 
         gameManager.stopGame()
         sender.sendMessage("${ChatColor.GREEN}CTF Game stopped!")
+        return true
+    }
+
+    private fun handleSkipPhaseCommand(sender: CommandSender): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage("${ChatColor.RED}You don't have permission to skip phases!")
+            return true
+        }
+
+        if (gameManager.getGameState() != GameState.RUNNING) {
+            sender.sendMessage("${ChatColor.RED}No game is currently running!")
+            return true
+        }
+
+        val currentPhase = gameManager.getCurrentPhase()
+        val success = gameManager.skipCurrentPhase()
+        
+        if (success) {
+            val phaseText = when (currentPhase) {
+                GamePhase.BUILD -> "Build"
+                GamePhase.COMBAT -> "Combat" 
+                GamePhase.RESULT -> "Result"
+            }
+            sender.sendMessage("${ChatColor.GREEN}${phaseText} phase skipped!")
+        } else {
+            sender.sendMessage("${ChatColor.RED}Cannot skip phase at this time!")
+        }
+        
         return true
     }
 
@@ -266,6 +295,7 @@ class CTFCommand(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-admin-title"))
             sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-start"))
             sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-stop"))
+            sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-skipphase"))
             sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-setflag"))
             sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-setspawn"))
             sender.sendMessage(plugin.languageManager.getCommandExtendedMessage("help-setteam"))
@@ -337,7 +367,7 @@ class CTFCommand(private val plugin: Main) : CommandExecutor, TabCompleter {
         when (args.size) {
             1 -> {
                 val commands = if (sender.hasPermission("ctf.admin")) {
-                    listOf("start", "stop", "join", "leave", "setflag", "setspawn", "setteam", "status")
+                    listOf("start", "stop", "skipphase", "join", "leave", "setflag", "setspawn", "setteam", "status")
                 } else {
                     listOf("join", "leave", "status")
                 }
