@@ -1,7 +1,7 @@
 # EasyCTF - Minecraft CTF プラグイン
 
-[![Build and Test](https://github.com/hacklab/easy_ctf/actions/workflows/build.yml/badge.svg)](https://github.com/hacklab/easy_ctf/actions/workflows/build.yml)
-[![Build and Release](https://github.com/hacklab/easy_ctf/actions/workflows/release.yml/badge.svg)](https://github.com/hacklab/easy_ctf/actions/workflows/release.yml)
+[![Build and Test](https://github.com/0x48lab/easy_ctf/actions/workflows/build.yml/badge.svg)](https://github.com/0x48lab/easy_ctf/actions/workflows/build.yml)
+[![Build and Release](https://github.com/0x48lab/easy_ctf/actions/workflows/release.yml/badge.svg)](https://github.com/0x48lab/easy_ctf/actions/workflows/release.yml)
 
 **🏆 hackCraft2 公式プラグイン**
 
@@ -22,7 +22,7 @@ Minecraft Paper サーバー向けの包括的な Capture The Flag プラグイ�
 
 ### リリースから（推奨）
 
-**📦 [GitHub Releases](https://github.com/hacklab/easy_ctf/releases) でビルド済みファイルをダウンロード**
+**📦 [GitHub Releases](https://github.com/0x48lab/easy_ctf/releases) でビルド済みファイルをダウンロード**
 
 すべてのリリースには以下のビルド済みファイルが含まれています：
 - `EasyCTF-x.x.x.jar` - メインプラグインファイル（すぐに使用可能）
@@ -31,12 +31,12 @@ Minecraft Paper サーバー向けの包括的な Capture The Flag プラグイ�
 - インストール・設定手順
 
 **インストール手順：**
-1. **[📥 最新リリースをダウンロード](https://github.com/hacklab/easy_ctf/releases/latest)** から `EasyCTF-x.x.x.jar` を取得
+1. **[📥 最新リリースをダウンロード](https://github.com/0x48lab/easy_ctf/releases/latest)** から `EasyCTF-x.x.x.jar` を取得
 2. サーバーの `plugins` ディレクトリにJARファイルを配置
 3. サーバーを再起動
 4. `/ctf` コマンドでプラグインを設定
 
-> **💡 ヒント**: [Releases ページ](https://github.com/hacklab/easy_ctf/releases)では、すべてのバージョンの履歴と各バージョンの詳細な変更内容を確認できます。
+> **💡 ヒント**: [Releases ページ](https://github.com/0x48lab/easy_ctf/releases)では、すべてのバージョンの履歴と各バージョンの詳細な変更内容を確認できます。
 
 ### ソースから
 
@@ -144,9 +144,9 @@ world:
 
 ## サポート
 
-- **問題報告**: [GitHub Issues](https://github.com/hacklab/easy_ctf/issues)
+- **問題報告**: [GitHub Issues](https://github.com/0x48lab/easy_ctf/issues)
 - **ドキュメント**: [CLAUDE.md](CLAUDE.md)
-- **Wiki**: [GitHub Wiki](https://github.com/hacklab/easy_ctf/wiki)
+- **Wiki**: [GitHub Wiki](https://github.com/0x48lab/easy_ctf/wiki)
 
 ## リリース
 
@@ -161,8 +161,8 @@ world:
 
 ### 📥 ダウンロード
 
-- **[🚀 最新リリース](https://github.com/hacklab/easy_ctf/releases/latest)** - 最新の安定版
-- **[📋 全リリース履歴](https://github.com/hacklab/easy_ctf/releases)** - すべてのバージョン
+- **[🚀 最新リリース](https://github.com/0x48lab/easy_ctf/releases/latest)** - 最新の安定版
+- **[📋 全リリース履歴](https://github.com/0x48lab/easy_ctf/releases)** - すべてのバージョン
 
 ### 各リリースに含まれるファイル
 
@@ -172,4 +172,4 @@ world:
 - **インストール手順** - 詳細なセットアップガイド
 - **動作要件** - 必要なMinecraft/Javaバージョン情報
 
-> **🔄 自動更新**: 新機能や修正が追加されるたびに新しいリリースが自動作成されます。[Releases ページ](https://github.com/hacklab/easy_ctf/releases)をウォッチして最新情報をお見逃しなく！
+> **🔄 自動更新**: 新機能や修正が追加されるたびに新しいリリースが自動作成されます。[Releases ページ](https://github.com/0x48lab/easy_ctf/releases)をウォッチして最新情報をお見逃しなく！
