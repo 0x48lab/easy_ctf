@@ -71,6 +71,7 @@ Minecraft Paper サーバー向けの高機能な Capture The Flag プラグイ�
 - `/ctf list` - 全ゲーム一覧を表示
 - `/ctf join <ゲーム名>` - 指定ゲームに参加（チーム自動割り当て）
 - `/ctf leave` - 現在のゲームから離脱
+- `/ctf team [red|blue]` - チーム確認・変更（ゲーム開始前のみ）
 - `/ctf status [ゲーム名]` - ゲーム状況を確認
 
 ### 管理者用コマンド

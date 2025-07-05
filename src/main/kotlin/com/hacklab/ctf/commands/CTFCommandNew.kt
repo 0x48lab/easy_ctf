@@ -38,6 +38,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "stop" -> return handleStopCommand(sender, args)
             "join" -> return handleJoinCommand(sender, args)
             "leave" -> return handleLeaveCommand(sender)
+            "team" -> return handleTeamCommand(sender, args)
             "setflag" -> return handleSetFlagCommand(sender, args)
             "setspawn" -> return handleSetSpawnCommand(sender, args)
             "status" -> return handleStatusCommand(sender, args)
@@ -300,6 +301,87 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         return true
     }
     
+    private fun handleTeamCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (sender !is Player) {
+            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            return true
+        }
+        
+        val currentGame = gameManager.getPlayerGame(sender)
+        if (currentGame == null) {
+            sender.sendMessage(Component.text("現在ゲームに参加していません", NamedTextColor.RED))
+            return true
+        }
+        
+        if (args.size < 2) {
+            // 現在のチームを表示
+            val currentTeam = currentGame.getPlayerTeam(sender.uniqueId)
+            if (currentTeam != null) {
+                sender.sendMessage(Component.text("現在のチーム: ${currentTeam.displayName}", currentTeam.color))
+                sender.sendMessage(Component.text("チーム変更: /ctf team <red|blue>", NamedTextColor.GRAY))
+            }
+            return true
+        }
+        
+        // ゲームが既に開始している場合は変更不可
+        if (currentGame.state != com.hacklab.ctf.utils.GameState.WAITING) {
+            sender.sendMessage(Component.text("ゲーム開始後はチーム変更できません", NamedTextColor.RED))
+            return true
+        }
+        
+        val newTeam = when (args[1].lowercase()) {
+            "red" -> com.hacklab.ctf.utils.Team.RED
+            "blue" -> com.hacklab.ctf.utils.Team.BLUE
+            else -> {
+                sender.sendMessage(Component.text("チームは 'red' または 'blue' を指定してください", NamedTextColor.RED))
+                return true
+            }
+        }
+        
+        val currentTeam = currentGame.getPlayerTeam(sender.uniqueId)
+        if (currentTeam == newTeam) {
+            sender.sendMessage(Component.text("既に${newTeam.displayName}に所属しています", newTeam.color))
+            return true
+        }
+        
+        // チーム人数チェック
+        val targetTeamSize = if (newTeam == com.hacklab.ctf.utils.Team.RED) currentGame.redTeam.size else currentGame.blueTeam.size
+        if (targetTeamSize >= currentGame.maxPlayersPerTeam) {
+            sender.sendMessage(Component.text("${newTeam.displayName}は満員です（最大${currentGame.maxPlayersPerTeam}名）", NamedTextColor.RED))
+            return true
+        }
+        
+        // チーム変更処理
+        if (currentTeam != null) {
+            // 現在のチームから削除
+            when (currentTeam) {
+                com.hacklab.ctf.utils.Team.RED -> currentGame.redTeam.remove(sender.uniqueId)
+                com.hacklab.ctf.utils.Team.BLUE -> currentGame.blueTeam.remove(sender.uniqueId)
+            }
+        }
+        
+        // 新しいチームに追加
+        when (newTeam) {
+            com.hacklab.ctf.utils.Team.RED -> currentGame.redTeam.add(sender.uniqueId)
+            com.hacklab.ctf.utils.Team.BLUE -> currentGame.blueTeam.add(sender.uniqueId)
+        }
+        
+        // メッセージ送信
+        sender.sendMessage(Component.text("${newTeam.displayName}に変更しました！", newTeam.color))
+        
+        // 他のプレイヤーに通知
+        currentGame.getAllPlayers().forEach { player ->
+            if (player != sender) {
+                player.sendMessage(Component.text("${sender.name}が${newTeam.displayName}に移動しました", NamedTextColor.YELLOW))
+            }
+        }
+        
+        // スコアボード更新
+        currentGame.updateScoreboard()
+        
+        return true
+    }
+    
     private fun handleSetFlagCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
             sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
@@ -459,6 +541,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("/ctf list - ゲーム一覧表示", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf join <ゲーム名> - ゲーム参加", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf leave - ゲーム退出", NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text("/ctf team [red|blue] - チーム確認・変更", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf status [ゲーム名] - ゲーム状態確認", NamedTextColor.YELLOW))
     }
 
@@ -467,7 +550,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args.size) {
             1 -> {
-                val subcommands = mutableListOf("list", "join", "leave", "status")
+                val subcommands = mutableListOf("list", "join", "leave", "team", "status")
                 if (sender.hasPermission("ctf.admin")) {
                     subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn"))
                 }
@@ -477,6 +560,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                 when (args[0].lowercase()) {
                     "update", "delete", "start", "stop", "join", "status", "setflag", "setspawn" -> {
                         completions.addAll(gameManager.getAllGames().keys.filter { it.startsWith(args[1].lowercase()) })
+                    }
+                    "team" -> {
+                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[1].lowercase()) })
                     }
                 }
             }

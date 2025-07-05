@@ -706,7 +706,7 @@ class Game(
         player.scoreboard = scoreboard!!
     }
     
-    private fun updateScoreboard() {
+    fun updateScoreboard() {
         val obj = objective ?: return
         
         // 既存のエントリをクリア
