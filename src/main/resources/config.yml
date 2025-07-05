@@ -3,12 +3,9 @@
 # Language Settings
 language: "ja"  # Available: "en" (English), "ja" (Japanese)
 
-# Game Settings
-game:
-  # Game duration in seconds (default: 10 minutes) - DEPRECATED, use phases instead
-  time-limit: 600
-  
-  # Minimum players required to start a game
+# Default Game Settings (used when creating new games)
+default-game:
+  # Minimum players required to auto-start a game
   min-players: 2
   
   # Maximum players per team
@@ -16,9 +13,12 @@ game:
   
   # Respawn delay in seconds
   respawn-delay: 5
+  
+  # Force PVP during combat phase (ignore server pvp settings)
+  force-pvp: true
 
-# Phase Settings
-phases:
+# Default Phase Settings
+default-phases:
   # Phase 1: Build phase duration in seconds (default: 5 minutes)
   build-duration: 300
   
@@ -34,6 +34,23 @@ phases:
   
   # Phase 3: Result phase duration in seconds (default: 1 minute)
   result-duration: 60
+
+# Game Mechanics
+mechanics:
+  # Flag drop timeout in seconds
+  flag-drop-timeout: 30
+  
+  # Spawn protection duration in seconds
+  spawn-protection-duration: 3
+  
+  # Allow ender pearls
+  allow-ender-pearls: false
+  
+  # Allow elytra
+  allow-elytra: false
+  
+  # Allow vehicles (minecarts, boats)
+  allow-vehicles: false
 
 # Equipment Settings
 equipment:
@@ -143,28 +160,17 @@ effects:
 
 # World Settings
 world:
-  # Disable block breaking during games
-  disable-block-break: true
+  # NOTE: These settings are deprecated. 
+  # Block breaking/placing is now controlled by phase and gamemode
+  disable-block-break: false
+  disable-block-place: false
+  disable-item-drop: false
   
-  # Disable block placing during games
-  disable-block-place: true
-  
-  # Disable item dropping (except flags)
-  disable-item-drop: true
-  
-  # Spawn area protection
+  # Spawn area protection (deprecated - using 3-second invincibility instead)
   spawn-protection:
-    # Enable spawn area protection
-    enabled: true
-    
-    # Protection radius around spawn points (blocks)
+    enabled: false
     radius: 5
-    
-    # Height protection (blocks above and below spawn)
     height: 3
-    
-    # Minimum distance between flag and spawn locations (blocks)
-    # This prevents flags from being placed too close to spawn points
     min-flag-spawn-distance: 15
 
 # Debug Settings
