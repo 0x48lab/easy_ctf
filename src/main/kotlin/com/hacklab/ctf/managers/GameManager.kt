@@ -13,6 +13,8 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.LeatherArmorMeta
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.scoreboard.*
+import org.bukkit.block.Beacon
+import org.bukkit.block.data.type.RespawnAnchor
 import java.util.*
 
 class GameManager(private val plugin: Main) {
@@ -31,6 +33,7 @@ class GameManager(private val plugin: Main) {
     val teamSpawns = mutableMapOf<Team, Location>()
     private val flagLocations = mutableMapOf<Team, Location>()
     private val flagBases = mutableMapOf<Team, Location>()
+    private val flagBeacons = mutableMapOf<Team, Location>()
     private val spawnProtectionAreas = mutableMapOf<Team, Location>()
     private val spawnBeacons = mutableMapOf<Team, Location>()
     private var redFlagCarrier: UUID? = null
@@ -91,6 +94,9 @@ class GameManager(private val plugin: Main) {
         
         // スポーンエリアのビーコンとカラーブロックを設置
         setupSpawnAreas()
+        
+        // フラグ地点のビーコンを設置（ビルディングフェーズ用）
+        setupFlagBeacons()
         
         startPhaseTimer()
         updateScoreboard()
@@ -201,6 +207,9 @@ class GameManager(private val plugin: Main) {
     }
 
     private fun spawnFlags() {
+        // 既存のフラグビーコンを削除
+        clearFlagBeacons()
+        
         Team.values().forEach { team ->
             flagBases[team]?.let { flagBase ->
                 flagLocations[team] = flagBase.clone()
@@ -221,6 +230,7 @@ class GameManager(private val plugin: Main) {
                 blockLoc.block.type = Material.IRON_BLOCK
             }
         }
+        
         
         // Particle effect task
         object : BukkitRunnable() {
@@ -625,6 +635,9 @@ class GameManager(private val plugin: Main) {
         
         // スポーンエリアの設置物をクリア
         clearSpawnAreas()
+        
+        // フラグビーコンをクリア
+        clearFlagBeacons()
         
         updateScoreboard()
     }
@@ -1266,5 +1279,80 @@ class GameManager(private val plugin: Main) {
         }
         
         return Pair(true, null)
+    }
+    
+    // フラグ地点のビーコンを設置（ビルディングフェーズ用）
+    private fun setupFlagBeacons() {
+        Team.values().forEach { team ->
+            flagBases[team]?.let { flagLocation ->
+                setupTeamFlagBeacon(team, flagLocation)
+            }
+        }
+    }
+    
+    // チームフラグビーコンの設置
+    private fun setupTeamFlagBeacon(team: Team, flagLocation: Location) {
+        val world = flagLocation.world ?: return
+        
+        // チーム色のステンドグラスを決定
+        val teamGlass = if (team == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
+        
+        // ビーコンを設置
+        val beaconLocation = flagLocation.clone()
+        beaconLocation.block.type = Material.BEACON
+        flagBeacons[team] = beaconLocation
+        
+        // ビーコンベースを設置（鉄ブロック）
+        for (x in -1..1) {
+            for (z in -1..1) {
+                val baseLocation = beaconLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
+                baseLocation.block.type = Material.IRON_BLOCK
+            }
+        }
+        
+        // ビーコンの上にステンドグラスを設置（色を変える効果）
+        val glassLocation = beaconLocation.clone().add(0.0, 1.0, 0.0)
+        glassLocation.block.type = teamGlass
+        
+        plugin.logger.info("Setup flag beacon for ${team} team at ${flagLocation.blockX}, ${flagLocation.blockY}, ${flagLocation.blockZ}")
+    }
+    
+    // フラグビーコンをクリア
+    private fun clearFlagBeacons() {
+        flagBeacons.values.forEach { beaconLocation ->
+            // ビーコンとステンドグラスを削除
+            beaconLocation.block.type = Material.AIR
+            beaconLocation.clone().add(0.0, 1.0, 0.0).block.type = Material.AIR
+            
+            // ベースブロックを削除（3x3）
+            for (x in -1..1) {
+                for (z in -1..1) {
+                    val baseLocation = beaconLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
+                    if (baseLocation.block.type == Material.IRON_BLOCK) {
+                        baseLocation.block.type = Material.AIR
+                    }
+                }
+            }
+        }
+        
+        flagBeacons.clear()
+        
+        plugin.logger.info("Cleared all flag beacons")
+    }
+    
+    // スポーン保護エリアまたはフラグビーコンエリア内かどうかをチェック
+    fun isInProtectedArea(location: Location): Boolean {
+        // スポーン保護エリアのチェック
+        if (isInSpawnProtection(location)) {
+            return true
+        }
+        
+        // フラグビーコンエリアのチェック（3x3x3範囲）
+        return flagBeacons.values.any { beaconLocation ->
+            location.world == beaconLocation.world &&
+            Math.abs(location.blockX - beaconLocation.blockX) <= 1 &&
+            Math.abs(location.blockY - beaconLocation.blockY) <= 1 &&
+            Math.abs(location.blockZ - beaconLocation.blockZ) <= 1
+        }
     }
 }

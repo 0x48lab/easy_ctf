@@ -159,7 +159,7 @@ class GameListener(private val plugin: Main) : Listener {
         }
         
         // スポーン保護エリア内での破壊を禁止
-        if (gameManager.isInSpawnProtection(event.block.location)) {
+        if (gameManager.isInProtectedArea(event.block.location)) {
             event.setCancelled(true)
             val protectedTeam = gameManager.getSpawnProtectionTeam(event.block.location)
             if (protectedTeam != null) {
@@ -167,7 +167,7 @@ class GameListener(private val plugin: Main) : Listener {
                 val teamName = if (protectedTeam == Team.RED) "RED" else "BLUE"
                 player.sendMessage("${ChatColor.RED}You cannot break blocks in the ${teamColor}${teamName}${ChatColor.RED} team spawn area!")
             } else {
-                player.sendMessage("${ChatColor.RED}You cannot break blocks in spawn protected areas!")
+                player.sendMessage("${ChatColor.RED}You cannot break blocks in protected areas!")
             }
             return
         }
@@ -237,7 +237,7 @@ class GameListener(private val plugin: Main) : Listener {
         }
         
         // スポーン保護エリア内での設置を禁止
-        if (gameManager.isInSpawnProtection(event.block.location)) {
+        if (gameManager.isInProtectedArea(event.block.location)) {
             event.setCancelled(true)
             val protectedTeam = gameManager.getSpawnProtectionTeam(event.block.location)
             if (protectedTeam != null) {
@@ -245,7 +245,7 @@ class GameListener(private val plugin: Main) : Listener {
                 val teamName = if (protectedTeam == Team.RED) "RED" else "BLUE"
                 player.sendMessage("${ChatColor.RED}You cannot place blocks in the ${teamColor}${teamName}${ChatColor.RED} team spawn area!")
             } else {
-                player.sendMessage("${ChatColor.RED}You cannot place blocks in spawn protected areas!")
+                player.sendMessage("${ChatColor.RED}You cannot place blocks in protected areas!")
             }
             return
         }
