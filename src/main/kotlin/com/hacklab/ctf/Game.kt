@@ -3,6 +3,7 @@ package com.hacklab.ctf
 import com.hacklab.ctf.utils.GamePhase
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.Team
+import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
@@ -23,12 +24,16 @@ import java.time.Duration
 import java.util.*
 
 class Game(
+    val gameName: String,
     val plugin: Main,
-    val name: String,
     val world: World
 ) {
     var state = GameState.WAITING
     var phase = GamePhase.BUILD
+    
+    // マッチシステム参照
+    private var match: Match? = null
+    private var gameEndCallback: ((Team?) -> Unit)? = null
     
     // チーム管理
     val redTeam = mutableSetOf<UUID>()
@@ -36,10 +41,10 @@ class Game(
     val disconnectedPlayers = mutableMapOf<UUID, Team>() // 切断中のプレイヤー
     
     // 位置設定
-    var redFlagLocation: Location? = null
-    var blueSpawnLocation: Location? = null
-    var redSpawnLocation: Location? = null
-    var blueFlagLocation: Location? = null
+    private var redFlagLocation: Location? = null
+    private var blueSpawnLocation: Location? = null
+    private var redSpawnLocation: Location? = null
+    private var blueFlagLocation: Location? = null
     
     // 設定
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
@@ -48,14 +53,15 @@ class Game(
     var buildDuration = plugin.config.getInt("default-phases.build-duration", 300)
     var combatDuration = plugin.config.getInt("default-phases.combat-duration", 600)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
-    var buildPhaseGameMode = GameMode.valueOf(
-        plugin.config.getString("default-phases.build-phase-gamemode", "ADVENTURE")!!
-    )
+    var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "ADVENTURE")!!
     
     // ゲーム状態
     var score = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
     var currentPhaseTime = 0
     var autoStartCountdown = -1
+    
+    // 通貨管理（マッチがない場合用）
+    private val teamCurrency = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
     
     // 旗管理
     var redFlagCarrier: UUID? = null
@@ -76,6 +82,47 @@ class Game(
     
     // タスク
     private var gameTask: BukkitRunnable? = null
+    
+    // ゲッター
+    val name: String get() = gameName
+    
+    fun setMatchContext(match: Match) {
+        this.match = match
+    }
+    
+    fun setGameEndCallback(callback: (Team?) -> Unit) {
+        this.gameEndCallback = callback
+    }
+    
+    fun getPlayers(): Set<Player> = getAllPlayers()
+    fun getPlayerTeam(player: Player): Team? = getPlayerTeam(player.uniqueId)
+    fun getTeamPlayers(team: Team): Set<Player> {
+        val uuids = when (team) {
+            Team.RED -> redTeam
+            Team.BLUE -> blueTeam
+        }
+        return uuids.mapNotNull { Bukkit.getPlayer(it) }.toSet()
+    }
+    
+    fun getRedScore(): Int = score[Team.RED] ?: 0
+    fun getBlueScore(): Int = score[Team.BLUE] ?: 0
+    fun getWinner(): Team? {
+        return when {
+            getRedScore() > getBlueScore() -> Team.RED
+            getBlueScore() > getRedScore() -> Team.BLUE
+            else -> null
+        }
+    }
+    
+    fun getRedFlagLocation(): Location? = redFlagLocation
+    fun getBlueFlagLocation(): Location? = blueFlagLocation
+    fun getRedSpawnLocation(): Location? = redSpawnLocation
+    fun getBlueSpawnLocation(): Location? = blueSpawnLocation
+    
+    fun setRedFlagLocation(location: Location) { redFlagLocation = location }
+    fun setBlueFlagLocation(location: Location) { blueFlagLocation = location }
+    fun setRedSpawnLocation(location: Location) { redSpawnLocation = location }
+    fun setBlueSpawnLocation(location: Location) { blueSpawnLocation = location }
     
     fun addPlayer(player: Player, team: Team? = null): Boolean {
         if (state != GameState.WAITING) {
@@ -114,7 +161,10 @@ class Game(
         setupScoreboard(player)
         updateScoreboard()
         
-        player.sendMessage(Component.text("ゲーム '$name' の${selectedTeam.displayName}に参加しました", selectedTeam.color))
+        player.sendMessage(Component.text("ゲーム '$gameName' の${selectedTeam.displayName}に参加しました", selectedTeam.color))
+        
+        // マッチに追加
+        match?.addPlayerToMatch(player, this)
         
         // 自動開始チェック
         checkAutoStart()
@@ -138,7 +188,10 @@ class Game(
             dropFlag(player, Team.BLUE)
         }
         
-        player.sendMessage(Component.text("ゲーム '$name' から退出しました", NamedTextColor.YELLOW))
+        player.sendMessage(Component.text("ゲーム '$gameName' から退出しました", NamedTextColor.YELLOW))
+        
+        // マッチから削除
+        match?.removePlayerFromMatch(player)
     }
     
     fun handleDisconnect(player: Player) {
@@ -265,6 +318,9 @@ class Game(
         phase = GamePhase.BUILD
         currentPhaseTime = buildDuration
         
+        // 通貨を初期化
+        initializeCurrency()
+        
         // BossBar作成
         bossBar = Bukkit.createBossBar(
             "建築フェーズ - 残り時間: ${formatTime(currentPhaseTime)}",
@@ -280,7 +336,7 @@ class Game(
             player.inventory.clear()
             
             // ゲームモード設定
-            player.gameMode = buildPhaseGameMode
+            player.gameMode = GameMode.valueOf(buildPhaseGameMode)
             
             // スポーン地点に転送
             teleportToSpawn(player, team)
@@ -386,6 +442,11 @@ class Game(
         phase = GamePhase.RESULT
         currentPhaseTime = resultDuration
         
+        // 戦闘フェーズ終了ボーナス
+        val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 50)
+        addTeamCurrency(Team.RED, phaseEndBonus, "戦闘フェーズ終了ボーナス")
+        addTeamCurrency(Team.BLUE, phaseEndBonus, "戦闘フェーズ終了ボーナス")
+        
         val winner = when {
             score[Team.RED]!! > score[Team.BLUE]!! -> Team.RED
             score[Team.BLUE]!! > score[Team.RED]!! -> Team.BLUE
@@ -394,6 +455,9 @@ class Game(
         
         bossBar?.setTitle("試合終了！")
         bossBar?.color = BarColor.YELLOW
+        
+        // ゲーム結果レポートを作成
+        displayGameReport(winner)
         
         getAllPlayers().forEach { player ->
             // インベントリクリア
@@ -428,7 +492,7 @@ class Game(
     }
     
     fun stop() {
-        plugin.logger.info("Stopping game: $name")
+        plugin.logger.info("Stopping game: $gameName")
         state = GameState.ENDING
         
         // タスクキャンセル
@@ -491,8 +555,18 @@ class Game(
     }
     
     private fun endGame() {
-        plugin.logger.info("Game $name ended naturally")
-        stop()
+        plugin.logger.info("Game $gameName ended naturally")
+        
+        // 勝者を決定
+        val winner = getWinner()
+        
+        // コールバックを実行（マッチがある場合は、マッチが次のゲームを管理）
+        if (gameEndCallback != null) {
+            gameEndCallback?.invoke(winner)
+        } else {
+            // マッチがない場合のみ、ゲームを停止
+            stop()
+        }
         
         // GameManagerから削除はしない（再利用可能）
     }
@@ -516,83 +590,85 @@ class Game(
     private fun giveBuildPhaseItems(player: Player, team: Team) {
         val inv = player.inventory
         
-        // 基本ツール
-        inv.addItem(ItemStack(Material.WOODEN_PICKAXE))
-        inv.addItem(ItemStack(Material.WOODEN_AXE))
-        inv.addItem(ItemStack(Material.WOODEN_SHOVEL))
+        // config.ymlから初期装備を取得
+        val initialEquipment = plugin.config.getConfigurationSection("initial-equipment") ?: run {
+            // デフォルト装備
+            giveDefaultBuildItems(player, team)
+            return
+        }
         
-        // 建築ブロック
-        inv.addItem(ItemStack(Material.OAK_PLANKS, 64))
-        inv.addItem(ItemStack(Material.COBBLESTONE, 64))
-        inv.addItem(ItemStack(Material.DIRT, 64))
-        inv.addItem(ItemStack(Material.OAK_LOG, 32))
+        // 武器
+        initialEquipment.getStringList("weapons").forEach { weaponStr ->
+            val parts = weaponStr.split(":")
+            val material = Material.getMaterial(parts[0]) ?: return@forEach
+            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+            inv.addItem(ItemStack(material, amount))
+        }
         
         // 食料
-        inv.addItem(ItemStack(Material.BREAD, 16))
-        
-        // チームカラーのウール
-        val woolType = when (team) {
-            Team.RED -> Material.RED_WOOL
-            Team.BLUE -> Material.BLUE_WOOL
+        initialEquipment.getStringList("food").forEach { foodStr ->
+            val parts = foodStr.split(":")
+            val material = Material.getMaterial(parts[0]) ?: return@forEach
+            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+            inv.addItem(ItemStack(material, amount))
         }
-        inv.addItem(ItemStack(woolType, 32))
+        
+        // ショップアイテムをホットバー9番目に配置
+        val shopManager = plugin.shopManager
+        val shopItem = shopManager.createShopItem()
+        player.inventory.setItem(8, shopItem)
+    }
+    
+    private fun giveDefaultBuildItems(player: Player, team: Team) {
+        val inv = player.inventory
+        // デフォルト装備
+        inv.addItem(ItemStack(Material.STONE_SWORD))
+        inv.addItem(ItemStack(Material.STONE_AXE))
+        inv.addItem(ItemStack(Material.BREAD, 8))
     }
     
     private fun giveCombatPhaseItems(player: Player, team: Team) {
         val inv = player.inventory
         
-        // 武器
-        inv.addItem(ItemStack(Material.IRON_SWORD))
-        inv.addItem(ItemStack(Material.BOW))
-        inv.addItem(ItemStack(Material.ARROW, 32))
-        
-        // 防具（チームカラーの革防具）
-        val color = when (team) {
-            Team.RED -> org.bukkit.Color.RED
-            Team.BLUE -> org.bukkit.Color.BLUE
+        // config.ymlから初期装備を取得
+        val initialEquipment = plugin.config.getConfigurationSection("initial-equipment") ?: run {
+            // デフォルト装備
+            giveDefaultCombatItems(player, team)
+            return
         }
         
-        val helmet = ItemStack(Material.LEATHER_HELMET)
-        val helmetMeta = helmet.itemMeta as org.bukkit.inventory.meta.LeatherArmorMeta
-        helmetMeta.setColor(color)
-        helmetMeta.isUnbreakable = true
-        helmet.itemMeta = helmetMeta
-        
-        val chestplate = ItemStack(Material.LEATHER_CHESTPLATE)
-        val chestMeta = chestplate.itemMeta as org.bukkit.inventory.meta.LeatherArmorMeta
-        chestMeta.setColor(color)
-        chestMeta.isUnbreakable = true
-        chestplate.itemMeta = chestMeta
-        
-        val leggings = ItemStack(Material.LEATHER_LEGGINGS)
-        val legMeta = leggings.itemMeta as org.bukkit.inventory.meta.LeatherArmorMeta
-        legMeta.setColor(color)
-        legMeta.isUnbreakable = true
-        leggings.itemMeta = legMeta
-        
-        val boots = ItemStack(Material.LEATHER_BOOTS)
-        val bootMeta = boots.itemMeta as org.bukkit.inventory.meta.LeatherArmorMeta
-        bootMeta.setColor(color)
-        bootMeta.isUnbreakable = true
-        boots.itemMeta = bootMeta
-        
-        // 防具を装備
-        player.inventory.helmet = helmet
-        player.inventory.chestplate = chestplate
-        player.inventory.leggings = leggings
-        player.inventory.boots = boots
+        // 武器
+        initialEquipment.getStringList("weapons").forEach { weaponStr ->
+            val parts = weaponStr.split(":")
+            val material = Material.getMaterial(parts[0]) ?: return@forEach
+            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+            inv.addItem(ItemStack(material, amount))
+        }
         
         // 食料
-        inv.addItem(ItemStack(Material.GOLDEN_APPLE, 2))
-        inv.addItem(ItemStack(Material.COOKED_BEEF, 16))
+        initialEquipment.getStringList("food").forEach { foodStr ->
+            val parts = foodStr.split(":")
+            val material = Material.getMaterial(parts[0]) ?: return@forEach
+            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+            inv.addItem(ItemStack(material, amount))
+        }
         
-        // ツール
-        inv.addItem(ItemStack(Material.IRON_PICKAXE))
-        inv.addItem(ItemStack(Material.IRON_AXE))
+        // チーム識別用にプレイヤー名を色付け
+        player.setDisplayName("${team.getChatColor()}${player.name}")
+        player.setPlayerListName("${team.getChatColor()}${player.name}")
         
-        // 建築ブロック（少量）
-        inv.addItem(ItemStack(Material.OAK_PLANKS, 32))
-        inv.addItem(ItemStack(Material.COBBLESTONE, 32))
+        // ショップアイテムをホットバー9番目に配置
+        val shopManager = plugin.shopManager
+        val shopItem = shopManager.createShopItem()
+        player.inventory.setItem(8, shopItem)
+    }
+    
+    private fun giveDefaultCombatItems(player: Player, team: Team) {
+        val inv = player.inventory
+        // デフォルト装備
+        inv.addItem(ItemStack(Material.STONE_SWORD))
+        inv.addItem(ItemStack(Material.STONE_AXE))
+        inv.addItem(ItemStack(Material.BREAD, 8))
     }
     
     private fun setupFlags() {
@@ -699,8 +775,8 @@ class Game(
     private fun setupScoreboard(player: Player) {
         if (scoreboard == null) {
             scoreboard = Bukkit.getScoreboardManager().newScoreboard
-            objective = scoreboard!!.registerNewObjective("ctf_$name", "dummy", 
-                Component.text("CTF - $name", NamedTextColor.GOLD))
+            objective = scoreboard!!.registerNewObjective("ctf_$gameName", "dummy", 
+                Component.text("CTF - $gameName", NamedTextColor.GOLD))
             objective!!.displaySlot = DisplaySlot.SIDEBAR
         }
         player.scoreboard = scoreboard!!
@@ -716,24 +792,60 @@ class Game(
         
         var line = 15
         
+        // マッチ情報（マッチがある場合）
+        match?.let { m ->
+            obj.getScore("§6§l=== マッチ情報 ===").score = line--
+            
+            // モードと進捗
+            when (m.mode) {
+                MatchMode.FIRST_TO_X -> {
+                    obj.getScore("§e先取${m.target}勝負").score = line--
+                    obj.getScore("§f第${m.getCurrentGameNumber()}ゲーム目").score = line--
+                }
+                MatchMode.FIXED_ROUNDS -> {
+                    obj.getScore("§e全${m.target}ゲーム").score = line--
+                    obj.getScore("§f第${m.getCurrentGameNumber()}/${m.target}ゲーム").score = line--
+                }
+            }
+            
+            // マッチスコア
+            val wins = m.getMatchWins()
+            obj.getScore("§f勝利数: §c${wins[Team.RED] ?: 0} §f- §9${wins[Team.BLUE] ?: 0}").score = line--
+            obj.getScore(" ").score = line--
+        }
+        
         // ゲーム情報
         obj.getScore("§e§l==============").score = line--
         obj.getScore("§fフェーズ: §a${getPhaseDisplayName()}").score = line--
         obj.getScore("§f残り時間: §e${formatTime(currentPhaseTime)}").score = line--
         obj.getScore("§e§l==============").score = line--
-        obj.getScore(" ").score = line--
+        obj.getScore("  ").score = line--
         
         // スコア
         if (phase == GamePhase.COMBAT || phase == GamePhase.RESULT) {
             obj.getScore("§c赤チーム: §f${score[Team.RED] ?: 0}").score = line--
             obj.getScore("§9青チーム: §f${score[Team.BLUE] ?: 0}").score = line--
-            obj.getScore("  ").score = line--
+            obj.getScore("   ").score = line--
         }
+        
+        // チーム通貨
+        if (match != null) {
+            // マッチシステムの通貨
+            obj.getScore("§6§l=== チーム資金 ===").score = line--
+            obj.getScore("§c赤チーム: §e${match!!.getTeamCurrency(Team.RED)}G").score = line--
+            obj.getScore("§9青チーム: §e${match!!.getTeamCurrency(Team.BLUE)}G").score = line--
+        } else {
+            // 単独ゲームの通貨
+            obj.getScore("§6§l=== チーム資金 ===").score = line--
+            obj.getScore("§c赤チーム: §e${getTeamCurrency(Team.RED)}G").score = line--
+            obj.getScore("§9青チーム: §e${getTeamCurrency(Team.BLUE)}G").score = line--
+        }
+        obj.getScore("    ").score = line--
         
         // チーム人数
         obj.getScore("§c赤: §f${redTeam.size}名").score = line--
         obj.getScore("§9青: §f${blueTeam.size}名").score = line--
-        obj.getScore("   ").score = line--
+        obj.getScore("     ").score = line--
         
         // 旗の状態
         if (phase == GamePhase.COMBAT) {
@@ -759,14 +871,52 @@ class Game(
     private fun updateBossBar() {
         val bar = bossBar ?: return
         
+        // フェーズ情報
         val phaseText = when (phase) {
             GamePhase.BUILD -> "建築フェーズ"
             GamePhase.COMBAT -> "戦闘フェーズ"
             GamePhase.RESULT -> "リザルト"
         }
         
+        // 時間情報
         val timeText = formatTime(currentPhaseTime)
-        bar.setTitle("$phaseText - 残り時間: $timeText")
+        
+        // マッチ情報（マッチモードの場合）
+        val matchInfo = match?.let { m ->
+            val wins = m.getMatchWins()
+            when (m.mode) {
+                MatchMode.FIRST_TO_X -> "[先取${m.target}] 第${m.getCurrentGameNumber()}ゲーム | "
+                MatchMode.FIXED_ROUNDS -> "[${m.getCurrentGameNumber()}/${m.target}] | "
+            } + "赤${wins[Team.RED]}勝 青${wins[Team.BLUE]}勝 | "
+        } ?: ""
+        
+        // 現在のスコア（戦闘・結果フェーズのみ）
+        val scoreInfo = if (phase == GamePhase.COMBAT || phase == GamePhase.RESULT) {
+            "スコア: 赤${score[Team.RED] ?: 0} - 青${score[Team.BLUE] ?: 0} | "
+        } else ""
+        
+        // 旗の状態（戦闘フェーズのみ）
+        val flagInfo = if (phase == GamePhase.COMBAT) {
+            val redCarrierName = redFlagCarrier?.let { Bukkit.getPlayer(it)?.name }
+            val blueCarrierName = blueFlagCarrier?.let { Bukkit.getPlayer(it)?.name }
+            
+            when {
+                redCarrierName != null && blueCarrierName != null -> "旗: 赤→${blueCarrierName} 青→${redCarrierName} | "
+                redCarrierName != null -> "青旗: ${redCarrierName}が保持 | "
+                blueCarrierName != null -> "赤旗: ${blueCarrierName}が保持 | "
+                else -> ""
+            }
+        } else ""
+        
+        // タイトルを組み立て
+        bar.setTitle("$matchInfo$scoreInfo$flagInfo$phaseText - $timeText")
+        
+        // フェーズに応じて色を変更
+        bar.color = when (phase) {
+            GamePhase.BUILD -> BarColor.GREEN
+            GamePhase.COMBAT -> BarColor.RED
+            GamePhase.RESULT -> BarColor.YELLOW
+        }
         
         // 進行度を更新
         val totalTime = when (phase) {
@@ -963,6 +1113,10 @@ class Game(
         // スコア加算
         score[team] = (score[team] ?: 0) + 1
         
+        // 通貨報酬（マッチがある場合もない場合も）
+        val captureReward = plugin.config.getInt("currency.capture-reward", 30)
+        addTeamCurrency(team, captureReward, "${player.name}が旗をキャプチャー")
+        
         // キャリアをクリア
         when (carriedFlagTeam) {
             Team.RED -> redFlagCarrier = null
@@ -1109,6 +1263,115 @@ class Game(
             }
             
             player.sendActionBar(message)
+        }
+    }
+    
+    // 通貨管理メソッド（マッチがない場合用）
+    fun getTeamCurrency(team: Team): Int {
+        return match?.getTeamCurrency(team) ?: teamCurrency[team] ?: 0
+    }
+    
+    fun addTeamCurrency(team: Team, amount: Int, reason: String = "") {
+        if (match != null) {
+            match!!.addTeamCurrency(team, amount, reason)
+        } else {
+            val current = teamCurrency[team] ?: 0
+            teamCurrency[team] = current + amount
+            
+            // チームメンバーに通知
+            getTeamPlayers(team).forEach { player ->
+                if (reason.isNotEmpty()) {
+                    player.sendMessage(Component.text("[チーム] $reason (+${amount}G)", NamedTextColor.GREEN))
+                }
+                player.sendMessage(Component.text("[チーム] 残高: ${teamCurrency[team]}G", NamedTextColor.GREEN))
+            }
+        }
+    }
+    
+    fun spendTeamCurrency(team: Team, amount: Int, player: Player, itemName: String): Boolean {
+        if (match != null) {
+            return match!!.spendTeamCurrency(team, amount, player, itemName)
+        } else {
+            val current = teamCurrency[team] ?: 0
+            if (current < amount) return false
+            
+            teamCurrency[team] = current - amount
+            
+            // チームメンバーに通知
+            getTeamPlayers(team).forEach { p ->
+                p.sendMessage(Component.text("[チーム] ${player.name} が $itemName を購入しました (-${amount}G)", NamedTextColor.YELLOW))
+                p.sendMessage(Component.text("[チーム] 残高: ${teamCurrency[team]}G", NamedTextColor.YELLOW))
+            }
+            
+            return true
+        }
+    }
+    
+    fun initializeCurrency() {
+        val initialAmount = plugin.config.getInt("currency.initial", 50)
+        teamCurrency[Team.RED] = initialAmount
+        teamCurrency[Team.BLUE] = initialAmount
+    }
+    
+    private fun displayGameReport(winner: Team?) {
+        // ゲーム結果の詳細レポート
+        getAllPlayers().forEach { player ->
+            player.sendMessage(Component.text("", NamedTextColor.WHITE))
+            player.sendMessage(Component.text("========== ゲーム結果 ==========").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+            
+            // マッチ情報（マッチモードの場合）
+            match?.let { m ->
+                player.sendMessage(Component.text(m.getMatchStatus()).color(NamedTextColor.YELLOW))
+                val wins = m.getMatchWins()
+                player.sendMessage(Component.text("現在のマッチスコア: ").color(NamedTextColor.WHITE)
+                    .append(Component.text("赤 ${wins[Team.RED]} ").color(NamedTextColor.RED))
+                    .append(Component.text("- ").color(NamedTextColor.WHITE))
+                    .append(Component.text("青 ${wins[Team.BLUE]}").color(NamedTextColor.BLUE)))
+                player.sendMessage(Component.text("", NamedTextColor.WHITE))
+            }
+            
+            // 今回のゲーム結果
+            player.sendMessage(Component.text("今回のゲーム:").color(NamedTextColor.YELLOW))
+            if (winner != null) {
+                player.sendMessage(Component.text("勝利: ").color(NamedTextColor.WHITE).append(Component.text(winner.displayName).color(winner.color)))
+            } else {
+                player.sendMessage(Component.text("引き分け").color(NamedTextColor.YELLOW))
+            }
+            player.sendMessage(Component.text("スコア: ").color(NamedTextColor.WHITE)
+                .append(Component.text("赤 ${score[Team.RED]} ").color(NamedTextColor.RED))
+                .append(Component.text("- ").color(NamedTextColor.WHITE))
+                .append(Component.text("青 ${score[Team.BLUE]}").color(NamedTextColor.BLUE)))
+            
+            // チーム統計
+            player.sendMessage(Component.text("", NamedTextColor.WHITE))
+            player.sendMessage(Component.text("チーム統計:").color(NamedTextColor.YELLOW))
+            
+            // 赤チーム
+            player.sendMessage(Component.text("赤チーム:").color(NamedTextColor.RED))
+            val redPlayers = getTeamPlayers(Team.RED)
+            redPlayers.forEach { p ->
+                player.sendMessage(Component.text("  - ${p.name}", NamedTextColor.WHITE))
+            }
+            
+            // 青チーム
+            player.sendMessage(Component.text("青チーム:").color(NamedTextColor.BLUE))
+            val bluePlayers = getTeamPlayers(Team.BLUE)
+            bluePlayers.forEach { p ->
+                player.sendMessage(Component.text("  - ${p.name}", NamedTextColor.WHITE))
+            }
+            
+            // 通貨情報
+            if (match != null) {
+                player.sendMessage(Component.text("", NamedTextColor.WHITE))
+                player.sendMessage(Component.text("チーム資金:").color(NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("赤チーム: ").color(NamedTextColor.RED)
+                    .append(Component.text("${match!!.getTeamCurrency(Team.RED)}G").color(NamedTextColor.YELLOW)))
+                player.sendMessage(Component.text("青チーム: ").color(NamedTextColor.BLUE)
+                    .append(Component.text("${match!!.getTeamCurrency(Team.BLUE)}G").color(NamedTextColor.YELLOW)))
+            }
+            
+            player.sendMessage(Component.text("===============================").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+            player.sendMessage(Component.text("", NamedTextColor.WHITE))
         }
     }
 }

@@ -41,6 +41,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         gameManager.handlePlayerDisconnect(event.player)
     }
 
+
     @EventHandler
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val player = event.player
@@ -70,8 +71,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 敵の旗の位置をチェック
             val enemyTeam = if (playerTeam == Team.RED) Team.BLUE else Team.RED
             val enemyFlagLocation = when (enemyTeam) {
-                Team.RED -> game.getRedFlagLocation()
-                Team.BLUE -> game.getBlueFlagLocation()
+                Team.RED -> game.redFlagLocation
+                Team.BLUE -> game.blueFlagLocation
             } ?: return
             
             // 敵の旗に近づいたら取得（1.5ブロック以内）
@@ -87,30 +88,29 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     when (enemyTeam) {
                         Team.RED -> game.redFlagCarrier = player.uniqueId
                         Team.BLUE -> game.blueFlagCarrier = player.uniqueId
-                    }
-                
-                    // ビーコンと色付きガラスを削除
-                    enemyFlagLocation.block.type = Material.AIR
-                    enemyFlagLocation.clone().add(0.0, 1.0, 0.0).block.type = Material.AIR
-                    
-                    // プレイヤーに発光効果
-                    player.isGlowing = true
-                    
-                    // メッセージ
-                    game.getAllPlayers().forEach {
-                        it.sendMessage(Component.text("${player.name}が${enemyTeam.displayName}の旗を取得しました！", NamedTextColor.YELLOW))
-                    }
-                    
-                    // 効果音
-                    player.playSound(player.location, org.bukkit.Sound.ENTITY_ENDER_DRAGON_FLAP, 1.0f, 1.0f)
                 }
+                
+                // ビーコンと色付きガラスを削除
+                enemyFlagLocation.block.type = Material.AIR
+                enemyFlagLocation.clone().add(0.0, 1.0, 0.0).block.type = Material.AIR
+                
+                // プレイヤーに発光効果
+                player.isGlowing = true
+                
+                // メッセージ
+                game.getAllPlayers().forEach {
+                    it.sendMessage(Component.text("${player.name}が${enemyTeam.displayName}の旗を取得しました！", NamedTextColor.YELLOW))
+                }
+                
+                // 効果音
+                player.playSound(player.location, org.bukkit.Sound.ENTITY_ENDER_DRAGON_FLAP, 1.0f, 1.0f)
             }
         }
         
         // 自陣の旗位置で敵の旗を持っている場合、キャプチャー
         val ownFlagLocation = when (playerTeam) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
         } ?: return
         
         if (playerLoc.distance(ownFlagLocation) < 3.0) {
@@ -132,7 +132,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             
             if (isInRange && !wasInRange) {
                 player.setMetadata("shop_in_range", org.bukkit.metadata.FixedMetadataValue(plugin, true))
-                player.sendActionBar(Component.text("[ショップ使用可能]").color(NamedTextColor.GREEN).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+                player.sendActionBar(Component.text("§a§l[ショップ使用可能]"))
             } else if (!isInRange && wasInRange) {
                 player.removeMetadata("shop_in_range", plugin)
             }
@@ -160,7 +160,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             
             // キラーの取得
             val killer = player.killer
-            if (killer != null) {
+            if (killer != null && match != null) {
                 val killerTeam = game.getPlayerTeam(killer.uniqueId)
                 if (killerTeam != null && killerTeam != team) {
                     // キル報酬
@@ -171,8 +171,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         plugin.config.getInt("currency.kill-reward", 10)
                     }
                     
-                    // マッチがある場合もない場合も通貨を追加
-                    game.addTeamCurrency(killerTeam, killReward, "${killer.name}が${player.name}をキル")
+                    match.addTeamCurrency(killerTeam, killReward, "${killer.name}が${player.name}をキル")
                 }
             }
             
@@ -398,8 +397,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val blockLoc = clickedBlock.location
                     
                     // 旗の位置かチェック
-                    val isRedFlag = game.getRedFlagLocation()?.let { it.distance(blockLoc) < 1.0 } ?: false
-                    val isBlueFlag = game.getBlueFlagLocation()?.let { it.distance(blockLoc) < 1.0 } ?: false
+                    val isRedFlag = game.redFlagLocation?.let { it.distance(blockLoc) < 1.0 } ?: false
+                    val isBlueFlag = game.blueFlagLocation?.let { it.distance(blockLoc) < 1.0 } ?: false
                     
                     if (isRedFlag || isBlueFlag) {
                         val flagTeam = if (isRedFlag) Team.RED else Team.BLUE
@@ -416,17 +415,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // ショップアイテムのチェック
             if (item.type == Material.EMERALD && item.hasItemMeta()) {
                 val meta = item.itemMeta
-                val displayName = meta.displayName()
-                if (displayName != null && displayName.toString().contains("ショップ")) {
+                if (meta.displayName.contains("ショップ")) {
                     event.isCancelled = true
                     
-                    val team = game.getPlayerTeam(player.uniqueId)
-                    if (team == null) {
-                        player.sendMessage(Component.text("チームが見つかりません", NamedTextColor.RED))
-                        return
-                    }
-                    
-                    // マッチがなくてもゲームがあればショップを使える
+                    val team = game.getPlayerTeam(player.uniqueId) ?: return
+                    val match = gameManager.getMatch(game.name) ?: return
                     
                     // フェーズチェック
                     if (game.phase != GamePhase.BUILD && game.phase != GamePhase.COMBAT) {
@@ -447,11 +440,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     }
                     
                     // ショップを開く
-                    shopManager.openShop(player, game, team)
+                    shopManager.openShop(player, match, team)
                 }
             }
         }
     }
+
     
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
@@ -477,19 +471,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
             if (clickedItem.type == Material.AIR) return
             
             val team = game.getPlayerTeam(player.uniqueId) ?: return
+            val match = gameManager.getMatch(game.name) ?: return
             
             // アイテム名から購入処理
-            val meta = clickedItem.itemMeta ?: return
-            val displayNameComponent = meta.displayName()
-            if (displayNameComponent == null) return
-            val displayName = displayNameComponent.toString()
-            if (shopManager.handlePurchase(player, displayName, game, team)) {
+            val displayName = clickedItem.itemMeta?.displayName ?: return
+            if (shopManager.handlePurchase(player, displayName, match, team)) {
                 // 購入成功時はUIを更新
                 player.closeInventory()
-                shopManager.openShop(player, game, team)
+                shopManager.openShop(player, match, team)
             }
         }
     }
+    
     
     private fun isArmor(material: Material): Boolean {
         val name = material.name
@@ -501,7 +494,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
 
     private fun isProtectedBlock(game: com.hacklab.ctf.Game, location: org.bukkit.Location): Boolean {
         // 旗の位置チェック
-        val flagLocations = listOf(game.getRedFlagLocation(), game.getBlueFlagLocation()).filterNotNull()
+        val flagLocations = listOf(game.redFlagLocation, game.blueFlagLocation).filterNotNull()
         for (flagLoc in flagLocations) {
             // 旗本体（ビーコン）
             if (location.blockX == flagLoc.blockX && 
@@ -530,7 +523,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         }
         
         // スポーン装飾チェック（スポーン地点が設定されている場合のみ）
-        val spawnLocations = listOf(game.getRedSpawnLocation(), game.getBlueSpawnLocation()).filterNotNull()
+        val spawnLocations = listOf(game.redSpawnLocation, game.blueSpawnLocation).filterNotNull()
         
         for (spawnLoc in spawnLocations) {
             // コンクリート床（スポーン地点の下3x3）

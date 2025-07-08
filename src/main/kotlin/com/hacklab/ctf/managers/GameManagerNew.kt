@@ -2,8 +2,10 @@ package com.hacklab.ctf.managers
 
 import com.hacklab.ctf.Game
 import com.hacklab.ctf.Main
+import com.hacklab.ctf.Match
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.Team
+import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.GameMode
@@ -19,6 +21,7 @@ class GameManagerNew(private val plugin: Main) {
     
     // 複数ゲームの管理
     private val games = mutableMapOf<String, Game>()
+    private val matches = mutableMapOf<String, Match>() // マッチ管理
     private val playerGames = mutableMapOf<UUID, String>() // プレイヤー -> ゲーム名
     
     // 対話形式作成・更新の状態管理
@@ -38,9 +41,11 @@ class GameManagerNew(private val plugin: Main) {
         var redSpawnLocation: Location? = null,
         var blueFlagLocation: Location? = null,
         var blueSpawnLocation: Location? = null,
-        var buildPhaseGameMode: GameMode = GameMode.ADVENTURE,
+        var buildPhaseGameMode: String = "ADVENTURE",
         var buildDuration: Int = 300,
         var combatDuration: Int = 600,
+        var matchMode: MatchMode = MatchMode.FIRST_TO_X,
+        var matchTarget: Int = 3,
         val startTime: Long = System.currentTimeMillis()
     )
     
@@ -60,6 +65,8 @@ class GameManagerNew(private val plugin: Main) {
         BUILD_GAMEMODE,
         BUILD_DURATION,
         COMBAT_DURATION,
+        MATCH_MODE,
+        MATCH_TARGET,
         COMPLETE
     }
     
@@ -71,7 +78,9 @@ class GameManagerNew(private val plugin: Main) {
         BLUE_SPAWN,
         BUILD_GAMEMODE,
         BUILD_DURATION,
-        COMBAT_DURATION
+        COMBAT_DURATION,
+        MATCH_MODE,
+        MATCH_TARGET
     }
     
     // ゲーム管理メソッド
@@ -80,7 +89,7 @@ class GameManagerNew(private val plugin: Main) {
             return false
         }
         
-        val game = Game(plugin, name, world)
+        val game = Game(name, plugin, world)
         games[name.lowercase()] = game
         saveGame(name)
         return true
@@ -114,6 +123,10 @@ class GameManagerNew(private val plugin: Main) {
     
     fun getGame(name: String): Game? {
         return games[name.lowercase()]
+    }
+    
+    fun getMatch(name: String): Match? {
+        return matches[name.lowercase()]
     }
     
     fun getAllGames(): Map<String, Game> {
@@ -219,6 +232,12 @@ class GameManagerNew(private val plugin: Main) {
             CreationStep.BUILD_DURATION, CreationStep.COMBAT_DURATION -> {
                 handleDurationInput(player, session, message)
             }
+            CreationStep.MATCH_MODE -> {
+                handleMatchModeInput(player, session, message)
+            }
+            CreationStep.MATCH_TARGET -> {
+                handleMatchTargetInput(player, session, message)
+            }
             CreationStep.COMPLETE -> {}
         }
     }
@@ -254,6 +273,17 @@ class GameManagerNew(private val plugin: Main) {
             CreationStep.COMBAT_DURATION -> {
                 player.sendMessage(Component.text("戦闘フェーズの時間を秒単位で入力してください（例: 600）", NamedTextColor.YELLOW))
                 player.sendMessage(Component.text("'skip' でデフォルト（600秒）、'cancel' でキャンセル", NamedTextColor.GRAY))
+            }
+            CreationStep.MATCH_MODE -> {
+                player.sendMessage(Component.text("マッチモードを選択してください", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("first_to_x: 先取モード（指定勝利数に先に到達）", NamedTextColor.WHITE))
+                player.sendMessage(Component.text("fixed_rounds: 固定回数モード（指定回数実施して合計で勝敗決定）", NamedTextColor.WHITE))
+                player.sendMessage(Component.text("'skip' でデフォルト（first_to_x）、'cancel' でキャンセル", NamedTextColor.GRAY))
+            }
+            CreationStep.MATCH_TARGET -> {
+                val modeText = if (session.matchMode == MatchMode.FIRST_TO_X) "必要勝利数" else "ゲーム数"
+                player.sendMessage(Component.text("${modeText}を入力してください（例: 3）", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("'skip' でデフォルト（3）、'cancel' でキャンセル", NamedTextColor.GRAY))
             }
             CreationStep.COMPLETE -> {
                 completeCreation(player, session)
@@ -326,6 +356,16 @@ class GameManagerNew(private val plugin: Main) {
             }
             CreationStep.COMBAT_DURATION -> {
                 player.sendMessage(Component.text("戦闘フェーズ時間をデフォルト（600秒）に設定しました", NamedTextColor.YELLOW))
+                session.step = CreationStep.MATCH_MODE
+                showCreationStep(player, session)
+            }
+            CreationStep.MATCH_MODE -> {
+                player.sendMessage(Component.text("マッチモードをデフォルト（first_to_x）に設定しました", NamedTextColor.YELLOW))
+                session.step = CreationStep.MATCH_TARGET
+                showCreationStep(player, session)
+            }
+            CreationStep.MATCH_TARGET -> {
+                player.sendMessage(Component.text("マッチターゲットをデフォルト（3）に設定しました", NamedTextColor.YELLOW))
                 session.step = CreationStep.COMPLETE
                 showCreationStep(player, session)
             }
@@ -344,7 +384,7 @@ class GameManagerNew(private val plugin: Main) {
             }
         }
         
-        session.buildPhaseGameMode = gameMode
+        session.buildPhaseGameMode = gameMode.name
         player.sendMessage(Component.text("建築フェーズのゲームモードを ${gameMode.name} に設定しました", NamedTextColor.GREEN))
         session.step = CreationStep.BUILD_DURATION
         showCreationStep(player, session)
@@ -366,11 +406,38 @@ class GameManagerNew(private val plugin: Main) {
             CreationStep.COMBAT_DURATION -> {
                 session.combatDuration = duration
                 player.sendMessage(Component.text("戦闘フェーズの時間を ${duration}秒 に設定しました", NamedTextColor.GREEN))
-                session.step = CreationStep.COMPLETE
+                session.step = CreationStep.MATCH_MODE
             }
             else -> return
         }
         
+        showCreationStep(player, session)
+    }
+    
+    private fun handleMatchModeInput(player: Player, session: GameCreationSession, input: String) {
+        val mode = MatchMode.fromString(input)
+        if (mode == null) {
+            player.sendMessage(Component.text("無効なモードです。first_to_x または fixed_rounds を入力してください。", NamedTextColor.RED))
+            return
+        }
+        
+        session.matchMode = mode
+        player.sendMessage(Component.text("マッチモードを ${mode.displayName} に設定しました", NamedTextColor.GREEN))
+        session.step = CreationStep.MATCH_TARGET
+        showCreationStep(player, session)
+    }
+    
+    private fun handleMatchTargetInput(player: Player, session: GameCreationSession, input: String) {
+        val target = input.toIntOrNull()
+        if (target == null || target < 1 || target > 10) {
+            player.sendMessage(Component.text("無効な値です。1〜10の間で入力してください。", NamedTextColor.RED))
+            return
+        }
+        
+        session.matchTarget = target
+        val targetText = if (session.matchMode == MatchMode.FIRST_TO_X) "${target}勝先取" else "${target}ゲーム"
+        player.sendMessage(Component.text("マッチ設定を $targetText に設定しました", NamedTextColor.GREEN))
+        session.step = CreationStep.COMPLETE
         showCreationStep(player, session)
     }
     
@@ -383,16 +450,29 @@ class GameManagerNew(private val plugin: Main) {
         }
         
         // ゲーム作成
-        val game = Game(plugin, session.gameName, session.world)
-        game.redFlagLocation = session.redFlagLocation
-        game.redSpawnLocation = session.redSpawnLocation
-        game.blueFlagLocation = session.blueFlagLocation
-        game.blueSpawnLocation = session.blueSpawnLocation
+        val game = Game(session.gameName, plugin, session.world)
+        game.setRedFlagLocation(session.redFlagLocation!!)
+        session.redSpawnLocation?.let { game.setRedSpawnLocation(it) }
+        game.setBlueFlagLocation(session.blueFlagLocation!!)
+        session.blueSpawnLocation?.let { game.setBlueSpawnLocation(it) }
         game.buildPhaseGameMode = session.buildPhaseGameMode
         game.buildDuration = session.buildDuration
         game.combatDuration = session.combatDuration
         
+        // マッチ作成
+        val match = Match(
+            name = session.gameName,
+            plugin = plugin,
+            mode = session.matchMode,
+            target = session.matchTarget,
+            intervalDuration = plugin.config.getInt("match.interval-duration", 30)
+        )
+        match.buildDuration = session.buildDuration
+        match.combatDuration = session.combatDuration
+        match.buildPhaseGameMode = session.buildPhaseGameMode
+        
         games[session.gameName.lowercase()] = game
+        matches[session.gameName.lowercase()] = match
         saveGame(session.gameName)
         
         player.sendMessage(Component.text("ゲーム '${session.gameName}' を作成しました！", NamedTextColor.GREEN))
@@ -539,19 +619,19 @@ class GameManagerNew(private val plugin: Main) {
         
         when (session.currentMenu) {
             UpdateMenu.RED_FLAG -> {
-                session.game.redFlagLocation = location
+                session.game.setRedFlagLocation(location)
                 player.sendMessage(Component.text("赤チームの旗位置を更新しました: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
             }
             UpdateMenu.RED_SPAWN -> {
-                session.game.redSpawnLocation = location
+                session.game.setRedSpawnLocation(location)
                 player.sendMessage(Component.text("赤チームのスポーン地点を更新しました: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
             }
             UpdateMenu.BLUE_FLAG -> {
-                session.game.blueFlagLocation = location
+                session.game.setBlueFlagLocation(location)
                 player.sendMessage(Component.text("青チームの旗位置を更新しました: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
             }
             UpdateMenu.BLUE_SPAWN -> {
-                session.game.blueSpawnLocation = location
+                session.game.setBlueSpawnLocation(location)
                 player.sendMessage(Component.text("青チームのスポーン地点を更新しました: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
             }
             else -> return
@@ -574,7 +654,7 @@ class GameManagerNew(private val plugin: Main) {
             }
         }
         
-        session.game.buildPhaseGameMode = gameMode
+        session.game.buildPhaseGameMode = gameMode.name
         player.sendMessage(Component.text("建築フェーズのゲームモードを ${gameMode.name} に更新しました", NamedTextColor.GREEN))
         
         saveGame(session.gameName)
@@ -656,22 +736,22 @@ class GameManagerNew(private val plugin: Main) {
         config.set("world", game.world.name)
         
         // チーム設定
-        game.redFlagLocation?.let {
+        game.getRedFlagLocation()?.let {
             config.set("teams.red.flag-location.x", it.x)
             config.set("teams.red.flag-location.y", it.y)
             config.set("teams.red.flag-location.z", it.z)
         }
-        game.redSpawnLocation?.let {
+        game.getRedSpawnLocation()?.let {
             config.set("teams.red.spawn-location.x", it.x)
             config.set("teams.red.spawn-location.y", it.y)
             config.set("teams.red.spawn-location.z", it.z)
         }
-        game.blueFlagLocation?.let {
+        game.getBlueFlagLocation()?.let {
             config.set("teams.blue.flag-location.x", it.x)
             config.set("teams.blue.flag-location.y", it.y)
             config.set("teams.blue.flag-location.z", it.z)
         }
-        game.blueSpawnLocation?.let {
+        game.getBlueSpawnLocation()?.let {
             config.set("teams.blue.spawn-location.x", it.x)
             config.set("teams.blue.spawn-location.y", it.y)
             config.set("teams.blue.spawn-location.z", it.z)
@@ -682,8 +762,16 @@ class GameManagerNew(private val plugin: Main) {
         config.set("settings.max-players-per-team", game.maxPlayersPerTeam)
         config.set("settings.respawn-delay", game.respawnDelay)
         config.set("settings.phases.build-duration", game.buildDuration)
-        config.set("settings.phases.build-gamemode", game.buildPhaseGameMode.name)
+        config.set("settings.phases.build-gamemode", game.buildPhaseGameMode)
         config.set("settings.phases.combat-duration", game.combatDuration)
+        
+        // マッチ設定
+        val match = matches[name.lowercase()]
+        if (match != null) {
+            config.set("settings.match.mode", match.mode.name)
+            config.set("settings.match.target", match.target)
+            config.set("settings.match.interval-duration", plugin.config.getInt("match.interval-duration", 30))
+        }
         
         config.save(file)
     }
@@ -701,40 +789,40 @@ class GameManagerNew(private val plugin: Main) {
                 val worldName = config.getString("world") ?: return@forEach
                 val world = plugin.server.getWorld(worldName) ?: return@forEach
                 
-                val game = Game(plugin, name, world)
+                val game = Game(name, plugin, world)
                 
                 // 位置情報の読み込み
                 if (config.contains("teams.red.flag-location")) {
-                    game.redFlagLocation = Location(
+                    game.setRedFlagLocation(Location(
                         world,
                         config.getDouble("teams.red.flag-location.x"),
                         config.getDouble("teams.red.flag-location.y"),
                         config.getDouble("teams.red.flag-location.z")
-                    )
+                    ))
                 }
                 if (config.contains("teams.red.spawn-location")) {
-                    game.redSpawnLocation = Location(
+                    game.setRedSpawnLocation(Location(
                         world,
                         config.getDouble("teams.red.spawn-location.x"),
                         config.getDouble("teams.red.spawn-location.y"),
                         config.getDouble("teams.red.spawn-location.z")
-                    )
+                    ))
                 }
                 if (config.contains("teams.blue.flag-location")) {
-                    game.blueFlagLocation = Location(
+                    game.setBlueFlagLocation(Location(
                         world,
                         config.getDouble("teams.blue.flag-location.x"),
                         config.getDouble("teams.blue.flag-location.y"),
                         config.getDouble("teams.blue.flag-location.z")
-                    )
+                    ))
                 }
                 if (config.contains("teams.blue.spawn-location")) {
-                    game.blueSpawnLocation = Location(
+                    game.setBlueSpawnLocation(Location(
                         world,
                         config.getDouble("teams.blue.spawn-location.x"),
                         config.getDouble("teams.blue.spawn-location.y"),
                         config.getDouble("teams.blue.spawn-location.z")
-                    )
+                    ))
                 }
                 
                 // ゲーム設定の読み込み
@@ -743,11 +831,29 @@ class GameManagerNew(private val plugin: Main) {
                 game.respawnDelay = config.getInt("settings.respawn-delay", game.respawnDelay)
                 game.buildDuration = config.getInt("settings.phases.build-duration", game.buildDuration)
                 config.getString("settings.phases.build-gamemode")?.let {
-                    try {
-                        game.buildPhaseGameMode = GameMode.valueOf(it)
-                    } catch (_: IllegalArgumentException) {}
+                    game.buildPhaseGameMode = it
                 }
                 game.combatDuration = config.getInt("settings.phases.combat-duration", game.combatDuration)
+                
+                // マッチ設定の読み込み
+                if (config.contains("settings.match.mode")) {
+                    val matchMode = MatchMode.fromString(config.getString("settings.match.mode", "first_to_x")!!) ?: MatchMode.FIRST_TO_X
+                    val matchTarget = config.getInt("settings.match.target", 3)
+                    val intervalDuration = config.getInt("settings.match.interval-duration", 30)
+                    
+                    val match = Match(
+                        name = name,
+                        plugin = plugin,
+                        mode = matchMode,
+                        target = matchTarget,
+                        intervalDuration = intervalDuration
+                    )
+                    match.buildDuration = game.buildDuration
+                    match.combatDuration = game.combatDuration
+                    match.buildPhaseGameMode = game.buildPhaseGameMode
+                    
+                    matches[name.lowercase()] = match
+                }
                 
                 games[name.lowercase()] = game
                 plugin.logger.info("Loaded game: $name")

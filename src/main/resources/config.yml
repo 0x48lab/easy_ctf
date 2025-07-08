@@ -52,7 +52,7 @@ mechanics:
   # Allow vehicles (minecarts, boats)
   allow-vehicles: false
 
-# Equipment Settings
+# Equipment Settings (DEPRECATED - Now using initial-equipment and shop system)
 equipment:
   # Build phase equipment
   build-phase:
@@ -180,3 +180,67 @@ debug:
   
   # Log level (INFO, WARNING, SEVERE)
   log-level: "INFO"
+
+# Match Settings
+match:
+  # Default match mode (first_to_x or fixed_rounds)
+  default-mode: "first_to_x"
+  
+  # Default target (wins needed for first_to_x, or rounds for fixed_rounds)
+  default-target: 3
+  
+  # Interval between games in seconds
+  interval-duration: 30
+
+# Currency Settings
+currency:
+  # Currency display name
+  name: "G"
+  
+  # Initial currency per team at game start
+  initial: 50
+  
+  # Phase end bonus (given at end of combat phase)
+  phase-end-bonus: 50
+  
+  # Kill rewards
+  kill-reward: 10
+  kill-assist-reward: 5
+  carrier-kill-reward: 20
+  carrier-kill-assist-reward: 10
+  
+  # Capture rewards
+  capture-reward: 30
+  capture-assist-reward: 15
+
+# Shop Settings
+shop:
+  # Enable shop system
+  enabled: true
+  
+  # Shop usage range from spawn point (blocks)
+  use-range: 15
+  
+  # Death item behavior
+  death-item-behavior:
+    weapons: "keep"      # keep/drop/destroy
+    armor: "keep"        # keep/drop/destroy
+    consumables: "drop"  # keep/drop/destroy
+  
+  # Discount rates based on score difference
+  discount:
+    1-point: 0.1    # 10% off
+    2-point: 0.2    # 20% off
+    3-point: 0.3    # 30% off
+    4-point-plus: 0.4  # 40% off
+
+# Initial Equipment Settings
+initial-equipment:
+  # Weapons given at start
+  weapons:
+    - "STONE_SWORD"
+    - "STONE_AXE"
+  
+  # Food given at start
+  food:
+    - "BREAD:8"

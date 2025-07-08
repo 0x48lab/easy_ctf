@@ -6,6 +6,7 @@ import com.hacklab.ctf.listeners.ChatListener
 import com.hacklab.ctf.managers.GameManagerNew
 import com.hacklab.ctf.managers.LanguageManager
 import com.hacklab.ctf.managers.EquipmentManager
+import com.hacklab.ctf.shop.ShopManager
 import org.bukkit.plugin.java.JavaPlugin
 
 class Main : JavaPlugin() {
@@ -21,6 +22,8 @@ class Main : JavaPlugin() {
         private set
     lateinit var equipmentManager: EquipmentManager
         private set
+    lateinit var shopManager: ShopManager
+        private set
 
     override fun onEnable() {
         instance = this
@@ -29,6 +32,7 @@ class Main : JavaPlugin() {
         
         languageManager = LanguageManager(this)
         equipmentManager = EquipmentManager(this)
+        shopManager = ShopManager(this)
         gameManager = GameManagerNew(this)
         
         getCommand("ctf")?.setExecutor(CTFCommandNew(this))
