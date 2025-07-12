@@ -179,6 +179,13 @@ class GameManagerNew(private val plugin: Main) {
     fun handlePlayerReconnect(player: Player) {
         val gameName = playerGames[player.uniqueId] ?: return
         val game = games[gameName] ?: return
+        
+        // 実際に切断されていたプレイヤーかどうか確認
+        if (!game.disconnectedPlayers.containsKey(player.uniqueId)) {
+            // 新規ログインの場合は何もしない
+            return
+        }
+        
         game.handleReconnect(player)
     }
     

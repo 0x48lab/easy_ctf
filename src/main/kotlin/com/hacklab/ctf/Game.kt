@@ -72,6 +72,7 @@ class Game(
     var scoreboard: Scoreboard? = null
     var objective: Objective? = null
     var bossBar: BossBar? = null
+    private var lastScoreboardUpdate: Long = 0
     
     // スポーン保護
     val spawnProtection = mutableMapOf<UUID, Long>() // プレイヤー -> 保護終了時刻
@@ -208,6 +209,12 @@ class Game(
     
     fun handleReconnect(player: Player) {
         val team = disconnectedPlayers.remove(player.uniqueId) ?: return
+        
+        // プレイヤーを再度チームに追加
+        when (team) {
+            Team.RED -> redTeam.add(player.uniqueId)
+            Team.BLUE -> blueTeam.add(player.uniqueId)
+        }
         
         // UIの再設定
         setupScoreboard(player)
@@ -362,6 +369,9 @@ class Game(
         // 旗とスポーン地点の設置
         setupFlags()
         setupSpawnAreas()
+        
+        // ショップの購入履歴をリセット
+        plugin.shopManager.resetGamePurchases(name)
         
         state = GameState.RUNNING
         
@@ -529,6 +539,10 @@ class Game(
         // BossBar削除
         bossBar?.removeAll()
         bossBar = null
+        
+        // スコアボード削除
+        scoreboard = null
+        objective = null
         
         // 旗とスポーン装飾を削除
         cleanupGameBlocks()
@@ -773,17 +787,31 @@ class Game(
     }
     
     private fun setupScoreboard(player: Player) {
-        if (scoreboard == null) {
-            scoreboard = Bukkit.getScoreboardManager().newScoreboard
-            objective = scoreboard!!.registerNewObjective("ctf_$gameName", "dummy", 
-                Component.text("CTF - $gameName", NamedTextColor.GOLD))
-            objective!!.displaySlot = DisplaySlot.SIDEBAR
+        try {
+            // 共通のスコアボードを使用（初回のみ作成）
+            if (scoreboard == null) {
+                scoreboard = Bukkit.getScoreboardManager().newScoreboard
+                objective = scoreboard!!.registerNewObjective("ctf_game", "dummy", 
+                    Component.text("CTF - $gameName", NamedTextColor.GOLD))
+                objective!!.displaySlot = DisplaySlot.SIDEBAR
+            }
+            
+            // プレイヤーに共通のスコアボードを設定
+            player.scoreboard = scoreboard!!
+            
+        } catch (e: Exception) {
+            plugin.logger.warning("Failed to setup scoreboard for player ${player.name}: ${e.message}")
         }
-        player.scoreboard = scoreboard!!
     }
     
     fun updateScoreboard() {
         val obj = objective ?: return
+        
+        // スコアボードの更新を1秒に1回に制限（ゲームループと同期）
+        if (System.currentTimeMillis() - lastScoreboardUpdate < 1000) {
+            return
+        }
+        lastScoreboardUpdate = System.currentTimeMillis()
         
         // 既存のエントリをクリア
         scoreboard?.entries?.forEach { entry ->

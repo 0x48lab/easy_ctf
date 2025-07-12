@@ -22,6 +22,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.player.*
 import org.bukkit.event.block.Action
 import org.bukkit.inventory.ItemStack
@@ -33,7 +34,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        gameManager.handlePlayerReconnect(event.player)
+        // 少し遅延させてからreconnect処理を実行
+        plugin.server.scheduler.runTaskLater(plugin, Runnable {
+            gameManager.handlePlayerReconnect(event.player)
+        }, 20L) // 1秒後
     }
 
     @EventHandler
@@ -177,9 +181,6 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }
             
             // 購入アイテムの処理
-            val purchasedItems = player.getMetadata("ctf_purchased_items")
-                .firstOrNull()?.value() as? MutableList<ShopItem> ?: mutableListOf()
-            
             val itemsToKeep = mutableListOf<ItemStack>()
             val itemsToDrop = mutableListOf<ItemStack>()
             
@@ -187,12 +188,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
             for (item in player.inventory.contents) {
                 if (item == null) continue
                 
-                val shopItem = purchasedItems.find { it.material == item.type }
-                if (shopItem != null) {
-                    when (shopItem.deathBehavior) {
+                if (shopManager.isShopItem(item)) {
+                    val deathBehavior = shopManager.getItemDeathBehavior(item)
+                    when (deathBehavior) {
                         DeathBehavior.KEEP -> itemsToKeep.add(item)
                         DeathBehavior.DROP -> itemsToDrop.add(item)
                         DeathBehavior.DESTROY -> {} // 何もしない
+                        null -> itemsToKeep.add(item) // デフォルトは保持
                     }
                 } else {
                     // デフォルトアイテムは保持
@@ -205,9 +207,20 @@ class GameListenerNew(private val plugin: Main) : Listener {
             for (armor in armorContents) {
                 if (armor == null) continue
                 
-                val shopItem = purchasedItems.find { it.material == armor.type }
-                if (shopItem != null && shopItem.deathBehavior == DeathBehavior.KEEP) {
+                // 革の防具（チーム色）は常に保持
+                if (armor.type.name.startsWith("LEATHER_")) {
                     itemsToKeep.add(armor)
+                    continue
+                }
+                
+                if (shopManager.isShopItem(armor)) {
+                    val deathBehavior = shopManager.getItemDeathBehavior(armor)
+                    when (deathBehavior) {
+                        DeathBehavior.KEEP -> itemsToKeep.add(armor)
+                        DeathBehavior.DROP -> itemsToDrop.add(armor)
+                        DeathBehavior.DESTROY -> {} // 何もしない
+                        null -> itemsToKeep.add(armor) // デフォルトは保持
+                    }
                 }
             }
             
@@ -446,8 +459,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         return
                     }
                     
-                    // ショップを開く
-                    shopManager.openShop(player, game, team)
+                    // カテゴリーメニューを開く
+                    shopManager.openCategoryMenu(player, game, team)
                 }
             }
         }
@@ -470,24 +483,92 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         // ショップUIのクリック処理
         val inventory = event.inventory
-        if (inventory.holder == null && event.view.title().contains(Component.text("ショップ"))) {
+        val title = event.view.title()
+        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        
+        if (inventory.holder == null && titleText.contains("ショップ")) {
+            // すべてのクリックをキャンセル
             event.isCancelled = true
             
+            // クリックされたインベントリがプレイヤーのものならreturn（アイテム移動防止）
+            if (event.clickedInventory == player.inventory) {
+                return
+            }
+            
+            // ショップインベントリのアイテムをクリックした場合のみ処理
             val clickedItem = event.currentItem ?: return
             if (clickedItem.type == Material.AIR) return
             
             val team = game.getPlayerTeam(player.uniqueId) ?: return
             
+            // カテゴリー選択画面の処理
+            if (titleText.contains("カテゴリー選択")) {
+                val meta = clickedItem.itemMeta ?: return
+                val displayNameComponent = meta.displayName()
+                if (displayNameComponent == null) return
+                val displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayNameComponent)
+                
+                val page = when (displayName) {
+                    "武器" -> 0
+                    "防具" -> 1
+                    "消耗品" -> 2
+                    "ブロック" -> 3
+                    else -> return
+                }
+                
+                shopManager.openShop(player, game, team, page)
+                return
+            }
+            
             // アイテム名から購入処理
             val meta = clickedItem.itemMeta ?: return
             val displayNameComponent = meta.displayName()
             if (displayNameComponent == null) return
-            val displayName = displayNameComponent.toString()
+            // PlainTextComponentSerializerを使って純粋なテキストを取得
+            val displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayNameComponent)
+            
+            // ナビゲーションボタンのチェック
+            when (displayName) {
+                "← 前のページ" -> {
+                    val currentPage = shopManager.getCurrentPage(player)
+                    if (currentPage > 0) {
+                        shopManager.openShop(player, game, team, currentPage - 1)
+                    }
+                    return
+                }
+                "次のページ →" -> {
+                    val currentPage = shopManager.getCurrentPage(player)
+                    shopManager.openShop(player, game, team, currentPage + 1)
+                    return
+                }
+                "メインメニュー" -> {
+                    // カテゴリー選択画面を開く
+                    shopManager.openCategoryMenu(player, game, team)
+                    return
+                }
+            }
+            
+            // 通常のアイテム購入
             if (shopManager.handlePurchase(player, displayName, game, team)) {
                 // 購入成功時はUIを更新
                 player.closeInventory()
-                shopManager.openShop(player, game, team)
+                val currentPage = shopManager.getCurrentPage(player)
+                shopManager.openShop(player, game, team, currentPage)
             }
+        }
+    }
+    
+    @EventHandler
+    fun onInventoryDrag(event: InventoryDragEvent) {
+        val player = event.whoClicked as? Player ?: return
+        val game = gameManager.getPlayerGame(player) ?: return
+        
+        // ショップUIでのドラッグを防止
+        val title = event.view.title()
+        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        
+        if (event.inventory.holder == null && titleText.contains("ショップ")) {
+            event.isCancelled = true
         }
     }
     

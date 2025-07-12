@@ -2,6 +2,8 @@ package com.hacklab.ctf.shop
 
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
+import org.bukkit.enchantments.Enchantment
+import com.hacklab.ctf.utils.GamePhase
 
 data class ShopItem(
     val id: String,
@@ -11,13 +13,28 @@ data class ShopItem(
     val basePrice: Int,
     val category: ShopCategory,
     val deathBehavior: DeathBehavior = DeathBehavior.KEEP,
-    val lore: List<String> = emptyList()
+    val lore: List<String> = emptyList(),
+    val enchantments: Map<Enchantment, Int> = emptyMap(),
+    val unbreakable: Boolean = false,
+    val maxPurchasePerPlayer: Int = -1,  // -1 = 無制限
+    val maxPurchasePerTeam: Int = -1,    // -1 = 無制限
+    val availablePhases: Set<GamePhase> = setOf(GamePhase.BUILD, GamePhase.COMBAT)
 ) {
     fun createItemStack(): ItemStack {
         return ItemStack(material, amount).apply {
             itemMeta = itemMeta?.apply {
-                setDisplayName(displayName)
-                setLore(lore)
+                displayName(net.kyori.adventure.text.Component.text(displayName))
+                lore(this@ShopItem.lore.map { net.kyori.adventure.text.Component.text(it) })
+                
+                // エンチャント追加
+                this@ShopItem.enchantments.forEach { (enchantment, level) ->
+                    addEnchant(enchantment, level, true)
+                }
+                
+                // 耐久無限設定
+                if (this@ShopItem.unbreakable) {
+                    isUnbreakable = true
+                }
             }
         }
     }

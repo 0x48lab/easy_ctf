@@ -11,10 +11,17 @@ import org.bukkit.inventory.ItemStack
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import kotlin.math.roundToInt
+import org.bukkit.NamespacedKey
+import org.bukkit.persistence.PersistentDataType
+import org.bukkit.enchantments.Enchantment
 
 class ShopManager(private val plugin: Main) {
     
     private val shopItems = mutableListOf<ShopItem>()
+    private val shopItemKey = NamespacedKey(plugin, "shop_item_id")
+    private val deathBehaviorKey = NamespacedKey(plugin, "death_behavior")
+    private val playerPages = mutableMapOf<Player, Int>() // プレイヤーごとの現在のページ
+    private val purchaseTracker = mutableMapOf<String, MutableMap<String, MutableMap<String, Int>>>() // ゲームID -> プレイヤー/チーム -> アイテムID -> 購入数
     
     init {
         loadShopItems()
@@ -43,6 +50,28 @@ class ShopManager(private val plugin: Main) {
         shopItems.add(ShopItem("bow", "§f弓", Material.BOW, 1, 20, ShopCategory.WEAPONS))
         shopItems.add(ShopItem("arrows", "§f矢 x8", Material.ARROW, 8, 10, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
         
+        // エンチャント付きアイテム
+        shopItems.add(ShopItem("enchanted_bow", "§bエンチャント弓", Material.BOW, 1, 50, ShopCategory.WEAPONS,
+            enchantments = mapOf(
+                Enchantment.POWER to 2,
+                Enchantment.INFINITY to 1
+            ),
+            lore = listOf("§7パワー II", "§7無限 I")
+        ))
+        
+        shopItems.add(ShopItem("enchanted_sword", "§bエンチャント剣", Material.DIAMOND_SWORD, 1, 100, ShopCategory.WEAPONS,
+            enchantments = mapOf(
+                Enchantment.SHARPNESS to 3,
+                Enchantment.KNOCKBACK to 1
+            ),
+            lore = listOf("§7ダメージ増加 III", "§7ノックバック I")
+        ))
+        
+        shopItems.add(ShopItem("unbreaking_pickaxe", "§b耐久無限ツルハシ", Material.IRON_PICKAXE, 1, 40, ShopCategory.WEAPONS,
+            unbreakable = true,
+            lore = listOf("§7壊れない")
+        ))
+        
         // 消耗品
         shopItems.add(ShopItem("ender_pearl", "§5エンダーパール", Material.ENDER_PEARL, 1, 50, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
         shopItems.add(ShopItem("golden_apple", "§6金のリンゴ", Material.GOLDEN_APPLE, 1, 30, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
@@ -60,59 +89,108 @@ class ShopManager(private val plugin: Main) {
         shopItems.add(ShopItem("redstone", "§cレッドストーン x16", Material.REDSTONE, 16, 10, ShopCategory.BLOCKS))
         shopItems.add(ShopItem("tnt", "§cTNT x1", Material.TNT, 1, 30, ShopCategory.BLOCKS))
         
+        // 特殊エンチャント防具
+        shopItems.add(ShopItem("protection_armor", "§5プロテクション防具セット", Material.DIAMOND_CHESTPLATE, 1, 150, ShopCategory.ARMOR,
+            enchantments = mapOf(
+                Enchantment.PROTECTION to 2
+            ),
+            lore = listOf("§7ダメージ軽減 II", "§7ヘルメット、チェストプレート", "§7レギンス、ブーツのセット")
+        ))
+        
         // 特殊アイテム
         shopItems.add(ShopItem("water_bucket", "§9水バケツ", Material.WATER_BUCKET, 1, 15, ShopCategory.BLOCKS))
         shopItems.add(ShopItem("lava_bucket", "§c溶岩バケツ", Material.LAVA_BUCKET, 1, 20, ShopCategory.BLOCKS))
         shopItems.add(ShopItem("ladder", "§6はしご x16", Material.LADDER, 16, 10, ShopCategory.BLOCKS))
         shopItems.add(ShopItem("fence", "§6フェンス x16", Material.OAK_FENCE, 16, 8, ShopCategory.BLOCKS))
+        
+        // 購入制限付きアイテムの例
+        shopItems.add(ShopItem("ender_chest", "§5エンダーチェスト", Material.ENDER_CHEST, 1, 50, ShopCategory.BLOCKS,
+            maxPurchasePerTeam = 1,
+            lore = listOf("§7チームで１つまで")
+        ))
+        
+        shopItems.add(ShopItem("enchanted_golden_apple", "§6§lエンチャント金リンゴ", Material.ENCHANTED_GOLDEN_APPLE, 1, 100, ShopCategory.CONSUMABLES,
+            maxPurchasePerPlayer = 2,
+            deathBehavior = DeathBehavior.DROP,
+            lore = listOf("§7一人2個まで")
+        ))
     }
     
-    fun openShop(player: Player, game: Game, team: Team) {
-        val inventory = createShopInventory(game, team)
+    fun openShop(player: Player, game: Game, team: Team, page: Int = 0) {
+        playerPages[player] = page
+        val inventory = createShopInventory(player, game, team, page)
         player.openInventory(inventory)
     }
     
-    private fun createShopInventory(game: Game, team: Team): Inventory {
-        val inventory = Bukkit.createInventory(null, 54, "§6§lショップ §7- §e${game.getTeamCurrency(team)}G")
+    private fun createShopInventory(player: Player, game: Game, team: Team, page: Int): Inventory {
+        val inventory = Bukkit.createInventory(null, 54, "§6§lショップ §7- §e${game.getTeamCurrency(team)}G §7(ページ ${page + 1})")
         
-        // カテゴリごとにアイテムを配置
-        var slot = 0
+        // カテゴリーのページング
+        val categories = listOf(
+            ShopCategory.WEAPONS to "§c§l武器",
+            ShopCategory.ARMOR to "§b§l防具",
+            ShopCategory.CONSUMABLES to "§e§l消耗品",
+            ShopCategory.BLOCKS to "§5§lブロック"
+        )
         
-        // 武器
-        addCategoryHeader(inventory, 0, "§c§l武器", Material.DIAMOND_SWORD)
-        slot = 9
-        shopItems.filter { it.category == ShopCategory.WEAPONS }.forEach { item ->
-            if (slot < 18) {
-                addShopItemToInventory(inventory, slot, item, game, team)
-                slot++
+        if (page < categories.size) {
+            val (category, categoryName) = categories[page]
+            val categoryItems = shopItems.filter { it.category == category }
+            
+            // カテゴリーヘッダー
+            val headerMaterial = when (category) {
+                ShopCategory.WEAPONS -> Material.DIAMOND_SWORD
+                ShopCategory.ARMOR -> Material.DIAMOND_CHESTPLATE
+                ShopCategory.CONSUMABLES -> Material.GOLDEN_APPLE
+                ShopCategory.BLOCKS -> Material.STONE
+            }
+            addCategoryHeader(inventory, 4, categoryName, headerMaterial)
+            
+            // アイテムを配置（最大44個）
+            var slot = 9
+            categoryItems.take(44).forEach { item ->
+                if (slot % 9 == 8) slot++ // 最右列をスキップ
+                if (slot < 45) {
+                    addShopItemToInventory(inventory, slot, item, game, team, player)
+                    slot++
+                }
             }
         }
         
-        // 防具
-        addCategoryHeader(inventory, 18, "§b§l防具", Material.DIAMOND_CHESTPLATE)
-        slot = 27
-        shopItems.filter { it.category == ShopCategory.ARMOR }.forEach { item ->
-            if (slot < 36) {
-                addShopItemToInventory(inventory, slot, item, game, team)
-                slot++
+        // ナビゲーションボタン
+        // 前のページ
+        if (page > 0) {
+            val prevPage = ItemStack(Material.ARROW).apply {
+                itemMeta = itemMeta?.apply {
+                    setDisplayName("§a§l← 前のページ")
+                }
             }
+            inventory.setItem(45, prevPage)
         }
         
-        // 消耗品
-        addCategoryHeader(inventory, 36, "§e§l消耗品", Material.GOLDEN_APPLE)
-        slot = 45
-        shopItems.filter { it.category == ShopCategory.CONSUMABLES }.forEach { item ->
-            if (slot < 54) {
-                addShopItemToInventory(inventory, slot, item, game, team)
-                slot++
+        // メインメニュー
+        val mainMenu = ItemStack(Material.COMPASS).apply {
+            itemMeta = itemMeta?.apply {
+                setDisplayName("§6§lメインメニュー")
+                setLore(listOf(
+                    "§7カテゴリー一覧：",
+                    "§c武器",
+                    "§b防具",
+                    "§e消耗品",
+                    "§5ブロック"
+                ))
             }
         }
+        inventory.setItem(49, mainMenu)
         
-        // 建築ブロック（別ページまたは右側に配置）
-        slot = 5
-        shopItems.filter { it.category == ShopCategory.BLOCKS }.take(4).forEach { item ->
-            addShopItemToInventory(inventory, slot, item, game, team)
-            slot += 9
+        // 次のページ
+        if (page < categories.size - 1) {
+            val nextPage = ItemStack(Material.ARROW).apply {
+                itemMeta = itemMeta?.apply {
+                    setDisplayName("§a§l次のページ →")
+                }
+            }
+            inventory.setItem(53, nextPage)
         }
         
         return inventory
@@ -128,7 +206,7 @@ class ShopManager(private val plugin: Main) {
         inventory.setItem(slot, header)
     }
     
-    private fun addShopItemToInventory(inventory: Inventory, slot: Int, item: ShopItem, game: Game, team: Team) {
+    private fun addShopItemToInventory(inventory: Inventory, slot: Int, item: ShopItem, game: Game, team: Team, player: Player) {
         val displayItem = item.createItemStack()
         
         // 価格計算（割引適用）
@@ -150,9 +228,25 @@ class ShopManager(private val plugin: Main) {
             // 死亡時の挙動
             loreList.add("§7死亡時: ${getDeathBehaviorText(item.deathBehavior)}")
             
+            // 購入制限情報
+            val gameId = game.name
+            val playerPurchases = getPurchaseCount(gameId, player.uniqueId.toString(), item.id)
+            val teamPurchases = getPurchaseCount(gameId, "team_$team", item.id)
+            
+            if (item.maxPurchasePerPlayer > 0) {
+                loreList.add("§7個人購入制限: §e$playerPurchases§7/§e${item.maxPurchasePerPlayer}")
+            }
+            if (item.maxPurchasePerTeam > 0) {
+                loreList.add("§7チーム購入制限: §e$teamPurchases§7/§e${item.maxPurchasePerTeam}")
+            }
+            
             // 購入可能かどうか
             val currency = game.getTeamCurrency(team)
-            if (currency >= discountedPrice) {
+            val canPurchase = checkPurchaseLimit(gameId, player, team, item)
+            
+            if (!canPurchase) {
+                loreList.add("§c§l✗ 購入制限に達しました")
+            } else if (currency >= discountedPrice) {
                 loreList.add("§a§l✔ 購入可能")
             } else {
                 loreList.add("§c§l✗ G不足")
@@ -204,6 +298,18 @@ class ShopManager(private val plugin: Main) {
     fun handlePurchase(player: Player, itemName: String, game: Game, team: Team): Boolean {
         val item = shopItems.find { it.displayName == itemName } ?: return false
         
+        // フェーズチェック
+        if (!item.availablePhases.contains(game.phase)) {
+            player.sendMessage(Component.text("このアイテムは現在のフェーズでは購入できません").color(NamedTextColor.RED))
+            return false
+        }
+        
+        // 購入制限チェック
+        if (!checkPurchaseLimit(game.name, player, team, item)) {
+            player.sendMessage(Component.text("購入制限に達しています").color(NamedTextColor.RED))
+            return false
+        }
+        
         val price = calculateDiscountedPrice(item, game, team)
         
         // 通貨チェック
@@ -220,10 +326,10 @@ class ShopManager(private val plugin: Main) {
         // アイテム付与
         when (item.id) {
             "iron_armor", "diamond_armor", "netherite_armor" -> {
-                giveArmorSet(player, item.material)
+                giveArmorSet(player, item)
             }
             else -> {
-                val itemStack = item.createItemStack()
+                val itemStack = createShopItemStack(item)
                 
                 // インベントリに空きがない場合は足元にドロップ
                 val leftover = player.inventory.addItem(itemStack)
@@ -236,15 +342,28 @@ class ShopManager(private val plugin: Main) {
             }
         }
         
-        // 購入したアイテムにメタデータを付与（死亡時の処理用）
-        tagPurchasedItem(player, item)
+        // 購入数を記録
+        recordPurchase(game.name, player.uniqueId.toString(), item.id)
+        recordPurchase(game.name, "team_$team", item.id)
         
         player.sendMessage(Component.text("${item.displayName} を購入しました！").color(NamedTextColor.GREEN))
         return true
     }
     
-    private fun giveArmorSet(player: Player, chestplateMaterial: Material) {
-        val armorMaterials = when (chestplateMaterial) {
+    private fun createShopItemStack(item: ShopItem): ItemStack {
+        return item.createItemStack().apply {
+            itemMeta = itemMeta?.apply {
+                val container = persistentDataContainer
+                container.set(shopItemKey, PersistentDataType.STRING, item.id)
+                container.set(deathBehaviorKey, PersistentDataType.STRING, item.deathBehavior.name)
+                
+                // エンチャントはcreateItemStack()で既に追加されている
+            }
+        }
+    }
+    
+    private fun giveArmorSet(player: Player, item: ShopItem) {
+        val armorMaterials = when (item.material) {
             Material.IRON_CHESTPLATE -> listOf(
                 Material.IRON_HELMET,
                 Material.IRON_CHESTPLATE,
@@ -266,7 +385,15 @@ class ShopManager(private val plugin: Main) {
             else -> return
         }
         
-        val armorItems = armorMaterials.map { ItemStack(it) }
+        val armorItems = armorMaterials.map { material ->
+            ItemStack(material).apply {
+                itemMeta = itemMeta?.apply {
+                    val container = persistentDataContainer
+                    container.set(shopItemKey, PersistentDataType.STRING, item.id)
+                    container.set(deathBehaviorKey, PersistentDataType.STRING, item.deathBehavior.name)
+                }
+            }
+        }
         
         // 現在の装備を保存
         val currentArmor = player.inventory.armorContents
@@ -288,14 +415,21 @@ class ShopManager(private val plugin: Main) {
         }
     }
     
-    private fun tagPurchasedItem(player: Player, item: ShopItem) {
-        // プレイヤーのメタデータに購入アイテム情報を保存
-        val purchasedItems = player.getMetadata("ctf_purchased_items")
-            .firstOrNull()?.value() as? MutableList<ShopItem> ?: mutableListOf()
-        
-        purchasedItems.add(item)
-        player.setMetadata("ctf_purchased_items", 
-            org.bukkit.metadata.FixedMetadataValue(plugin, purchasedItems))
+    fun getItemDeathBehavior(itemStack: ItemStack): DeathBehavior? {
+        val meta = itemStack.itemMeta ?: return null
+        val behaviorString = meta.persistentDataContainer.get(deathBehaviorKey, PersistentDataType.STRING)
+        return behaviorString?.let { 
+            try {
+                DeathBehavior.valueOf(it)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+    }
+    
+    fun isShopItem(itemStack: ItemStack): Boolean {
+        val meta = itemStack.itemMeta ?: return false
+        return meta.persistentDataContainer.has(shopItemKey, PersistentDataType.STRING)
     }
     
     fun getShopItem(displayName: String): ShopItem? {
@@ -313,5 +447,104 @@ class ShopManager(private val plugin: Main) {
                 ))
             }
         }
+    }
+    
+    fun getCurrentPage(player: Player): Int {
+        return playerPages[player] ?: 0
+    }
+    
+    fun openCategoryMenu(player: Player, game: Game, team: Team) {
+        val inventory = Bukkit.createInventory(null, 27, "§6§lショップ - カテゴリー選択")
+        
+        // 武器カテゴリー
+        val weapons = ItemStack(Material.DIAMOND_SWORD).apply {
+            itemMeta = itemMeta?.apply {
+                setDisplayName("§c§l武器")
+                setLore(listOf(
+                    "§7剣、斧、弓など",
+                    "§7",
+                    "§eクリックして開く"
+                ))
+            }
+        }
+        inventory.setItem(10, weapons)
+        
+        // 防具カテゴリー
+        val armor = ItemStack(Material.DIAMOND_CHESTPLATE).apply {
+            itemMeta = itemMeta?.apply {
+                setDisplayName("§b§l防具")
+                setLore(listOf(
+                    "§7鉄、ダイヤ、ネザライトの防具",
+                    "§7",
+                    "§eクリックして開く"
+                ))
+            }
+        }
+        inventory.setItem(12, armor)
+        
+        // 消耗品カテゴリー
+        val consumables = ItemStack(Material.GOLDEN_APPLE).apply {
+            itemMeta = itemMeta?.apply {
+                setDisplayName("§e§l消耗品")
+                setLore(listOf(
+                    "§7エンダーパール、金リンゴなど",
+                    "§7",
+                    "§eクリックして開く"
+                ))
+            }
+        }
+        inventory.setItem(14, consumables)
+        
+        // ブロックカテゴリー
+        val blocks = ItemStack(Material.STONE).apply {
+            itemMeta = itemMeta?.apply {
+                setDisplayName("§5§lブロック")
+                setLore(listOf(
+                    "§7建築用ブロック、TNTなど",
+                    "§7",
+                    "§eクリックして開く"
+                ))
+            }
+        }
+        inventory.setItem(16, blocks)
+        
+        player.openInventory(inventory)
+    }
+    
+    private fun checkPurchaseLimit(gameId: String, player: Player, team: Team, item: ShopItem): Boolean {
+        // プレイヤー制限チェック
+        if (item.maxPurchasePerPlayer > 0) {
+            val playerPurchases = getPurchaseCount(gameId, player.uniqueId.toString(), item.id)
+            if (playerPurchases >= item.maxPurchasePerPlayer) {
+                return false
+            }
+        }
+        
+        // チーム制限チェック
+        if (item.maxPurchasePerTeam > 0) {
+            val teamPurchases = getPurchaseCount(gameId, "team_$team", item.id)
+            if (teamPurchases >= item.maxPurchasePerTeam) {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
+    private fun getPurchaseCount(gameId: String, purchaserId: String, itemId: String): Int {
+        return purchaseTracker
+            .getOrPut(gameId) { mutableMapOf() }
+            .getOrPut(purchaserId) { mutableMapOf() }
+            .getOrDefault(itemId, 0)
+    }
+    
+    private fun recordPurchase(gameId: String, purchaserId: String, itemId: String) {
+        val gameTracker = purchaseTracker.getOrPut(gameId) { mutableMapOf() }
+        val purchaserTracker = gameTracker.getOrPut(purchaserId) { mutableMapOf() }
+        purchaserTracker[itemId] = purchaserTracker.getOrDefault(itemId, 0) + 1
+    }
+    
+    fun resetGamePurchases(gameId: String) {
+        purchaseTracker.remove(gameId)
     }
 }
