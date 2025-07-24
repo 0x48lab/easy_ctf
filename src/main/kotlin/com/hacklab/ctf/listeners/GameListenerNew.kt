@@ -447,19 +447,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         return
                     }
                     
-                    // スポーン地点からの距離チェック
-                    val spawnLocation = when (team) {
-                        Team.RED -> game.getRedSpawnLocation() ?: game.getRedFlagLocation()
-                        Team.BLUE -> game.getBlueSpawnLocation() ?: game.getBlueFlagLocation()
-                    } ?: return
-                    
-                    val useRange = plugin.config.getDouble("shop.use-range", 15.0)
-                    if (player.location.distance(spawnLocation) > useRange) {
-                        player.sendMessage(Component.text("ショップは自陣スポーン地点から${useRange}ブロック以内でのみ使用可能です", NamedTextColor.RED))
-                        return
-                    }
-                    
-                    // カテゴリーメニューを開く
+                    // 距離制限を削除し、直接カテゴリーメニューを開く
                     shopManager.openCategoryMenu(player, game, team)
                 }
             }

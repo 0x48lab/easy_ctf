@@ -296,7 +296,12 @@ class ShopManager(private val plugin: Main) {
     }
     
     fun handlePurchase(player: Player, itemName: String, game: Game, team: Team): Boolean {
-        val item = shopItems.find { it.displayName == itemName } ?: return false
+        // プレーンテキストに変換して比較
+        val plainItemName = itemName.replace("§[0-9a-fklmnor]".toRegex(), "")
+        val item = shopItems.find { 
+            val plainDisplayName = it.displayName.replace("§[0-9a-fklmnor]".toRegex(), "")
+            plainDisplayName == plainItemName
+        } ?: return false
         
         // フェーズチェック
         if (!item.availablePhases.contains(game.phase)) {
@@ -433,7 +438,12 @@ class ShopManager(private val plugin: Main) {
     }
     
     fun getShopItem(displayName: String): ShopItem? {
-        return shopItems.find { it.displayName == displayName }
+        // プレーンテキストに変換して比較
+        val plainDisplayName = displayName.replace("§[0-9a-fklmnor]".toRegex(), "")
+        return shopItems.find {
+            val plainItemName = it.displayName.replace("§[0-9a-fklmnor]".toRegex(), "")
+            plainItemName == plainDisplayName
+        }
     }
     
     fun createShopItem(): ItemStack {
@@ -441,9 +451,7 @@ class ShopManager(private val plugin: Main) {
             itemMeta = itemMeta?.apply {
                 setDisplayName("§a§lショップ")
                 setLore(listOf(
-                    "§7右クリックでショップを開く",
-                    "§7",
-                    "§e自陣スポーン地点の近くで使用可能"
+                    "§7右クリックでショップを開く"
                 ))
             }
         }

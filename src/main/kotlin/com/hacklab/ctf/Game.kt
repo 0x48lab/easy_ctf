@@ -223,7 +223,10 @@ class Game(
         // 現在のフェーズに応じた装備を配布
         when (phase) {
             GamePhase.BUILD -> giveBuildPhaseItems(player, team)
-            GamePhase.COMBAT -> giveCombatPhaseItems(player, team)
+            GamePhase.COMBAT -> {
+                // 戦闘フェーズ中の途中参加の場合は初期装備を配布
+                giveCombatPhaseItems(player, team)
+            }
             GamePhase.RESULT -> {}
         }
         
@@ -394,6 +397,11 @@ class Game(
                 
                 // ドロップした旗のチェック
                 checkDroppedFlags()
+                
+                // ドロップした旗への接触チェック（戦闘フェーズのみ）
+                if (phase == GamePhase.COMBAT) {
+                    checkDroppedFlagTouch()
+                }
                 
                 // フェーズ遷移チェック
                 if (currentPhaseTime <= 0) {
@@ -604,67 +612,81 @@ class Game(
     private fun giveBuildPhaseItems(player: Player, team: Team) {
         val inv = player.inventory
         
-        // config.ymlから初期装備を取得
-        val initialEquipment = plugin.config.getConfigurationSection("initial-equipment") ?: run {
+        // 革の防具（チームカラー）
+        giveColoredLeatherArmor(player, team)
+        
+        // config.ymlから建築フェーズ装備を取得
+        val buildEquipment = plugin.config.getConfigurationSection("initial-equipment.build-phase")
+        if (buildEquipment != null) {
+            // ツール
+            buildEquipment.getStringList("tools").forEach { toolStr ->
+                val parts = toolStr.split(":")
+                val material = Material.getMaterial(parts[0]) ?: return@forEach
+                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                inv.addItem(ItemStack(material, amount))
+            }
+            
+            // ブロック
+            buildEquipment.getStringList("blocks").forEach { blockStr ->
+                val parts = blockStr.split(":")
+                val material = Material.getMaterial(parts[0]) ?: return@forEach
+                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                inv.addItem(ItemStack(material, amount))
+            }
+            
+            // 食料
+            buildEquipment.getStringList("food").forEach { foodStr ->
+                val parts = foodStr.split(":")
+                val material = Material.getMaterial(parts[0]) ?: return@forEach
+                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                inv.addItem(ItemStack(material, amount))
+            }
+        } else {
             // デフォルト装備
-            giveDefaultBuildItems(player, team)
-            return
-        }
-        
-        // 武器
-        initialEquipment.getStringList("weapons").forEach { weaponStr ->
-            val parts = weaponStr.split(":")
-            val material = Material.getMaterial(parts[0]) ?: return@forEach
-            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-            inv.addItem(ItemStack(material, amount))
-        }
-        
-        // 食料
-        initialEquipment.getStringList("food").forEach { foodStr ->
-            val parts = foodStr.split(":")
-            val material = Material.getMaterial(parts[0]) ?: return@forEach
-            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-            inv.addItem(ItemStack(material, amount))
+            inv.addItem(ItemStack(Material.IRON_PICKAXE))
+            inv.addItem(ItemStack(Material.IRON_AXE))
+            inv.addItem(ItemStack(Material.IRON_SHOVEL))
+            inv.addItem(ItemStack(Material.OAK_PLANKS, 64))
+            inv.addItem(ItemStack(Material.COBBLESTONE, 64))
+            inv.addItem(ItemStack(Material.DIRT, 32))
+            inv.addItem(ItemStack(Material.BREAD, 16))
         }
         
         // ショップアイテムをホットバー9番目に配置
-        val shopManager = plugin.shopManager
-        val shopItem = shopManager.createShopItem()
+        val shopItem = plugin.shopManager.createShopItem()
         player.inventory.setItem(8, shopItem)
     }
     
-    private fun giveDefaultBuildItems(player: Player, team: Team) {
-        val inv = player.inventory
-        // デフォルト装備
-        inv.addItem(ItemStack(Material.STONE_SWORD))
-        inv.addItem(ItemStack(Material.STONE_AXE))
-        inv.addItem(ItemStack(Material.BREAD, 8))
-    }
     
     private fun giveCombatPhaseItems(player: Player, team: Team) {
         val inv = player.inventory
         
-        // config.ymlから初期装備を取得
-        val initialEquipment = plugin.config.getConfigurationSection("initial-equipment") ?: run {
+        // 革の防具（チームカラー）を再装備（防具をリセットして確実に着用）
+        giveColoredLeatherArmor(player, team)
+        
+        // config.ymlから戦闘フェーズ装備を取得
+        val combatEquipment = plugin.config.getConfigurationSection("initial-equipment.combat-phase")
+        if (combatEquipment != null) {
+            // 武器
+            combatEquipment.getStringList("weapons").forEach { weaponStr ->
+                val parts = weaponStr.split(":")
+                val material = Material.getMaterial(parts[0]) ?: return@forEach
+                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                inv.addItem(ItemStack(material, amount))
+            }
+            
+            // 食料
+            combatEquipment.getStringList("food").forEach { foodStr ->
+                val parts = foodStr.split(":")
+                val material = Material.getMaterial(parts[0]) ?: return@forEach
+                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                inv.addItem(ItemStack(material, amount))
+            }
+        } else {
             // デフォルト装備
-            giveDefaultCombatItems(player, team)
-            return
-        }
-        
-        // 武器
-        initialEquipment.getStringList("weapons").forEach { weaponStr ->
-            val parts = weaponStr.split(":")
-            val material = Material.getMaterial(parts[0]) ?: return@forEach
-            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-            inv.addItem(ItemStack(material, amount))
-        }
-        
-        // 食料
-        initialEquipment.getStringList("food").forEach { foodStr ->
-            val parts = foodStr.split(":")
-            val material = Material.getMaterial(parts[0]) ?: return@forEach
-            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-            inv.addItem(ItemStack(material, amount))
+            inv.addItem(ItemStack(Material.STONE_SWORD))
+            inv.addItem(ItemStack(Material.STONE_AXE))
+            inv.addItem(ItemStack(Material.BREAD, 8))
         }
         
         // チーム識別用にプレイヤー名を色付け
@@ -672,8 +694,7 @@ class Game(
         player.setPlayerListName("${team.getChatColor()}${player.name}")
         
         // ショップアイテムをホットバー9番目に配置
-        val shopManager = plugin.shopManager
-        val shopItem = shopManager.createShopItem()
+        val shopItem = plugin.shopManager.createShopItem()
         player.inventory.setItem(8, shopItem)
     }
     
@@ -683,6 +704,47 @@ class Game(
         inv.addItem(ItemStack(Material.STONE_SWORD))
         inv.addItem(ItemStack(Material.STONE_AXE))
         inv.addItem(ItemStack(Material.BREAD, 8))
+    }
+    
+    private fun giveColoredLeatherArmor(player: Player, team: Team) {
+        val color = when (team) {
+            Team.RED -> org.bukkit.Color.RED
+            Team.BLUE -> org.bukkit.Color.BLUE
+        }
+        
+        // 革のヘルメット
+        val helmet = ItemStack(Material.LEATHER_HELMET)
+        val helmetMeta = helmet.itemMeta as? org.bukkit.inventory.meta.LeatherArmorMeta
+        helmetMeta?.setColor(color)
+        helmetMeta?.isUnbreakable = true
+        helmet.itemMeta = helmetMeta
+        
+        // 革のチェストプレート
+        val chestplate = ItemStack(Material.LEATHER_CHESTPLATE)
+        val chestMeta = chestplate.itemMeta as? org.bukkit.inventory.meta.LeatherArmorMeta
+        chestMeta?.setColor(color)
+        chestMeta?.isUnbreakable = true
+        chestplate.itemMeta = chestMeta
+        
+        // 革のレギンス
+        val leggings = ItemStack(Material.LEATHER_LEGGINGS)
+        val legMeta = leggings.itemMeta as? org.bukkit.inventory.meta.LeatherArmorMeta
+        legMeta?.setColor(color)
+        legMeta?.isUnbreakable = true
+        leggings.itemMeta = legMeta
+        
+        // 革のブーツ
+        val boots = ItemStack(Material.LEATHER_BOOTS)
+        val bootMeta = boots.itemMeta as? org.bukkit.inventory.meta.LeatherArmorMeta
+        bootMeta?.setColor(color)
+        bootMeta?.isUnbreakable = true
+        boots.itemMeta = bootMeta
+        
+        // 装備
+        player.inventory.helmet = helmet
+        player.inventory.chestplate = chestplate
+        player.inventory.leggings = leggings
+        player.inventory.boots = boots
     }
     
     private fun setupFlags() {
@@ -1098,6 +1160,81 @@ class Game(
         return true
     }
     
+    private fun checkDroppedFlagTouch() {
+        // ドロップされている旗の位置を確認
+        val world = redFlagLocation?.world ?: return
+        
+        // 全プレイヤーをチェック
+        getAllPlayers().forEach { player ->
+            val team = getPlayerTeam(player.uniqueId) ?: return@forEach
+            
+            // 既に旗を持っているプレイヤーはスキップ
+            if (player.uniqueId == redFlagCarrier || player.uniqueId == blueFlagCarrier) {
+                return@forEach
+            }
+            
+            // ドロップされた旗の近くにいるかチェック
+            world.entities.filterIsInstance<org.bukkit.entity.Item>().forEach { item ->
+                if (item.itemStack.type == Material.BEACON && player.location.distance(item.location) < 1.5) {
+                    // どちらのチームの旗かを判定
+                    val flagTeam = when {
+                        item.customName()?.contains(Component.text("赤")) == true -> Team.RED
+                        item.customName()?.contains(Component.text("青")) == true -> Team.BLUE
+                        else -> return@forEach
+                    }
+                    
+                    // 自分のチームの旗に触れた場合
+                    if (team == flagTeam) {
+                        // ドロップフラグから削除
+                        droppedFlags.entries.removeIf { (location, data) ->
+                            data.first == flagTeam && location.distance(item.location) < 2.0
+                        }
+                        
+                        // アイテムを削除
+                        item.remove()
+                        
+                        // 旗を元の位置に戻す
+                        val flagLocation = when (flagTeam) {
+                            Team.RED -> redFlagLocation
+                            Team.BLUE -> blueFlagLocation
+                        } ?: return@forEach
+                        
+                        setupFlagBeacon(flagLocation, flagTeam)
+                        
+                        // メッセージ
+                        getAllPlayers().forEach { p ->
+                            p.sendMessage(Component.text("${player.name}が${flagTeam.displayName}の旗を回収しました！", team.color))
+                        }
+                    }
+                    // 敵の旗に触れた場合
+                    else if (team != flagTeam) {
+                        // 旗を拾う
+                        when (flagTeam) {
+                            Team.RED -> redFlagCarrier = player.uniqueId
+                            Team.BLUE -> blueFlagCarrier = player.uniqueId
+                        }
+                        
+                        // ドロップフラグから削除
+                        droppedFlags.entries.removeIf { (location, data) ->
+                            data.first == flagTeam && location.distance(item.location) < 2.0
+                        }
+                        
+                        // アイテムを削除
+                        item.remove()
+                        
+                        // プレイヤーに発光効果
+                        player.isGlowing = true
+                        
+                        // メッセージ
+                        getAllPlayers().forEach { p ->
+                            p.sendMessage(Component.text("${player.name}が${flagTeam.displayName}の旗を取得しました！", NamedTextColor.YELLOW))
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     fun captureFlag(player: Player): Boolean {
         val team = getPlayerTeam(player.uniqueId) ?: return false
         
@@ -1209,10 +1346,26 @@ class Game(
         // スポーン地点に転送
         teleportToSpawn(player, team)
         
-        // 現在のフェーズに応じた装備を再配布
+        // 戦闘フェーズではリスポーン時に装備を再配布しない
+        // 建築フェーズでは、リスポーン時にツールを復元する
         when (phase) {
-            GamePhase.BUILD -> giveBuildPhaseItems(player, team)
-            GamePhase.COMBAT -> giveCombatPhaseItems(player, team)
+            GamePhase.BUILD -> {
+                // 建築ツールのみ再配布（防具とショップアイテムは既に持っているはず）
+                val buildEquipment = plugin.config.getConfigurationSection("initial-equipment.build-phase")
+                if (buildEquipment != null) {
+                    buildEquipment.getStringList("tools").forEach { toolStr ->
+                        val parts = toolStr.split(":")
+                        val material = Material.getMaterial(parts[0]) ?: return@forEach
+                        if (!player.inventory.contains(material)) {
+                            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                            player.inventory.addItem(ItemStack(material, amount))
+                        }
+                    }
+                }
+            }
+            GamePhase.COMBAT -> {
+                // 戦闘フェーズではリスポーン時に装備を再配布しない
+            }
             GamePhase.RESULT -> {}
         }
         

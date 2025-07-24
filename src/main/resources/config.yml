@@ -218,8 +218,8 @@ shop:
   # Enable shop system
   enabled: true
   
-  # Shop usage range from spawn point (blocks)
-  use-range: 15
+  # Shop usage range from spawn point (blocks) - Currently disabled (no range limit)
+  # use-range: 15
   
   # Death item behavior
   death-item-behavior:
@@ -236,11 +236,25 @@ shop:
 
 # Initial Equipment Settings
 initial-equipment:
-  # Weapons given at start
-  weapons:
-    - "STONE_SWORD"
-    - "STONE_AXE"
+  # Build phase equipment
+  build-phase:
+    tools:
+      - "IRON_PICKAXE"
+      - "IRON_AXE"
+      - "IRON_SHOVEL"
+    blocks:
+      - "OAK_PLANKS:64"
+      - "COBBLESTONE:64"
+      - "DIRT:32"
+    food:
+      - "BREAD:16"
   
-  # Food given at start
-  food:
-    - "BREAD:8"
+  # Combat phase equipment (given once at the start of combat phase)
+  combat-phase:
+    weapons:
+      - "STONE_SWORD"
+      - "STONE_AXE"
+    armor:
+      # Team colored leather armor will be added automatically
+    food:
+      - "BREAD:8"
