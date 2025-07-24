@@ -3,6 +3,7 @@ package com.hacklab.ctf.commands
 import com.hacklab.ctf.Main
 import com.hacklab.ctf.managers.GameManagerNew
 import com.hacklab.ctf.utils.GameState
+import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -170,28 +171,78 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         if (args.size < 2) {
-            sender.sendMessage(Component.text("使用方法: /ctf start <ゲーム名>", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("使用方法: /ctf start <ゲーム名> [モード] [目標値]", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("モード: first_to_x (先取) | fixed_rounds (固定ラウンド)", NamedTextColor.GRAY))
             return true
         }
         
         val gameName = args[1]
         val game = gameManager.getGame(gameName)
-        val match = gameManager.getMatch(gameName)
         
         if (game == null) {
             sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
             return true
         }
         
-        if (match != null) {
-            // マッチシステムを使用
-            match.startMatch(game)
+        // マッチパラメータの解析
+        var matchMode: MatchMode? = null
+        var matchTarget: Int? = null
+        
+        if (args.size >= 3) {
+            // モード指定あり
+            matchMode = when (args[2].lowercase()) {
+                "first_to_x", "first-to-x", "firsttox" -> MatchMode.FIRST_TO_X
+                "fixed_rounds", "fixed-rounds", "fixedrounds" -> MatchMode.FIXED_ROUNDS
+                else -> {
+                    sender.sendMessage(Component.text("無効なモード: ${args[2]}", NamedTextColor.RED))
+                    sender.sendMessage(Component.text("使用可能: first_to_x, fixed_rounds", NamedTextColor.YELLOW))
+                    return true
+                }
+            }
+            
+            if (args.size >= 4) {
+                // 目標値指定あり
+                matchTarget = args[3].toIntOrNull()
+                if (matchTarget == null || matchTarget < 1) {
+                    sender.sendMessage(Component.text("目標値は1以上の数値で指定してください", NamedTextColor.RED))
+                    return true
+                }
+            }
+        }
+        
+        // マッチシステムの使用判定
+        if (matchMode != null || matchTarget != null) {
+            // マッチパラメータが指定されている場合は必ずマッチシステムを使用
+            val existingMatch = gameManager.getMatch(gameName)
+            
+            if (existingMatch != null && existingMatch.isActive) {
+                sender.sendMessage(Component.text("既にマッチが実行中です", NamedTextColor.RED))
+                return true
+            }
+            
+            // 新しいマッチを作成または既存のマッチを更新
+            val finalMode = matchMode ?: existingMatch?.mode ?: MatchMode.valueOf(plugin.config.getString("match.default-mode", "FIRST_TO_X")!!.uppercase())
+            val finalTarget = matchTarget ?: existingMatch?.target ?: plugin.config.getInt("match.default-target", 3)
+            
+            // 新しいマッチを作成して開始
+            gameManager.startMatchWithParams(gameName, finalMode, finalTarget)
+            
             sender.sendMessage(Component.text("マッチ '$gameName' を開始しました！", NamedTextColor.GREEN))
-            sender.sendMessage(Component.text("モード: ${match.mode.displayName} (${match.target})", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("モード: ${finalMode.displayName} (${finalTarget})", NamedTextColor.YELLOW))
         } else {
-            // 従来の単一ゲーム
-            if (game.start()) {
-                sender.sendMessage(Component.text("ゲーム '$gameName' を開始しました！", NamedTextColor.GREEN))
+            // パラメータ指定なしの場合
+            val existingMatch = gameManager.getMatch(gameName)
+            
+            if (existingMatch != null) {
+                // 既存のマッチがある場合はそれを使用
+                existingMatch.startMatch(game)
+                sender.sendMessage(Component.text("マッチ '$gameName' を開始しました！", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text("モード: ${existingMatch.mode.displayName} (${existingMatch.target})", NamedTextColor.YELLOW))
+            } else {
+                // 従来の単一ゲーム
+                if (game.start()) {
+                    sender.sendMessage(Component.text("ゲーム '$gameName' を開始しました！", NamedTextColor.GREEN))
+                }
             }
         }
         
@@ -595,6 +646,19 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                 when (args[0].lowercase()) {
                     "setflag", "setspawn" -> {
                         completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
+                    }
+                    "start" -> {
+                        completions.addAll(listOf("first_to_x", "fixed_rounds").filter { it.startsWith(args[2].lowercase()) })
+                    }
+                }
+            }
+            4 -> {
+                when (args[0].lowercase()) {
+                    "start" -> {
+                        // 目標値の提案
+                        if (args[2].lowercase() in listOf("first_to_x", "fixed_rounds")) {
+                            completions.addAll(listOf("1", "3", "5", "7", "10").filter { it.startsWith(args[3]) })
+                        }
                     }
                 }
             }

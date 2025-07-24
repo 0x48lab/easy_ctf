@@ -888,4 +888,40 @@ class GameManagerNew(private val plugin: Main) {
     fun isInUpdateSession(player: Player): Boolean {
         return updateSessions.containsKey(player.uniqueId)
     }
+    
+    fun startMatchWithParams(gameName: String, mode: MatchMode, target: Int): Boolean {
+        val game = games[gameName.lowercase()]
+        if (game == null) {
+            plugin.logger.warning("Game $gameName not found for match creation")
+            return false
+        }
+        
+        // 既存のマッチを削除
+        matches.remove(gameName.lowercase())
+        
+        // 新しいマッチを作成
+        val match = Match(
+            name = gameName,
+            plugin = plugin,
+            mode = mode,
+            target = target,
+            intervalDuration = plugin.config.getInt("match.interval-duration", 30)
+        )
+        
+        // ゲームの設定をマッチに反映
+        match.buildDuration = game.buildDuration
+        match.combatDuration = game.combatDuration
+        match.buildPhaseGameMode = game.buildPhaseGameMode
+        
+        matches[gameName.lowercase()] = match
+        game.setMatchContext(match)
+        
+        // マッチを開始
+        match.startMatch(game)
+        
+        // 設定を保存
+        saveGame(gameName)
+        
+        return true
+    }
 }
