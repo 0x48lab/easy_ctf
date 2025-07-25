@@ -1,7 +1,7 @@
 package com.hacklab.ctf.listeners
 
 import com.hacklab.ctf.Main
-import com.hacklab.ctf.managers.GameManagerNew
+import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.shop.ShopManager
 import com.hacklab.ctf.shop.ShopItem
 import com.hacklab.ctf.shop.DeathBehavior
@@ -26,10 +26,12 @@ import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.player.*
 import org.bukkit.event.block.Action
 import org.bukkit.inventory.ItemStack
+import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.Bukkit
 
 class GameListenerNew(private val plugin: Main) : Listener {
     
-    private val gameManager = plugin.gameManager as GameManagerNew
+    private val gameManager = plugin.gameManager as GameManager
     private val shopManager = plugin.shopManager
 
     @EventHandler
@@ -48,10 +50,19 @@ class GameListenerNew(private val plugin: Main) : Listener {
     @EventHandler
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val player = event.player
+        
+        val item = event.itemDrop.itemStack
+        
+        // ショップアイテムのドロップを防止（ゲーム参加有無に関わらず）
+        if (shopManager.isShopItem(item)) {
+            event.isCancelled = true
+            player.sendMessage(Component.text("ショップアイテムは捨てることができません！", NamedTextColor.RED))
+            return
+        }
+        
         val game = gameManager.getPlayerGame(player) ?: return
         
         if (game.state == GameState.RUNNING && game.phase == GamePhase.COMBAT) {
-            val item = event.itemDrop.itemStack
             if (isArmor(item.type)) {
                 event.isCancelled = true
                 player.sendMessage(Component.text("戦闘中は防具を捨てられません！", NamedTextColor.RED))
@@ -99,6 +110,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     // プレイヤーに発光効果
                     player.isGlowing = true
+                    
+                    // キャプチャーアシストリストに追加（旗を取った人をリストに追加）
+                    game.captureAssists.getOrPut(playerTeam) { mutableSetOf() }.add(player.uniqueId)
+                    
+                    // 旗取得統計を記録
+                    game.playerFlagPickups[player.uniqueId] = (game.playerFlagPickups[player.uniqueId] ?: 0) + 1
                     
                     // メッセージ
                     game.getAllPlayers().forEach {
@@ -150,7 +167,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         if (game.state != GameState.RUNNING || game.phase != GamePhase.COMBAT) return
         
-        game.pickupFlag(player, event.item)
+        // 旗の拾得を試みる
+        if (game.pickupFlag(player, event.item)) {
+            // 旗の拾得に成功した場合、イベントをキャンセル（通常のアイテム取得を防ぐ）
+            event.isCancelled = true
+        }
     }
 
     @EventHandler
@@ -162,73 +183,109 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val team = game.getPlayerTeam(player.uniqueId) ?: return
             val match = gameManager.getMatch(game.name)
             
+            // 死亡回数を増やす
+            val deaths = (game.playerDeaths[player.uniqueId] ?: 0) + 1
+            game.playerDeaths[player.uniqueId] = deaths
+            
+            // キルストリークをリセット
+            game.killStreaks[player.uniqueId] = 0
+            
             // キラーの取得
             val killer = player.killer
             if (killer != null) {
                 val killerTeam = game.getPlayerTeam(killer.uniqueId)
                 if (killerTeam != null && killerTeam != team) {
-                    // キル報酬
+                    // キル数を増やす
+                    val kills = (game.playerKills[killer.uniqueId] ?: 0) + 1
+                    game.playerKills[killer.uniqueId] = kills
+                    
+                    // キルストリークを増やす
+                    val streak = (game.killStreaks[killer.uniqueId] ?: 0) + 1
+                    game.killStreaks[killer.uniqueId] = streak
+                    
+                    // 基本キル報酬
                     val isCarrier = player.uniqueId == game.redFlagCarrier || player.uniqueId == game.blueFlagCarrier
-                    val killReward = if (isCarrier) {
+                    val baseReward = if (isCarrier) {
+                        // 旗キャリアキル（防衛）の統計を記録
+                        game.playerFlagDefends[killer.uniqueId] = (game.playerFlagDefends[killer.uniqueId] ?: 0) + 1
                         plugin.config.getInt("currency.carrier-kill-reward", 20)
                     } else {
                         plugin.config.getInt("currency.kill-reward", 10)
                     }
                     
+                    // キルストリークボーナス
+                    val streakBonus = when (streak) {
+                        2 -> plugin.config.getInt("currency.kill-streak-bonus.2-kills", 5)
+                        3 -> plugin.config.getInt("currency.kill-streak-bonus.3-kills", 10)
+                        4 -> plugin.config.getInt("currency.kill-streak-bonus.4-kills", 15)
+                        in 5..Int.MAX_VALUE -> plugin.config.getInt("currency.kill-streak-bonus.5-plus-kills", 20)
+                        else -> 0
+                    }
+                    
+                    val totalReward = baseReward + streakBonus
+                    
                     // マッチがある場合もない場合も通貨を追加
-                    game.addTeamCurrency(killerTeam, killReward, "${killer.name}が${player.name}をキル")
+                    val message = if (streakBonus > 0) {
+                        "${killer.name}が${player.name}をキル (${streak}連続キル!)"
+                    } else {
+                        "${killer.name}が${player.name}をキル"
+                    }
+                    game.addTeamCurrency(killerTeam, totalReward, message)
+                    
+                    // キルストリーク通知
+                    if (streak >= 2) {
+                        game.getAllPlayers().forEach { p ->
+                            p.sendMessage(Component.text("${killer.name} は ${streak} 連続キル中！", NamedTextColor.GOLD))
+                        }
+                    }
                 }
             }
             
-            // 購入アイテムの処理
-            val itemsToKeep = mutableListOf<ItemStack>()
-            val itemsToDrop = mutableListOf<ItemStack>()
+            // アシスト報酬の処理
+            val currentTime = System.currentTimeMillis()
+            val assistTimeWindow = 5000L // 5秒以内のダメージをアシストとして扱う
+            val damagers = game.damageTracking[player.uniqueId]
             
-            // インベントリ内のアイテムを分類
-            for (item in player.inventory.contents) {
-                if (item == null) continue
-                
-                if (shopManager.isShopItem(item)) {
-                    val deathBehavior = shopManager.getItemDeathBehavior(item)
-                    when (deathBehavior) {
-                        DeathBehavior.KEEP -> itemsToKeep.add(item)
-                        DeathBehavior.DROP -> itemsToDrop.add(item)
-                        DeathBehavior.DESTROY -> {} // 何もしない
-                        null -> itemsToKeep.add(item) // デフォルトは保持
+            if (damagers != null) {
+                damagers.forEach { (assisterId, damageTime) ->
+                    if (currentTime - damageTime <= assistTimeWindow && assisterId != killer?.uniqueId) {
+                        val assister = Bukkit.getPlayer(assisterId)
+                        if (assister != null) {
+                            val assisterTeam = game.getPlayerTeam(assisterId)
+                            if (assisterTeam != null && assisterTeam != team) {
+                                // アシスト報酬
+                                val isCarrierAssist = player.uniqueId == game.redFlagCarrier || player.uniqueId == game.blueFlagCarrier
+                                val assistReward = if (isCarrierAssist) {
+                                    plugin.config.getInt("currency.carrier-kill-assist-reward", 10)
+                                } else {
+                                    plugin.config.getInt("currency.kill-assist-reward", 5)
+                                }
+                                
+                                game.addTeamCurrency(assisterTeam, assistReward, "${assister.name}がキルアシスト")
+                                assister.sendMessage(Component.text("キルアシスト! +${assistReward}G", NamedTextColor.GREEN))
+                                
+                                // アシスト統計を記録
+                                game.playerAssists[assisterId] = (game.playerAssists[assisterId] ?: 0) + 1
+                            }
+                        }
                     }
-                } else {
-                    // デフォルトアイテムは保持
+                }
+                // ダメージ記録をクリア
+                game.damageTracking.remove(player.uniqueId)
+            }
+            
+            // 死亡時はすべてのアイテムを保持（旗以外ドロップしない）
+            val itemsToKeep = mutableListOf<ItemStack>()
+            
+            // インベントリ内のアイテムをすべて保持（革防具以外）
+            for (item in player.inventory.contents) {
+                if (item != null && !isLeatherArmor(item.type)) {
                     itemsToKeep.add(item)
                 }
             }
             
-            // 防具の処理
-            val armorContents = player.inventory.armorContents
-            for (armor in armorContents) {
-                if (armor == null) continue
-                
-                // 革の防具（チーム色）は常に保持
-                if (armor.type.name.startsWith("LEATHER_")) {
-                    itemsToKeep.add(armor)
-                    continue
-                }
-                
-                if (shopManager.isShopItem(armor)) {
-                    val deathBehavior = shopManager.getItemDeathBehavior(armor)
-                    when (deathBehavior) {
-                        DeathBehavior.KEEP -> itemsToKeep.add(armor)
-                        DeathBehavior.DROP -> itemsToDrop.add(armor)
-                        DeathBehavior.DESTROY -> {} // 何もしない
-                        null -> itemsToKeep.add(armor) // デフォルトは保持
-                    }
-                }
-            }
-            
-            // アイテムをドロップ
+            // アイテムはドロップしない
             event.drops.clear()
-            for (item in itemsToDrop) {
-                player.world.dropItem(player.location, item)
-            }
             
             // 保持するアイテムを記録
             player.setMetadata("ctf_items_to_keep", 
@@ -243,7 +300,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 game.dropFlag(player, flagTeam)
             }
             
-            // リスポーン処理
+            // リスポーン処理（死亡回数に応じた遅延）
+            val baseDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
+            val deathPenalty = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
+            val maxDelay = plugin.config.getInt("default-game.respawn-delay-max", 20)
+            
+            val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
+            
+            // 死亡メッセージにリスポーン時間を表示
+            player.sendMessage(Component.text("リスポーンまで ${respawnDelay} 秒...", NamedTextColor.YELLOW))
+            
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 player.spigot().respawn()
                 game.handleRespawn(player)
@@ -257,7 +323,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
                 
                 player.removeMetadata("ctf_items_to_keep", plugin)
-            }, 1L)
+            }, respawnDelay * 20L) // 秒をticksに変換
         }
     }
 
@@ -307,6 +373,17 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 // PVPが無効でもダメージを通す
                 if (event.isCancelled) {
                     event.isCancelled = false
+                }
+                
+                // ダメージトラッキング（アシスト用）
+                if (victimTeam != null && attackerTeam != null && victimTeam != attackerTeam) {
+                    val attackerMap = game.damageTracking.getOrPut(victim.uniqueId) { mutableMapOf() }
+                    attackerMap[attacker.uniqueId] = System.currentTimeMillis()
+                    
+                    // 被害者が旗キャリアの場合、攻撃者をキャプチャーアシストリストに追加
+                    if (victim.uniqueId == game.redFlagCarrier || victim.uniqueId == game.blueFlagCarrier) {
+                        game.captureAssists.getOrPut(attackerTeam) { mutableSetOf() }.add(attacker.uniqueId)
+                    }
                 }
             }
         }
@@ -378,6 +455,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     }
                     GameMode.SURVIVAL, GameMode.CREATIVE -> {
                         // 設置は許可
+                        // ブロック設置統計を記録
+                        game.playerBlocksPlaced[player.uniqueId] = (game.playerBlocksPlaced[player.uniqueId] ?: 0) + 1
                     }
                     GameMode.SPECTATOR -> {
                         event.isCancelled = true
@@ -459,13 +538,40 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val player = event.whoClicked as? Player ?: return
         val game = gameManager.getPlayerGame(player) ?: return
         
-        // 防具の取り外し禁止
-        if (game.state == GameState.RUNNING && game.phase == GamePhase.COMBAT) {
-            val item = event.currentItem
-            if (item != null && isArmor(item.type)) {
+        // 防具の装備制限
+        if (game.state == GameState.RUNNING) {
+            val clickedItem = event.currentItem
+            val cursor = event.cursor
+            
+            // 防具スロットへの装備チェック
+            if (event.slot in 36..39) { // 防具スロット
+                if (clickedItem != null && isArmor(clickedItem.type) && !clickedItem.type.name.startsWith("LEATHER_")) {
+                    event.isCancelled = true
+                    player.sendMessage(Component.text("革の防具以外は装備できません！", NamedTextColor.RED))
+                    return
+                }
+                if (cursor != null && isArmor(cursor.type) && !cursor.type.name.startsWith("LEATHER_")) {
+                    event.isCancelled = true
+                    player.sendMessage(Component.text("革の防具以外は装備できません！", NamedTextColor.RED))
+                    return
+                }
+            }
+            
+            // Shift+クリックでの防具装備チェック
+            if (event.isShiftClick && clickedItem != null && isArmor(clickedItem.type) && !clickedItem.type.name.startsWith("LEATHER_")) {
                 event.isCancelled = true
-                player.sendMessage(Component.text("戦闘中は防具を外せません！", NamedTextColor.RED))
+                player.sendMessage(Component.text("革の防具以外は装備できません！", NamedTextColor.RED))
                 return
+            }
+            
+            // 防具の取り外し禁止（戦闘フェーズのみ）
+            if (game.phase == GamePhase.COMBAT) {
+                val item = event.currentItem
+                if (item != null && isArmor(item.type)) {
+                    event.isCancelled = true
+                    player.sendMessage(Component.text("戦闘中は防具を外せません！", NamedTextColor.RED))
+                    return
+                }
             }
         }
         
@@ -498,9 +604,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 
                 val page = when (displayName) {
                     "武器" -> 0
-                    "防具" -> 1
-                    "消耗品" -> 2
-                    "ブロック" -> 3
+                    "消耗品" -> 1
+                    "ブロック" -> 2
                     else -> return
                 }
                 
@@ -511,25 +616,29 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // アイテム名から購入処理
             val meta = clickedItem.itemMeta ?: return
             val displayNameComponent = meta.displayName()
-            if (displayNameComponent == null) return
-            // PlainTextComponentSerializerを使って純粋なテキストを取得
-            val displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayNameComponent)
+            if (displayNameComponent == null) {
+                player.sendMessage(Component.text("アイテム名を取得できませんでした", NamedTextColor.RED))
+                return
+            }
+            // レガシーフォーマットを含むテキストを取得
+            val displayName = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayNameComponent)
+            plugin.logger.info("Clicked item displayName: '$displayName'")
             
-            // ナビゲーションボタンのチェック
+            // ナビゲーションボタンのチェック（レガシーフォーマットを含む）
             when (displayName) {
-                "← 前のページ" -> {
+                "§a§l← 前のページ" -> {
                     val currentPage = shopManager.getCurrentPage(player)
                     if (currentPage > 0) {
                         shopManager.openShop(player, game, team, currentPage - 1)
                     }
                     return
                 }
-                "次のページ →" -> {
+                "§a§l次のページ →" -> {
                     val currentPage = shopManager.getCurrentPage(player)
                     shopManager.openShop(player, game, team, currentPage + 1)
                     return
                 }
-                "メインメニュー" -> {
+                "§6§lメインメニュー" -> {
                     // カテゴリー選択画面を開く
                     shopManager.openCategoryMenu(player, game, team)
                     return
@@ -567,7 +676,46 @@ class GameListenerNew(private val plugin: Main) : Listener {
                name.endsWith("_LEGGINGS") || 
                name.endsWith("_BOOTS")
     }
+    
+    private fun isLeatherArmor(material: Material): Boolean {
+        return material == Material.LEATHER_HELMET ||
+               material == Material.LEATHER_CHESTPLATE ||
+               material == Material.LEATHER_LEGGINGS ||
+               material == Material.LEATHER_BOOTS
+    }
 
+    @EventHandler
+    fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
+        val player = event.player
+        val command = event.message.toLowerCase()
+        
+        // /clearコマンドを検出
+        if (command.startsWith("/clear") || command.startsWith("/minecraft:clear")) {
+            val game = gameManager.getPlayerGame(player)
+            if (game != null && game.state == GameState.RUNNING) {
+                // ゲーム中は/clearコマンドを無効化
+                event.isCancelled = true
+                player.sendMessage(Component.text("ゲーム中は/clearコマンドは使用できません！", NamedTextColor.RED))
+                return
+            }
+            
+            // ゲーム外でも、ショップアイテムを持っている場合は警告
+            val hasShopItem = player.inventory.contents.any { item ->
+                item != null && shopManager.isShopItem(item)
+            }
+            
+            if (hasShopItem) {
+                // 一旦clearを実行させて、その後ショップアイテムを再配布
+                plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                    if (!player.inventory.contains(Material.EMERALD)) {
+                        player.inventory.addItem(shopManager.createShopItem())
+                        player.sendMessage(Component.text("ショップアイテムは削除できません。再配布されました。", NamedTextColor.YELLOW))
+                    }
+                }, 1L)
+            }
+        }
+    }
+    
     private fun isProtectedBlock(game: com.hacklab.ctf.Game, location: org.bukkit.Location): Boolean {
         // 旗の位置チェック
         val flagLocations = listOf(game.getRedFlagLocation(), game.getBlueFlagLocation()).filterNotNull()

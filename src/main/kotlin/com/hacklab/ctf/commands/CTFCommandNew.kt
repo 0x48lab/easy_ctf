@@ -1,7 +1,7 @@
 package com.hacklab.ctf.commands
 
 import com.hacklab.ctf.Main
-import com.hacklab.ctf.managers.GameManagerNew
+import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
@@ -16,7 +16,7 @@ import org.bukkit.scheduler.BukkitRunnable
 
 class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
-    private val gameManager = plugin.gameManager as GameManagerNew
+    private val gameManager = plugin.gameManager as GameManager
     private val confirmations = mutableMapOf<Player, ConfirmationData>()
     
     data class ConfirmationData(
@@ -43,6 +43,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "setflag" -> return handleSetFlagCommand(sender, args)
             "setspawn" -> return handleSetSpawnCommand(sender, args)
             "status" -> return handleStatusCommand(sender, args)
+            "info" -> return handleInfoCommand(sender, args)
             else -> {
                 sendHelpMessage(sender)
                 return true
@@ -67,9 +68,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         val gameName = args[1]
-        if (gameManager.startGameCreation(sender, gameName)) {
-            // 成功時のメッセージは GameManager 側で表示
-        }
+        gameManager.startCreateGame(sender, gameName)
         
         return true
     }
@@ -91,9 +90,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         val gameName = args[1]
-        if (!gameManager.startGameUpdate(sender, gameName)) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
-        }
+        gameManager.startUpdateGame(sender, gameName)
         
         return true
     }
@@ -221,11 +218,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
             
             // 新しいマッチを作成または既存のマッチを更新
-            val finalMode = matchMode ?: existingMatch?.mode ?: MatchMode.valueOf(plugin.config.getString("match.default-mode", "FIRST_TO_X")!!.uppercase())
-            val finalTarget = matchTarget ?: existingMatch?.target ?: plugin.config.getInt("match.default-target", 3)
+            val finalMode = matchMode ?: existingMatch?.config?.matchMode ?: MatchMode.valueOf(plugin.config.getString("match.default-mode", "FIRST_TO_X")!!.uppercase())
+            val finalTarget = matchTarget ?: existingMatch?.config?.matchTarget ?: plugin.config.getInt("match.default-target", 3)
             
             // 新しいマッチを作成して開始
-            gameManager.startMatchWithParams(gameName, finalMode, finalTarget)
+            gameManager.startGame(gameName, finalMode, finalTarget)
             
             sender.sendMessage(Component.text("マッチ '$gameName' を開始しました！", NamedTextColor.GREEN))
             sender.sendMessage(Component.text("モード: ${finalMode.displayName} (${finalTarget})", NamedTextColor.YELLOW))
@@ -235,9 +232,10 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             
             if (existingMatch != null) {
                 // 既存のマッチがある場合はそれを使用
-                existingMatch.startMatch(game)
-                sender.sendMessage(Component.text("マッチ '$gameName' を開始しました！", NamedTextColor.GREEN))
-                sender.sendMessage(Component.text("モード: ${existingMatch.mode.displayName} (${existingMatch.target})", NamedTextColor.YELLOW))
+                if (gameManager.startGame(gameName, existingMatch.config.matchMode, existingMatch.config.matchTarget)) {
+                    sender.sendMessage(Component.text("マッチ '$gameName' を開始しました！", NamedTextColor.GREEN))
+                    sender.sendMessage(Component.text("モード: ${existingMatch.config.matchMode.displayName} (${existingMatch.config.matchTarget})", NamedTextColor.YELLOW))
+                }
             } else {
                 // 従来の単一ゲーム
                 if (game.start()) {
@@ -262,16 +260,17 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val gameName = args[1]
         val game = gameManager.getGame(gameName)
-        val match = gameManager.getMatch(gameName)
+        val matchWrapper = gameManager.getMatch(gameName)
         
         if (game == null) {
             sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
             return true
         }
         
-        if (match != null && match.isActive) {
+        if (matchWrapper != null && matchWrapper.isActive) {
             // マッチを停止
-            match.stopMatch()
+            game.stop()
+            matchWrapper.isActive = false
             sender.sendMessage(Component.text("マッチ '$gameName' を停止しました", NamedTextColor.GREEN))
         } else if (game.state != GameState.WAITING) {
             // 単一ゲームを停止
@@ -496,8 +495,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
         }
         
-        // 設定を保存
-        gameManager.saveGame(gameName)
+        // 設定は新しいGameManagerでは自動保存される
         
         return true
     }
@@ -551,8 +549,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
         }
         
-        // 設定を保存
-        gameManager.saveGame(gameName)
+        // 設定は新しいGameManagerでは自動保存される
         
         return true
     }
@@ -588,15 +585,100 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         // マッチ情報（ある場合）
-        val match = gameManager.getMatch(gameName)
-        if (match != null && match.isActive) {
+        val matchWrapper = gameManager.getMatch(gameName)
+        if (matchWrapper != null && matchWrapper.isActive) {
             sender.sendMessage(Component.text("", NamedTextColor.WHITE))
             sender.sendMessage(Component.text("=== マッチ情報 ===", NamedTextColor.GOLD))
-            sender.sendMessage(Component.text("モード: ${match.mode.displayName}", NamedTextColor.WHITE))
-            sender.sendMessage(Component.text("進行状況: ${match.getMatchStatus()}", NamedTextColor.YELLOW))
-            val wins = match.getMatchWins()
+            sender.sendMessage(Component.text("モード: ${matchWrapper.config.matchMode.displayName}", NamedTextColor.WHITE))
+            sender.sendMessage(Component.text("進行状況: ${matchWrapper.getMatchStatus()}", NamedTextColor.YELLOW))
+            val wins = matchWrapper.matchWins
             sender.sendMessage(Component.text("マッチスコア - 赤: ${wins[com.hacklab.ctf.utils.Team.RED]} 青: ${wins[com.hacklab.ctf.utils.Team.BLUE]}", NamedTextColor.WHITE))
         }
+        
+        return true
+    }
+    
+    private fun handleInfoCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (args.size < 2) {
+            sender.sendMessage(Component.text("使用方法: /ctf info <ゲーム名>", NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val gameName = args[1]
+        val game = gameManager.getGame(gameName)
+        
+        if (game == null) {
+            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            return true
+        }
+        
+        // ゲーム設定情報を表示
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("===== ゲーム設定: $gameName =====").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+        
+        // 基本設定
+        sender.sendMessage(Component.text("【基本設定】").color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text("最小プレイヤー数: ${game.minPlayers}人", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("チーム最大人数: ${game.maxPlayersPerTeam}人", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("ワールド: ${game.world.name}", NamedTextColor.WHITE))
+        
+        // フェーズ設定
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("【フェーズ設定】").color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text("建築フェーズ: ${game.buildDuration}秒 (${game.buildDuration / 60}分)", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("建築時ゲームモード: ${game.buildPhaseGameMode}", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("戦闘フェーズ: ${game.combatDuration}秒 (${game.combatDuration / 60}分)", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("リザルトフェーズ: ${game.resultDuration}秒", NamedTextColor.WHITE))
+        
+        // 位置設定
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("【位置設定】").color(NamedTextColor.YELLOW))
+        
+        val redFlag = game.getRedFlagLocation()
+        if (redFlag != null) {
+            sender.sendMessage(Component.text("赤旗: X:${redFlag.blockX} Y:${redFlag.blockY} Z:${redFlag.blockZ}", NamedTextColor.RED))
+        } else {
+            sender.sendMessage(Component.text("赤旗: 未設定", NamedTextColor.RED))
+        }
+        
+        val redSpawn = game.getRedSpawnLocation()
+        if (redSpawn != null) {
+            sender.sendMessage(Component.text("赤スポーン: X:${redSpawn.blockX} Y:${redSpawn.blockY} Z:${redSpawn.blockZ}", NamedTextColor.RED))
+        } else {
+            sender.sendMessage(Component.text("赤スポーン: 旗位置と同じ", NamedTextColor.RED))
+        }
+        
+        val blueFlag = game.getBlueFlagLocation()
+        if (blueFlag != null) {
+            sender.sendMessage(Component.text("青旗: X:${blueFlag.blockX} Y:${blueFlag.blockY} Z:${blueFlag.blockZ}", NamedTextColor.BLUE))
+        } else {
+            sender.sendMessage(Component.text("青旗: 未設定", NamedTextColor.BLUE))
+        }
+        
+        val blueSpawn = game.getBlueSpawnLocation()
+        if (blueSpawn != null) {
+            sender.sendMessage(Component.text("青スポーン: X:${blueSpawn.blockX} Y:${blueSpawn.blockY} Z:${blueSpawn.blockZ}", NamedTextColor.BLUE))
+        } else {
+            sender.sendMessage(Component.text("青スポーン: 旗位置と同じ", NamedTextColor.BLUE))
+        }
+        
+        // 通貨設定
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("【通貨設定】").color(NamedTextColor.YELLOW))
+        val initialCurrency = plugin.config.getInt("currency.initial", 50)
+        sender.sendMessage(Component.text("初期資金: ${initialCurrency}G", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("キル報酬: 10G (旗キャリア: 20G)", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("キャプチャー報酬: 30G", NamedTextColor.WHITE))
+        
+        // その他
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("【その他】").color(NamedTextColor.YELLOW))
+        val respawnBase = plugin.config.getInt("default-game.respawn-delay-base", 10)
+        val respawnPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
+        val respawnMax = plugin.config.getInt("default-game.respawn-delay-max", 20)
+        sender.sendMessage(Component.text("リスポーン時間: ${respawnBase}秒 (+${respawnPerDeath}秒/死亡, 最大${respawnMax}秒)", NamedTextColor.WHITE))
+        
+        sender.sendMessage(Component.text("================================").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
         
         return true
     }
@@ -619,6 +701,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("/ctf leave - ゲーム退出", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf team [red|blue] - チーム確認・変更", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf status [ゲーム名] - ゲーム状態確認", NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text("/ctf info <ゲーム名> - ゲーム設定の詳細表示", NamedTextColor.YELLOW))
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<String>): List<String> {
@@ -626,7 +709,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args.size) {
             1 -> {
-                val subcommands = mutableListOf("list", "join", "leave", "team", "status")
+                val subcommands = mutableListOf("list", "join", "leave", "team", "status", "info")
                 if (sender.hasPermission("ctf.admin")) {
                     subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn"))
                 }
@@ -634,7 +717,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
             2 -> {
                 when (args[0].lowercase()) {
-                    "update", "delete", "start", "stop", "join", "status", "setflag", "setspawn" -> {
+                    "update", "delete", "start", "stop", "join", "status", "info", "setflag", "setspawn" -> {
                         completions.addAll(gameManager.getAllGames().keys.filter { it.startsWith(args[1].lowercase()) })
                     }
                     "team" -> {
@@ -668,9 +751,3 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     }
 }
 
-// GameManagerNew に saveGame メソッドを公開する拡張関数
-fun GameManagerNew.saveGame(name: String) {
-    val method = this::class.java.getDeclaredMethod("saveGame", String::class.java)
-    method.isAccessible = true
-    method.invoke(this, name)
-}

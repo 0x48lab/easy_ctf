@@ -11,8 +11,10 @@ default-game:
   # Maximum players per team
   max-players-per-team: 10
   
-  # Respawn delay in seconds
-  respawn-delay: 5
+  # Respawn delay in seconds (base + kill penalty)
+  respawn-delay-base: 10
+  respawn-delay-per-death: 2  # Additional seconds per death
+  respawn-delay-max: 20  # Maximum respawn delay
   
   # Force PVP during combat phase (ignore server pvp settings)
   force-pvp: true
@@ -208,6 +210,13 @@ currency:
   kill-assist-reward: 5
   carrier-kill-reward: 20
   carrier-kill-assist-reward: 10
+  
+  # Kill streak bonuses (additional currency per consecutive kill)
+  kill-streak-bonus:
+    2-kills: 5    # 2連続キルで+5G
+    3-kills: 10   # 3連続キルで+10G
+    4-kills: 15   # 4連続キルで+15G
+    5-plus-kills: 20  # 5連続キル以上で+20G
   
   # Capture rewards
   capture-reward: 30

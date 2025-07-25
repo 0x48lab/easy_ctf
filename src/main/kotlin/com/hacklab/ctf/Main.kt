@@ -3,7 +3,7 @@ package com.hacklab.ctf
 import com.hacklab.ctf.commands.CTFCommandNew
 import com.hacklab.ctf.listeners.GameListenerNew
 import com.hacklab.ctf.listeners.ChatListener
-import com.hacklab.ctf.managers.GameManagerNew
+import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.managers.LanguageManager
 import com.hacklab.ctf.managers.EquipmentManager
 import com.hacklab.ctf.shop.ShopManager
@@ -16,7 +16,7 @@ class Main : JavaPlugin() {
             private set
     }
     
-    lateinit var gameManager: GameManagerNew
+    lateinit var gameManager: GameManager
         private set
     lateinit var languageManager: LanguageManager
         private set
@@ -33,7 +33,7 @@ class Main : JavaPlugin() {
         languageManager = LanguageManager(this)
         equipmentManager = EquipmentManager(this)
         shopManager = ShopManager(this)
-        gameManager = GameManagerNew(this)
+        gameManager = GameManager(this)
         
         getCommand("ctf")?.setExecutor(CTFCommandNew(this))
         

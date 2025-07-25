@@ -4,6 +4,10 @@ import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import org.bukkit.enchantments.Enchantment
 import com.hacklab.ctf.utils.GamePhase
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 
 data class ShopItem(
     val id: String,
@@ -23,8 +27,9 @@ data class ShopItem(
     fun createItemStack(): ItemStack {
         return ItemStack(material, amount).apply {
             itemMeta = itemMeta?.apply {
-                displayName(net.kyori.adventure.text.Component.text(displayName))
-                lore(this@ShopItem.lore.map { net.kyori.adventure.text.Component.text(it) })
+                // レガシーフォーマットをAdventure APIに変換
+                displayName(LegacyComponentSerializer.legacySection().deserialize(displayName))
+                lore(this@ShopItem.lore.map { LegacyComponentSerializer.legacySection().deserialize(it) })
                 
                 // エンチャント追加
                 this@ShopItem.enchantments.forEach { (enchantment, level) ->

@@ -13,7 +13,10 @@
       "Bash(git push:*)",
       "Bash(ssh:*)",
       "Bash(awk:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(echo $JAVA_HOME)",
+      "Bash(java:*)"
     ],
     "deny": []
   }
