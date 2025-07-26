@@ -7,6 +7,8 @@
 
 Minecraft Paper サーバー向けの高機能な Capture The Flag プラグインです。複数のCTFゲームを同時に管理・実行でき、直感的なUIとガイドシステムにより、初心者から上級者まで楽しめる対戦体験を提供します。
 
+📚 **[ドキュメント](https://0x48lab.github.io/easy_ctf/)** - ゲームの遊び方や詳細な機能説明
+
 ## 主な機能
 
 - **🎮 複数ゲーム同時実行**: 1つのサーバーで複数のCTFゲームを並行管理
@@ -18,6 +20,8 @@ Minecraft Paper サーバー向けの高機能な Capture The Flag プラグイ�
 - **🛡️ スポーン保護**: 3秒間の無敵時間
 - **⚔️ PVP強制有効化**: サーバー設定に関わらず戦闘フェーズでPVP有効
 - **📊 永続化**: YAMLによるゲーム設定の自動保存・復元
+- **🛒 ショップシステム**: チーム共有通貨でアイテム購入、負けチームには割引
+- **🏆 マッチモード**: 複数ゲームを連続実施して総合勝者を決定
 
 ## インストール
 
@@ -187,7 +191,8 @@ default-phases:
 ## サポート
 
 - **問題報告**: [GitHub Issues](https://github.com/0x48lab/easy_ctf/issues)
-- **ドキュメント**: [CLAUDE.md](CLAUDE.md)
+- **ドキュメント**: [オンラインドキュメント](https://0x48lab.github.io/easy_ctf/)
+- **開発者向け**: [CLAUDE.md](CLAUDE.md)
 - **Wiki**: [GitHub Wiki](https://github.com/0x48lab/easy_ctf/wiki)
 
 ## リリース
