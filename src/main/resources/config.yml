@@ -37,8 +37,11 @@ default-phases:
   # Phase 2: Combat phase duration in seconds (default: 10 minutes)
   combat-duration: 600
   
-  # Phase 3: Result phase duration in seconds (default: 1 minute)
+  # Phase 3: Result phase duration in seconds (default: 1 minute for final, 15 seconds for intermediate)
   result-duration: 60
+  
+  # Intermediate result duration for matches (seconds)
+  intermediate-result-duration: 15
 
 # Game Mechanics
 mechanics:

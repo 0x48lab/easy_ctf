@@ -147,7 +147,7 @@
             
             <div class="command-item">
                 <div class="command-block">
-                    <code>/ctf start &lt;ゲーム名&gt; [モード] [目標値]</code>
+                    <code>/ctf start &lt;ゲーム名&gt; [match] [ゲーム数]</code>
                     <button class="copy-btn">コピー</button>
                 </div>
                 <p>ゲームまたはマッチを開始します。</p>
@@ -156,8 +156,9 @@
                 <pre><code>/ctf start arena1</code></pre>
                 
                 <h4>マッチモード開始:</h4>
-                <pre><code>/ctf start arena1 first_to_x 3     # 3勝先取
-/ctf start arena1 fixed_rounds 5   # 5ラウンド固定</code></pre>
+                <pre><code>/ctf start arena1 match 3          # 3ゲーム実施
+/ctf start arena1 match 5          # 5ゲーム実施
+/ctf start arena1 match            # デフォルト設定（3ゲーム）</code></pre>
                 
                 <table>
                     <thead>

@@ -362,7 +362,15 @@ class GameListenerNew(private val plugin: Main) : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
         val victim = event.entity as? Player ?: return
-        val attacker = event.damager as? Player ?: return
+        
+        // 攻撃者を取得（直接攻撃または発射物）
+        val attacker: Player? = when (val damager = event.damager) {
+            is Player -> damager
+            is org.bukkit.entity.Projectile -> damager.shooter as? Player
+            else -> null
+        }
+        
+        attacker ?: return
         
         val victimGame = gameManager.getPlayerGame(victim)
         val attackerGame = gameManager.getPlayerGame(attacker)

@@ -488,7 +488,13 @@ class Game(
     
     private fun transitionToResultPhase() {
         phase = GamePhase.RESULT
-        currentPhaseTime = resultDuration
+        
+        // マッチモードで、かつ最終ゲームでない場合は短縮
+        currentPhaseTime = if (matchWrapper != null && !matchWrapper!!.isMatchComplete()) {
+            plugin.config.getInt("default-phases.intermediate-result-duration", 15)  // 中間結果
+        } else {
+            resultDuration  // 最終結果は通常の時間
+        }
         
         // 戦闘フェーズ終了ボーナス
         val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 50)

@@ -28,7 +28,11 @@
         </div>
     </nav>
 
-    <header class="hero">
+    <header class="hero hero-with-image">
+        <div class="hero-background">
+            <img src="images/hero.png" alt="EasyCTF Hero Image" class="hero-image">
+            <div class="hero-overlay"></div>
+        </div>
         <div class="hero-content">
             <h1 class="hero-title">EasyCTF</h1>
             <p class="hero-subtitle">Minecraft Capture The Flag Plugin</p>
@@ -38,6 +42,11 @@
                 <a href="https://github.com/yourusername/easy_ctf/releases" class="btn btn-secondary">
                     <i class="fab fa-github"></i> ダウンロード
                 </a>
+            </div>
+            <div class="hero-features">
+                <span class="hero-feature"><i class="fas fa-check"></i> Paper 1.21.5対応</span>
+                <span class="hero-feature"><i class="fas fa-check"></i> 複数ゲーム同時実行</span>
+                <span class="hero-feature"><i class="fas fa-check"></i> 日本語/英語対応</span>
             </div>
         </div>
     </header>
@@ -65,14 +74,28 @@
                         <i class="fas fa-trophy"></i>
                     </div>
                     <h3>マッチモード</h3>
-                    <p>複数ゲームを連続プレイして総合優勝を決定。逆転のチャンスも！</p>
+                    <p>固定ラウンド方式で複数ゲームを連続プレイ。最多勝利チームが優勝！</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <h3>ショップシステム</h3>
-                    <p>チーム共有通貨でアイテムを購入。負けているチームには割引も。</p>
+                    <p>チーム共有通貨でアイテムを購入。負けているチームには自動割引も。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-ghost"></i>
+                    </div>
+                    <h3>スペクテーターモード</h3>
+                    <p>戦闘中の死亡時は観戦モードに。戦況を把握して次の作戦を立てよう。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3>柔軟な設定</h3>
+                    <p>自動開始、フェーズ時間、ゲームモードなど、細かくカスタマイズ可能。</p>
                 </div>
             </div>
         </section>
@@ -95,6 +118,7 @@
                     <div class="step-content">
                         <h3>建築フェーズで準備</h3>
                         <p>5分間で防御設備を建築。エメラルドを右クリックしてショップでブロックを購入。</p>
+                        <p class="step-note">建築中に死亡しても即復活！アイテムも失いません。</p>
                     </div>
                 </div>
                 
@@ -103,6 +127,7 @@
                     <div class="step-content">
                         <h3>戦闘フェーズで戦う</h3>
                         <p>敵の旗（ビーコン）を奪って自陣に持ち帰ろう！キルで通貨を稼いで装備を強化。</p>
+                        <p class="step-note">死亡時はスペクテーターで観戦後、自動復活します。</p>
                     </div>
                 </div>
                 
@@ -125,11 +150,13 @@
                         <i class="fas fa-hammer"></i>
                     </div>
                     <h3>建築フェーズ</h3>
-                    <p class="phase-time">5分間</p>
+                    <p class="phase-time">5分間（設定可能）</p>
                     <ul>
                         <li>防御設備の建築</li>
                         <li>PvP無効で安全</li>
                         <li>ショップで資材購入</li>
+                        <li>死亡時は即復活</li>
+                        <li>ADVENTURE/SURVIVAL/CREATIVE選択可</li>
                     </ul>
                 </div>
                 
@@ -142,11 +169,13 @@
                         <i class="fas fa-sword"></i>
                     </div>
                     <h3>戦闘フェーズ</h3>
-                    <p class="phase-time">10分間</p>
+                    <p class="phase-time">10分間（設定可能）</p>
                     <ul>
                         <li>旗の奪い合い</li>
                         <li>PvP有効</li>
                         <li>キル報酬で装備強化</li>
+                        <li>死亡時はスペクテーター</li>
+                        <li>10〜20秒で自動復活</li>
                     </ul>
                 </div>
                 
@@ -163,8 +192,39 @@
                     <ul>
                         <li>勝敗結果発表</li>
                         <li>統計情報表示</li>
+                        <li>MVP発表</li>
                         <li>次ゲーム準備</li>
                     </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="whats-new">
+            <h2 class="section-title">🆕 最新機能</h2>
+            
+            <div class="update-cards">
+                <div class="update-card">
+                    <span class="update-badge">NEW</span>
+                    <h3>固定ラウンドマッチ</h3>
+                    <p>マッチシステムが固定ラウンド方式に統一され、よりシンプルに。</p>
+                </div>
+                
+                <div class="update-card">
+                    <span class="update-badge">NEW</span>
+                    <h3>自動開始設定</h3>
+                    <p>自動ゲーム開始はデフォルトOFF。config.ymlで有効化可能に。</p>
+                </div>
+                
+                <div class="update-card">
+                    <span class="update-badge">IMPROVED</span>
+                    <h3>リスポーンシステム</h3>
+                    <p>建築中は即復活、戦闘中はスペクテーターモードで観戦可能に。</p>
+                </div>
+                
+                <div class="update-card">
+                    <span class="update-badge">IMPROVED</span>
+                    <h3>ショップ割引</h3>
+                    <p>スコア差に応じて負けているチームに最大40%の自動割引。</p>
                 </div>
             </div>
         </section>
@@ -211,6 +271,7 @@
                 <div class="footer-section">
                     <h4>EasyCTF</h4>
                     <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+                    <p class="footer-version">Version 1.0 | Paper 1.21.5対応</p>
                 </div>
                 <div class="footer-section">
                     <h4>リンク</h4>

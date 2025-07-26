@@ -95,6 +95,42 @@ body {
     margin-top: 60px;
 }
 
+.hero-with-image {
+    position: relative;
+    overflow: hidden;
+    padding: 200px 0 120px;
+}
+
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.3;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.8), rgba(52, 152, 219, 0.8));
+}
+
+.hero-with-image .hero-content {
+    position: relative;
+    z-index: 2;
+}
+
 .hero-title {
     font-size: 3.5rem;
     margin-bottom: 1rem;
@@ -117,6 +153,26 @@ body {
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.hero-features {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.hero-feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hero-feature i {
+    color: #90ee90;
 }
 
 /* ボタン */
@@ -428,6 +484,57 @@ tr:hover {
     background-color: #f8d7da;
     color: #721c24;
     border-left: 4px solid #dc3545;
+}
+
+/* 最新情報セクション */
+.whats-new {
+    margin: 4rem 0;
+}
+
+.update-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.update-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.update-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.update-card h3 {
+    margin-bottom: 0.5rem;
+    color: var(--dark-color);
+}
+
+.step-note {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.footer-version {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
 }
 
 /* フッター */

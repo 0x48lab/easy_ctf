@@ -38,40 +38,25 @@
     <main class="container">
         <section class="content-section">
             <h2>概要</h2>
-            <p>マッチモードでは、複数のゲームを連続して実施し、総合的な勝者を決定します。単発のゲームよりも戦略性が高く、逆転のチャンスもある白熱した戦いが楽しめます。</p>
+            <p>マッチモードでは、複数のゲームを連続して実施し、総合的な勝者を決定します。固定ラウンド方式で公平性を保ちながら、戦略性の高い戦いが楽しめます。</p>
         </section>
 
         <section class="content-section">
-            <h2><i class="fas fa-trophy"></i> マッチの種類</h2>
+            <h2><i class="fas fa-trophy"></i> マッチシステム</h2>
             
             <div class="match-types">
-                <div class="match-type">
-                    <div class="match-icon">
-                        <i class="fas fa-flag-checkered"></i>
-                    </div>
-                    <h3>先取モード（first_to_x）</h3>
-                    <p>指定した勝利数に最初に到達したチームが優勝します。</p>
-                    <div class="match-example">
-                        <h4>例: 3勝先取の場合</h4>
-                        <ul>
-                            <li>先に3勝したチームがマッチ優勝</li>
-                            <li>最短3ゲーム、最長5ゲームで決着</li>
-                            <li>緊張感のある展開</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="match-type">
+                <div class="match-type full-width">
                     <div class="match-icon">
                         <i class="fas fa-list-ol"></i>
                     </div>
-                    <h3>固定ラウンドモード（fixed_rounds）</h3>
-                    <p>指定した回数のゲームを行い、最多勝利チームが優勝します。</p>
+                    <h3>固定ラウンドモード</h3>
+                    <p>指定した回数のゲームを実施し、最多勝利チームが優勝する公平なシステムです。</p>
                     <div class="match-example">
-                        <h4>例: 5ラウンド固定の場合</h4>
+                        <h4>特徴</h4>
                         <ul>
-                            <li>必ず5ゲーム実施</li>
-                            <li>最終的に勝利数が多いチームが優勝</li>
+                            <li>すべてのゲームを最後まで実施</li>
+                            <li>最終的な勝利数で優勝を決定</li>
+                            <li>途中で負けていても逆転のチャンス</li>
                             <li>同数の場合は引き分け</li>
                         </ul>
                     </div>
@@ -85,7 +70,7 @@
             <div class="command-format">
                 <h3>コマンド形式</h3>
                 <div class="command-block">
-                    <code>/ctf start &lt;ゲーム名&gt; &lt;モード&gt; &lt;目標値&gt;</code>
+                    <code>/ctf start &lt;ゲーム名&gt; match &lt;ゲーム数&gt;</code>
                     <button class="copy-btn">コピー</button>
                 </div>
             </div>
@@ -94,165 +79,186 @@
                 <h3>使用例</h3>
                 <div class="example-grid">
                     <div class="example-card">
-                        <h4>3勝先取マッチ</h4>
-                        <pre><code>/ctf start arena1 first_to_x 3</code></pre>
-                        <p>最初に3勝したチームが優勝</p>
+                        <h4>3ゲームマッチ</h4>
+                        <pre><code>/ctf start arena1 match 3</code></pre>
+                        <p>3ゲーム実施して最多勝利チームが優勝</p>
                     </div>
+                    
                     <div class="example-card">
-                        <h4>5ラウンド固定マッチ</h4>
-                        <pre><code>/ctf start arena1 fixed_rounds 5</code></pre>
-                        <p>5ゲーム実施して勝利数で決定</p>
+                        <h4>5ゲームマッチ</h4>
+                        <pre><code>/ctf start arena1 match 5</code></pre>
+                        <p>5ゲーム実施して最多勝利チームが優勝</p>
+                    </div>
+                    
+                    <div class="example-card">
+                        <h4>デフォルト設定</h4>
+                        <pre><code>/ctf start arena1 match</code></pre>
+                        <p>config.ymlの設定値（デフォルト3）を使用</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <section class="content-section">
-            <h2><i class="fas fa-cogs"></i> マッチ中の仕様</h2>
+            <h2><i class="fas fa-cogs"></i> マッチの仕組み</h2>
             
-            <div class="match-features">
-                <div class="match-feature">
-                    <i class="fas fa-clock"></i>
-                    <h3>ゲーム間のインターバル</h3>
-                    <ul>
-                        <li>各ゲーム終了後、<strong>5秒間</strong>のインターバル</li>
-                        <li>勝敗結果と現在のスコアを表示</li>
-                        <li>BossBarでカウントダウン表示</li>
-                        <li>インターバル中はプレイヤーの移動や操作が可能</li>
-                    </ul>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>1. マッチ開始</h3>
+                    <p>参加プレイヤーは自動的に次のゲームに引き継がれます。途中参加・離脱も可能。</p>
                 </div>
                 
-                <div class="match-feature">
-                    <i class="fas fa-coins"></i>
+                <div class="process-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3>2. ゲーム実施</h3>
+                    <p>通常のCTFゲームを実施。各ゲームの勝敗をカウント。</p>
+                </div>
+                
+                <div class="process-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>3. インターバル</h3>
+                    <p>5秒間の休憩。次ゲームの準備時間。</p>
+                </div>
+                
+                <div class="process-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>4. 最終結果</h3>
+                    <p>全ゲーム終了後、最多勝利チームがマッチ優勝！</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-chart-line"></i> スコア表示</h2>
+            
+            <div class="info-card">
+                <h3>BossBarでの表示</h3>
+                <p>マッチ中は画面上部のBossBarで進行状況を確認できます。</p>
+                <ul>
+                    <li><strong>ゲーム番号</strong>: 現在のゲーム / 総ゲーム数</li>
+                    <li><strong>現在のスコア</strong>: 赤X勝 青Y勝</li>
+                    <li><strong>進行状況</strong>: プログレスバーで視覚的に表示</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h3>チャット通知</h3>
+                <p>各ゲーム終了時に以下の情報が表示されます：</p>
+                <ul>
+                    <li>ゲームの勝敗結果</li>
+                    <li>現在のマッチスコア</li>
+                    <li>次ゲーム開始までのカウントダウン</li>
+                    <li>マッチ終了時は総合結果</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-coins"></i> マッチ中の通貨システム</h2>
+            
+            <div class="currency-info">
+                <div class="currency-card">
                     <h3>通貨の引き継ぎ</h3>
+                    <p>マッチ中はチーム通貨が次のゲームに引き継がれます。</p>
                     <ul>
-                        <li>チーム通貨はマッチ全体で共有</li>
-                        <li>ゲーム間で通貨が引き継がれる</li>
-                        <li>各ゲーム終了時に50Gのボーナス</li>
-                        <li>戦略的な通貨管理が重要</li>
+                        <li>ゲーム間で通貨はリセットされません</li>
+                        <li>フェーズ終了ボーナス（50G）は各ゲームで獲得</li>
+                        <li>長期戦略で通貨を管理しよう</li>
                     </ul>
                 </div>
                 
-                <div class="match-feature">
-                    <i class="fas fa-users"></i>
-                    <h3>プレイヤーの扱い</h3>
+                <div class="currency-card">
+                    <h3>逆転のチャンス</h3>
+                    <p>スコア差による割引システムで負けているチームも逆転可能！</p>
                     <ul>
-                        <li>マッチ開始時の参加者で固定</li>
-                        <li>途中参加・離脱は不可</li>
-                        <li>切断しても次のゲームで自動復帰</li>
-                        <li>チーム構成は維持される</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-chart-bar"></i> マッチ進行状況の表示</h2>
-            
-            <div class="progress-display">
-                <h3>BossBar表示</h3>
-                <div class="bossbar-examples">
-                    <div class="bossbar-example">
-                        <h4>先取モード</h4>
-                        <div class="bossbar">
-                            <div class="bossbar-text">[先取3] 第2ゲーム | 赤1勝 青0勝 | 戦闘フェーズ - 8:45</div>
-                        </div>
-                    </div>
-                    <div class="bossbar-example">
-                        <h4>固定ラウンドモード</h4>
-                        <div class="bossbar">
-                            <div class="bossbar-text">[3/5] | 赤2勝 青1勝 | 建築フェーズ - 4:20</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <h3>スコアボード表示</h3>
-                <p>マッチ情報がスコアボードに追加表示されます：</p>
-                <ul>
-                    <li>現在のゲーム数</li>
-                    <li>各チームの勝利数</li>
-                    <li>マッチモード情報</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-chess"></i> 戦略ガイド</h2>
-            
-            <div class="strategy-cards">
-                <div class="strategy-card">
-                    <h3><i class="fas fa-piggy-bank"></i> 通貨管理</h3>
-                    <ul>
-                        <li><strong>序盤温存:</strong> 最初のゲームで通貨を貯める</li>
-                        <li><strong>中盤投資:</strong> 重要なゲームで大量購入</li>
-                        <li><strong>終盤決戦:</strong> 最終ゲームに全力投入</li>
-                    </ul>
-                </div>
-                
-                <div class="strategy-card">
-                    <h3><i class="fas fa-handshake"></i> チーム戦術</h3>
-                    <ul>
-                        <li><strong>役割固定:</strong> マッチ全体で同じ役割を継続</li>
-                        <li><strong>学習と適応:</strong> 相手の戦術を分析して対策</li>
-                        <li><strong>モメンタム:</strong> 連勝の勢いを活かす</li>
-                    </ul>
-                </div>
-                
-                <div class="strategy-card">
-                    <h3><i class="fas fa-brain"></i> 心理戦</h3>
-                    <ul>
-                        <li><strong>プレッシャー:</strong> リードされても諦めない</li>
-                        <li><strong>油断禁物:</strong> リードしていても気を抜かない</li>
-                        <li><strong>チーム士気:</strong> 声かけでモチベーション維持</li>
+                        <li>1点差: 10%割引</li>
+                        <li>2点差: 20%割引</li>
+                        <li>3点差: 30%割引</li>
+                        <li>4点差以上: 40%割引</li>
                     </ul>
                 </div>
             </div>
         </section>
 
         <section class="content-section">
-            <h2><i class="fas fa-flag-checkered"></i> マッチ終了</h2>
+            <h2><i class="fas fa-lightbulb"></i> マッチ戦略のヒント</h2>
             
-            <div class="match-end">
-                <h3>勝敗決定</h3>
-                <ul>
-                    <li><strong>先取モード:</strong> 目標勝利数到達で即終了</li>
-                    <li><strong>固定ラウンド:</strong> 全ゲーム終了後に判定</li>
-                </ul>
+            <div class="tip-cards">
+                <div class="tip-card">
+                    <h3>通貨管理</h3>
+                    <p>序盤は通貨を節約し、重要な局面で大きな投資をする戦略も有効。</p>
+                </div>
                 
-                <h3>結果表示</h3>
-                <div class="result-display">
-                    <pre><code>=== マッチ終了 ===
-赤チームがマッチに勝利！
-最終スコア: 赤3勝 - 青1勝</code></pre>
+                <div class="tip-card">
+                    <h3>メンバー固定</h3>
+                    <p>マッチ中はメンバーを固定して、チームワークを高めよう。</p>
+                </div>
+                
+                <div class="tip-card">
+                    <h3>戦術変更</h3>
+                    <p>相手の戦術を分析し、ゲームごとに対策を変える柔軟性が重要。</p>
+                </div>
+                
+                <div class="tip-card">
+                    <h3>割引活用</h3>
+                    <p>負けている時こそチャンス！割引を活用して装備を強化し逆転を狙おう。</p>
                 </div>
             </div>
         </section>
 
         <section class="content-section">
-            <h2><i class="fas fa-sliders-h"></i> 設定可能な項目</h2>
+            <h2><i class="fas fa-cog"></i> 設定項目</h2>
             
-            <h3>デフォルト設定（config.yml）</h3>
-            <pre><code>match:
-  default-mode: "first_to_x"
-  default-target: 3
-  interval-duration: 5</code></pre>
-            
-            <h3>カスタマイズ可能な要素</h3>
-            <ul>
-                <li>マッチモード（先取/固定）</li>
-                <li>目標値（勝利数/ラウンド数）</li>
-                <li>ゲーム間インターバル時間</li>
-            </ul>
+            <div class="config-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>設定項目</th>
+                            <th>説明</th>
+                            <th>デフォルト値</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>match.default-target</code></td>
+                            <td>デフォルトのゲーム数</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td><code>match.interval-duration</code></td>
+                            <td>ゲーム間のインターバル（秒）</td>
+                            <td>5</td>
+                        </tr>
+                        <tr>
+                            <td><code>currency.phase-end-bonus</code></td>
+                            <td>フェーズ終了ボーナス</td>
+                            <td>50G</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
-
-        <nav class="page-nav">
-            <a href="shop.html" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> ショップシステム
-            </a>
-            <a href="admin.html" class="btn btn-primary">
-                管理者ガイド <i class="fas fa-arrow-right"></i>
-            </a>
-        </nav>
     </main>
 
     <footer class="footer">
