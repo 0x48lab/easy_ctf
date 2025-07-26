@@ -54,6 +54,7 @@ class ConfigManager(private val plugin: Main) {
         }
         
         // ゲーム設定
+        yaml.set("settings.auto-start-enabled", config.autoStartEnabled)
         yaml.set("settings.min-players", config.minPlayers)
         yaml.set("settings.max-players-per-team", config.maxPlayersPerTeam)
         yaml.set("settings.respawn-delay", config.respawnDelay)
@@ -122,6 +123,7 @@ class ConfigManager(private val plugin: Main) {
         }
         
         // ゲーム設定の読み込み
+        config.autoStartEnabled = yaml.getBoolean("settings.auto-start-enabled", config.autoStartEnabled)
         config.minPlayers = yaml.getInt("settings.min-players", config.minPlayers)
         config.maxPlayersPerTeam = yaml.getInt("settings.max-players-per-team", config.maxPlayersPerTeam)
         config.respawnDelay = yaml.getInt("settings.respawn-delay", config.respawnDelay)
@@ -177,6 +179,7 @@ class ConfigManager(private val plugin: Main) {
         return GameConfig(
             name = name,
             world = world,
+            autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false),
             minPlayers = plugin.config.getInt("default-game.min-players", 2),
             maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10),
             respawnDelay = plugin.config.getInt("default-game.respawn-delay", 5),

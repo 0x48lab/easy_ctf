@@ -47,6 +47,7 @@ class Game(
     private var blueFlagLocation: Location? = null
     
     // 設定
+    var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
     var respawnDelay = plugin.config.getInt("default-game.respawn-delay", 5)
@@ -270,6 +271,9 @@ class Game(
     }
     
     private fun checkAutoStart() {
+        // 自動開始が無効な場合は何もしない
+        if (!autoStartEnabled) return
+        
         if (state != GameState.WAITING) return
         if (redTeam.size + blueTeam.size < minPlayers) {
             if (autoStartCountdown > 0) {

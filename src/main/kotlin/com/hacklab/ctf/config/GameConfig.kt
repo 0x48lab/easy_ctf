@@ -19,6 +19,7 @@ data class GameConfig(
     var blueSpawnLocation: Location? = null,
     
     // ゲーム設定
+    var autoStartEnabled: Boolean = false,
     var minPlayers: Int = 2,
     var maxPlayersPerTeam: Int = 10,
     var respawnDelay: Int = 5,
@@ -60,6 +61,7 @@ data class GameConfig(
         redSpawnLocation = redSpawnLocation?.clone(),
         blueFlagLocation = blueFlagLocation?.clone(),
         blueSpawnLocation = blueSpawnLocation?.clone(),
+        autoStartEnabled = autoStartEnabled,
         minPlayers = minPlayers,
         maxPlayersPerTeam = maxPlayersPerTeam,
         respawnDelay = respawnDelay,

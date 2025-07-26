@@ -5,7 +5,10 @@ language: "ja"  # Available: "en" (English), "ja" (Japanese)
 
 # Default Game Settings (used when creating new games)
 default-game:
-  # Minimum players required to auto-start a game
+  # Enable automatic game start when minimum players join
+  auto-start-enabled: false
+  
+  # Minimum players required to auto-start a game (if enabled)
   min-players: 2
   
   # Maximum players per team

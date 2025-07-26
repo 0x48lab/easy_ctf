@@ -226,6 +226,7 @@ class GameManager(private val plugin: Main) {
             config.blueSpawnLocation?.let { setBlueSpawnLocation(it) }
             
             // ゲーム設定
+            autoStartEnabled = config.autoStartEnabled
             minPlayers = config.minPlayers
             maxPlayersPerTeam = config.maxPlayersPerTeam
             respawnDelay = config.respawnDelay
