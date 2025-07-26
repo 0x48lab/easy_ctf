@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyCTF - Minecraft Capture The Flag Plugin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">ホーム</a></li>
+                <li><a href="gameplay.html">遊び方</a></li>
+                <li><a href="commands.html">コマンド</a></li>
+                <li><a href="shop.html">ショップ</a></li>
+                <li><a href="match.html">マッチ</a></li>
+                <li><a href="admin.html">管理者</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">EasyCTF</h1>
+            <p class="hero-subtitle">Minecraft Capture The Flag Plugin</p>
+            <p class="hero-description">Easy to play, Hard to master!</p>
+            <div class="hero-buttons">
+                <a href="#quick-start" class="btn btn-primary">始めよう</a>
+                <a href="https://github.com/yourusername/easy_ctf/releases" class="btn btn-secondary">
+                    <i class="fab fa-github"></i> ダウンロード
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="features">
+            <h2 class="section-title">🎮 ゲームの特徴</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>チーム戦</h3>
+                    <p>各チーム最大10人までの白熱したバトル。自動チームバランス機能付き。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>3フェーズシステム</h3>
+                    <p>建築→戦闘→結果の流れで、戦略的なゲームプレイを実現。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>マッチモード</h3>
+                    <p>複数ゲームを連続プレイして総合優勝を決定。逆転のチャンスも！</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>ショップシステム</h3>
+                    <p>チーム共有通貨でアイテムを購入。負けているチームには割引も。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="quick-start" class="quick-start">
+            <h2 class="section-title">🚀 クイックスタート</h2>
+            
+            <div class="step-list">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>ゲームに参加</h3>
+                        <pre><code>/ctf join &lt;ゲーム名&gt;</code></pre>
+                        <p>自動的に人数の少ないチームに配置されます。</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>建築フェーズで準備</h3>
+                        <p>5分間で防御設備を建築。エメラルドを右クリックしてショップでブロックを購入。</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>戦闘フェーズで戦う</h3>
+                        <p>敵の旗（ビーコン）を奪って自陣に持ち帰ろう！キルで通貨を稼いで装備を強化。</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>勝利を目指せ！</h3>
+                        <p>より多くの旗をキャプチャしたチームが勝利。マッチモードなら連戦で真の勝者を決めよう。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="game-flow">
+            <h2 class="section-title">📋 ゲームの流れ</h2>
+            
+            <div class="phase-timeline">
+                <div class="phase">
+                    <div class="phase-icon build">
+                        <i class="fas fa-hammer"></i>
+                    </div>
+                    <h3>建築フェーズ</h3>
+                    <p class="phase-time">5分間</p>
+                    <ul>
+                        <li>防御設備の建築</li>
+                        <li>PvP無効で安全</li>
+                        <li>ショップで資材購入</li>
+                    </ul>
+                </div>
+                
+                <div class="phase-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                
+                <div class="phase">
+                    <div class="phase-icon combat">
+                        <i class="fas fa-sword"></i>
+                    </div>
+                    <h3>戦闘フェーズ</h3>
+                    <p class="phase-time">10分間</p>
+                    <ul>
+                        <li>旗の奪い合い</li>
+                        <li>PvP有効</li>
+                        <li>キル報酬で装備強化</li>
+                    </ul>
+                </div>
+                
+                <div class="phase-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                
+                <div class="phase">
+                    <div class="phase-icon result">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>結果フェーズ</h3>
+                    <p class="phase-time">1分間</p>
+                    <ul>
+                        <li>勝敗結果発表</li>
+                        <li>統計情報表示</li>
+                        <li>次ゲーム準備</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="tips">
+            <h2 class="section-title">💡 基本的なヒント</h2>
+            
+            <div class="tip-cards">
+                <div class="tip-card">
+                    <h3><i class="fas fa-handshake"></i> チームワーク重視</h3>
+                    <p>攻撃と防御のバランスが重要。役割分担を明確にしよう。</p>
+                </div>
+                
+                <div class="tip-card">
+                    <h3><i class="fas fa-coins"></i> ショップ活用</h3>
+                    <p>キル報酬で装備をアップグレード。チーム通貨は共有なので相談して使おう。</p>
+                </div>
+                
+                <div class="tip-card">
+                    <h3><i class="fas fa-lightbulb"></i> 旗キャリア</h3>
+                    <p>旗を持つと発光して目立つ。エンダーパールも使えないので慎重に。</p>
+                </div>
+                
+                <div class="tip-card">
+                    <h3><i class="fas fa-shield-alt"></i> スポーン保護</h3>
+                    <p>リスポーン後3秒間は無敵。この時間を活用して態勢を立て直そう。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <h2>準備はできましたか？</h2>
+            <p>詳しい遊び方やコマンドは各ページをご覧ください。</p>
+            <div class="cta-buttons">
+                <a href="gameplay.html" class="btn btn-primary">詳しい遊び方を見る</a>
+                <a href="commands.html" class="btn btn-secondary">コマンド一覧</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EasyCTF</h4>
+                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+                </div>
+                <div class="footer-section">
+                    <h4>リンク</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>ドキュメント</h4>
+                    <ul>
+                        <li><a href="gameplay.html">遊び方</a></li>
+                        <li><a href="admin.html">管理者ガイド</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -192,7 +192,7 @@ match:
   default-target: 3
   
   # Interval between games in seconds
-  interval-duration: 30
+  interval-duration: 5
 
 # Currency Settings
 currency:

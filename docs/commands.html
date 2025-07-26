@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>コマンド一覧 - EasyCTF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">ホーム</a></li>
+                <li><a href="gameplay.html">遊び方</a></li>
+                <li><a href="commands.html" class="active">コマンド</a></li>
+                <li><a href="shop.html">ショップ</a></li>
+                <li><a href="match.html">マッチ</a></li>
+                <li><a href="admin.html">管理者</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>コマンド一覧</h1>
+            <p>EasyCTFで使用可能なすべてのコマンド</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2><i class="fas fa-user"></i> プレイヤーコマンド</h2>
+            
+            <h3>ゲーム参加・退出</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf join &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>指定したゲームに参加します。自動的に人数の少ないチームに配置されます。</p>
+                <p class="example">例: <code>/ctf join arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf leave</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>現在参加しているゲームから離脱します。ゲーム中でも離脱可能です。</p>
+            </div>
+            
+            <h3>チーム関連</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf team</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>現在所属しているチームを確認します。</p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf team &lt;red|blue&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>チームを変更します（ゲーム開始前のみ）。</p>
+                <p class="example">例: <code>/ctf team red</code></p>
+            </div>
+            
+            <h3>ゲーム情報</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf list</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>サーバー上の全ゲーム一覧を表示します。</p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf status [ゲーム名]</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>ゲームの詳細状態を確認します。ゲーム名を省略すると参加中のゲーム情報を表示します。</p>
+                <p class="example">例: <code>/ctf status arena1</code></p>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-crown"></i> 管理者コマンド</h2>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                これらのコマンドには <code>ctf.admin</code> 権限が必要です。
+            </div>
+            
+            <h3>ゲーム作成・管理</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf create &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>新しいゲームを作成します（対話形式）。</p>
+                <ol>
+                    <li>赤チーム旗位置の設定</li>
+                    <li>赤チームスポーン地点の設定</li>
+                    <li>青チーム旗位置の設定</li>
+                    <li>青チームスポーン地点の設定</li>
+                    <li>建築フェーズゲームモード選択</li>
+                    <li>各フェーズの時間設定</li>
+                </ol>
+                <p class="example">例: <code>/ctf create arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf update &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>既存ゲームの設定を更新します（対話形式）。個別の設定項目を選択して更新可能です。</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    ゲーム実行中は更新できません。
+                </div>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf delete &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>ゲームを削除します。確認プロンプトが表示されます。</p>
+            </div>
+            
+            <h3>ゲーム開始・停止</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf start &lt;ゲーム名&gt; [モード] [目標値]</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>ゲームまたはマッチを開始します。</p>
+                
+                <h4>単体ゲーム開始:</h4>
+                <pre><code>/ctf start arena1</code></pre>
+                
+                <h4>マッチモード開始:</h4>
+                <pre><code>/ctf start arena1 first_to_x 3     # 3勝先取
+/ctf start arena1 fixed_rounds 5   # 5ラウンド固定</code></pre>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>モード</th>
+                            <th>説明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>first_to_x</code></td>
+                            <td>指定勝利数に最初に到達したチームが優勝</td>
+                        </tr>
+                        <tr>
+                            <td><code>fixed_rounds</code></td>
+                            <td>指定回数のゲームを実施</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf stop &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>実行中のゲームまたはマッチを強制停止します。</p>
+            </div>
+            
+            <h3>位置設定</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setflag &lt;ゲーム名&gt; &lt;red|blue&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>旗の位置を現在地に設定します。視線の先のブロックに設定することも可能です。</p>
+                <p class="example">例: <code>/ctf setflag arena1 red</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setspawn &lt;ゲーム名&gt; &lt;red|blue&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>スポーン地点を現在地に設定します。</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    旗から15ブロック以上離れている必要があります。
+                </div>
+                <p class="example">例: <code>/ctf setspawn arena1 blue</code></p>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-key"></i> 権限システム</h2>
+            
+            <table class="sortable">
+                <thead>
+                    <tr>
+                        <th>権限</th>
+                        <th>説明</th>
+                        <th>デフォルト</th>
+                        <th>含まれるコマンド</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>ctf.use</code></td>
+                        <td>基本的なプレイヤーコマンドの使用</td>
+                        <td>全員</td>
+                        <td>join, leave, team, list, status</td>
+                    </tr>
+                    <tr>
+                        <td><code>ctf.admin</code></td>
+                        <td>管理者コマンドの使用</td>
+                        <td>OP</td>
+                        <td>create, update, delete, start, stop, setflag, setspawn</td>
+                    </tr>
+                    <tr>
+                        <td><code>ctf.*</code></td>
+                        <td>すべてのコマンドの使用</td>
+                        <td>OP</td>
+                        <td>全コマンド</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-lightbulb"></i> コマンド使用例</h2>
+            
+            <div class="example-grid">
+                <div class="example-card">
+                    <h3>新しいアリーナを作成して開始</h3>
+                    <pre><code>/ctf create arena1
+# 対話形式で設定を完了
+/ctf start arena1</code></pre>
+                </div>
+                
+                <div class="example-card">
+                    <h3>5勝先取マッチを開催</h3>
+                    <pre><code>/ctf start arena1 first_to_x 5</code></pre>
+                </div>
+                
+                <div class="example-card">
+                    <h3>ゲーム情報を確認</h3>
+                    <pre><code>/ctf list               # 全ゲーム一覧
+/ctf status             # 参加中のゲーム
+/ctf status arena1      # 特定のゲーム</code></pre>
+                </div>
+                
+                <div class="example-card">
+                    <h3>チームを変更してゲーム参加</h3>
+                    <pre><code>/ctf join arena1
+/ctf team blue
+# ゲーム開始を待つ</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <nav class="page-nav">
+            <a href="gameplay.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 遊び方
+            </a>
+            <a href="shop.html" class="btn btn-primary">
+                ショップシステム <i class="fas fa-arrow-right"></i>
+            </a>
+        </nav>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EasyCTF</h4>
+                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+                </div>
+                <div class="footer-section">
+                    <h4>リンク</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>ドキュメント</h4>
+                    <ul>
+                        <li><a href="gameplay.html">遊び方</a></li>
+                        <li><a href="admin.html">管理者ガイド</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

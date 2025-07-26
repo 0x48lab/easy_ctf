@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>よくある質問 - EasyCTF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">ホーム</a></li>
+                <li><a href="gameplay.html">遊び方</a></li>
+                <li><a href="commands.html">コマンド</a></li>
+                <li><a href="shop.html">ショップ</a></li>
+                <li><a href="match.html">マッチ</a></li>
+                <li><a href="admin.html">管理者</a></li>
+                <li><a href="faq.html" class="active">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>よくある質問（FAQ）</h1>
+            <p>EasyCTFに関するよくある質問と回答</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2><i class="fas fa-gamepad"></i> ゲームプレイ関連</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>旗を取ったのに得点できません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>自陣の旗が敵に奪われている場合、得点できません。まず自陣の旗を取り戻してから、敵の旗を持ち帰る必要があります。</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-lightbulb"></i>
+                            スコアボードで自陣の旗の状態を確認しましょう。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>ショップが開けません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>以下を確認してください：</p>
+                        <ul>
+                            <li>エメラルドを右クリックしていますか？</li>
+                            <li>スポーン地点から15ブロック以内にいますか？</li>
+                            <li>ゲームが実行中（建築/戦闘フェーズ）ですか？</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>チームを変更できません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>チーム変更はゲーム開始前（WAITINGフェーズ）のみ可能です。ゲームが始まってしまうと変更できません。</p>
+                        <p>コマンド: <code>/ctf team red</code> または <code>/ctf team blue</code></p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>死んでもアイテムが消えません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>ショップで購入した装備品（武器・防具）は死亡時も保持されます。消耗品（食料・エンダーパール等）はドロップします。</p>
+                        <table>
+                            <tr>
+                                <td><span class="badge badge-success">保持</span></td>
+                                <td>武器、防具、ツール</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">ドロップ</span></td>
+                                <td>消耗品、食料</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>エンダーパールが使えません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>旗を持っている間はエンダーパールを使用できません。これは旗キャリアの移動を制限するための仕様です。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-wrench"></i> 技術的な問題</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>ゲームに参加できません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>以下を確認してください：</p>
+                        <ul>
+                            <li>既に別のゲームに参加していませんか？（<code>/ctf leave</code>で離脱）</li>
+                            <li>ゲームが満員ではありませんか？（各チーム最大10人）</li>
+                            <li>ゲーム名を正しく入力していますか？</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>ラグがひどいです</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>管理者に以下の対処を依頼してください：</p>
+                        <ul>
+                            <li>同時実行ゲーム数を減らす</li>
+                            <li>サーバーのRAMを増やす</li>
+                            <li>不要なプラグインを無効化する</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>日本語が文字化けします</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>サーバーの文字コード設定を確認してください。lang_ja.ymlファイルはUTF-8で保存されている必要があります。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-user-shield"></i> 管理者向けFAQ</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>ゲームが自動的に開始しません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>最小プレイヤー数（デフォルト2人）を満たしているか確認してください。config.ymlで<code>min-players</code>を調整できます。</p>
+                        <pre><code>default-game:
+  min-players: 2</code></pre>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>旗が設置できません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>以下を確認してください：</p>
+                        <ul>
+                            <li>対象のブロックを見ていますか？（最大100ブロック先まで）</li>
+                            <li>ワールドの保護設定が影響していませんか？</li>
+                            <li>権限（ctf.admin）を持っていますか？</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>設定が反映されません</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>多くの設定はサーバー再起動が必要です。また、実行中のゲームには影響しません。</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>マッチが途中で止まりました</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p><code>/ctf stop &lt;ゲーム名&gt;</code>で強制終了し、再度開始してください。ログにエラーが出ている場合は、GitHubのIssuesで報告してください。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-palette"></i> ゲーム設計のFAQ</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>おすすめのアリーナサイズは？</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>プレイヤー数によって以下を推奨：</p>
+                        <ul>
+                            <li>2v2～4v4: 50×50ブロック</li>
+                            <li>5v5～7v7: 100×100ブロック</li>
+                            <li>8v8～10v10: 150×150ブロック</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>建築フェーズで何を作るべき？</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>優先順位：</p>
+                        <ol>
+                            <li>旗の周りの壁（最重要）</li>
+                            <li>狙撃ポイント（高所）</li>
+                            <li>侵入防止の堀や障害物</li>
+                            <li>おとりの構造物</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>バランスの良いショップ価格設定は？</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>デフォルト設定がバランス調整済みです。変更する場合：</p>
+                        <ul>
+                            <li>初期通貨の2-3倍で基本装備が揃う</li>
+                            <li>最高級装備は3-4キル分の報酬が必要</li>
+                            <li>消耗品は気軽に買える価格に</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-question-circle"></i> その他の質問</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>新機能の要望があります</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>GitHubのIssuesで要望を投稿してください。実装可能性を検討します。</p>
+                        <a href="https://github.com/yourusername/easy_ctf/issues" class="btn btn-primary">
+                            <i class="fab fa-github"></i> Issues
+                        </a>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>バグを見つけました</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>GitHubのIssuesで以下の情報と共に報告してください：</p>
+                        <ul>
+                            <li>サーバーバージョン</li>
+                            <li>プラグインバージョン</li>
+                            <li>エラーログ（あれば）</li>
+                            <li>再現手順</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>他のプラグインと競合します</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>以下のプラグインとの競合が報告されています：</p>
+                        <ul>
+                            <li>ワールド保護系プラグイン → CTFワールドを除外設定</li>
+                            <li>PvP管理系プラグイン → CTF中は無効化</li>
+                            <li>インベントリ管理系 → 互換性パッチを検討中</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>ソースコードは公開されていますか？</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>はい、GitHubで公開されています。プルリクエストも歓迎します。</p>
+                        <a href="https://github.com/yourusername/easy_ctf" class="btn btn-secondary">
+                            <i class="fab fa-github"></i> ソースコード
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <nav class="page-nav">
+            <a href="admin.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 管理者ガイド
+            </a>
+            <a href="index.html" class="btn btn-primary">
+                トップページ <i class="fas fa-home"></i>
+            </a>
+        </nav>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EasyCTF</h4>
+                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+                </div>
+                <div class="footer-section">
+                    <h4>リンク</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>ドキュメント</h4>
+                    <ul>
+                        <li><a href="gameplay.html">遊び方</a></li>
+                        <li><a href="admin.html">管理者ガイド</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

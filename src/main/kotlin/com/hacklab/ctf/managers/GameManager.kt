@@ -10,7 +10,11 @@ import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import org.bukkit.Bukkit
+import org.bukkit.boss.BarColor
+import org.bukkit.boss.BarStyle
 import org.bukkit.entity.Player
+import org.bukkit.scheduler.BukkitRunnable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -120,6 +124,11 @@ class GameManager(private val plugin: Main) {
             matches[name.lowercase()] = matchWrapper
             game.setMatchContext(matchWrapper)
             matchWrapper.isActive = true
+            
+            // ゲーム終了時のコールバックを設定
+            game.setGameEndCallback { winner ->
+                handleMatchGameEnd(name, winner)
+            }
         }
         
         return game.start()
@@ -261,5 +270,136 @@ class GameManager(private val plugin: Main) {
             createGameFromConfig(config)
             plugin.logger.info("Loaded game: $name")
         }
+    }
+    
+    /**
+     * マッチ内のゲーム終了処理
+     */
+    private fun handleMatchGameEnd(gameName: String, winner: Team?) {
+        val game = games[gameName.lowercase()] ?: return
+        val match = matches[gameName.lowercase()] ?: return
+        
+        // マッチのスコアを更新
+        match.onGameEnd(winner)
+        
+        // 勝敗表示
+        val winnerText = when (winner) {
+            Team.RED -> "§c赤チームの勝利！"
+            Team.BLUE -> "§9青チームの勝利！"
+            null -> "§e引き分け！"
+        }
+        
+        game.getAllPlayers().forEach { player ->
+            player.sendMessage("§6=== ゲーム ${match.currentGameNumber} 結果 ===")
+            player.sendMessage(winnerText)
+            player.sendMessage("§e現在のスコア: §c赤 ${match.matchWins[Team.RED]} §f- §9青 ${match.matchWins[Team.BLUE]}")
+            
+            if (match.isMatchComplete()) {
+                val matchWinner = match.getMatchWinner()
+                val matchWinnerText = when (matchWinner) {
+                    Team.RED -> "§c§l赤チームがマッチに勝利！"
+                    Team.BLUE -> "§9§l青チームがマッチに勝利！"
+                    null -> "§e§lマッチは引き分け！"
+                }
+                player.sendMessage("")
+                player.sendMessage("§6§l=== マッチ終了 ===")
+                player.sendMessage(matchWinnerText)
+            } else {
+                player.sendMessage("")
+                player.sendMessage("§a5秒後に次のゲームが開始されます...")
+            }
+        }
+        
+        // マッチが完了したか確認
+        if (match.isMatchComplete()) {
+            // マッチ終了処理
+            handleMatchComplete(gameName)
+        } else {
+            // インターバル表示を開始
+            showMatchInterval(game, match, gameName)
+        }
+    }
+    
+    /**
+     * マッチインターバル表示
+     */
+    private fun showMatchInterval(game: Game, match: MatchWrapper, gameName: String) {
+        // インターバル用BossBar作成
+        val bossBar = Bukkit.createBossBar(
+            "次のゲームまで: 5秒",
+            BarColor.YELLOW,
+            BarStyle.SOLID
+        )
+        
+        // 全プレイヤーに表示
+        game.getAllPlayers().forEach { player ->
+            bossBar.addPlayer(player)
+        }
+        
+        var remainingSeconds = 5
+        
+        object : BukkitRunnable() {
+            override fun run() {
+                remainingSeconds--
+                
+                if (remainingSeconds > 0) {
+                    // BossBar更新
+                    bossBar.setTitle("次のゲームまで: ${remainingSeconds}秒")
+                    bossBar.progress = remainingSeconds / 5.0
+                } else {
+                    // インターバル終了
+                    bossBar.removeAll()
+                    bossBar.isVisible = false
+                    cancel()
+                    
+                    // 次のゲームを開始
+                    startNextMatchGame(gameName)
+                }
+            }
+        }.runTaskTimer(plugin, 20L, 20L) // 1秒ごとに実行
+    }
+    
+    /**
+     * 次のマッチゲームを開始
+     */
+    private fun startNextMatchGame(gameName: String) {
+        val game = games[gameName.lowercase()] ?: return
+        val match = matches[gameName.lowercase()] ?: return
+        
+        // ゲームを停止してリセット
+        game.stop()
+        
+        // 次のゲーム番号に進める
+        match.nextGame()
+        
+        // ゲームを再開
+        game.setMatchContext(match)
+        game.setGameEndCallback { winner ->
+            handleMatchGameEnd(gameName, winner)
+        }
+        
+        // プレイヤーを再追加
+        match.players.values.forEach { player ->
+            if (player.isOnline) {
+                game.addPlayer(player)
+            }
+        }
+        
+        game.start()
+    }
+    
+    /**
+     * マッチ完了処理
+     */
+    private fun handleMatchComplete(gameName: String) {
+        val game = games[gameName.lowercase()] ?: return
+        val match = matches[gameName.lowercase()] ?: return
+        
+        // ゲームを完全に停止
+        game.stop()
+        
+        // マッチを削除
+        matches.remove(gameName.lowercase())
+        match.isActive = false
     }
 }
