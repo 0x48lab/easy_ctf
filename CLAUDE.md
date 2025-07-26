@@ -49,8 +49,7 @@ src/main/resources/
 複数のゲームを連続して実行し、総合的な勝者を決定するシステム。
 
 #### マッチモード
-- **FIRST_TO_X（先取モード）**: 指定した勝利数に最初に到達したチームが優勝
-- **FIXED_ROUNDS（固定ラウンドモード）**: 指定した回数のゲームを行い、最多勝利チームが優勝
+固定ラウンドモードのみサポート：指定した回数のゲームを実施し、最多勝利チームが優勝
 
 #### マッチ機能
 - ゲーム間のインターバル（デフォルト30秒）
@@ -165,7 +164,7 @@ src/main/resources/
 | `update <ゲーム名>` | `ctf.admin` | 既存ゲーム設定の更新（対話形式） |
 | `delete <ゲーム名>` | `ctf.admin` | ゲーム削除 |
 | `list` | `ctf.use` | 全ゲーム一覧表示 |
-| `start <ゲーム名> [モード] [目標値]` | `ctf.admin` | ゲーム/マッチ開始 |
+| `start <ゲーム名> [match] [ゲーム数]` | `ctf.admin` | ゲーム/マッチ開始 |
 | `stop <ゲーム名>` | `ctf.admin` | ゲーム/マッチ強制停止 |
 | `join <ゲーム名>` | `ctf.use` | ゲーム参加 |
 | `leave` | `ctf.use` | 現在のゲームから離脱 |
@@ -176,11 +175,11 @@ src/main/resources/
 
 ### マッチ開始コマンド
 ```
-/ctf start <ゲーム名> [first_to_x|fixed_rounds] [目標値]
+/ctf start <ゲーム名> [match] [ゲーム数]
 ```
-- `first_to_x`: 先取モード（例: `/ctf start game1 first_to_x 3` → 3勝先取）
-- `fixed_rounds`: 固定ラウンド（例: `/ctf start game1 fixed_rounds 5` → 5ゲーム実施）
-- 省略時: config.ymlのデフォルト設定を使用
+- `match`: マッチモードを指定（例: `/ctf start game1 match 5` → 5ゲーム実施）
+- ゲーム数省略時: config.ymlのデフォルト設定（3ゲーム）を使用
+- マッチ指定なし: 単一ゲームとして実行
 
 ### ショップの使用方法
 1. インベントリのエメラルドを右クリック
@@ -309,8 +308,7 @@ default-phases:
 
 # マッチ設定
 match:
-  default-mode: "first_to_x"
-  default-target: 3
+  default-target: 3          # デフォルトゲーム数
   interval-duration: 30      # ゲーム間インターバル（秒）
 
 # 通貨設定

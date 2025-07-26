@@ -179,9 +179,27 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val player = event.entity
         val game = gameManager.getPlayerGame(player) ?: return
         
-        if (game.state == GameState.RUNNING && game.phase == GamePhase.COMBAT) {
-            val team = game.getPlayerTeam(player.uniqueId) ?: return
-            val match = gameManager.getMatch(game.name)
+        if (game.state == GameState.RUNNING) {
+            // ビルドフェーズでの死亡処理
+            if (game.phase == GamePhase.BUILD) {
+                // アイテムをドロップしない
+                event.drops.clear()
+                event.keepInventory = true
+                event.droppedExp = 0
+                
+                // 即座にリスポーン
+                plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                    player.spigot().respawn()
+                    game.handleRespawn(player)
+                }, 1L) // 1 tick後（ほぼ即座）
+                
+                return
+            }
+            
+            // 戦闘フェーズでの死亡処理
+            if (game.phase == GamePhase.COMBAT) {
+                val team = game.getPlayerTeam(player.uniqueId) ?: return
+                val match = gameManager.getMatch(game.name)
             
             // 死亡回数を増やす
             val deaths = (game.playerDeaths[player.uniqueId] ?: 0) + 1
@@ -310,9 +328,22 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 死亡メッセージにリスポーン時間を表示
             player.sendMessage(Component.text("リスポーンまで ${respawnDelay} 秒...", NamedTextColor.YELLOW))
             
+            // 死亡位置を記録
+            val deathLocation = player.location.clone()
+            
+            // 即座にリスポーンしてスペクテーターモードに
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 player.spigot().respawn()
+                player.gameMode = GameMode.SPECTATOR
+                // 死亡位置にテレポート（観戦用）
+                player.teleport(deathLocation)
+                player.sendMessage(Component.text("スペクテーターモードで観戦中... ${respawnDelay}秒後に復活します", NamedTextColor.GRAY))
+            }, 1L) // 1 tick後
+            
+            // 指定時間後にサバイバルモードで復活
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 game.handleRespawn(player)
+                player.gameMode = GameMode.SURVIVAL
                 
                 // 保持アイテムを再配布
                 val keptItems = player.getMetadata("ctf_items_to_keep")
@@ -324,6 +355,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 
                 player.removeMetadata("ctf_items_to_keep", plugin)
             }, respawnDelay * 20L) // 秒をticksに変換
+            }
         }
     }
 

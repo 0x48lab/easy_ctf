@@ -8,6 +8,7 @@ import com.hacklab.ctf.config.GameConfig
 import com.hacklab.ctf.session.GameSetupSession
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.MatchMode
+import com.hacklab.ctf.utils.Team
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -106,7 +107,7 @@ class GameManager(private val plugin: Main) {
     /**
      * ゲーム開始（単体またはマッチ）
      */
-    fun startGame(name: String, mode: MatchMode? = null, target: Int? = null): Boolean {
+    fun startGame(name: String, isMatch: Boolean = false, target: Int? = null): Boolean {
         val game = games[name.lowercase()] ?: return false
         val config = configManager.loadConfig(name) ?: return false
         
@@ -114,10 +115,10 @@ class GameManager(private val plugin: Main) {
             return false
         }
         
-        // マッチモードが指定されていれば、マッチとして開始
-        if (mode != null && target != null) {
+        // マッチとして開始
+        if (isMatch && target != null) {
             val matchWrapper = MatchWrapper(config.copy().apply {
-                matchMode = mode
+                matchMode = MatchMode.FIXED_ROUNDS
                 matchTarget = target
             }, plugin)
             

@@ -131,9 +131,7 @@ class ConfigManager(private val plugin: Main) {
         config.resultDuration = yaml.getInt("settings.phases.result-duration", config.resultDuration)
         
         // マッチ設定の読み込み
-        yaml.getString("settings.match.mode")?.let {
-            config.matchMode = MatchMode.fromString(it) ?: MatchMode.FIRST_TO_X
-        }
+        config.matchMode = MatchMode.FIXED_ROUNDS
         config.matchTarget = yaml.getInt("settings.match.target", config.matchTarget)
         config.matchIntervalDuration = yaml.getInt("settings.match.interval-duration", config.matchIntervalDuration)
         
@@ -186,9 +184,7 @@ class ConfigManager(private val plugin: Main) {
             buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "ADVENTURE")!!,
             combatDuration = plugin.config.getInt("default-phases.combat-duration", 600),
             resultDuration = plugin.config.getInt("default-phases.result-duration", 60),
-            matchMode = MatchMode.fromString(
-                plugin.config.getString("match.default-mode", "first_to_x")!!
-            ) ?: MatchMode.FIRST_TO_X,
+            matchMode = MatchMode.FIXED_ROUNDS,
             matchTarget = plugin.config.getInt("match.default-target", 3),
             matchIntervalDuration = plugin.config.getInt("match.interval-duration", 30)
         )

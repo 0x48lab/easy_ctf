@@ -206,8 +206,7 @@ class GameSetupSession(private val plugin: Main) {
                 player.sendMessage(Component.text("'skip' でfirst_to_x", NamedTextColor.GRAY))
             }
             CreateSession.Step.MATCH_TARGET -> {
-                val text = if (session.config.matchMode == MatchMode.FIRST_TO_X) "必要勝利数" else "ゲーム数"
-                player.sendMessage(Component.text("$text を入力", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("ゲーム数を入力", NamedTextColor.YELLOW))
                 player.sendMessage(Component.text("'skip' で3", NamedTextColor.GRAY))
             }
             CreateSession.Step.COMPLETE -> completeCreate(session)

@@ -1000,10 +1000,7 @@ class Game(
         // マッチ情報（マッチモードの場合）
         val matchInfo = matchWrapper?.let { m ->
             val wins = m.matchWins
-            when (m.config.matchMode) {
-                MatchMode.FIRST_TO_X -> "[先取${m.config.matchTarget}] 第${m.currentGameNumber}ゲーム | "
-                MatchMode.FIXED_ROUNDS -> "[${m.currentGameNumber}/${m.config.matchTarget}] | "
-            } + "赤${wins[Team.RED]}勝 青${wins[Team.BLUE]}勝 | "
+            "[${m.currentGameNumber}/${m.config.matchTarget}] | " + "赤${wins[Team.RED]}勝 青${wins[Team.BLUE]}勝 | "
         } ?: ""
         
         // 現在のスコア（戦闘・結果フェーズのみ）

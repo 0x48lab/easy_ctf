@@ -185,10 +185,7 @@ debug:
 
 # Match Settings
 match:
-  # Default match mode (first_to_x or fixed_rounds)
-  default-mode: "first_to_x"
-  
-  # Default target (wins needed for first_to_x, or rounds for fixed_rounds)
+  # Default number of games to play in a match
   default-target: 3
   
   # Interval between games in seconds

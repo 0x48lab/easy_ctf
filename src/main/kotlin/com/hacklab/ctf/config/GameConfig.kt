@@ -30,7 +30,7 @@ data class GameConfig(
     var resultDuration: Int = 60,
     
     // マッチ設定
-    var matchMode: MatchMode = MatchMode.FIRST_TO_X,
+    var matchMode: MatchMode = MatchMode.FIXED_ROUNDS,
     var matchTarget: Int = 3,
     var matchIntervalDuration: Int = 30,
     

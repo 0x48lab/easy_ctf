@@ -52,10 +52,7 @@ class MatchWrapper(
      * マッチ完了判定
      */
     fun isMatchComplete(): Boolean {
-        return when (config.matchMode) {
-            MatchMode.FIRST_TO_X -> matchWins.values.any { it >= config.matchTarget }
-            MatchMode.FIXED_ROUNDS -> currentGameNumber >= config.matchTarget
-        }
+        return currentGameNumber > config.matchTarget
     }
     
     /**
@@ -83,10 +80,7 @@ class MatchWrapper(
      * マッチステータス文字列
      */
     fun getMatchStatus(): String {
-        return when (config.matchMode) {
-            MatchMode.FIRST_TO_X -> "ゲーム $currentGameNumber (${config.matchTarget}勝先取)"
-            MatchMode.FIXED_ROUNDS -> "ゲーム $currentGameNumber / ${config.matchTarget}"
-        }
+        return "ゲーム $currentGameNumber / ${config.matchTarget}"
     }
     
     /**
