@@ -152,7 +152,7 @@ class CompressedMapManager(private val plugin: Main) {
                     if (restoredBlocks < 3) {
                         println("[CompressedMapManager] 復元データ例: $line")
                     }
-                    val parts = line.split(":")
+                    val parts = line.split(":", limit = 2)
                     if (parts.size == 2) {
                         val coords = parts[0].split(",")
                         if (coords.size == 3) {
