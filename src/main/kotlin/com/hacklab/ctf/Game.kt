@@ -374,15 +374,19 @@ class Game(
         
         // テンポラリワールドを作成
         val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
+        plugin.logger.info("[Game] テンポラリワールドを作成中: $gameName")
         tempWorld = worldManager.createTempWorld(gameName)
         
         if (tempWorld == null) {
+            plugin.logger.warning("[Game] テンポラリワールドの作成に失敗しました")
             getAllPlayers().forEach {
                 it.sendMessage(Component.text("テンポラリワールドの作成に失敗しました", NamedTextColor.RED))
             }
             state = GameState.WAITING
             return false
         }
+        
+        plugin.logger.info("[Game] テンポラリワールド作成成功: ${tempWorld!!.name}")
         
         // ワールドを切り替え
         world = tempWorld!!
@@ -393,10 +397,18 @@ class Game(
         
         // 保存されたマップがある場合は復元
         if (mapManager.hasMap(gameName)) {
+            plugin.logger.info("[Game] 保存されたマップを復元中...")
             if (!gameManager.resetGameMap(gameName, tempWorld)) {
-                plugin.logger.warning("マップの復元に失敗しました")
+                plugin.logger.warning("[Game] マップの復元に失敗しました")
+            } else {
+                plugin.logger.info("[Game] マップの復元が完了しました")
             }
+        } else {
+            plugin.logger.info("[Game] 保存されたマップが見つかりません: $gameName")
         }
+        
+        // 位置情報をテンポラリワールドに更新
+        updateLocationsToWorld(tempWorld!!)
         
         // 通貨を初期化
         initializeCurrency()
@@ -693,6 +705,24 @@ class Game(
     
     // 以下、ヘルパーメソッド
     
+    private fun updateLocationsToWorld(newWorld: World) {
+        // 位置情報を新しいワールドに更新
+        redFlagLocation?.let {
+            redFlagLocation = Location(newWorld, it.x, it.y, it.z, it.yaw, it.pitch)
+        }
+        blueFlagLocation?.let {
+            blueFlagLocation = Location(newWorld, it.x, it.y, it.z, it.yaw, it.pitch)
+        }
+        redSpawnLocation?.let {
+            redSpawnLocation = Location(newWorld, it.x, it.y, it.z, it.yaw, it.pitch)
+        }
+        blueSpawnLocation?.let {
+            blueSpawnLocation = Location(newWorld, it.x, it.y, it.z, it.yaw, it.pitch)
+        }
+        
+        plugin.logger.info("[Game] 位置情報を ${newWorld.name} ワールドに更新しました")
+    }
+    
     private fun teleportToSpawn(player: Player, team: Team) {
         val spawnLocation = when (team) {
             Team.RED -> redSpawnLocation ?: redFlagLocation
@@ -701,6 +731,7 @@ class Game(
         
         if (spawnLocation != null) {
             player.teleport(spawnLocation)
+            plugin.logger.info("[Game] ${player.name} を ${spawnLocation.world?.name} ワールドにテレポート")
         } else {
             player.sendMessage(Component.text("スポーン地点が設定されていません", NamedTextColor.RED))
             plugin.logger.warning("Game $name: No spawn location for team $team")
