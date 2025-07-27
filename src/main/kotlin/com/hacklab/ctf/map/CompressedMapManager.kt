@@ -69,7 +69,13 @@ class CompressedMapManager(private val plugin: Main) {
             println("[CompressedMapManager] スキャン完了: 総ブロック数=$totalBlocks, AIR=$airBlocks, 保存ブロック数=${blockDataList.size}")
             
             // データを圧縮してBase64エンコード
-            val compressedData = compressData(blockDataList.joinToString("\n"))
+            val rawData = blockDataList.joinToString("\n")
+            println("[CompressedMapManager] 保存前のデータ例（最初の3行）:")
+            blockDataList.take(3).forEach { println("  $it") }
+            
+            val compressedData = compressData(rawData)
+            println("[CompressedMapManager] 圧縮後のデータサイズ: ${compressedData.length} 文字")
+            
             config.set("blocks_compressed", compressedData)
             config.set("block_count", blockDataList.size)
             
@@ -127,13 +133,25 @@ class CompressedMapManager(private val plugin: Main) {
             println("[CompressedMapManager] $clearedBlocks ブロックをクリア")
             
             // 圧縮データを解凍
-            val compressedData = config.getString("blocks_compressed") ?: return false
+            val compressedData = config.getString("blocks_compressed")
+            if (compressedData == null) {
+                println("[CompressedMapManager] 圧縮データが見つかりません")
+                return false
+            }
+            
+            println("[CompressedMapManager] 圧縮データサイズ: ${compressedData.length} 文字")
+            
             val blockDataString = decompressData(compressedData)
+            val lines = blockDataString.split("\n")
+            println("[CompressedMapManager] 解凍後のライン数: ${lines.size}")
             
             // ブロックを復元
             var restoredBlocks = 0
-            blockDataString.split("\n").forEach { line ->
+            lines.forEach { line ->
                 if (line.isNotEmpty()) {
+                    if (restoredBlocks < 3) {
+                        println("[CompressedMapManager] 復元データ例: $line")
+                    }
                     val parts = line.split(":")
                     if (parts.size == 2) {
                         val coords = parts[0].split(",")
@@ -148,7 +166,11 @@ class CompressedMapManager(private val plugin: Main) {
                             } catch (e: Exception) {
                                 plugin.logger.warning("Failed to restore block at $x,$y,$z: ${e.message}")
                             }
+                        } else {
+                            println("[CompressedMapManager] 無効な座標形式: ${parts[0]}")
                         }
+                    } else {
+                        println("[CompressedMapManager] 無効なデータ形式: $line")
                     }
                 }
             }
