@@ -572,10 +572,8 @@ class GameManager(private val plugin: Main) {
         val pos2 = positions.pos2 
             ?: return MapSaveResult(false, listOf("終点（pos2）が設定されていません"))
         
-        // ゲームが存在しない場合はエラー
-        if (!games.containsKey(gameName.lowercase())) {
-            return MapSaveResult(false, listOf("ゲーム '$gameName' が存在しません"))
-        }
+        // ゲームが存在しない場合は新規作成モードとして処理（既存ゲームがある場合のみチェック）
+        val isNewGame = !games.containsKey(gameName.lowercase())
         
         // ゲームが実行中の場合はエラー
         val game = getGame(gameName)
@@ -593,17 +591,36 @@ class GameManager(private val plugin: Main) {
             return MapSaveResult(false, scanResult.errors)
         }
         
-        // 設定を更新
-        val config = configManager.loadConfig(gameName)
-        if (config != null) {
-            config.redFlagLocation = scanResult.redFlags[0]
-            config.blueFlagLocation = scanResult.blueFlags[0]
-            config.redSpawnLocation = scanResult.redSpawns[0]
-            config.blueSpawnLocation = scanResult.blueSpawns[0]
+        // 新規ゲームの場合は設定を作成、既存ゲームの場合は更新
+        if (isNewGame) {
+            // 新規ゲーム作成
+            val config = GameConfig(gameName, pos1.world).apply {
+                redFlagLocation = scanResult.redFlags[0]
+                blueFlagLocation = scanResult.blueFlags[0]
+                redSpawnLocation = scanResult.redSpawns[0]
+                blueSpawnLocation = scanResult.blueSpawns[0]
+            }
+            
+            // 設定を保存
             configManager.saveConfig(config)
             
-            // ゲームインスタンスも更新
-            game?.updateFromConfig(config)
+            // ゲームインスタンスを作成
+            val newGame = Game(gameName, plugin, pos1.world)
+            newGame.updateFromConfig(config)
+            games[gameName.lowercase()] = newGame
+        } else {
+            // 既存ゲームの設定を更新
+            val config = configManager.loadConfig(gameName)
+            if (config != null) {
+                config.redFlagLocation = scanResult.redFlags[0]
+                config.blueFlagLocation = scanResult.blueFlags[0]
+                config.redSpawnLocation = scanResult.redSpawns[0]
+                config.blueSpawnLocation = scanResult.blueSpawns[0]
+                configManager.saveConfig(config)
+                
+                // ゲームインスタンスも更新
+                game?.updateFromConfig(config)
+            }
         }
         
         // 圧縮形式で保存
