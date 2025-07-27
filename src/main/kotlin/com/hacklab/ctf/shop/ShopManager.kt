@@ -120,6 +120,13 @@ class ShopManager(private val plugin: Main) {
         shopItems.add(ShopItem("combat_bucket", "§f戦闘用バケツ", Material.BUCKET, 1, 15, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.COMBAT),
             lore = listOf("§7戦闘中でも液体を回収できる")))
+        shopItems.add(ShopItem("combat_iron_axe", "§f戦闘用鉄の斧", Material.IRON_AXE, 1, 30, ShopCategory.WEAPONS,
+            availablePhases = setOf(GamePhase.COMBAT),
+            lore = listOf("§7戦闘中でも木を伐採できる")))
+        shopItems.add(ShopItem("combat_diamond_axe", "§b戦闘用ダイヤの斧", Material.DIAMOND_AXE, 1, 60, ShopCategory.WEAPONS,
+            availablePhases = setOf(GamePhase.COMBAT),
+            lore = listOf("§7戦闘中でも木を伐採できる"),
+            enchantments = mapOf(Enchantment.EFFICIENCY to 2)))
         
         // 購入制限付きアイテムの例
         shopItems.add(ShopItem("ender_chest", "§5エンダーチェスト", Material.ENDER_CHEST, 1, 50, ShopCategory.BLOCKS,

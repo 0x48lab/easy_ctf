@@ -65,6 +65,7 @@ mechanics:
   allowed-break-tools:
     - PICKAXE
     - SHOVEL
+    - AXE
     - BUCKET
 
 # Equipment Settings (DEPRECATED - Now using initial-equipment and shop system)
