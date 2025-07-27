@@ -77,6 +77,42 @@ class GameManager(private val plugin: Main) {
             return false
         }
         
+        // マップ領域が設定されているか確認
+        val positions = mapPositions[gameName.lowercase()]
+        val hasMapRegion = positions?.pos1 != null && positions.pos2 != null
+        
+        if (hasMapRegion) {
+            player.sendMessage(Component.text("マップ領域が設定されています。自動検出でゲームを作成しますか？", NamedTextColor.YELLOW))
+            player.sendMessage(Component.text("[Y/n] Yで自動作成、nで対話形式", NamedTextColor.GRAY))
+            
+            // チャットリスナーで応答を待つ
+            setupSession.waitForMapAutoConfirm(player, gameName) { useAuto ->
+                if (useAuto) {
+                    // 自動検出でゲーム作成
+                    val result = saveMap(gameName)
+                    if (result.success) {
+                        player.sendMessage(Component.text("ゲーム '$gameName' を作成しました！", NamedTextColor.GREEN))
+                        player.sendMessage(Component.text("検出結果:", NamedTextColor.AQUA))
+                        player.sendMessage(Component.text("- 赤チームスポーン: ${result.redSpawn}", NamedTextColor.RED))
+                        player.sendMessage(Component.text("- 青チームスポーン: ${result.blueSpawn}", NamedTextColor.BLUE))
+                        player.sendMessage(Component.text("- 赤チーム旗: ${result.redFlag}", NamedTextColor.RED))
+                        player.sendMessage(Component.text("- 青チーム旗: ${result.blueFlag}", NamedTextColor.BLUE))
+                    } else {
+                        player.sendMessage(Component.text("自動検出に失敗しました", NamedTextColor.RED))
+                        result.errors.forEach { error ->
+                            player.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
+                        }
+                        player.sendMessage(Component.text("対話形式でゲームを作成します", NamedTextColor.YELLOW))
+                        setupSession.startCreateSession(player, gameName, player.world)
+                    }
+                } else {
+                    // 対話形式でゲーム作成
+                    setupSession.startCreateSession(player, gameName, player.world)
+                }
+            }
+            return true
+        }
+        
         return setupSession.startCreateSession(player, gameName, player.world)
     }
     

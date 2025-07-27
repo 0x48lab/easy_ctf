@@ -74,6 +74,37 @@ class GameSetupSession(private val plugin: Main) {
         }
     }
     
+    // マップ自動確認セッション
+    class MapAutoConfirmSession(
+        player: Player,
+        val gameName: String,
+        val callback: (Boolean) -> Unit,
+        val onComplete: (Player) -> Unit
+    ) : Session(player) {
+        
+        override fun handleInput(input: String) {
+            when (input.lowercase()) {
+                "y", "yes", "はい" -> {
+                    callback(true)
+                    onComplete(player)
+                }
+                "n", "no", "いいえ" -> {
+                    callback(false)
+                    onComplete(player)
+                }
+                else -> {
+                    player.sendMessage(Component.text("Y または n で回答してください", NamedTextColor.YELLOW))
+                    return
+                }
+            }
+        }
+        
+        override fun showCurrentStep() {
+            player.sendMessage(Component.text("マップ領域が設定されています。自動検出でゲームを作成しますか？", NamedTextColor.YELLOW))
+            player.sendMessage(Component.text("[Y/n] Yで自動作成、nで対話形式", NamedTextColor.GRAY))
+        }
+    }
+    
     /**
      * 作成セッション開始
      */
@@ -120,6 +151,7 @@ class GameSetupSession(private val plugin: Main) {
         when (session) {
             is CreateSession -> handleCreateInput(session, message)
             is UpdateSession -> handleUpdateInput(session, message)
+            is MapAutoConfirmSession -> session.handleInput(message)
         }
     }
     
@@ -549,6 +581,18 @@ class GameSetupSession(private val plugin: Main) {
     fun hasActiveSession(player: Player): Boolean = activeSessions.containsKey(player.uniqueId)
     
     fun clearSession(player: Player) = activeSessions.remove(player.uniqueId)
+    
+    /**
+     * マップ自動確認セッション開始
+     */
+    fun waitForMapAutoConfirm(player: Player, gameName: String, callback: (Boolean) -> Unit) {
+        val session = MapAutoConfirmSession(player, gameName, callback) { p ->
+            activeSessions.remove(p.uniqueId)
+        }
+        activeSessions[player.uniqueId] = session
+        session.showCurrentStep()
+        startTimeout(player.uniqueId)
+    }
     
     // コールバック
     var onCreateComplete: ((GameConfig) -> Unit)? = null
