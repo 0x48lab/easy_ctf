@@ -29,24 +29,31 @@ class MapScanner {
         val blueFlags = mutableListOf<Location>()
         val errors = mutableListOf<String>()
         
+        println("[MapScanner] スキャン開始: ${region.minX},${region.minY},${region.minZ} から ${region.maxX},${region.maxY},${region.maxZ}")
+        
         // すべてのブロックをスキャン
+        var scannedBlocks = 0
         for (x in region.minX..region.maxX) {
             for (y in region.minY..region.maxY) {
                 for (z in region.minZ..region.maxZ) {
                     val block = region.world.getBlockAt(x, y, z)
                     val location = block.location
+                    scannedBlocks++
                     
                     when (block.type) {
                         // 赤のコンクリート = 赤チームスポーン
                         Material.RED_CONCRETE -> {
+                            println("[MapScanner] 赤コンクリート発見: $x, $y, $z")
                             redSpawns.add(location.clone().add(0.5, 1.0, 0.5))
                         }
                         // 青のコンクリート = 青チームスポーン
                         Material.BLUE_CONCRETE -> {
+                            println("[MapScanner] 青コンクリート発見: $x, $y, $z")
                             blueSpawns.add(location.clone().add(0.5, 1.0, 0.5))
                         }
                         // ビーコンをチェック
                         Material.BEACON -> {
+                            println("[MapScanner] ビーコン発見: $x, $y, $z")
                             checkBeaconFlag(block, redFlags, blueFlags)
                         }
                         else -> {}
@@ -54,6 +61,9 @@ class MapScanner {
                 }
             }
         }
+        
+        println("[MapScanner] スキャン完了: ${scannedBlocks}ブロックをスキャン")
+        println("[MapScanner] 結果: 赤スポーン=${redSpawns.size}, 青スポーン=${blueSpawns.size}, 赤旗=${redFlags.size}, 青旗=${blueFlags.size}")
         
         // 検証
         validateScanResult(redSpawns, blueSpawns, redFlags, blueFlags, errors)
@@ -73,12 +83,16 @@ class MapScanner {
         
         when (aboveBlock.type) {
             Material.RED_STAINED_GLASS -> {
+                println("[MapScanner] ビーコンの上に赤ガラス発見")
                 redFlags.add(beaconBlock.location.clone().add(0.5, 0.0, 0.5))
             }
             Material.BLUE_STAINED_GLASS -> {
+                println("[MapScanner] ビーコンの上に青ガラス発見")
                 blueFlags.add(beaconBlock.location.clone().add(0.5, 0.0, 0.5))
             }
-            else -> {}
+            else -> {
+                println("[MapScanner] ビーコンの上のブロック: ${aboveBlock.type}")
+            }
         }
     }
     

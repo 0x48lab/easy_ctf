@@ -115,6 +115,18 @@ class GameManager(private val plugin: Main) {
                         clearTempMapPositions(player)
                     }
                     
+                    // デバッグ: マップ範囲を確認
+                    val finalPositions = mapPositions[gameName.lowercase()]
+                    if (finalPositions != null) {
+                        val pos1 = finalPositions.pos1
+                        val pos2 = finalPositions.pos2
+                        if (pos1 != null && pos2 != null) {
+                            player.sendMessage(Component.text("[DEBUG] マップ範囲:", NamedTextColor.GRAY))
+                            player.sendMessage(Component.text("  pos1: ${pos1.blockX}, ${pos1.blockY}, ${pos1.blockZ}", NamedTextColor.GRAY))
+                            player.sendMessage(Component.text("  pos2: ${pos2.blockX}, ${pos2.blockY}, ${pos2.blockZ}", NamedTextColor.GRAY))
+                        }
+                    }
+                    
                     // 自動検出でゲーム作成
                     val result = saveMap(gameName)
                     if (result.success) {

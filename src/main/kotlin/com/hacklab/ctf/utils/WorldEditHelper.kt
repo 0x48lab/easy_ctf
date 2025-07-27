@@ -51,6 +51,8 @@ object WorldEditHelper {
             val minLocation = Location(bukkitWorld, min.x().toDouble(), min.y().toDouble(), min.z().toDouble())
             val maxLocation = Location(bukkitWorld, max.x().toDouble(), max.y().toDouble(), max.z().toDouble())
             
+            println("[WorldEditHelper] 選択範囲: ${minLocation.blockX},${minLocation.blockY},${minLocation.blockZ} から ${maxLocation.blockX},${maxLocation.blockY},${maxLocation.blockZ}")
+            
             return Pair(minLocation, maxLocation)
         } catch (e: IncompleteRegionException) {
             // 選択範囲が不完全
