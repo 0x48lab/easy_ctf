@@ -26,8 +26,11 @@ import java.util.*
 class Game(
     val gameName: String,
     val plugin: Main,
-    val world: World
+    var world: World  // var に変更してテンポラリワールドを設定可能に
 ) {
+    // テンポラリワールド
+    private var tempWorld: World? = null
+    private var originalWorld: World = world  // 元のワールドを保持
     var state = GameState.WAITING
     var phase = GamePhase.BUILD
     
@@ -140,6 +143,28 @@ class Game(
     fun setBlueFlagLocation(location: Location) { blueFlagLocation = location }
     fun setRedSpawnLocation(location: Location) { redSpawnLocation = location }
     fun setBlueSpawnLocation(location: Location) { blueSpawnLocation = location }
+    
+    fun updateFromConfig(config: com.hacklab.ctf.config.GameConfig) {
+        // 位置情報は後でワールド変換が必要なので、座標のみ保持
+        redFlagLocation = config.redFlagLocation?.let { loc ->
+            Location(world, loc.x, loc.y, loc.z, loc.yaw, loc.pitch)
+        }
+        blueFlagLocation = config.blueFlagLocation?.let { loc ->
+            Location(world, loc.x, loc.y, loc.z, loc.yaw, loc.pitch)
+        }
+        redSpawnLocation = config.redSpawnLocation?.let { loc ->
+            Location(world, loc.x, loc.y, loc.z, loc.yaw, loc.pitch)
+        }
+        blueSpawnLocation = config.blueSpawnLocation?.let { loc ->
+            Location(world, loc.x, loc.y, loc.z, loc.yaw, loc.pitch)
+        }
+        buildDuration = config.buildDuration
+        combatDuration = config.combatDuration
+        buildPhaseGameMode = config.buildPhaseGameMode
+        minPlayers = config.minPlayers
+        maxPlayersPerTeam = config.maxPlayersPerTeam
+        autoStartEnabled = config.autoStartEnabled
+    }
     
     fun addPlayer(player: Player, team: Team? = null): Boolean {
         if (state != GameState.WAITING) {
@@ -346,6 +371,32 @@ class Game(
         state = GameState.STARTING
         phase = GamePhase.BUILD
         currentPhaseTime = buildDuration
+        
+        // テンポラリワールドを作成
+        val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
+        tempWorld = worldManager.createTempWorld(gameName)
+        
+        if (tempWorld == null) {
+            getAllPlayers().forEach {
+                it.sendMessage(Component.text("テンポラリワールドの作成に失敗しました", NamedTextColor.RED))
+            }
+            state = GameState.WAITING
+            return false
+        }
+        
+        // ワールドを切り替え
+        world = tempWorld!!
+        
+        // マップを復元
+        val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
+        val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
+        
+        // 保存されたマップがある場合は復元
+        if (mapManager.hasMap(gameName)) {
+            if (!gameManager.resetGameMap(gameName, tempWorld)) {
+                plugin.logger.warning("マップの復元に失敗しました")
+            }
+        }
         
         // 通貨を初期化
         initializeCurrency()
@@ -570,8 +621,9 @@ class Game(
             player.scoreboard = Bukkit.getScoreboardManager().mainScoreboard
             bossBar?.removePlayer(player)
             
-            // ワールドスポーンに転送
-            player.teleport(world.spawnLocation)
+            // 元のワールドに転送
+            val mainWorld = originalWorld ?: Bukkit.getWorlds()[0]
+            player.teleport(mainWorld.spawnLocation)
             
             player.sendMessage(Component.text("ゲームが終了しました", NamedTextColor.YELLOW))
             
@@ -610,6 +662,16 @@ class Game(
         actionBarErrorDisplay.clear()
         redFlagCarrier = null
         blueFlagCarrier = null
+        
+        // テンポラリワールドをクリーンアップ
+        if (tempWorld != null) {
+            val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
+            worldManager.cleanupTempWorld(gameName)
+            tempWorld = null
+            
+            // ワールドを元に戻す
+            world = originalWorld
+        }
     }
     
     private fun endGame() {

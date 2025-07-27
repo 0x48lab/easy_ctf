@@ -53,6 +53,10 @@ class Main : JavaPlugin() {
             }
         }
         
+        // 全てのテンポラリワールドをクリーンアップ
+        val worldManager = com.hacklab.ctf.world.WorldManager(this)
+        worldManager.cleanupAllTempWorlds()
+        
         if (::languageManager.isInitialized) {
             logger.info(languageManager.getGeneralMessage("disabled"))
         } else {

@@ -59,6 +59,13 @@ mechanics:
   
   # Allow vehicles (minecarts, boats)
   allow-vehicles: false
+  
+  # Tools allowed to break blocks during combat phase
+  # Available tools: PICKAXE, SHOVEL, AXE, HOE, BUCKET
+  allowed-break-tools:
+    - PICKAXE
+    - SHOVEL
+    - BUCKET
 
 # Equipment Settings (DEPRECATED - Now using initial-equipment and shop system)
 equipment:

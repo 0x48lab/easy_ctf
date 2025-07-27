@@ -6,12 +6,16 @@ import com.hacklab.ctf.MatchWrapper
 import com.hacklab.ctf.config.ConfigManager
 import com.hacklab.ctf.config.GameConfig
 import com.hacklab.ctf.session.GameSetupSession
+import com.hacklab.ctf.map.CompressedMapManager
+import com.hacklab.ctf.map.MapRegion
+import com.hacklab.ctf.map.MapScanner
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.MatchMode
 import com.hacklab.ctf.utils.Team
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.entity.Player
@@ -28,6 +32,25 @@ class GameManager(private val plugin: Main) {
     // 管理対象
     private val games = ConcurrentHashMap<String, Game>()
     private val matches = ConcurrentHashMap<String, MatchWrapper>()
+    
+    // マップ管理
+    private val mapManager = CompressedMapManager(plugin)
+    private val mapScanner = MapScanner()
+    private val mapPositions = ConcurrentHashMap<String, MapPositions>()
+    
+    data class MapPositions(
+        var pos1: Location? = null,
+        var pos2: Location? = null
+    )
+    
+    data class MapSaveResult(
+        val success: Boolean,
+        val errors: List<String> = emptyList(),
+        val redSpawn: String? = null,
+        val blueSpawn: String? = null,
+        val redFlag: String? = null,
+        val blueFlag: String? = null
+    )
     private val playerGames = ConcurrentHashMap<UUID, String>()
     
     // 専用マネージャー
@@ -403,5 +426,95 @@ class GameManager(private val plugin: Main) {
         // マッチを削除
         matches.remove(gameName.lowercase())
         match.isActive = false
+    }
+    
+    /**
+     * マップ範囲の始点を設定
+     */
+    fun setMapPos1(gameName: String, location: Location) {
+        val positions = mapPositions.getOrPut(gameName.lowercase()) { MapPositions() }
+        positions.pos1 = location.clone()
+    }
+    
+    /**
+     * マップ範囲の終点を設定
+     */
+    fun setMapPos2(gameName: String, location: Location) {
+        val positions = mapPositions.getOrPut(gameName.lowercase()) { MapPositions() }
+        positions.pos2 = location.clone()
+    }
+    
+    /**
+     * マップを保存し、自動的に旗とスポーンを検出
+     */
+    fun saveMap(gameName: String): MapSaveResult {
+        val positions = mapPositions[gameName.lowercase()] 
+            ?: return MapSaveResult(false, listOf("マップ範囲が設定されていません"))
+        
+        val pos1 = positions.pos1 
+            ?: return MapSaveResult(false, listOf("始点（pos1）が設定されていません"))
+        val pos2 = positions.pos2 
+            ?: return MapSaveResult(false, listOf("終点（pos2）が設定されていません"))
+        
+        // ゲームが存在しない場合はエラー
+        if (!games.containsKey(gameName.lowercase())) {
+            return MapSaveResult(false, listOf("ゲーム '$gameName' が存在しません"))
+        }
+        
+        // ゲームが実行中の場合はエラー
+        val game = getGame(gameName)
+        if (game != null && game.state != GameState.WAITING) {
+            return MapSaveResult(false, listOf("ゲームが実行中は保存できません"))
+        }
+        
+        // マップ領域を作成
+        val region = MapRegion(pos1.world, pos1, pos2)
+        
+        // ブロックをスキャンして特定の位置を検出
+        val scanResult = mapScanner.scan(region)
+        
+        if (!scanResult.isValid()) {
+            return MapSaveResult(false, scanResult.errors)
+        }
+        
+        // 設定を更新
+        val config = configManager.loadConfig(gameName)
+        if (config != null) {
+            config.redFlagLocation = scanResult.redFlags[0]
+            config.blueFlagLocation = scanResult.blueFlags[0]
+            config.redSpawnLocation = scanResult.redSpawns[0]
+            config.blueSpawnLocation = scanResult.blueSpawns[0]
+            configManager.saveConfig(config)
+            
+            // ゲームインスタンスも更新
+            game?.updateFromConfig(config)
+        }
+        
+        // 圧縮形式で保存
+        if (!mapManager.saveMap(gameName, region)) {
+            return MapSaveResult(false, listOf("マップの保存に失敗しました"))
+        }
+        
+        // pos設定をクリア
+        mapPositions.remove(gameName.lowercase())
+        
+        return MapSaveResult(
+            success = true,
+            redSpawn = formatLocation(scanResult.redSpawns[0]),
+            blueSpawn = formatLocation(scanResult.blueSpawns[0]),
+            redFlag = formatLocation(scanResult.redFlags[0]),
+            blueFlag = formatLocation(scanResult.blueFlags[0])
+        )
+    }
+    
+    /**
+     * ゲーム開始時にマップをリセット
+     */
+    fun resetGameMap(gameName: String, targetWorld: org.bukkit.World? = null): Boolean {
+        return mapManager.loadAndRestoreMap(gameName, targetWorld)
+    }
+    
+    private fun formatLocation(loc: Location): String {
+        return "${loc.blockX}, ${loc.blockY}, ${loc.blockZ}"
     }
 }

@@ -43,6 +43,10 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "setspawn" -> return handleSetSpawnCommand(sender, args)
             "status" -> return handleStatusCommand(sender, args)
             "info" -> return handleInfoCommand(sender, args)
+            // マップ関連コマンド
+            "setpos1" -> return handleSetPos1Command(sender, args)
+            "setpos2" -> return handleSetPos2Command(sender, args)
+            "savemap" -> return handleSaveMapCommand(sender, args)
             else -> {
                 sendHelpMessage(sender)
                 return true
@@ -673,6 +677,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/ctf stop <ゲーム名> - ゲーム停止", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf setflag <ゲーム名> <red|blue> - 旗位置設定", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf setspawn <ゲーム名> <red|blue> - スポーン地点設定", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("/ctf setpos1 <ゲーム名> - マップ領域の始点を設定", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("/ctf setpos2 <ゲーム名> - マップ領域の終点を設定", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("/ctf savemap <ゲーム名> - マップを保存（自動検出）", NamedTextColor.YELLOW))
         }
         
         sender.sendMessage(Component.text("/ctf list - ゲーム一覧表示", NamedTextColor.YELLOW))
@@ -690,13 +697,13 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             1 -> {
                 val subcommands = mutableListOf("list", "join", "leave", "team", "status", "info")
                 if (sender.hasPermission("ctf.admin")) {
-                    subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn"))
+                    subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap"))
                 }
                 completions.addAll(subcommands.filter { it.startsWith(args[0].lowercase()) })
             }
             2 -> {
                 when (args[0].lowercase()) {
-                    "update", "delete", "start", "stop", "join", "status", "info", "setflag", "setspawn" -> {
+                    "update", "delete", "start", "stop", "join", "status", "info", "setflag", "setspawn", "setpos1", "setpos2", "savemap" -> {
                         completions.addAll(gameManager.getAllGames().keys.filter { it.startsWith(args[1].lowercase()) })
                     }
                     "team" -> {
@@ -727,6 +734,88 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         return completions
+    }
+    
+    private fun handleSetPos1Command(sender: CommandSender, args: Array<String>): Boolean {
+        if (sender !is Player) {
+            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            return true
+        }
+        
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            return true
+        }
+        
+        if (args.size < 2) {
+            sender.sendMessage(Component.text("使用方法: /ctf setpos1 <ゲーム名>", NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val gameName = args[1]
+        gameManager.setMapPos1(gameName, sender.location)
+        sender.sendMessage(Component.text("ゲーム $gameName の始点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
+        
+        return true
+    }
+    
+    private fun handleSetPos2Command(sender: CommandSender, args: Array<String>): Boolean {
+        if (sender !is Player) {
+            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            return true
+        }
+        
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            return true
+        }
+        
+        if (args.size < 2) {
+            sender.sendMessage(Component.text("使用方法: /ctf setpos2 <ゲーム名>", NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val gameName = args[1]
+        gameManager.setMapPos2(gameName, sender.location)
+        sender.sendMessage(Component.text("ゲーム $gameName の終点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
+        
+        return true
+    }
+    
+    private fun handleSaveMapCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (sender !is Player) {
+            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            return true
+        }
+        
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            return true
+        }
+        
+        if (args.size < 2) {
+            sender.sendMessage(Component.text("使用方法: /ctf savemap <ゲーム名>", NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val gameName = args[1]
+        val result = gameManager.saveMap(gameName)
+        
+        if (result.success) {
+            sender.sendMessage(Component.text("マップを正常に保存しました！", NamedTextColor.GREEN))
+            sender.sendMessage(Component.text("検出結果:", NamedTextColor.AQUA))
+            sender.sendMessage(Component.text("- 赤チームスポーン: ${result.redSpawn}", NamedTextColor.RED))
+            sender.sendMessage(Component.text("- 青チームスポーン: ${result.blueSpawn}", NamedTextColor.BLUE))
+            sender.sendMessage(Component.text("- 赤チーム旗: ${result.redFlag}", NamedTextColor.RED))
+            sender.sendMessage(Component.text("- 青チーム旗: ${result.blueFlag}", NamedTextColor.BLUE))
+        } else {
+            sender.sendMessage(Component.text("マップの保存に失敗しました", NamedTextColor.RED))
+            result.errors.forEach { error ->
+                sender.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
+            }
+        }
+        
+        return true
     }
 }
 

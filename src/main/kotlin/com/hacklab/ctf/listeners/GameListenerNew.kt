@@ -462,9 +462,62 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
             GamePhase.COMBAT -> {
-                // 戦闘フェーズ：全面的に破壊禁止
-                event.isCancelled = true
-                player.sendMessage(Component.text("戦闘フェーズ中はブロックを破壊できません", NamedTextColor.RED))
+                // 戦闘フェーズ：設定されたツールでのみ破壊可能
+                val itemInHand = player.inventory.itemInMainHand
+                val allowedToolTypes = plugin.config.getStringList("mechanics.allowed-break-tools")
+                
+                // 許可されたツールタイプをMaterialリストに変換
+                val allowedTools = mutableListOf<Material>()
+                if (allowedToolTypes.contains("PICKAXE")) {
+                    allowedTools.addAll(listOf(
+                        Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+                        Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE
+                    ))
+                }
+                if (allowedToolTypes.contains("SHOVEL")) {
+                    allowedTools.addAll(listOf(
+                        Material.WOODEN_SHOVEL, Material.STONE_SHOVEL, Material.IRON_SHOVEL,
+                        Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL
+                    ))
+                }
+                if (allowedToolTypes.contains("AXE")) {
+                    allowedTools.addAll(listOf(
+                        Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
+                        Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE
+                    ))
+                }
+                if (allowedToolTypes.contains("HOE")) {
+                    allowedTools.addAll(listOf(
+                        Material.WOODEN_HOE, Material.STONE_HOE, Material.IRON_HOE,
+                        Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE
+                    ))
+                }
+                if (allowedToolTypes.contains("BUCKET")) {
+                    allowedTools.addAll(listOf(
+                        Material.BUCKET, Material.WATER_BUCKET, Material.LAVA_BUCKET
+                    ))
+                }
+                
+                if (!allowedTools.contains(itemInHand.type)) {
+                    event.isCancelled = true
+                    val toolNames = allowedToolTypes.map { toolType ->
+                        when (toolType) {
+                            "PICKAXE" -> "ピッケル"
+                            "SHOVEL" -> "シャベル"
+                            "AXE" -> "斧"
+                            "HOE" -> "クワ"
+                            "BUCKET" -> "バケツ"
+                            else -> toolType
+                        }
+                    }.joinToString("、")
+                    player.sendMessage(Component.text("戦闘フェーズ中は${toolNames}でのみブロックを破壊できます", NamedTextColor.RED))
+                } else {
+                    // 旗とスポーン装飾は破壊不可
+                    if (isProtectedBlock(game, event.block.location)) {
+                        event.isCancelled = true
+                        player.sendMessage(Component.text("ゲーム用のブロックは破壊できません", NamedTextColor.RED))
+                    }
+                }
             }
             GamePhase.RESULT -> {
                 // リザルトフェーズ：全面的に破壊禁止
