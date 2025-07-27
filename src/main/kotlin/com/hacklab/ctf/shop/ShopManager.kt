@@ -96,7 +96,7 @@ class ShopManager(private val plugin: Main) {
         shopItems.add(ShopItem("ladder", "§6はしご x16", Material.LADDER, 16, 10, ShopCategory.BLOCKS))
         shopItems.add(ShopItem("fence", "§6フェンス x16", Material.OAK_FENCE, 16, 8, ShopCategory.BLOCKS))
         
-        // 建築用ツール
+        // 建築用ツール（建築フェーズのみ）
         shopItems.add(ShopItem("wooden_pickaxe", "§6木のツルハシ", Material.WOODEN_PICKAXE, 1, 10, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.BUILD)))
         shopItems.add(ShopItem("stone_pickaxe", "§7石のツルハシ", Material.STONE_PICKAXE, 1, 15, ShopCategory.WEAPONS,
@@ -105,6 +105,21 @@ class ShopManager(private val plugin: Main) {
             availablePhases = setOf(GamePhase.BUILD)))
         shopItems.add(ShopItem("shears", "§fハサミ", Material.SHEARS, 1, 15, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.BUILD)))
+        
+        // 戦闘用ツール（戦闘フェーズでブロック破壊用）
+        shopItems.add(ShopItem("combat_iron_pickaxe", "§f戦闘用鉄のツルハシ", Material.IRON_PICKAXE, 1, 30, ShopCategory.WEAPONS,
+            availablePhases = setOf(GamePhase.COMBAT),
+            lore = listOf("§7戦闘中でもブロックを破壊できる")))
+        shopItems.add(ShopItem("combat_diamond_pickaxe", "§b戦闘用ダイヤのツルハシ", Material.DIAMOND_PICKAXE, 1, 60, ShopCategory.WEAPONS,
+            availablePhases = setOf(GamePhase.COMBAT),
+            lore = listOf("§7戦闘中でもブロックを破壊できる"),
+            enchantments = mapOf(Enchantment.EFFICIENCY to 2)))
+        shopItems.add(ShopItem("combat_iron_shovel", "§f戦闘用鉄のシャベル", Material.IRON_SHOVEL, 1, 20, ShopCategory.WEAPONS,
+            availablePhases = setOf(GamePhase.COMBAT),
+            lore = listOf("§7戦闘中でもブロックを破壊できる")))
+        shopItems.add(ShopItem("combat_bucket", "§f戦闘用バケツ", Material.BUCKET, 1, 15, ShopCategory.WEAPONS,
+            availablePhases = setOf(GamePhase.COMBAT),
+            lore = listOf("§7戦闘中でも液体を回収できる")))
         
         // 購入制限付きアイテムの例
         shopItems.add(ShopItem("ender_chest", "§5エンダーチェスト", Material.ENDER_CHEST, 1, 50, ShopCategory.BLOCKS,

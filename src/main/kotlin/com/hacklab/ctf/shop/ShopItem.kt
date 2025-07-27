@@ -8,6 +8,8 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import org.bukkit.NamespacedKey
+import org.bukkit.persistence.PersistentDataType
 
 data class ShopItem(
     val id: String,
@@ -39,6 +41,16 @@ data class ShopItem(
                 // 耐久無限設定
                 if (this@ShopItem.unbreakable) {
                     isUnbreakable = true
+                }
+                
+                // ショップアイテムマーカーを追加（NBTタグ）
+                val plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("EasyCTF")
+                if (plugin != null) {
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "shop_item"),
+                        PersistentDataType.STRING,
+                        id
+                    )
                 }
             }
         }
