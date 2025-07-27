@@ -12,6 +12,7 @@ import com.hacklab.ctf.map.MapScanner
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.MatchMode
 import com.hacklab.ctf.utils.Team
+import com.hacklab.ctf.utils.WorldEditHelper
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -78,6 +79,11 @@ class GameManager(private val plugin: Main) {
             return false
         }
         
+        // WorldEditの選択範囲を確認
+        val worldEditSelection = if (WorldEditHelper.isWorldEditAvailable()) {
+            WorldEditHelper.getPlayerSelection(player)
+        } else null
+        
         // プレイヤーの一時的なマップ領域または既存のゲームのマップ領域を確認
         val tempPositions = getTempMapPositions(player)
         val hasTempMapRegion = tempPositions?.pos1 != null && tempPositions.pos2 != null
@@ -85,15 +91,23 @@ class GameManager(private val plugin: Main) {
         val gamePositions = mapPositions[gameName.lowercase()]
         val hasGameMapRegion = gamePositions?.pos1 != null && gamePositions.pos2 != null
         
-        if (hasTempMapRegion || hasGameMapRegion) {
+        if (worldEditSelection != null || hasTempMapRegion || hasGameMapRegion) {
             player.sendMessage(Component.text("マップ領域が設定されています。自動検出でゲームを作成しますか？", NamedTextColor.YELLOW))
             player.sendMessage(Component.text("[Y/n] Yで自動作成、nで対話形式", NamedTextColor.GRAY))
             
             // チャットリスナーで応答を待つ
             setupSession.waitForMapAutoConfirm(player, gameName) { useAuto ->
                 if (useAuto) {
+                    // WorldEditの選択範囲を優先的に使用
+                    if (worldEditSelection != null) {
+                        mapPositions[gameName.lowercase()] = MapPositions(
+                            worldEditSelection.first.clone(),
+                            worldEditSelection.second.clone()
+                        )
+                        player.sendMessage(Component.text("WorldEditの選択範囲を使用します", NamedTextColor.GRAY))
+                    }
                     // 一時的なマップ範囲がある場合は、ゲームのマップ範囲に移動
-                    if (hasTempMapRegion && tempPositions != null) {
+                    else if (hasTempMapRegion && tempPositions != null) {
                         mapPositions[gameName.lowercase()] = MapPositions(
                             tempPositions.pos1?.clone(),
                             tempPositions.pos2?.clone()
