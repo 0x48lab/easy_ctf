@@ -44,19 +44,29 @@ class CompressedMapManager(private val plugin: Main) {
             
             // ブロックデータを収集
             val blockDataList = mutableListOf<String>()
+            var totalBlocks = 0
+            var airBlocks = 0
+            
+            println("[CompressedMapManager] 保存範囲: ${region.minX},${region.minY},${region.minZ} から ${region.maxX},${region.maxY},${region.maxZ}")
+            
             for (x in region.minX..region.maxX) {
                 for (y in region.minY..region.maxY) {
                     for (z in region.minZ..region.maxZ) {
+                        totalBlocks++
                         val block = region.world.getBlockAt(x, y, z)
                         if (block.type != Material.AIR) {
                             val relX = x - region.minX
                             val relY = y - region.minY
                             val relZ = z - region.minZ
                             blockDataList.add("$relX,$relY,$relZ:${block.blockData.asString}")
+                        } else {
+                            airBlocks++
                         }
                     }
                 }
             }
+            
+            println("[CompressedMapManager] スキャン完了: 総ブロック数=$totalBlocks, AIR=$airBlocks, 保存ブロック数=${blockDataList.size}")
             
             // データを圧縮してBase64エンコード
             val compressedData = compressData(blockDataList.joinToString("\n"))
@@ -101,20 +111,27 @@ class CompressedMapManager(private val plugin: Main) {
             val maxY = config.getInt("pos2.y")
             val maxZ = config.getInt("pos2.z")
             
+            println("[CompressedMapManager] 復元範囲: $minX,$minY,$minZ から $maxX,$maxY,$maxZ")
+            println("[CompressedMapManager] 復元先ワールド: ${world.name}")
+            
             // まず範囲内をすべてAIRにする
+            var clearedBlocks = 0
             for (x in minX..maxX) {
                 for (y in minY..maxY) {
                     for (z in minZ..maxZ) {
                         world.getBlockAt(x, y, z).type = Material.AIR
+                        clearedBlocks++
                     }
                 }
             }
+            println("[CompressedMapManager] $clearedBlocks ブロックをクリア")
             
             // 圧縮データを解凍
             val compressedData = config.getString("blocks_compressed") ?: return false
             val blockDataString = decompressData(compressedData)
             
             // ブロックを復元
+            var restoredBlocks = 0
             blockDataString.split("\n").forEach { line ->
                 if (line.isNotEmpty()) {
                     val parts = line.split(":")
@@ -127,6 +144,7 @@ class CompressedMapManager(private val plugin: Main) {
                             try {
                                 val blockData = plugin.server.createBlockData(parts[1])
                                 world.getBlockAt(x, y, z).blockData = blockData
+                                restoredBlocks++
                             } catch (e: Exception) {
                                 plugin.logger.warning("Failed to restore block at $x,$y,$z: ${e.message}")
                             }
@@ -135,7 +153,8 @@ class CompressedMapManager(private val plugin: Main) {
                 }
             }
             
-            plugin.logger.info("Restored map for $gameName")
+            println("[CompressedMapManager] 復元完了: $restoredBlocks ブロックを復元")
+            plugin.logger.info("Restored map for $gameName ($restoredBlocks blocks)")
             return true
             
         } catch (e: Exception) {
