@@ -37,6 +37,7 @@ class GameManager(private val plugin: Main) {
     private val mapManager = CompressedMapManager(plugin)
     private val mapScanner = MapScanner()
     private val mapPositions = ConcurrentHashMap<String, MapPositions>()
+    private val tempMapPositions = ConcurrentHashMap<Player, MapPositions>() // プレイヤーごとの一時的なマップ範囲
     
     data class MapPositions(
         var pos1: Location? = null,
@@ -77,17 +78,29 @@ class GameManager(private val plugin: Main) {
             return false
         }
         
-        // マップ領域が設定されているか確認
-        val positions = mapPositions[gameName.lowercase()]
-        val hasMapRegion = positions?.pos1 != null && positions.pos2 != null
+        // プレイヤーの一時的なマップ領域または既存のゲームのマップ領域を確認
+        val tempPositions = getTempMapPositions(player)
+        val hasTempMapRegion = tempPositions?.pos1 != null && tempPositions.pos2 != null
         
-        if (hasMapRegion) {
+        val gamePositions = mapPositions[gameName.lowercase()]
+        val hasGameMapRegion = gamePositions?.pos1 != null && gamePositions.pos2 != null
+        
+        if (hasTempMapRegion || hasGameMapRegion) {
             player.sendMessage(Component.text("マップ領域が設定されています。自動検出でゲームを作成しますか？", NamedTextColor.YELLOW))
             player.sendMessage(Component.text("[Y/n] Yで自動作成、nで対話形式", NamedTextColor.GRAY))
             
             // チャットリスナーで応答を待つ
             setupSession.waitForMapAutoConfirm(player, gameName) { useAuto ->
                 if (useAuto) {
+                    // 一時的なマップ範囲がある場合は、ゲームのマップ範囲に移動
+                    if (hasTempMapRegion && tempPositions != null) {
+                        mapPositions[gameName.lowercase()] = MapPositions(
+                            tempPositions.pos1?.clone(),
+                            tempPositions.pos2?.clone()
+                        )
+                        clearTempMapPositions(player)
+                    }
+                    
                     // 自動検出でゲーム作成
                     val result = saveMap(gameName)
                     if (result.success) {
@@ -478,6 +491,36 @@ class GameManager(private val plugin: Main) {
     fun setMapPos2(gameName: String, location: Location) {
         val positions = mapPositions.getOrPut(gameName.lowercase()) { MapPositions() }
         positions.pos2 = location.clone()
+    }
+    
+    /**
+     * 一時的なマップ範囲の始点を設定（プレイヤーごと）
+     */
+    fun setTempMapPos1(player: Player, location: Location) {
+        val positions = tempMapPositions.getOrPut(player) { MapPositions() }
+        positions.pos1 = location.clone()
+    }
+    
+    /**
+     * 一時的なマップ範囲の終点を設定（プレイヤーごと）
+     */
+    fun setTempMapPos2(player: Player, location: Location) {
+        val positions = tempMapPositions.getOrPut(player) { MapPositions() }
+        positions.pos2 = location.clone()
+    }
+    
+    /**
+     * プレイヤーの一時的なマップ範囲を取得
+     */
+    fun getTempMapPositions(player: Player): MapPositions? {
+        return tempMapPositions[player]
+    }
+    
+    /**
+     * プレイヤーの一時的なマップ範囲を削除
+     */
+    fun clearTempMapPositions(player: Player) {
+        tempMapPositions.remove(player)
     }
     
     /**

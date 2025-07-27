@@ -677,8 +677,8 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/ctf stop <ゲーム名> - ゲーム停止", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf setflag <ゲーム名> <red|blue> - 旗位置設定", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf setspawn <ゲーム名> <red|blue> - スポーン地点設定", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf setpos1 <ゲーム名> - マップ領域の始点を設定", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf setpos2 <ゲーム名> - マップ領域の終点を設定", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("/ctf setpos1 [ゲーム名] - マップ領域の始点を設定", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("/ctf setpos2 [ゲーム名] - マップ領域の終点を設定", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf savemap <ゲーム名> - マップを保存（自動検出）", NamedTextColor.YELLOW))
         }
         
@@ -747,14 +747,17 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
+        // ゲーム名なしで一時的な範囲として設定
         if (args.size < 2) {
-            sender.sendMessage(Component.text("使用方法: /ctf setpos1 <ゲーム名>", NamedTextColor.YELLOW))
-            return true
+            gameManager.setTempMapPos1(sender, sender.location)
+            sender.sendMessage(Component.text("マップ始点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
+            sender.sendMessage(Component.text("この範囲は次の /ctf create で使用されます", NamedTextColor.GRAY))
+        } else {
+            // ゲーム名ありの場合は既存のゲームに対して設定
+            val gameName = args[1]
+            gameManager.setMapPos1(gameName, sender.location)
+            sender.sendMessage(Component.text("ゲーム $gameName の始点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
         }
-        
-        val gameName = args[1]
-        gameManager.setMapPos1(gameName, sender.location)
-        sender.sendMessage(Component.text("ゲーム $gameName の始点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
         
         return true
     }
@@ -770,14 +773,17 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
+        // ゲーム名なしで一時的な範囲として設定
         if (args.size < 2) {
-            sender.sendMessage(Component.text("使用方法: /ctf setpos2 <ゲーム名>", NamedTextColor.YELLOW))
-            return true
+            gameManager.setTempMapPos2(sender, sender.location)
+            sender.sendMessage(Component.text("マップ終点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
+            sender.sendMessage(Component.text("この範囲は次の /ctf create で使用されます", NamedTextColor.GRAY))
+        } else {
+            // ゲーム名ありの場合は既存のゲームに対して設定
+            val gameName = args[1]
+            gameManager.setMapPos2(gameName, sender.location)
+            sender.sendMessage(Component.text("ゲーム $gameName の終点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
         }
-        
-        val gameName = args[1]
-        gameManager.setMapPos2(gameName, sender.location)
-        sender.sendMessage(Component.text("ゲーム $gameName の終点を設定しました: ${sender.location.blockX}, ${sender.location.blockY}, ${sender.location.blockZ}", NamedTextColor.GREEN))
         
         return true
     }
