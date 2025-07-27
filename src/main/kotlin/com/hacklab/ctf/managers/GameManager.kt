@@ -129,18 +129,29 @@ class GameManager(private val plugin: Main) {
                         result.errors.forEach { error ->
                             player.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
                         }
-                        player.sendMessage(Component.text("対話形式でゲームを作成します", NamedTextColor.YELLOW))
-                        setupSession.startCreateSession(player, gameName, player.world)
+                        player.sendMessage(Component.text("マップ内に必要なブロックを配置してから再度実行してください", NamedTextColor.YELLOW))
+                        player.sendMessage(Component.text("必要なブロック:", NamedTextColor.GRAY))
+                        player.sendMessage(Component.text("- 赤コンクリート: 赤チームスポーン", NamedTextColor.GRAY))
+                        player.sendMessage(Component.text("- 青コンクリート: 青チームスポーン", NamedTextColor.GRAY))
+                        player.sendMessage(Component.text("- ビーコン+赤ガラス: 赤チーム旗", NamedTextColor.GRAY))
+                        player.sendMessage(Component.text("- ビーコン+青ガラス: 青チーム旗", NamedTextColor.GRAY))
                     }
                 } else {
-                    // 対話形式でゲーム作成
-                    setupSession.startCreateSession(player, gameName, player.world)
+                    // 自動検出を使用しない場合
+                    player.sendMessage(Component.text("ゲーム作成をキャンセルしました", NamedTextColor.YELLOW))
                 }
             }
             return true
         }
         
-        return setupSession.startCreateSession(player, gameName, player.world)
+        // マップ領域が設定されていない場合
+        player.sendMessage(Component.text("マップ領域が設定されていません", NamedTextColor.RED))
+        player.sendMessage(Component.text("以下のいずれかの方法で範囲を設定してください:", NamedTextColor.YELLOW))
+        if (WorldEditHelper.isWorldEditAvailable()) {
+            player.sendMessage(Component.text("1. WorldEdit: //pos1 と //pos2", NamedTextColor.GRAY))
+        }
+        player.sendMessage(Component.text("2. CTFコマンド: /ctf setpos1 と /ctf setpos2", NamedTextColor.GRAY))
+        return false
     }
     
     /**
