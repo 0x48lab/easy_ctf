@@ -138,7 +138,7 @@ class MapScanner {
             val blueFlag = blueFlags[0]
             
             // 旗とスポーンの最小距離チェック
-            val minDistance = 15.0
+            val minDistance = 3.0
             
             if (redSpawn.distance(redFlag) < minDistance) {
                 errors.add("赤チームの旗とスポーン地点が近すぎます（最低${minDistance}ブロック必要）")

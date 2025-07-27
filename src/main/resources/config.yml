@@ -187,7 +187,7 @@ world:
     enabled: false
     radius: 5
     height: 3
-    min-flag-spawn-distance: 15
+    min-flag-spawn-distance: 3
 
 # Debug Settings
 debug:
