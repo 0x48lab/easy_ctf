@@ -30,6 +30,10 @@ class Main : JavaPlugin() {
         
         saveDefaultConfig()
         
+        // Config値の確認
+        logger.info("[EasyCTF] Loading configuration...")
+        logger.info("[EasyCTF] build-phase-gamemode: ${config.getString("default-phases.build-phase-gamemode")}")
+        
         languageManager = LanguageManager(this)
         equipmentManager = EquipmentManager(this)
         shopManager = ShopManager(this)

@@ -25,20 +25,20 @@ default-game:
 # Default Phase Settings
 default-phases:
   # Phase 1: Build phase duration in seconds (default: 5 minutes)
-  build-duration: 300
+  build-duration: 120
   
   # Build phase game mode for players
   # Options: ADVENTURE, SURVIVAL, CREATIVE
-  # ADVENTURE: Limited interaction, prevents most building (default)
-  # SURVIVAL: Normal building/breaking with tools
+  # ADVENTURE: Limited interaction, prevents most building
+  # SURVIVAL: Normal building/breaking with tools (default)
   # CREATIVE: Unlimited building, flying, instant break
-  build-phase-gamemode: "ADVENTURE"
+  build-phase-gamemode: "SURVIVAL"
   
   # Phase 2: Combat phase duration in seconds (default: 10 minutes)
-  combat-duration: 600
+  combat-duration: 120
   
   # Phase 3: Result phase duration in seconds (default: 1 minute for final, 15 seconds for intermediate)
-  result-duration: 60
+  result-duration: 15
   
   # Intermediate result duration for matches (seconds)
   intermediate-result-duration: 15
@@ -46,7 +46,7 @@ default-phases:
 # Game Mechanics
 mechanics:
   # Flag drop timeout in seconds
-  flag-drop-timeout: 30
+  flag-drop-timeout: 15
   
   # Spawn protection duration in seconds
   spawn-protection-duration: 3
@@ -60,13 +60,12 @@ mechanics:
   # Allow vehicles (minecarts, boats)
   allow-vehicles: false
   
-  # Tools allowed to break blocks during combat phase
-  # Available tools: PICKAXE, SHOVEL, AXE, HOE, BUCKET
-  allowed-break-tools:
-    - PICKAXE
-    - SHOVEL
-    - AXE
-    - BUCKET
+  # Tools allowed to break blocks during combat phase - REMOVED
+  # Players can now break blocks with any tool or by hand
+  
+  # Block placement restriction
+  # Blocks must be adjacent to existing blocks (except within 3 blocks of flag)
+  # Adjacent = horizontally, vertically, or diagonally touching
 
 # Equipment Settings (DEPRECATED - Now using initial-equipment and shop system)
 equipment:
@@ -203,7 +202,7 @@ match:
   default-target: 3
   
   # Interval between games in seconds
-  interval-duration: 5
+  interval-duration: 15
 
 # Currency Settings
 currency:
@@ -238,8 +237,8 @@ shop:
   # Enable shop system
   enabled: true
   
-  # Shop usage range from spawn point (blocks) - Currently disabled (no range limit)
-  # use-range: 15
+  # Shop usage range from spawn point (blocks)
+  use-range: 15
   
   # Death item behavior
   death-item-behavior:
@@ -254,27 +253,17 @@ shop:
     3-point: 0.3    # 30% off
     4-point-plus: 0.4  # 40% off
 
-# Initial Equipment Settings
-initial-equipment:
-  # Build phase equipment
-  build-phase:
-    tools:
-      - "IRON_PICKAXE"
-      - "IRON_AXE"
-      - "IRON_SHOVEL"
-    blocks:
-      - "OAK_PLANKS:64"
-      - "COBBLESTONE:64"
-      - "DIRT:32"
-    food:
-      - "BREAD:16"
-  
-  # Combat phase equipment (given once at the start of combat phase)
-  combat-phase:
-    weapons:
-      - "STONE_SWORD"
-      - "STONE_AXE"
-    armor:
-      # Team colored leather armor will be added automatically
-    food:
-      - "BREAD:8"
+# Initial Equipment Settings - DISABLED (No initial equipment)
+# Players must purchase all items from the shop
+# initial-equipment:
+#   # Build phase equipment
+#   build-phase:
+#     tools: []
+#     blocks: []
+#     food: []
+#   
+#   # Combat phase equipment
+#   combat-phase:
+#     weapons: []
+#     armor: []
+#     food: []

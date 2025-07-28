@@ -11,6 +11,7 @@ import com.hacklab.ctf.utils.Team
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.GameMode
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -26,10 +27,16 @@ import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.player.*
 import org.bukkit.event.block.Action
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.event.player.PlayerRespawnEvent
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.ItemDespawnEvent
+import org.bukkit.event.entity.EntityCombustEvent
+import org.bukkit.entity.Item
 
 class GameListenerNew(private val plugin: Main) : Listener {
     
@@ -314,10 +321,46 @@ class GameListenerNew(private val plugin: Main) : Listener {
             event.keepInventory = false
             event.droppedExp = 0
             
-            // 旗を持っていた場合ドロップ
+            // 死亡位置を記録（旗ドロップ前に）
+            val deathLocation = player.location.clone()
+            
+            // 旗を持っていた場合の処理
             if (player.uniqueId == game.redFlagCarrier || player.uniqueId == game.blueFlagCarrier) {
                 val flagTeam = if (player.uniqueId == game.redFlagCarrier) Team.RED else Team.BLUE
-                game.dropFlag(player, flagTeam)
+                
+                // 奈落死の判定（Y座標が-64以下、または0以下、または死因がVOID）
+                val isVoidDeath = deathLocation.y <= -64 || 
+                                 deathLocation.y <= 0 || 
+                                 player.lastDamageCause?.cause == EntityDamageEvent.DamageCause.VOID
+                
+                if (isVoidDeath) {
+                    // 奈落死の場合は即座に旗を返却（アイテムがドロップされないため）
+                    plugin.logger.info("[Flag] Void death detected at Y=${deathLocation.y}, returning flag immediately")
+                    
+                    // キャリアをクリア
+                    when (flagTeam) {
+                        Team.RED -> game.redFlagCarrier = null
+                        Team.BLUE -> game.blueFlagCarrier = null
+                    }
+                    
+                    // グロー効果を解除
+                    player.isGlowing = false
+                    
+                    // 旗を元の位置に戻す
+                    val flagLocation = when (flagTeam) {
+                        Team.RED -> game.getRedFlagLocation()
+                        Team.BLUE -> game.getBlueFlagLocation()
+                    } ?: return
+                    
+                    game.setupFlagBeacon(flagLocation, flagTeam)
+                    
+                    game.getAllPlayers().forEach {
+                        it.sendMessage(Component.text("${flagTeam.displayName}の旗が元の位置に戻りました（奈落死のため）", flagTeam.color))
+                    }
+                } else {
+                    // 通常の死亡の場合はドロップ処理
+                    game.dropFlag(player, flagTeam, deathLocation)
+                }
             }
             
             // リスポーン処理（死亡回数に応じた遅延）
@@ -330,16 +373,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 死亡メッセージにリスポーン時間を表示
             player.sendMessage(Component.text("リスポーンまで ${respawnDelay} 秒...", NamedTextColor.YELLOW))
             
-            // 死亡位置を記録
-            val deathLocation = player.location.clone()
+            // 死亡位置を保存
+            player.setMetadata("death_location", org.bukkit.metadata.FixedMetadataValue(plugin, deathLocation))
             
             // 即座にリスポーンしてスペクテーターモードに
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 player.spigot().respawn()
-                player.gameMode = GameMode.SPECTATOR
-                // 死亡位置にテレポート（観戦用）
-                player.teleport(deathLocation)
-                player.sendMessage(Component.text("スペクテーターモードで観戦中... ${respawnDelay}秒後に復活します", NamedTextColor.GRAY))
             }, 1L) // 1 tick後
             
             // 指定時間後にサバイバルモードで復活
@@ -431,14 +470,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val game = gameManager.getPlayerGame(player) ?: return
         
-        // ゲーム中でない場合は禁止
-        if (game.state != GameState.RUNNING) {
+        // デバッグログ
+        plugin.logger.info("[BlockBreak] Player: ${player.name}, GameState: ${game.state}, Phase: ${game.phase}, BuildPhaseGameMode: ${game.buildPhaseGameMode}, PlayerGameMode: ${player.gameMode}")
+        
+        // ゲーム中でない場合は禁止（STARTINGとRUNNINGの両方を許可）
+        if (game.state != GameState.RUNNING && game.state != GameState.STARTING) {
             event.isCancelled = true
+            plugin.logger.info("[BlockBreak] Cancelled: Game state is ${game.state}")
             return
         }
         
@@ -446,6 +489,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             GamePhase.BUILD -> {
                 // 建築フェーズ：ゲームモードに応じた制限
                 val gameMode = GameMode.valueOf(game.buildPhaseGameMode)
+                plugin.logger.info("[BlockBreak] Build phase - checking gamemode: $gameMode")
                 when (gameMode) {
                     GameMode.ADVENTURE -> {
                         event.isCancelled = true
@@ -456,6 +500,28 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         if (isProtectedBlock(game, event.block.location)) {
                             event.isCancelled = true
                             player.sendMessage(Component.text("ゲーム用のブロックは破壊できません", NamedTextColor.RED))
+                            plugin.logger.info("[BlockBreak] Protected block at ${event.block.location}")
+                        } else {
+                            val blockType = event.block.type
+                            
+                            // チームカラーブロック（コンクリート、ガラス）と白いブロックはドロップしない
+                            val isTeamColorBlock = blockType in listOf(
+                                Material.RED_CONCRETE, Material.BLUE_CONCRETE,
+                                Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS,
+                                Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS
+                            )
+                            
+                            if (isTeamColorBlock) {
+                                event.isDropItems = false
+                                plugin.logger.info("[BlockBreak] Team color or white block - no drops")
+                            }
+                            
+                            // 明示的に許可
+                            event.isCancelled = false
+                            plugin.logger.info("[BlockBreak] Allowing block break in $gameMode mode")
+                            
+                            // ブロック破壊を記録から削除
+                            game.recordBlockBreak(event.block.location)
                         }
                     }
                     GameMode.SPECTATOR -> {
@@ -464,34 +530,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
             GamePhase.COMBAT -> {
-                // 戦闘フェーズ：ショップで購入したツールでのみ破壊可能
-                val itemInHand = player.inventory.itemInMainHand
-                
-                // ショップアイテムかどうかチェック
-                val isShopItem = itemInHand.itemMeta?.persistentDataContainer?.has(
-                    NamespacedKey(plugin, "shop_item"),
-                    PersistentDataType.STRING
-                ) ?: false
-                
-                // 許可されたツールタイプかチェック
-                val isAllowedTool = when (itemInHand.type) {
-                    Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
-                    Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE,
-                    Material.WOODEN_SHOVEL, Material.STONE_SHOVEL, Material.IRON_SHOVEL,
-                    Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL,
-                    Material.BUCKET, Material.WATER_BUCKET, Material.LAVA_BUCKET -> true
-                    else -> false
-                }
-                
-                if (!isShopItem || !isAllowedTool) {
+                // 戦闘フェーズ：旗とスポーン装飾は破壊不可
+                if (isProtectedBlock(game, event.block.location)) {
                     event.isCancelled = true
-                    player.sendMessage(Component.text("戦闘フェーズ中はショップで購入したピッケル、シャベル、バケツでのみブロックを破壊できます", NamedTextColor.RED))
+                    player.sendMessage(Component.text("ゲーム用のブロックは破壊できません", NamedTextColor.RED))
                 } else {
-                    // 旗とスポーン装飾は破壊不可
-                    if (isProtectedBlock(game, event.block.location)) {
-                        event.isCancelled = true
-                        player.sendMessage(Component.text("ゲーム用のブロックは破壊できません", NamedTextColor.RED))
-                    }
+                    // 戦闘フェーズではアイテムをドロップしない
+                    event.isDropItems = false
+                    
+                    // ブロック破壊を記録し、切断されたブロックを白く変換
+                    game.recordBlockBreak(event.block.location)
                 }
             }
             GamePhase.RESULT -> {
@@ -501,14 +549,36 @@ class GameListenerNew(private val plugin: Main) : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onBlockPlace(event: BlockPlaceEvent) {
         val player = event.player
         val game = gameManager.getPlayerGame(player) ?: return
         
-        // ゲーム中でない場合は禁止
-        if (game.state != GameState.RUNNING) {
+        // デバッグログ
+        plugin.logger.info("[BlockPlace] Player: ${player.name}, GameState: ${game.state}, Phase: ${game.phase}, BuildPhaseGameMode: ${game.buildPhaseGameMode}, PlayerGameMode: ${player.gameMode}")
+        
+        // ゲーム中でない場合は禁止（STARTINGとRUNNINGの両方を許可）
+        if (game.state != GameState.RUNNING && game.state != GameState.STARTING) {
             event.isCancelled = true
+            plugin.logger.info("[BlockPlace] Cancelled: Game state is ${game.state}")
+            return
+        }
+        
+        // 無限ブロックかどうかを事前にチェック（設置前のアイテム情報を保存）
+        val itemInHand = event.itemInHand
+        val originalItemType = itemInHand?.type
+        val originalItemMeta = itemInHand?.itemMeta?.clone()
+        val isInfiniteBlock = itemInHand?.itemMeta?.persistentDataContainer?.get(
+            NamespacedKey(plugin, "infinite_block"),
+            PersistentDataType.BOOLEAN
+        ) ?: false
+        
+        // ビーコンの上にブロックを置けないようにする
+        val blockLocation = event.block.location
+        val blockBelow = blockLocation.clone().subtract(0.0, 1.0, 0.0).block
+        if (blockBelow.type == Material.BEACON) {
+            event.isCancelled = true
+            player.sendMessage(Component.text("ビーコンの上にブロックを置くことはできません", NamedTextColor.RED))
             return
         }
         
@@ -516,13 +586,31 @@ class GameListenerNew(private val plugin: Main) : Listener {
             GamePhase.BUILD -> {
                 // 建築フェーズ：ゲームモードに応じた制限
                 val gameMode = GameMode.valueOf(game.buildPhaseGameMode)
+                plugin.logger.info("[BlockPlace] Build phase - checking gamemode: $gameMode")
                 when (gameMode) {
                     GameMode.ADVENTURE -> {
                         event.isCancelled = true
                         player.sendMessage(Component.text("アドベンチャーモードではブロックを設置できません", NamedTextColor.RED))
                     }
                     GameMode.SURVIVAL, GameMode.CREATIVE -> {
-                        // 設置は許可
+                        // ブロック設置制限をチェック
+                        val block = event.block
+                        val parent = game.canPlaceBlock(player, block)
+                        if (parent == null) {
+                            event.isCancelled = true
+                            return
+                        }
+                        
+                        // 明示的に許可
+                        event.isCancelled = false
+                        plugin.logger.info("[BlockPlace] Allowing block placement in $gameMode mode at ${block.location}")
+                        
+                        // ブロック設置を記録（ツリー構造で）
+                        val team = game.getPlayerTeam(player.uniqueId)
+                        if (team != null) {
+                            game.recordBlockPlacement(team, block.location, parent)
+                        }
+                        
                         // ブロック設置統計を記録
                         game.playerBlocksPlaced[player.uniqueId] = (game.playerBlocksPlaced[player.uniqueId] ?: 0) + 1
                     }
@@ -532,7 +620,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
             GamePhase.COMBAT -> {
-                // 戦闘フェーズ：全面的に設置禁止
+                // 戦闘フェーズ：ブロック設置禁止
                 event.isCancelled = true
                 player.sendMessage(Component.text("戦闘フェーズ中はブロックを設置できません", NamedTextColor.RED))
             }
@@ -540,6 +628,45 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 // リザルトフェーズ：全面的に設置禁止
                 event.isCancelled = true
             }
+        }
+        
+        // 無限ブロックの処理（設置が成功した場合のみ）
+        if (!event.isCancelled && isInfiniteBlock && originalItemType != null && originalItemType != Material.AIR) {
+            plugin.logger.info("[InfiniteBlock] Processing infinite block placement - Hand: ${event.hand}, Item: ${originalItemType}")
+            
+            // 無限ブロックの場合、アイテムを補充
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                // 元のアイテムを復元
+                val restoredItem = ItemStack(originalItemType).apply {
+                    amount = 1
+                    if (originalItemMeta != null) {
+                        itemMeta = originalItemMeta
+                    }
+                }
+                
+                // 使用された手に応じてアイテムを補充
+                when (event.hand) {
+                    EquipmentSlot.HAND -> {
+                        val currentItem = player.inventory.itemInMainHand
+                        plugin.logger.info("[InfiniteBlock] Main hand - Current: ${currentItem.type}, Amount: ${currentItem.amount}")
+                        if (currentItem.type == Material.AIR || currentItem.amount == 0) {
+                            player.inventory.setItemInMainHand(restoredItem)
+                            plugin.logger.info("[InfiniteBlock] Replenished main hand with ${restoredItem.type}")
+                        }
+                    }
+                    EquipmentSlot.OFF_HAND -> {
+                        val currentItem = player.inventory.itemInOffHand
+                        plugin.logger.info("[InfiniteBlock] Off hand - Current: ${currentItem.type}, Amount: ${currentItem.amount}")
+                        if (currentItem.type == Material.AIR || currentItem.amount == 0) {
+                            player.inventory.setItemInOffHand(restoredItem)
+                            plugin.logger.info("[InfiniteBlock] Replenished off hand with ${restoredItem.type}")
+                        }
+                    }
+                    else -> {
+                        plugin.logger.warning("[InfiniteBlock] Unknown hand type: ${event.hand}")
+                    }
+                }
+            }, 1L)
         }
     }
 
@@ -752,6 +879,178 @@ class GameListenerNew(private val plugin: Main) : Listener {
                material == Material.LEATHER_BOOTS
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onPlayerRespawn(event: PlayerRespawnEvent) {
+        val player = event.player
+        val game = gameManager.getPlayerGame(player) ?: return
+        
+        if (game.state == GameState.RUNNING && game.phase == GamePhase.COMBAT) {
+            // 戦闘フェーズ中の死亡リスポーン
+            // 保存された死亡位置を取得（なければ現在位置を使用）
+            val deathLocation = player.getMetadata("death_location")
+                .firstOrNull()?.value() as? Location ?: player.location.clone()
+            
+            // メタデータをクリア
+            player.removeMetadata("death_location", plugin)
+            
+            // 死亡位置がゲームワールドであることを確認
+            val gameWorld = game.world
+            if (deathLocation.world != gameWorld) {
+                // ワールドが違う場合は、ゲームワールドの同じ座標に修正
+                deathLocation.world = gameWorld
+            }
+            
+            val spectatorLocation = game.findSafeSpectatorLocation(deathLocation)
+            
+            // リスポーン地点をゲームワールドの観戦位置に設定
+            event.respawnLocation = spectatorLocation
+            
+            // スペクテーターモードに設定
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                player.gameMode = GameMode.SPECTATOR
+                player.sendMessage(Component.text("スペクテーターモードで観戦中...", NamedTextColor.GRAY))
+                
+                // 死亡回数を取得してリスポーン遅延を計算
+                val deaths = game.playerDeaths[player.uniqueId] ?: 1
+                val baseDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
+                val deathPenalty = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
+                val maxDelay = plugin.config.getInt("default-game.respawn-delay-max", 20)
+                val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
+                
+                // 指定時間後にサバイバルモードで復活
+                plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                    game.handleRespawn(player)
+                    player.gameMode = GameMode.SURVIVAL
+                    
+                    // 保持アイテムを再配布
+                    val keptItems = player.getMetadata("ctf_items_to_keep")
+                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
+                    
+                    for (item in keptItems) {
+                        player.inventory.addItem(item)
+                    }
+                    
+                    player.removeMetadata("ctf_items_to_keep", plugin)
+                }, respawnDelay * 20L) // 秒をticksに変換
+            }, 1L)
+        } else if (game.state == GameState.RUNNING && game.phase == GamePhase.BUILD) {
+            // 建築フェーズ中のリスポーン
+            val team = game.getPlayerTeam(player.uniqueId) ?: return
+            val spawnLocation = when (team) {
+                Team.RED -> game.getRedSpawnLocation()
+                Team.BLUE -> game.getBlueSpawnLocation()
+            }
+            if (spawnLocation != null) {
+                event.respawnLocation = spawnLocation
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onItemDamage(event: EntityDamageEvent) {
+        val entity = event.entity
+        if (entity !is Item) return
+        
+        val item = entity.itemStack
+        val itemName = item.itemMeta?.displayName() ?: return
+        val nameText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(itemName)
+        
+        // 旗アイテムかチェック
+        if (item.type == Material.BEACON && nameText.contains("の旗")) {
+            plugin.logger.info("[Flag] Flag item taking damage: ${event.cause}")
+            
+            // ダメージの原因をチェック
+            when (event.cause) {
+                EntityDamageEvent.DamageCause.LAVA,
+                EntityDamageEvent.DamageCause.FIRE,
+                EntityDamageEvent.DamageCause.FIRE_TICK,
+                EntityDamageEvent.DamageCause.VOID -> {
+                    // 旗を即座に返却
+                    event.isCancelled = true
+                    entity.remove()
+                    
+                    // どちらのチームの旗か判定
+                    val isRedFlag = nameText.contains("赤チーム")
+                    val team = if (isRedFlag) Team.RED else Team.BLUE
+                    
+                    // 該当するゲームを探す
+                    gameManager.getAllGames().values.forEach { game ->
+                        if (game.state == GameState.RUNNING) {
+                            val flagLocation = if (isRedFlag) game.getRedFlagLocation() else game.getBlueFlagLocation()
+                            if (flagLocation != null) {
+                                game.setupFlagBeacon(flagLocation, team)
+                                game.getAllPlayers().forEach { player ->
+                                    player.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました（${getDamageCauseMessage(event.cause)}）", team.color))
+                                }
+                                plugin.logger.info("[Flag] Flag returned due to ${event.cause}")
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    // その他のダメージは無効化
+                    event.isCancelled = true
+                }
+            }
+        }
+    }
+    
+    @EventHandler
+    fun onItemDespawn(event: ItemDespawnEvent) {
+        val item = event.entity.itemStack
+        val itemName = item.itemMeta?.displayName() ?: return
+        val nameText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(itemName)
+        
+        // 旗アイテムの自然消滅を防ぐ
+        if (item.type == Material.BEACON && nameText.contains("の旗")) {
+            event.isCancelled = true
+            plugin.logger.info("[Flag] Prevented flag despawn")
+        }
+    }
+    
+    @EventHandler
+    fun onItemCombust(event: EntityCombustEvent) {
+        val entity = event.entity
+        if (entity !is Item) return
+        
+        val item = entity.itemStack
+        val itemName = item.itemMeta?.displayName() ?: return
+        val nameText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(itemName)
+        
+        // 旗アイテムが燃えそうになったら
+        if (item.type == Material.BEACON && nameText.contains("の旗")) {
+            event.isCancelled = true
+            entity.remove()
+            
+            // どちらのチームの旗か判定
+            val isRedFlag = nameText.contains("赤チーム")
+            val team = if (isRedFlag) Team.RED else Team.BLUE
+            
+            // 該当するゲームを探す
+            gameManager.getAllGames().values.forEach { game ->
+                if (game.state == GameState.RUNNING) {
+                    val flagLocation = if (isRedFlag) game.getRedFlagLocation() else game.getBlueFlagLocation()
+                    if (flagLocation != null) {
+                        game.setupFlagBeacon(flagLocation, team)
+                        game.getAllPlayers().forEach { player ->
+                            player.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました（炎上のため）", team.color))
+                        }
+                        plugin.logger.info("[Flag] Flag returned due to combustion")
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun getDamageCauseMessage(cause: EntityDamageEvent.DamageCause): String {
+        return when (cause) {
+            EntityDamageEvent.DamageCause.LAVA -> "溶岩に落ちたため"
+            EntityDamageEvent.DamageCause.FIRE, EntityDamageEvent.DamageCause.FIRE_TICK -> "炎上のため"
+            EntityDamageEvent.DamageCause.VOID -> "奈落に落ちたため"
+            else -> "ダメージを受けたため"
+        }
+    }
+
     @EventHandler
     fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
         val player = event.player
@@ -785,6 +1084,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
     }
     
     private fun isProtectedBlock(game: com.hacklab.ctf.Game, location: org.bukkit.Location): Boolean {
+        // 白いコンクリート（切断されたブロック）は誰でも破壊可能
+        if (location.block.type == com.hacklab.ctf.Game.NEUTRAL_BLOCK) {
+            return false
+        }
+        
         // 旗の位置チェック
         val flagLocations = listOf(game.getRedFlagLocation(), game.getBlueFlagLocation()).filterNotNull()
         for (flagLoc in flagLocations) {

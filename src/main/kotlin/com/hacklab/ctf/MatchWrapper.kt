@@ -52,7 +52,7 @@ class MatchWrapper(
      * マッチ完了判定
      */
     fun isMatchComplete(): Boolean {
-        return currentGameNumber > config.matchTarget
+        return currentGameNumber >= config.matchTarget
     }
     
     /**

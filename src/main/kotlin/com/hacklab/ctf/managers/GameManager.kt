@@ -92,66 +92,44 @@ class GameManager(private val plugin: Main) {
         val hasGameMapRegion = gamePositions?.pos1 != null && gamePositions.pos2 != null
         
         if (worldEditSelection != null || hasTempMapRegion || hasGameMapRegion) {
-            player.sendMessage(Component.text("マップ領域が設定されています。自動検出でゲームを作成しますか？", NamedTextColor.YELLOW))
-            player.sendMessage(Component.text("[Y/n] Yで自動作成、nで対話形式", NamedTextColor.GRAY))
+            // WorldEditの選択範囲を優先的に使用
+            if (worldEditSelection != null) {
+                mapPositions[gameName.lowercase()] = MapPositions(
+                    worldEditSelection.first.clone(),
+                    worldEditSelection.second.clone()
+                )
+                player.sendMessage(Component.text("WorldEditの選択範囲を使用します", NamedTextColor.GRAY))
+            }
+            // 一時的なマップ範囲がある場合は、ゲームのマップ範囲に移動
+            else if (hasTempMapRegion && tempPositions != null) {
+                mapPositions[gameName.lowercase()] = MapPositions(
+                    tempPositions.pos1?.clone(),
+                    tempPositions.pos2?.clone()
+                )
+                clearTempMapPositions(player)
+                player.sendMessage(Component.text("設定済みのマップ範囲を使用します", NamedTextColor.GRAY))
+            }
             
-            // チャットリスナーで応答を待つ
-            setupSession.waitForMapAutoConfirm(player, gameName) { useAuto ->
-                if (useAuto) {
-                    // WorldEditの選択範囲を優先的に使用
-                    if (worldEditSelection != null) {
-                        mapPositions[gameName.lowercase()] = MapPositions(
-                            worldEditSelection.first.clone(),
-                            worldEditSelection.second.clone()
-                        )
-                        player.sendMessage(Component.text("WorldEditの選択範囲を使用します", NamedTextColor.GRAY))
-                    }
-                    // 一時的なマップ範囲がある場合は、ゲームのマップ範囲に移動
-                    else if (hasTempMapRegion && tempPositions != null) {
-                        mapPositions[gameName.lowercase()] = MapPositions(
-                            tempPositions.pos1?.clone(),
-                            tempPositions.pos2?.clone()
-                        )
-                        clearTempMapPositions(player)
-                    }
-                    
-                    // デバッグ: マップ範囲を確認
-                    val finalPositions = mapPositions[gameName.lowercase()]
-                    if (finalPositions != null) {
-                        val pos1 = finalPositions.pos1
-                        val pos2 = finalPositions.pos2
-                        if (pos1 != null && pos2 != null) {
-                            player.sendMessage(Component.text("[DEBUG] マップ範囲:", NamedTextColor.GRAY))
-                            player.sendMessage(Component.text("  pos1: ${pos1.blockX}, ${pos1.blockY}, ${pos1.blockZ}", NamedTextColor.GRAY))
-                            player.sendMessage(Component.text("  pos2: ${pos2.blockX}, ${pos2.blockY}, ${pos2.blockZ}", NamedTextColor.GRAY))
-                        }
-                    }
-                    
-                    // 自動検出でゲーム作成
-                    val result = saveMap(gameName)
-                    if (result.success) {
-                        player.sendMessage(Component.text("ゲーム '$gameName' を作成しました！", NamedTextColor.GREEN))
-                        player.sendMessage(Component.text("検出結果:", NamedTextColor.AQUA))
-                        player.sendMessage(Component.text("- 赤チームスポーン: ${result.redSpawn}", NamedTextColor.RED))
-                        player.sendMessage(Component.text("- 青チームスポーン: ${result.blueSpawn}", NamedTextColor.BLUE))
-                        player.sendMessage(Component.text("- 赤チーム旗: ${result.redFlag}", NamedTextColor.RED))
-                        player.sendMessage(Component.text("- 青チーム旗: ${result.blueFlag}", NamedTextColor.BLUE))
-                    } else {
-                        player.sendMessage(Component.text("自動検出に失敗しました", NamedTextColor.RED))
-                        result.errors.forEach { error ->
-                            player.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
-                        }
-                        player.sendMessage(Component.text("マップ内に必要なブロックを配置してから再度実行してください", NamedTextColor.YELLOW))
-                        player.sendMessage(Component.text("必要なブロック:", NamedTextColor.GRAY))
-                        player.sendMessage(Component.text("- 赤コンクリート: 赤チームスポーン", NamedTextColor.GRAY))
-                        player.sendMessage(Component.text("- 青コンクリート: 青チームスポーン", NamedTextColor.GRAY))
-                        player.sendMessage(Component.text("- ビーコン+赤ガラス: 赤チーム旗", NamedTextColor.GRAY))
-                        player.sendMessage(Component.text("- ビーコン+青ガラス: 青チーム旗", NamedTextColor.GRAY))
-                    }
-                } else {
-                    // 自動検出を使用しない場合
-                    player.sendMessage(Component.text("ゲーム作成をキャンセルしました", NamedTextColor.YELLOW))
+            // 自動検出でゲーム作成
+            val result = saveMap(gameName)
+            if (result.success) {
+                player.sendMessage(Component.text("ゲーム '$gameName' を作成しました！", NamedTextColor.GREEN))
+                player.sendMessage(Component.text("検出結果:", NamedTextColor.AQUA))
+                player.sendMessage(Component.text("- 赤チームスポーン: ${result.redSpawn}", NamedTextColor.RED))
+                player.sendMessage(Component.text("- 青チームスポーン: ${result.blueSpawn}", NamedTextColor.BLUE))
+                player.sendMessage(Component.text("- 赤チーム旗: ${result.redFlag}", NamedTextColor.RED))
+                player.sendMessage(Component.text("- 青チーム旗: ${result.blueFlag}", NamedTextColor.BLUE))
+            } else {
+                player.sendMessage(Component.text("自動検出に失敗しました", NamedTextColor.RED))
+                result.errors.forEach { error ->
+                    player.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
                 }
+                player.sendMessage(Component.text("マップ内に必要なブロックを配置してから再度実行してください", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("必要なブロック:", NamedTextColor.GRAY))
+                player.sendMessage(Component.text("- 赤コンクリート: 赤チームスポーン", NamedTextColor.GRAY))
+                player.sendMessage(Component.text("- 青コンクリート: 青チームスポーン", NamedTextColor.GRAY))
+                player.sendMessage(Component.text("- ビーコン+赤ガラス: 赤チーム旗", NamedTextColor.GRAY))
+                player.sendMessage(Component.text("- ビーコン+青ガラス: 青チーム旗", NamedTextColor.GRAY))
             }
             return true
         }
@@ -217,15 +195,20 @@ class GameManager(private val plugin: Main) {
      * ゲーム開始（単体またはマッチ）
      */
     fun startGame(name: String, isMatch: Boolean = false, target: Int? = null): Boolean {
+        plugin.logger.info("[GameManager] startGame called: name=$name, isMatch=$isMatch, target=$target")
+        
         val game = games[name.lowercase()] ?: return false
         val config = configManager.loadConfig(name) ?: return false
         
         if (!config.isValid()) {
+            plugin.logger.warning("[GameManager] Config is not valid for game $name")
             return false
         }
         
         // マッチとして開始
         if (isMatch && target != null) {
+            plugin.logger.info("[GameManager] Starting as match with $target games")
+            
             val matchWrapper = MatchWrapper(config.copy().apply {
                 matchMode = MatchMode.FIXED_ROUNDS
                 matchTarget = target
@@ -237,8 +220,13 @@ class GameManager(private val plugin: Main) {
             
             // ゲーム終了時のコールバックを設定
             game.setGameEndCallback { winner ->
+                plugin.logger.info("[GameManager] Game end callback triggered for match $name")
                 handleMatchGameEnd(name, winner)
             }
+            
+            plugin.logger.info("[GameManager] Match initialized successfully")
+        } else {
+            plugin.logger.info("[GameManager] Starting as single game")
         }
         
         return game.start()
@@ -316,6 +304,7 @@ class GameManager(private val plugin: Main) {
     fun getGame(name: String): Game? = games[name.lowercase()]
     fun getMatch(name: String): MatchWrapper? = matches[name.lowercase()]
     fun getAllGames(): Map<String, Game> = games.toMap()
+    fun getGameConfig(name: String): GameConfig? = configManager.loadConfig(name)
     fun getPlayerGame(player: Player): Game? {
         val gameName = playerGames[player.uniqueId] ?: return null
         return games[gameName]
@@ -390,6 +379,7 @@ class GameManager(private val plugin: Main) {
         val game = games[gameName.lowercase()] ?: return
         val match = matches[gameName.lowercase()] ?: return
         
+        
         // マッチのスコアを更新
         match.onGameEnd(winner)
         
@@ -404,6 +394,7 @@ class GameManager(private val plugin: Main) {
             player.sendMessage("§6=== ゲーム ${match.currentGameNumber} 結果 ===")
             player.sendMessage(winnerText)
             player.sendMessage("§e現在のスコア: §c赤 ${match.matchWins[Team.RED]} §f- §9青 ${match.matchWins[Team.BLUE]}")
+            
             
             if (match.isMatchComplete()) {
                 val matchWinner = match.getMatchWinner()
@@ -435,36 +426,93 @@ class GameManager(private val plugin: Main) {
      * マッチインターバル表示
      */
     private fun showMatchInterval(game: Game, match: MatchWrapper, gameName: String) {
-        // インターバル用BossBar作成
-        val bossBar = Bukkit.createBossBar(
-            "次のゲームまで: 5秒",
-            BarColor.YELLOW,
-            BarStyle.SOLID
-        )
+        // 15秒の休憩時間を設定
+        var remainingSeconds = 15
         
-        // 全プレイヤーに表示
+        // プレイヤーに次のゲームまでの時間を通知
         game.getAllPlayers().forEach { player ->
-            bossBar.addPlayer(player)
+            player.sendMessage(Component.text(""))
+            player.sendMessage(Component.text("15秒後に次のゲームが開始されます...", NamedTextColor.GREEN))
         }
-        
-        var remainingSeconds = 5
         
         object : BukkitRunnable() {
             override fun run() {
+                if (remainingSeconds > 5) {
+                    // 5秒前まではカウントダウンを表示しない
+                    remainingSeconds--
+                    return
+                }
+                
                 remainingSeconds--
                 
-                if (remainingSeconds > 0) {
-                    // BossBar更新
-                    bossBar.setTitle("次のゲームまで: ${remainingSeconds}秒")
-                    bossBar.progress = remainingSeconds / 5.0
-                } else {
-                    // インターバル終了
-                    bossBar.removeAll()
-                    bossBar.isVisible = false
-                    cancel()
-                    
-                    // 次のゲームを開始
-                    startNextMatchGame(gameName)
+                when (remainingSeconds) {
+                    4 -> {
+                        game.getAllPlayers().forEach { player ->
+                            player.sendMessage(Component.text("5秒後に開始します...", NamedTextColor.YELLOW))
+                        }
+                    }
+                    3 -> {
+                        game.getAllPlayers().forEach { player ->
+                            player.showTitle(net.kyori.adventure.title.Title.title(
+                                Component.text("3", NamedTextColor.YELLOW),
+                                Component.empty(),
+                                net.kyori.adventure.title.Title.Times.times(
+                                    java.time.Duration.ofMillis(0),
+                                    java.time.Duration.ofMillis(1000),
+                                    java.time.Duration.ofMillis(0)
+                                )
+                            ))
+                            player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f)
+                        }
+                    }
+                    2 -> {
+                        game.getAllPlayers().forEach { player ->
+                            player.showTitle(net.kyori.adventure.title.Title.title(
+                                Component.text("2", NamedTextColor.GOLD),
+                                Component.empty(),
+                                net.kyori.adventure.title.Title.Times.times(
+                                    java.time.Duration.ofMillis(0),
+                                    java.time.Duration.ofMillis(1000),
+                                    java.time.Duration.ofMillis(0)
+                                )
+                            ))
+                            player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f)
+                        }
+                    }
+                    1 -> {
+                        game.getAllPlayers().forEach { player ->
+                            player.showTitle(net.kyori.adventure.title.Title.title(
+                                Component.text("1", NamedTextColor.RED),
+                                Component.empty(),
+                                net.kyori.adventure.title.Title.Times.times(
+                                    java.time.Duration.ofMillis(0),
+                                    java.time.Duration.ofMillis(1000),
+                                    java.time.Duration.ofMillis(0)
+                                )
+                            ))
+                            player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f)
+                        }
+                    }
+                    0 -> {
+                        game.getAllPlayers().forEach { player ->
+                            player.showTitle(net.kyori.adventure.title.Title.title(
+                                Component.text("START!", NamedTextColor.GREEN),
+                                Component.empty(),
+                                net.kyori.adventure.title.Title.Times.times(
+                                    java.time.Duration.ofMillis(0),
+                                    java.time.Duration.ofMillis(500),
+                                    java.time.Duration.ofMillis(500)
+                                )
+                            ))
+                            player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f)
+                        }
+                        cancel()
+                        // 次のゲームを開始
+                        startNextMatchGame(gameName)
+                    }
+                    else -> {
+                        // それ以外の場合は何もしない
+                    }
                 }
             }
         }.runTaskTimer(plugin, 20L, 20L) // 1秒ごとに実行
@@ -477,26 +525,12 @@ class GameManager(private val plugin: Main) {
         val game = games[gameName.lowercase()] ?: return
         val match = matches[gameName.lowercase()] ?: return
         
-        // ゲームを停止してリセット
-        game.stop()
-        
         // 次のゲーム番号に進める
         match.nextGame()
         
-        // ゲームを再開
-        game.setMatchContext(match)
-        game.setGameEndCallback { winner ->
-            handleMatchGameEnd(gameName, winner)
+        // ゲームを再開（プレイヤーは既に保持されている）
+        if (!game.start()) {
         }
-        
-        // プレイヤーを再追加
-        match.players.values.forEach { player ->
-            if (player.isOnline) {
-                game.addPlayer(player)
-            }
-        }
-        
-        game.start()
     }
     
     /**
@@ -607,6 +641,7 @@ class GameManager(private val plugin: Main) {
             // ゲームインスタンスを作成
             val newGame = Game(gameName, plugin, pos1.world)
             newGame.updateFromConfig(config)
+            newGame.setMapBounds(pos1, pos2)  // マップ範囲を設定
             games[gameName.lowercase()] = newGame
         } else {
             // 既存ゲームの設定を更新
@@ -620,6 +655,7 @@ class GameManager(private val plugin: Main) {
                 
                 // ゲームインスタンスも更新
                 game?.updateFromConfig(config)
+                game?.setMapBounds(pos1, pos2)  // マップ範囲を設定
             }
         }
         

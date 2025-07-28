@@ -76,25 +76,15 @@ class ShopManager(private val plugin: Main) {
         shopItems.add(ShopItem("golden_apple", "§6金のリンゴ", Material.GOLDEN_APPLE, 1, 30, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
         shopItems.add(ShopItem("ender_pearl", "§5エンダーパール", Material.ENDER_PEARL, 1, 50, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
         
-        // 建築ブロック
-        shopItems.add(ShopItem("stone", "§7石 x16", Material.STONE, 16, 5, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("wood", "§6木材 x16", Material.OAK_PLANKS, 16, 5, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("dirt", "§6土 x16", Material.DIRT, 16, 3, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("sand", "§e砂 x16", Material.SAND, 16, 3, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("glass", "§fガラス x16", Material.GLASS, 16, 8, ShopCategory.BLOCKS))
+        // 建築ブロック - チームカラーブロックは動的に追加されるため、ここでは追加しない
         
-        // 高級建築資材
-        shopItems.add(ShopItem("obsidian", "§5黒曜石 x4", Material.OBSIDIAN, 4, 20, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("iron_block", "§f鉄ブロック x8", Material.IRON_BLOCK, 8, 15, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("redstone", "§cレッドストーン x16", Material.REDSTONE, 16, 10, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("tnt", "§cTNT x1", Material.TNT, 1, 30, ShopCategory.BLOCKS))
+        // 特殊ブロック（どちらのチームでも使える）
+        shopItems.add(ShopItem("tnt", "§cTNT x1", Material.TNT, 1, 100, ShopCategory.BLOCKS))
         
         
         // 特殊アイテム
         shopItems.add(ShopItem("water_bucket", "§9水バケツ", Material.WATER_BUCKET, 1, 15, ShopCategory.BLOCKS))
         shopItems.add(ShopItem("lava_bucket", "§c溶岩バケツ", Material.LAVA_BUCKET, 1, 20, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("ladder", "§6はしご x16", Material.LADDER, 16, 10, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("fence", "§6フェンス x16", Material.OAK_FENCE, 16, 8, ShopCategory.BLOCKS))
         
         // 建築用ツール（建築フェーズのみ）
         shopItems.add(ShopItem("wooden_pickaxe", "§6木のツルハシ", Material.WOODEN_PICKAXE, 1, 10, ShopCategory.WEAPONS,
@@ -106,33 +96,10 @@ class ShopManager(private val plugin: Main) {
         shopItems.add(ShopItem("shears", "§fハサミ", Material.SHEARS, 1, 15, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.BUILD)))
         
-        // 戦闘用ツール（戦闘フェーズでブロック破壊用）
-        shopItems.add(ShopItem("combat_iron_pickaxe", "§f戦闘用鉄のツルハシ", Material.IRON_PICKAXE, 1, 30, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.COMBAT),
-            lore = listOf("§7戦闘中でもブロックを破壊できる")))
-        shopItems.add(ShopItem("combat_diamond_pickaxe", "§b戦闘用ダイヤのツルハシ", Material.DIAMOND_PICKAXE, 1, 60, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.COMBAT),
-            lore = listOf("§7戦闘中でもブロックを破壊できる"),
-            enchantments = mapOf(Enchantment.EFFICIENCY to 2)))
-        shopItems.add(ShopItem("combat_iron_shovel", "§f戦闘用鉄のシャベル", Material.IRON_SHOVEL, 1, 20, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.COMBAT),
-            lore = listOf("§7戦闘中でもブロックを破壊できる")))
-        shopItems.add(ShopItem("combat_bucket", "§f戦闘用バケツ", Material.BUCKET, 1, 15, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.COMBAT),
-            lore = listOf("§7戦闘中でも液体を回収できる")))
-        shopItems.add(ShopItem("combat_iron_axe", "§f戦闘用鉄の斧", Material.IRON_AXE, 1, 30, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.COMBAT),
-            lore = listOf("§7戦闘中でも木を伐採できる")))
-        shopItems.add(ShopItem("combat_diamond_axe", "§b戦闘用ダイヤの斧", Material.DIAMOND_AXE, 1, 60, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.COMBAT),
-            lore = listOf("§7戦闘中でも木を伐採できる"),
-            enchantments = mapOf(Enchantment.EFFICIENCY to 2)))
+        // 戦闘用ツール削除 - ブロック破壊制限が撤廃されたため不要
         
         // 購入制限付きアイテムの例
-        shopItems.add(ShopItem("ender_chest", "§5エンダーチェスト", Material.ENDER_CHEST, 1, 50, ShopCategory.BLOCKS,
-            maxPurchasePerTeam = 1,
-            lore = listOf("§7チームで１つまで")
-        ))
+        // エンダーチェスト削除（チームカラーブロックのみ販売）
         
         shopItems.add(ShopItem("enchanted_golden_apple", "§6§lエンチャント金リンゴ", Material.ENCHANTED_GOLDEN_APPLE, 1, 100, ShopCategory.CONSUMABLES,
             maxPurchasePerPlayer = 2,
@@ -147,6 +114,36 @@ class ShopManager(private val plugin: Main) {
         player.openInventory(inventory)
     }
     
+    private fun getTeamColoredBlockItems(team: Team): List<ShopItem> {
+        val items = mutableListOf<ShopItem>()
+        
+        // チームカラーブロックは無限に提供されるため、ショップでは販売しない
+        
+        // フェンスや装置などの追加アイテム（どちらのチームでも使用可能）
+        items.add(ShopItem("fence", "§f木のフェンス x16", Material.OAK_FENCE, 16, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("iron_fence", "§7鉄格子 x16", Material.IRON_BARS, 16, 12, ShopCategory.BLOCKS))
+        items.add(ShopItem("glass_pane", "§fガラス板 x16", Material.GLASS_PANE, 16, 6, ShopCategory.BLOCKS))
+        items.add(ShopItem("ladder", "§6はしご x16", Material.LADDER, 16, 10, ShopCategory.BLOCKS))
+        items.add(ShopItem("trapdoor", "§6木のトラップドア x4", Material.OAK_TRAPDOOR, 4, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("iron_trapdoor", "§7鉄のトラップドア x2", Material.IRON_TRAPDOOR, 2, 15, ShopCategory.BLOCKS))
+        items.add(ShopItem("door", "§6木のドア x2", Material.OAK_DOOR, 2, 10, ShopCategory.BLOCKS))
+        items.add(ShopItem("iron_door", "§7鉄のドア x1", Material.IRON_DOOR, 1, 20, ShopCategory.BLOCKS))
+        items.add(ShopItem("torch", "§e松明 x16", Material.TORCH, 16, 5, ShopCategory.BLOCKS))
+        items.add(ShopItem("redstone_torch", "§cレッドストーントーチ x8", Material.REDSTONE_TORCH, 8, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("stone_button", "§7石のボタン x4", Material.STONE_BUTTON, 4, 5, ShopCategory.BLOCKS))
+        items.add(ShopItem("lever", "§7レバー x4", Material.LEVER, 4, 5, ShopCategory.BLOCKS))
+        items.add(ShopItem("pressure_plate", "§7石の感圧板 x4", Material.STONE_PRESSURE_PLATE, 4, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("piston", "§7ピストン x2", Material.PISTON, 2, 20, ShopCategory.BLOCKS))
+        items.add(ShopItem("sticky_piston", "§a粘着ピストン x2", Material.STICKY_PISTON, 2, 30, ShopCategory.BLOCKS))
+        items.add(ShopItem("redstone", "§cレッドストーンダスト x16", Material.REDSTONE, 16, 10, ShopCategory.BLOCKS))
+        items.add(ShopItem("redstone_block", "§cレッドストーンブロック x1", Material.REDSTONE_BLOCK, 1, 15, ShopCategory.BLOCKS))
+        items.add(ShopItem("hopper", "§7ホッパー x1", Material.HOPPER, 1, 25, ShopCategory.BLOCKS))
+        items.add(ShopItem("dispenser", "§7ディスペンサー x1", Material.DISPENSER, 1, 20, ShopCategory.BLOCKS))
+        items.add(ShopItem("slime_block", "§aスライムブロック x4", Material.SLIME_BLOCK, 4, 25, ShopCategory.BLOCKS))
+        
+        return items
+    }
+    
     private fun createShopInventory(player: Player, game: Game, team: Team, page: Int): Inventory {
         val inventory = Bukkit.createInventory(null, 54, LegacyComponentSerializer.legacySection().deserialize("§6§lショップ §7- §e${game.getTeamCurrency(team)}G §7(ページ ${page + 1})"))
         
@@ -159,7 +156,14 @@ class ShopManager(private val plugin: Main) {
         
         if (page < categories.size) {
             val (category, categoryName) = categories[page]
-            val categoryItems = shopItems.filter { it.category == category }
+            val categoryItems = if (category == ShopCategory.BLOCKS) {
+                // ブロックカテゴリーの場合、チームカラーのブロックを追加
+                val baseItems = shopItems.filter { it.category == category && it.availablePhases.contains(game.phase) }
+                val teamBlocks = getTeamColoredBlockItems(team)
+                baseItems + teamBlocks
+            } else {
+                shopItems.filter { it.category == category && it.availablePhases.contains(game.phase) }
+            }
             
             // カテゴリーヘッダー
             val headerMaterial = when (category) {
@@ -334,6 +338,20 @@ class ShopManager(private val plugin: Main) {
             item = shopItems.find { 
                 val plainDisplayName = it.displayName.replace("§[0-9a-fklmnor]".toRegex(), "")
                 plainDisplayName == plainItemName
+            }
+        }
+        
+        // それでも見つからない場合は、動的に作成されるアイテムから検索
+        if (item == null) {
+            val teamBlocks = getTeamColoredBlockItems(team)
+            item = teamBlocks.find { it.displayName == itemName }
+            
+            if (item == null) {
+                val plainItemName = itemName.replace("§[0-9a-fklmnor]".toRegex(), "")
+                item = teamBlocks.find { 
+                    val plainDisplayName = it.displayName.replace("§[0-9a-fklmnor]".toRegex(), "")
+                    plainDisplayName == plainItemName
+                }
             }
         }
         

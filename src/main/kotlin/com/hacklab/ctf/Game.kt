@@ -8,10 +8,12 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.*
+import org.bukkit.block.BlockFace
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.potion.PotionEffect
@@ -20,6 +22,8 @@ import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.scoreboard.DisplaySlot
 import org.bukkit.scoreboard.Objective
 import org.bukkit.scoreboard.Scoreboard
+import org.bukkit.NamespacedKey
+import org.bukkit.persistence.PersistentDataType
 import java.time.Duration
 import java.util.*
 
@@ -48,16 +52,17 @@ class Game(
     private var blueSpawnLocation: Location? = null
     private var redSpawnLocation: Location? = null
     private var blueFlagLocation: Location? = null
+    private var mapCenterLocation: Location? = null
     
     // 設定
     var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
-    var respawnDelay = plugin.config.getInt("default-game.respawn-delay", 5)
+    var respawnDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
     var buildDuration = plugin.config.getInt("default-phases.build-duration", 300)
     var combatDuration = plugin.config.getInt("default-phases.combat-duration", 600)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
-    var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "ADVENTURE")!!
+    var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!
     
     // ゲーム状態
     var score = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
@@ -100,11 +105,39 @@ class Game(
     private val actionBarCooldown = mutableMapOf<UUID, Long>() // プレイヤー -> 次回表示可能時刻
     private val actionBarErrorDisplay = mutableMapOf<UUID, Pair<String, Long>>() // プレイヤー -> (エラーメッセージ, 表示終了時刻)
     
+    // ブロック設置制限管理
+    val teamPlacedBlocks = mutableMapOf<Team, MutableSet<Location>>() // チーム -> 設置したブロックの座標
+    
+    // ブロック接続ツリー管理
+    data class BlockNode(
+        val location: Location,
+        val parent: Location?,
+        val children: MutableSet<Location> = mutableSetOf()
+    )
+    val teamBlockTrees = mutableMapOf<Team, MutableMap<Location, BlockNode>>() // チーム -> (座標 -> ノード)
+    
     // タスク
     private var gameTask: BukkitRunnable? = null
+    private var suffocationTask: BukkitRunnable? = null
     
     // ゲッター
     val name: String get() = gameName
+    
+    // チームカラーのブロック定義
+    companion object {
+        val TEAM_BLOCKS = mapOf(
+            Team.RED to setOf(
+                Material.RED_CONCRETE,
+                Material.RED_STAINED_GLASS
+            ),
+            Team.BLUE to setOf(
+                Material.BLUE_CONCRETE,
+                Material.BLUE_STAINED_GLASS
+            )
+        )
+        
+        val NEUTRAL_BLOCK = Material.WHITE_CONCRETE // 接続が切れたブロック
+    }
     
     fun setMatchContext(matchWrapper: MatchWrapper) {
         this.matchWrapper = matchWrapper
@@ -164,6 +197,9 @@ class Game(
         minPlayers = config.minPlayers
         maxPlayersPerTeam = config.maxPlayersPerTeam
         autoStartEnabled = config.autoStartEnabled
+        
+        // マップ中央位置を計算
+        calculateMapCenter()
     }
     
     fun addPlayer(player: Player, team: Team? = null): Boolean {
@@ -352,10 +388,10 @@ class Game(
             return false
         }
         
-        // 最小人数チェック
-        if (redTeam.size + blueTeam.size < 2) {
+        // 最小人数チェック（マッチの場合は最小人数チェックをスキップ）
+        if (matchWrapper == null && redTeam.size + blueTeam.size < minPlayers) {
             getAllPlayers().forEach {
-                it.sendMessage(Component.text("ゲームを開始するには最低2名必要です", NamedTextColor.RED))
+                it.sendMessage(Component.text("ゲームを開始するには最低${minPlayers}名必要です", NamedTextColor.RED))
             }
             return false
         }
@@ -372,39 +408,41 @@ class Game(
         phase = GamePhase.BUILD
         currentPhaseTime = buildDuration
         
-        // テンポラリワールドを作成
-        val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
-        plugin.logger.info("[Game] テンポラリワールドを作成中: $gameName")
-        tempWorld = worldManager.createTempWorld(gameName)
+        // マッチモードで既にテンポラリワールドがある場合は再利用
+        val isMatchMode = matchWrapper != null && matchWrapper!!.isActive
+        val needNewWorld = tempWorld == null || !isMatchMode
         
-        if (tempWorld == null) {
-            plugin.logger.warning("[Game] テンポラリワールドの作成に失敗しました")
-            getAllPlayers().forEach {
-                it.sendMessage(Component.text("テンポラリワールドの作成に失敗しました", NamedTextColor.RED))
+        if (needNewWorld) {
+            // テンポラリワールドを作成
+            val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
+            tempWorld = worldManager.createTempWorld(gameName)
+            
+            if (tempWorld == null) {
+                plugin.logger.warning("[Game] テンポラリワールドの作成に失敗しました")
+                getAllPlayers().forEach {
+                    it.sendMessage(Component.text("テンポラリワールドの作成に失敗しました", NamedTextColor.RED))
+                }
+                state = GameState.WAITING
+                return false
             }
-            state = GameState.WAITING
-            return false
+            
+        } else {
         }
-        
-        plugin.logger.info("[Game] テンポラリワールド作成成功: ${tempWorld!!.name}")
         
         // ワールドを切り替え
         world = tempWorld!!
         
-        // マップを復元
+        // マップを復元（マッチモードの2回目以降も必要）
         val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
         val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
         
         // 保存されたマップがある場合は復元
         if (mapManager.hasMap(gameName)) {
-            plugin.logger.info("[Game] 保存されたマップを復元中...")
             if (!gameManager.resetGameMap(gameName, tempWorld)) {
                 plugin.logger.warning("[Game] マップの復元に失敗しました")
             } else {
-                plugin.logger.info("[Game] マップの復元が完了しました")
             }
         } else {
-            plugin.logger.info("[Game] 保存されたマップが見つかりません: $gameName")
         }
         
         // 位置情報をテンポラリワールドに更新
@@ -439,7 +477,8 @@ class Game(
             player.inventory.clear()
             
             // ゲームモード設定
-            player.gameMode = GameMode.valueOf(buildPhaseGameMode)
+            val targetGameMode = GameMode.valueOf(buildPhaseGameMode)
+            player.gameMode = targetGameMode
             
             // スポーン地点に転送
             teleportToSpawn(player, team)
@@ -468,6 +507,16 @@ class Game(
         
         // ショップの購入履歴をリセット
         plugin.shopManager.resetGamePurchases(name)
+        
+        // ブロック設置記録をクリア
+        teamPlacedBlocks.clear()
+        teamPlacedBlocks[Team.RED] = mutableSetOf()
+        teamPlacedBlocks[Team.BLUE] = mutableSetOf()
+        
+        // ブロックツリーをクリア
+        teamBlockTrees.clear()
+        teamBlockTrees[Team.RED] = mutableMapOf()
+        teamBlockTrees[Team.BLUE] = mutableMapOf()
         
         state = GameState.RUNNING
         
@@ -520,6 +569,9 @@ class Game(
         
         bossBar?.setTitle("戦闘フェーズ - 残り時間: ${formatTime(currentPhaseTime)}")
         bossBar?.color = BarColor.RED
+        
+        // 窒息チェックタスクを開始
+        startSuffocationTask()
         
         getAllPlayers().forEach { player ->
             val team = getPlayerTeam(player.uniqueId)!!
@@ -614,6 +666,10 @@ class Game(
         
         // タスクキャンセル
         gameTask?.cancel()
+        suffocationTask?.cancel()
+        
+        // マッチモードかどうかチェック
+        val isMatchMode = matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()
         
         // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）
         val playerUUIDs = (redTeam + blueTeam).toList()
@@ -623,25 +679,43 @@ class Game(
             // インベントリクリア
             player.inventory.clear()
             
-            // ゲームモード戻す
-            player.gameMode = GameMode.SURVIVAL
-            
             // 発光効果を解除
             player.isGlowing = false
             
-            // UI削除
-            player.scoreboard = Bukkit.getScoreboardManager().mainScoreboard
-            bossBar?.removePlayer(player)
+            // 敵陣メタデータを削除
+            player.removeMetadata("on_enemy_block", plugin)
             
-            // 元のワールドに転送
-            val mainWorld = originalWorld ?: Bukkit.getWorlds()[0]
-            player.teleport(mainWorld.spawnLocation)
-            
-            player.sendMessage(Component.text("ゲームが終了しました", NamedTextColor.YELLOW))
-            
-            // GameManagerからプレイヤーを削除
-            val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
-            gameManager.removePlayerFromGame(player)
+            if (!isMatchMode) {
+                // マッチモードでない場合のみ、元のワールドに転送してゲームから削除
+                player.gameMode = GameMode.SURVIVAL
+                
+                // UI削除
+                player.scoreboard = Bukkit.getScoreboardManager().mainScoreboard
+                bossBar?.removePlayer(player)
+                
+                val mainWorld = originalWorld ?: Bukkit.getWorlds()[0]
+                player.teleport(mainWorld.spawnLocation)
+                
+                player.sendMessage(Component.text("ゲームが終了しました", NamedTextColor.YELLOW))
+                
+                // GameManagerからプレイヤーを削除
+                val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
+                gameManager.removePlayerFromGame(player)
+            } else {
+                // マッチモードの場合は、スポーン地点に戻してアドベンチャーモードに
+                val team = getPlayerTeam(player.uniqueId)
+                if (team != null) {
+                    val spawnLocation = when (team) {
+                        Team.RED -> redSpawnLocation ?: redFlagLocation
+                        Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
+                    }
+                    if (spawnLocation != null) {
+                        player.teleport(spawnLocation)
+                    }
+                }
+                player.gameMode = GameMode.ADVENTURE
+                player.sendMessage(Component.text("次のゲームまでしばらくお待ちください...", NamedTextColor.YELLOW))
+            }
         }
         
         // BossBar削除
@@ -652,7 +726,7 @@ class Game(
         scoreboard = null
         objective = null
         
-        // 旗とスポーン装飾を削除
+        // 旗とスポーン装飾を削除（マッチモードでもクリアする）
         cleanupGameBlocks()
         
         // データクリアの前に状態をリセット
@@ -661,10 +735,15 @@ class Game(
         currentPhaseTime = 0
         autoStartCountdown = -1
         
-        // データクリア
-        redTeam.clear()
-        blueTeam.clear()
-        disconnectedPlayers.clear()
+        // マッチモードの場合、プレイヤーデータは保持
+        if (!isMatchMode) {
+            // データクリア
+            redTeam.clear()
+            blueTeam.clear()
+            disconnectedPlayers.clear()
+        }
+        
+        // ゲーム状態データはリセット
         score.clear()
         score[Team.RED] = 0
         score[Team.BLUE] = 0
@@ -675,8 +754,8 @@ class Game(
         redFlagCarrier = null
         blueFlagCarrier = null
         
-        // テンポラリワールドをクリーンアップ
-        if (tempWorld != null) {
+        // テンポラリワールドをクリーンアップ（マッチモードでは削除しない）
+        if (!isMatchMode && tempWorld != null) {
             val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
             worldManager.cleanupTempWorld(gameName)
             tempWorld = null
@@ -720,7 +799,6 @@ class Game(
             blueSpawnLocation = Location(newWorld, it.x, it.y, it.z, it.yaw, it.pitch)
         }
         
-        plugin.logger.info("[Game] 位置情報を ${newWorld.name} ワールドに更新しました")
     }
     
     private fun teleportToSpawn(player: Player, team: Team) {
@@ -730,8 +808,28 @@ class Game(
         }
         
         if (spawnLocation != null) {
-            player.teleport(spawnLocation)
-            plugin.logger.info("[Game] ${player.name} を ${spawnLocation.world?.name} ワールドにテレポート")
+            // 相手チームの旗の位置を取得
+            val targetFlagLocation = when (team) {
+                Team.RED -> blueFlagLocation
+                Team.BLUE -> redFlagLocation
+            }
+            
+            // スポーン位置をクローンして、向きを設定
+            val teleportLocation = spawnLocation.clone()
+            
+            if (targetFlagLocation != null) {
+                // 相手の旗の方向を向くように計算
+                val direction = targetFlagLocation.toVector().subtract(teleportLocation.toVector())
+                
+                // Yaw（水平方向の回転）を計算
+                val yaw = Math.toDegrees(Math.atan2(-direction.x, direction.z)).toFloat()
+                
+                // Pitch（上下の角度）は0に設定（水平に保つ）
+                teleportLocation.yaw = yaw
+                teleportLocation.pitch = 0f
+            }
+            
+            player.teleport(teleportLocation)
         } else {
             player.sendMessage(Component.text("スポーン地点が設定されていません", NamedTextColor.RED))
             plugin.logger.warning("Game $name: No spawn location for team $team")
@@ -744,42 +842,47 @@ class Game(
         // 革の防具（チームカラー）
         giveColoredLeatherArmor(player, team)
         
-        // config.ymlから建築フェーズ装備を取得
-        val buildEquipment = plugin.config.getConfigurationSection("initial-equipment.build-phase")
-        if (buildEquipment != null) {
-            // ツール
-            buildEquipment.getStringList("tools").forEach { toolStr ->
-                val parts = toolStr.split(":")
-                val material = Material.getMaterial(parts[0]) ?: return@forEach
-                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                inv.addItem(ItemStack(material, amount))
+        // チームカラーブロック（無限）をスロット0と1に固定
+        val infiniteConcrete = ItemStack(
+            when (team) {
+                Team.RED -> Material.RED_CONCRETE
+                Team.BLUE -> Material.BLUE_CONCRETE
             }
-            
-            // ブロック
-            buildEquipment.getStringList("blocks").forEach { blockStr ->
-                val parts = blockStr.split(":")
-                val material = Material.getMaterial(parts[0]) ?: return@forEach
-                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                inv.addItem(ItemStack(material, amount))
+        ).apply {
+            amount = 1
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("${team.displayName}のコンクリート (無限)", team.color))
+                lore(listOf(Component.text("無限に設置できます", NamedTextColor.GRAY)))
+                // 無限フラグを設定
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "infinite_block"),
+                    PersistentDataType.BOOLEAN,
+                    true
+                )
             }
-            
-            // 食料
-            buildEquipment.getStringList("food").forEach { foodStr ->
-                val parts = foodStr.split(":")
-                val material = Material.getMaterial(parts[0]) ?: return@forEach
-                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                inv.addItem(ItemStack(material, amount))
-            }
-        } else {
-            // デフォルト装備
-            inv.addItem(ItemStack(Material.IRON_PICKAXE))
-            inv.addItem(ItemStack(Material.IRON_AXE))
-            inv.addItem(ItemStack(Material.IRON_SHOVEL))
-            inv.addItem(ItemStack(Material.OAK_PLANKS, 64))
-            inv.addItem(ItemStack(Material.COBBLESTONE, 64))
-            inv.addItem(ItemStack(Material.DIRT, 32))
-            inv.addItem(ItemStack(Material.BREAD, 16))
         }
+        
+        val infiniteGlass = ItemStack(
+            when (team) {
+                Team.RED -> Material.RED_STAINED_GLASS
+                Team.BLUE -> Material.BLUE_STAINED_GLASS
+            }
+        ).apply {
+            amount = 1
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("${team.displayName}のガラス (無限)", team.color))
+                lore(listOf(Component.text("無限に設置できます", NamedTextColor.GRAY)))
+                // 無限フラグを設定
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "infinite_block"),
+                    PersistentDataType.BOOLEAN,
+                    true
+                )
+            }
+        }
+        
+        player.inventory.setItem(0, infiniteConcrete)
+        player.inventory.setItem(1, infiniteGlass)
         
         // ショップアイテムをホットバー9番目に配置
         val shopItem = plugin.shopManager.createShopItem()
@@ -793,34 +896,11 @@ class Game(
         // 革の防具（チームカラー）を再装備（防具をリセットして確実に着用）
         giveColoredLeatherArmor(player, team)
         
-        // config.ymlから戦闘フェーズ装備を取得
-        val combatEquipment = plugin.config.getConfigurationSection("initial-equipment.combat-phase")
-        if (combatEquipment != null) {
-            // 武器
-            combatEquipment.getStringList("weapons").forEach { weaponStr ->
-                val parts = weaponStr.split(":")
-                val material = Material.getMaterial(parts[0]) ?: return@forEach
-                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                inv.addItem(ItemStack(material, amount))
-            }
-            
-            // 食料
-            combatEquipment.getStringList("food").forEach { foodStr ->
-                val parts = foodStr.split(":")
-                val material = Material.getMaterial(parts[0]) ?: return@forEach
-                val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                inv.addItem(ItemStack(material, amount))
-            }
-        } else {
-            // デフォルト装備
-            inv.addItem(ItemStack(Material.STONE_SWORD))
-            inv.addItem(ItemStack(Material.STONE_AXE))
-            inv.addItem(ItemStack(Material.BREAD, 8))
-        }
-        
         // チーム識別用にプレイヤー名を色付け
         player.setDisplayName("${team.getChatColor()}${player.name}")
         player.setPlayerListName("${team.getChatColor()}${player.name}")
+        
+        // 戦闘フェーズではチームカラーブロックは配布しない
         
         // ショップアイテムをホットバー9番目に配置
         val shopItem = plugin.shopManager.createShopItem()
@@ -829,10 +909,13 @@ class Game(
     
     private fun giveDefaultCombatItems(player: Player, team: Team) {
         val inv = player.inventory
-        // デフォルト装備
-        inv.addItem(ItemStack(Material.STONE_SWORD))
-        inv.addItem(ItemStack(Material.STONE_AXE))
-        inv.addItem(ItemStack(Material.BREAD, 8))
+        // 初期装備なし - ショップで購入する必要がある
+        
+        // 戦闘フェーズではチームカラーブロックは配布しない
+        
+        // ショップアイテムをホットバー9番目に配置
+        val shopItem = plugin.shopManager.createShopItem()
+        player.inventory.setItem(8, shopItem)
     }
     
     private fun giveColoredLeatherArmor(player: Player, team: Team) {
@@ -888,7 +971,7 @@ class Game(
         }
     }
     
-    private fun setupFlagBeacon(location: Location, team: Team) {
+    fun setupFlagBeacon(location: Location, team: Team) {
         val world = location.world
         
         // ビーコンを設置
@@ -934,9 +1017,15 @@ class Game(
             Team.BLUE -> Material.BLUE_CONCRETE
         }
         
+        // スポーン地点のコンクリートを設置し、チームの配置ブロックとして記録
         for (x in -1..1) {
             for (z in -1..1) {
-                location.clone().add(x.toDouble(), -1.0, z.toDouble()).block.type = concreteType
+                val blockLocation = location.clone().add(x.toDouble(), -1.0, z.toDouble())
+                blockLocation.block.type = concreteType
+                
+                // チームの配置ブロックとして記録（ビーコンから接続可能）
+                teamPlacedBlocks.getOrPut(team) { mutableSetOf() }.add(blockLocation)
+                // ツリー構造には追加しない（ビーコンから直接接続可能なため）
             }
         }
     }
@@ -971,7 +1060,11 @@ class Game(
             // コンクリート床を削除
             for (x in -1..1) {
                 for (z in -1..1) {
-                    spawnLocation.clone().add(x.toDouble(), -1.0, z.toDouble()).block.type = Material.AIR
+                    val blockLocation = spawnLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
+                    blockLocation.block.type = Material.AIR
+                    
+                    // チームの配置ブロックリストからも削除
+                    teamPlacedBlocks[team]?.remove(blockLocation)
                 }
             }
         }
@@ -1145,7 +1238,7 @@ class Game(
         bar.progress = progress.coerceIn(0.0, 1.0)
     }
     
-    fun dropFlag(player: Player, team: Team) {
+    fun dropFlag(player: Player, team: Team, deathLocation: Location? = null) {
         val carrier = when (team) {
             Team.RED -> redFlagCarrier
             Team.BLUE -> blueFlagCarrier
@@ -1162,6 +1255,44 @@ class Game(
         // グロー効果を解除
         player.isGlowing = false
         
+        // ドロップ位置を決定（死亡位置が指定されている場合はそれを使用）
+        val baseLocation = deathLocation ?: player.location
+        
+        // 旗が回収不可能な状況かチェック
+        val isUnrecoverable = when {
+            // 奈落（Y座標が0以下）
+            baseLocation.blockY <= 0 -> true
+            
+            // 溶岩の中
+            baseLocation.block.type == Material.LAVA -> true
+            
+            // 高所から落下中（下に安全な場所がない）
+            isLocationFalling(baseLocation) && findSafeDropLocation(baseLocation) == null -> true
+            
+            // 死亡位置の周囲が危険（溶岩や奈落に囲まれている）
+            isLocationSurroundedByDanger(baseLocation) -> true
+            
+            else -> false
+        }
+        
+        if (isUnrecoverable) {
+            // 回収不可能な場合は即座に旗を返却
+            val flagLocation = when (team) {
+                Team.RED -> redFlagLocation
+                Team.BLUE -> blueFlagLocation
+            } ?: return
+            
+            setupFlagBeacon(flagLocation, team)
+            
+            getAllPlayers().forEach {
+                it.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました（回収不可能な場所のため）", team.color))
+            }
+            return
+        }
+        
+        // ドロップ位置はプレイヤーの現在位置
+        val dropLocation = baseLocation
+        
         // 旗をドロップ
         val itemStack = ItemStack(Material.BEACON)
         val meta = itemStack.itemMeta
@@ -1169,14 +1300,16 @@ class Game(
         meta.isUnbreakable = true
         itemStack.itemMeta = meta
         
-        val droppedItem = player.world.dropItem(player.location, itemStack)
+        val droppedItem = player.world.dropItem(dropLocation, itemStack)
         droppedItem.setGlowing(true)
         droppedItem.customName(Component.text("${team.displayName}の旗", team.color))
         droppedItem.isCustomNameVisible = true
         droppedItem.isInvulnerable = true
+        droppedItem.setGravity(false) // 重力を無効化して落下を防ぐ
+        droppedItem.velocity = org.bukkit.util.Vector(0, 0, 0) // 速度をゼロにする
         
         // ドロップ情報を記録
-        droppedFlags[player.location] = Pair(team, System.currentTimeMillis())
+        droppedFlags[dropLocation] = Pair(team, System.currentTimeMillis())
         
         // メッセージ
         getAllPlayers().forEach {
@@ -1892,5 +2025,657 @@ class Game(
             
             player.sendMessage(Component.text("=======================").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
         }
+    }
+    
+    /**
+     * プレイヤーが落下中かどうかを判定
+     */
+    private fun isPlayerFalling(player: Player): Boolean {
+        // プレイヤーの足元のブロックを確認
+        val blockBelow = player.location.clone().subtract(0.0, 1.0, 0.0).block
+        val blockBelow2 = player.location.clone().subtract(0.0, 2.0, 0.0).block
+        
+        // 足元が空気ブロックで、かつY速度が負（落下中）の場合
+        return blockBelow.type == Material.AIR && 
+               blockBelow2.type == Material.AIR && 
+               player.velocity.y < -0.5
+    }
+    
+    /**
+     * 指定位置が落下位置かどうかを判定
+     */
+    private fun isLocationFalling(location: Location): Boolean {
+        // 位置の下のブロックを確認
+        val blockBelow = location.clone().subtract(0.0, 1.0, 0.0).block
+        val blockBelow2 = location.clone().subtract(0.0, 2.0, 0.0).block
+        val blockBelow3 = location.clone().subtract(0.0, 3.0, 0.0).block
+        
+        // 下3ブロックが空気の場合は落下位置と判定
+        return blockBelow.type == Material.AIR && 
+               blockBelow2.type == Material.AIR && 
+               blockBelow3.type == Material.AIR
+    }
+    
+    /**
+     * 安全な旗ドロップ位置を探す
+     */
+    private fun findSafeDropLocation(originalLocation: Location): Location? {
+        val world = originalLocation.world
+        val startX = originalLocation.blockX
+        val startY = originalLocation.blockY
+        val startZ = originalLocation.blockZ
+        
+        // まず現在位置が安全かチェック
+        if (isSafeLocation(originalLocation)) {
+            return originalLocation.clone().add(0.5, 0.5, 0.5)
+        }
+        
+        // 現在位置から下方向に安全な場所を探す（最大50ブロック下まで）
+        for (y in startY downTo kotlin.math.max(0, startY - 50)) {
+            val checkLoc = Location(world, startX.toDouble(), y.toDouble(), startZ.toDouble())
+            if (isSafeLocation(checkLoc)) {
+                return checkLoc.add(0.5, 1.0, 0.5) // ブロックの中心、1ブロック上
+            }
+        }
+        
+        // 下に見つからない場合、周囲を螺旋状に探索
+        for (radius in 1..15) {
+            for (dx in -radius..radius) {
+                for (dz in -radius..radius) {
+                    // 螺旋の外周のみチェック
+                    if (kotlin.math.abs(dx) == radius || kotlin.math.abs(dz) == radius) {
+                        // 現在の高さから上下に探索
+                        for (dy in -10..10) {
+                            val y = startY + dy
+                            if (y in 0..255) {
+                                val checkLoc = Location(world, (startX + dx).toDouble(), y.toDouble(), (startZ + dz).toDouble())
+                                if (isSafeLocation(checkLoc)) {
+                                    return checkLoc.add(0.5, 1.0, 0.5)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null
+    }
+    
+    /**
+     * 位置が危険物に囲まれているかチェック
+     */
+    private fun isLocationSurroundedByDanger(location: Location): Boolean {
+        val world = location.world
+        val x = location.blockX
+        val y = location.blockY
+        val z = location.blockZ
+        
+        var dangerCount = 0
+        var totalCount = 0
+        
+        // 周囲3x3x3の範囲をチェック
+        for (dx in -1..1) {
+            for (dy in -1..1) {
+                for (dz in -1..1) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue
+                    
+                    val checkLoc = Location(world, (x + dx).toDouble(), (y + dy).toDouble(), (z + dz).toDouble())
+                    val block = checkLoc.block
+                    
+                    totalCount++
+                    
+                    // 危険なブロック
+                    if (block.type == Material.LAVA || 
+                        block.type == Material.VOID_AIR ||
+                        (checkLoc.blockY <= 0)) {
+                        dangerCount++
+                    }
+                }
+            }
+        }
+        
+        // 半分以上が危険な場合は回収不可能と判定
+        return dangerCount > totalCount / 2
+    }
+    
+    /**
+     * 安全な観戦位置を探す（落下死用）
+     */
+    fun findSafeSpectatorLocation(deathLocation: Location): Location {
+        // まず安全なドロップ位置を探す
+        val safeLocation = findSafeDropLocation(deathLocation)
+        if (safeLocation != null) {
+            // 見つかった場合は少し上空から観戦
+            return safeLocation.clone().add(0.0, 5.0, 0.0)
+        }
+        
+        // 見つからない場合は、マップ中央を使用
+        if (mapCenterLocation != null) {
+            return mapCenterLocation!!.clone().add(0.0, 20.0, 0.0)
+        }
+        
+        // マップ中央が設定されていない場合は、スポーン地点から計算
+        // ゲームワールドを使用（テンポラリワールドの場合もある）
+        val world = this.world
+        val redSpawn = redSpawnLocation
+        val blueSpawn = blueSpawnLocation
+        
+        if (redSpawn != null && blueSpawn != null) {
+            // 両スポーン地点の中間点を計算
+            val centerX = (redSpawn.x + blueSpawn.x) / 2.0
+            val centerZ = (redSpawn.z + blueSpawn.z) / 2.0
+            val centerY = kotlin.math.max(redSpawn.y, blueSpawn.y) + 20.0
+            return Location(world, centerX, centerY, centerZ)
+        }
+        
+        // 最後の手段として、赤スポーンまたは青スポーンを使用
+        return redSpawn?.clone()?.add(0.0, 10.0, 0.0) 
+            ?: blueSpawn?.clone()?.add(0.0, 10.0, 0.0)
+            ?: Location(world, deathLocation.x, deathLocation.y + 10.0, deathLocation.z)
+    }
+    
+    /**
+     * 指定位置が安全かどうかを判定
+     */
+    private fun isSafeLocation(location: Location): Boolean {
+        val block = location.block
+        val blockAbove = location.clone().add(0.0, 1.0, 0.0).block
+        val blockAbove2 = location.clone().add(0.0, 2.0, 0.0).block
+        
+        // 足元が固体ブロックで、上2ブロックが空気の場合は安全
+        return block.type.isSolid && 
+               !blockAbove.type.isSolid && 
+               !blockAbove2.type.isSolid &&
+               block.type != Material.LAVA &&
+               block.type != Material.WATER
+    }
+    
+    /**
+     * ブロック設置が許可されているかをチェック
+     * @param player 設置するプレイヤー
+     * @param block 設置するブロック
+     * @return 設置可能な場合はペアレントの位置、不可の場合null
+     */
+    fun canPlaceBlock(player: Player, block: org.bukkit.block.Block): Location? {
+        val team = getPlayerTeam(player.uniqueId) ?: return null
+        val location = block.location
+        
+        // チームカラーのブロックかチェック
+        val teamBlocks = TEAM_BLOCKS[team] ?: return null
+        
+        if (block.type in teamBlocks) {
+            // チームカラーブロックの場合
+            
+            // 自チームの旗位置を取得
+            val teamFlagLocation = when (team) {
+                Team.RED -> redFlagLocation
+                Team.BLUE -> blueFlagLocation
+            } ?: return null
+            
+            // 旗から3ブロック以内かチェック（旗がルート）
+            if (location.distance(teamFlagLocation) <= 3.0) {
+                return teamFlagLocation
+            }
+            
+            // 既に設置したブロックから隣接（縦横斜め）しているかチェック
+            val placedBlocks = teamPlacedBlocks[team] ?: mutableSetOf()
+            
+            // 隣接ブロックを探す
+            for (placedBlock in placedBlocks) {
+                if (isAdjacent(location, placedBlock)) {
+                    return placedBlock
+                }
+            }
+            
+            // どちらの条件も満たさない場合は設置不可
+            player.sendActionBar(Component.text("旗（3ブロック以内）または設置済みブロックに隣接する位置にのみ設置できます", NamedTextColor.RED))
+            return null
+            
+        } else if (isDeviceOrFence(block.type)) {
+            // フェンスや装置の場合
+            
+            // 周囲3ブロック以内に自チームのカラーブロックがあるかチェック
+            val placedBlocks = teamPlacedBlocks[team] ?: mutableSetOf()
+            
+            for (placedBlock in placedBlocks) {
+                if (location.distance(placedBlock) <= 3.0) {
+                    // 最も近いブロックを親として返す
+                    return placedBlock
+                }
+            }
+            
+            // 自チームの旗から3ブロック以内かもチェック
+            val teamFlagLocation = when (team) {
+                Team.RED -> redFlagLocation
+                Team.BLUE -> blueFlagLocation
+            } ?: return null
+            
+            if (location.distance(teamFlagLocation) <= 3.0) {
+                return teamFlagLocation
+            }
+            
+            player.sendActionBar(Component.text("自チームのブロックから3ブロック以内にのみ設置できます", NamedTextColor.RED))
+            return null
+            
+        } else {
+            // その他のブロックは設置不可
+            player.sendActionBar(Component.text("設置できないブロックです", NamedTextColor.RED))
+            return null
+        }
+    }
+    
+    /**
+     * フェンスや装置かどうかをチェック
+     */
+    private fun isDeviceOrFence(material: Material): Boolean {
+        return material in setOf(
+            Material.OAK_FENCE, Material.IRON_BARS, Material.GLASS_PANE,
+            Material.LADDER, Material.OAK_TRAPDOOR, Material.IRON_TRAPDOOR,
+            Material.OAK_DOOR, Material.IRON_DOOR, Material.TORCH,
+            Material.REDSTONE_TORCH, Material.STONE_BUTTON, Material.LEVER,
+            Material.STONE_PRESSURE_PLATE, Material.PISTON, Material.STICKY_PISTON,
+            Material.REDSTONE, Material.REDSTONE_BLOCK, Material.HOPPER,
+            Material.DISPENSER, Material.TNT, Material.WATER_BUCKET, Material.LAVA_BUCKET
+        )
+    }
+    
+    /**
+     * 2つの位置が隣接しているかチェック（縦横斜め）
+     */
+    private fun isAdjacent(loc1: Location, loc2: Location): Boolean {
+        val dx = kotlin.math.abs(loc1.blockX - loc2.blockX)
+        val dy = kotlin.math.abs(loc1.blockY - loc2.blockY)
+        val dz = kotlin.math.abs(loc1.blockZ - loc2.blockZ)
+        
+        // 隣接の定義：各軸の差が1以下で、少なくとも1つの軸で差がある
+        return dx <= 1 && dy <= 1 && dz <= 1 && (dx + dy + dz) > 0
+    }
+    
+    /**
+     * ブロック設置を記録（ツリー構造で管理）
+     */
+    fun recordBlockPlacement(team: Team, location: Location, parent: Location) {
+        val block = location.block
+        
+        // チームカラーブロックのみ記録（フェンスや装置は記録しない）
+        val teamBlocks = TEAM_BLOCKS[team] ?: return
+        if (block.type in teamBlocks) {
+            val blocks = teamPlacedBlocks.getOrPut(team) { mutableSetOf() }
+            blocks.add(location.clone())
+            
+            val trees = teamBlockTrees.getOrPut(team) { mutableMapOf() }
+            
+            // 親ノードを取得または作成（旗の場合）
+            val parentNode = trees[parent] ?: BlockNode(parent, null).also { trees[parent] = it }
+            
+            // 新しいノードを作成
+            val newNode = BlockNode(location, parent)
+            trees[location] = newNode
+            
+            // 親ノードに子として追加
+            parentNode.children.add(location)
+            
+            // 隣接する白いブロックを再接続する
+            reconnectWhiteBlocks(team, location)
+        }
+        // フェンスや装置は設置記録しない（破壊されても切断判定に影響しない）
+    }
+    
+    /**
+     * 新しく設置したブロックの隣接する白いブロックを再接続し、チームカラーに戻す
+     */
+    private fun reconnectWhiteBlocks(team: Team, newBlockLocation: Location) {
+        val offsets = listOf(
+            BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
+            BlockFace.UP, BlockFace.DOWN,
+            BlockFace.NORTH_EAST, BlockFace.NORTH_WEST,
+            BlockFace.SOUTH_EAST, BlockFace.SOUTH_WEST
+        )
+        
+        val teamBlocks = TEAM_BLOCKS[team] ?: return
+        val blocks = teamPlacedBlocks.getOrPut(team) { mutableSetOf() }
+        val trees = teamBlockTrees.getOrPut(team) { mutableMapOf() }
+        val newNode = trees[newBlockLocation] ?: return
+        
+        // 隣接ブロックをチェック
+        for (face in offsets) {
+            val adjacentLoc = newBlockLocation.block.getRelative(face).location
+            val adjacentBlock = adjacentLoc.block
+            
+            // 白いコンクリートの場合
+            if (adjacentBlock.type == NEUTRAL_BLOCK) {
+                // このブロックから再帰的に接続された白いブロックを全て収集
+                val connectedWhiteBlocks = mutableSetOf<Location>()
+                collectConnectedWhiteBlocks(adjacentLoc, connectedWhiteBlocks)
+                
+                // 収集した白いブロックを全てチームカラーに戻す
+                val blockType = teamBlocks.first() // チームの最初のブロックタイプを使用
+                for (whiteLoc in connectedWhiteBlocks) {
+                    whiteLoc.block.type = blockType
+                    
+                    // ブロックリストに追加
+                    blocks.add(whiteLoc.clone())
+                    
+                    // ツリーに追加（新しく設置したブロックの子として）
+                    val whiteNode = BlockNode(whiteLoc, newBlockLocation)
+                    trees[whiteLoc] = whiteNode
+                    newNode.children.add(whiteLoc)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 接続された白いブロックを再帰的に収集
+     */
+    private fun collectConnectedWhiteBlocks(location: Location, result: MutableSet<Location>) {
+        if (location in result) return
+        if (location.block.type != NEUTRAL_BLOCK) return
+        
+        result.add(location.clone())
+        
+        val offsets = listOf(
+            BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
+            BlockFace.UP, BlockFace.DOWN,
+            BlockFace.NORTH_EAST, BlockFace.NORTH_WEST,
+            BlockFace.SOUTH_EAST, BlockFace.SOUTH_WEST
+        )
+        
+        for (face in offsets) {
+            val adjacentLoc = location.block.getRelative(face).location
+            collectConnectedWhiteBlocks(adjacentLoc, result)
+        }
+    }
+    
+    /**
+     * ブロック破壊を記録し、切断されたブロックを処理
+     */
+    fun recordBlockBreak(location: Location) {
+        // 破壊されたブロックがどのチームのものか特定
+        var ownerTeam: Team? = null
+        for ((team, blocks) in teamPlacedBlocks) {
+            if (location in blocks) {
+                ownerTeam = team
+                break
+            }
+        }
+        
+        if (ownerTeam == null) return
+        
+        // ブロックを削除
+        teamPlacedBlocks[ownerTeam]?.remove(location)
+        val trees = teamBlockTrees[ownerTeam] ?: return
+        val node = trees[location] ?: return
+        
+        // 親ノードから子として削除
+        node.parent?.let { parentLoc ->
+            trees[parentLoc]?.children?.remove(location)
+        }
+        
+        // 破壊されたブロック自体をツリーから削除
+        trees.remove(location)
+        
+        // ビーコンからの到達可能性をチェックして、切断されたブロックを特定
+        val reachableBlocks = findReachableBlocks(ownerTeam)
+        
+        // 到達不可能なブロックを白いブロックに変換
+        val allTeamBlocks = teamPlacedBlocks[ownerTeam] ?: mutableSetOf()
+        for (blockLoc in allTeamBlocks.toList()) {
+            if (blockLoc !in reachableBlocks && blockLoc != location) {
+                // ブロックを白いコンクリートに変換
+                val block = blockLoc.block
+                when (block.type) {
+                    Material.RED_CONCRETE, Material.BLUE_CONCRETE -> block.type = Material.WHITE_CONCRETE
+                    Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> block.type = Material.WHITE_STAINED_GLASS
+                    else -> {}
+                }
+                
+                // リストから削除
+                teamPlacedBlocks[ownerTeam]?.remove(blockLoc)
+                trees.remove(blockLoc)
+            }
+        }
+    }
+    
+    /**
+     * 敵陣シールドシステムタスクを開始
+     */
+    private fun startSuffocationTask() {
+        // 既存のタスクがあればキャンセル
+        suffocationTask?.cancel()
+        suffocationTask = null
+        
+        // プレイヤーごとのシールド値を管理（最大値: 100）
+        val playerShield = mutableMapOf<UUID, Float>()
+        val lastDamageTime = mutableMapOf<UUID, Long>()
+        
+        suffocationTask = object : BukkitRunnable() {
+            override fun run() {
+                // ゲームまたはフェーズが終了したらタスクを停止
+                if (state != GameState.RUNNING || phase != GamePhase.COMBAT) {
+                    cancel()
+                    suffocationTask = null
+                    return
+                }
+                
+                try {
+                    // プレイヤーリストをコピーして処理
+                    val players = getAllPlayers().toList()
+                    
+                    for (player in players) {
+                        // プレイヤーが有効でない場合はスキップ
+                        if (!player.isOnline || player.isDead) continue
+                        
+                        val playerTeam = getPlayerTeam(player.uniqueId)
+                        if (playerTeam == null) continue
+                        
+                        val blockBelow = player.location.clone().subtract(0.0, 0.5, 0.0).block
+                        
+                        // プレイヤーの下のブロックが敵チームの色ブロックかチェック
+                        val isOnEnemyBlock = when (playerTeam) {
+                            Team.RED -> blockBelow.type == Material.BLUE_CONCRETE || blockBelow.type == Material.BLUE_STAINED_GLASS
+                            Team.BLUE -> blockBelow.type == Material.RED_CONCRETE || blockBelow.type == Material.RED_STAINED_GLASS
+                        }
+                        
+                        // 現在のシールド値を取得（初期値100）
+                        var shield = playerShield.getOrDefault(player.uniqueId, 100f)
+                        
+                        if (isOnEnemyBlock) {
+                            // 初めて敵陣に乗った時だけ警告
+                            if (!player.hasMetadata("on_enemy_block")) {
+                                player.setMetadata("on_enemy_block", org.bukkit.metadata.FixedMetadataValue(plugin, true))
+                                player.sendMessage(Component.text("敵陣ブロックでシールドが減少しています！", NamedTextColor.AQUA))
+                            }
+                            
+                            // シールドを減らす（0.5秒ごとに2減少 = 25秒で枯渇）
+                            shield = (shield - 2f).coerceAtLeast(0f)
+                            
+                            // シールドが少なくなったら警告
+                            if (shield == 40f) {
+                                player.sendMessage(Component.text("シールドが弱まっています！", NamedTextColor.YELLOW))
+                                player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.5f)
+                            } else if (shield == 20f) {
+                                player.sendMessage(Component.text("シールドが危険レベルです！", NamedTextColor.RED))
+                                player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.3f)
+                            }
+                            
+                            // シールドがゼロになったらダメージ
+                            if (shield == 0f) {
+                                // 満腹度を減らして自動回復を防ぐ
+                                if (player.foodLevel > 6) {
+                                    player.foodLevel = 6
+                                }
+                                
+                                val currentTime = System.currentTimeMillis()
+                                val lastDamage = lastDamageTime[player.uniqueId] ?: 0
+                                
+                                // 2秒ごとにダメージ
+                                if (currentTime - lastDamage >= 2000) {
+                                    if (player.health > 1.0) {
+                                        // ダメージを与える
+                                        val event = EntityDamageEvent(player, EntityDamageEvent.DamageCause.CUSTOM, 1.0)
+                                        Bukkit.getPluginManager().callEvent(event)
+                                        if (!event.isCancelled) {
+                                            player.health = (player.health - event.finalDamage).coerceAtLeast(1.0)
+                                            player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_HURT, 0.5f, 1.0f)
+                                        }
+                                        lastDamageTime[player.uniqueId] = currentTime
+                                    }
+                                }
+                            }
+                        } else {
+                            // 敵陣ブロック上でない場合
+                            if (player.hasMetadata("on_enemy_block")) {
+                                player.removeMetadata("on_enemy_block", plugin)
+                                lastDamageTime.remove(player.uniqueId)
+                            }
+                            
+                            // シールドを回復（0.5秒ごとに5回復 = 10秒で全回復）
+                            if (shield < 100f) {
+                                shield = (shield + 5f).coerceAtMost(100f)
+                                
+                                // 全回復したら通知
+                                if (shield == 100f) {
+                                    player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 2.0f)
+                                }
+                            }
+                        }
+                        
+                        // シールド値を保存
+                        playerShield[player.uniqueId] = shield
+                        
+                        // アクションバーにシールド状態を表示
+                        val shieldColor = when {
+                            shield > 60 -> NamedTextColor.AQUA
+                            shield > 30 -> NamedTextColor.YELLOW
+                            else -> NamedTextColor.RED
+                        }
+                        
+                        if (shield < 100f) {
+                            val shieldBar = "█".repeat((shield / 10).toInt()).padEnd(10, '░')
+                            player.sendActionBar(Component.text("シールド: [$shieldBar] ${shield.toInt()}%", shieldColor))
+                        }
+                    }
+                } catch (e: Exception) {
+                    plugin.logger.warning("Error in oxygen task: ${e.message}")
+                    e.printStackTrace()
+                }
+            }
+        }
+        
+        // 10ティック（0.5秒）ごとに実行
+        suffocationTask?.runTaskTimer(plugin, 0L, 10L)
+    }
+    
+    /**
+     * ビーコンから到達可能なブロックを探索（BFS）
+     */
+    private fun findReachableBlocks(team: Team): Set<Location> {
+        val reachable = mutableSetOf<Location>()
+        val queue = mutableListOf<Location>()
+        
+        // ビーコンの位置を起点として追加
+        val beaconLocation = when (team) {
+            Team.RED -> redFlagLocation
+            Team.BLUE -> blueFlagLocation
+        } ?: return emptySet()
+        
+        // スポーン地点を取得
+        val spawnLocation = when (team) {
+            Team.RED -> redSpawnLocation
+            Team.BLUE -> blueSpawnLocation
+        }
+        
+        // ビーコン周辺3ブロック以内のブロックを起点に追加
+        val teamBlocks = teamPlacedBlocks[team] ?: return emptySet()
+        for (block in teamBlocks) {
+            if (block.distance(beaconLocation) <= 3.0) {
+                queue.add(block)
+                reachable.add(block)
+            }
+        }
+        
+        // スポーン地点周辺3ブロック以内のブロックも起点に追加
+        if (spawnLocation != null) {
+            for (block in teamBlocks) {
+                if (block.distance(spawnLocation) <= 3.0) {
+                    if (block !in reachable) {
+                        queue.add(block)
+                        reachable.add(block)
+                    }
+                }
+            }
+        }
+        
+        // BFSで隣接ブロックを探索
+        while (queue.isNotEmpty()) {
+            val current = queue.removeAt(0)
+            
+            // 隣接する全方向（26方向）をチェック
+            for (dx in -1..1) {
+                for (dy in -1..1) {
+                    for (dz in -1..1) {
+                        if (dx == 0 && dy == 0 && dz == 0) continue
+                        
+                        val neighbor = current.clone().add(dx.toDouble(), dy.toDouble(), dz.toDouble())
+                        if (neighbor in teamBlocks && neighbor !in reachable) {
+                            reachable.add(neighbor)
+                            queue.add(neighbor)
+                        }
+                    }
+                }
+            }
+        }
+        
+        return reachable
+    }
+    
+    /**
+     * マップ中央位置を計算（各種位置から推定）
+     */
+    private fun calculateMapCenter() {
+        val locations = mutableListOf<Location>()
+        
+        // 旗位置を追加
+        redFlagLocation?.let { locations.add(it) }
+        blueFlagLocation?.let { locations.add(it) }
+        
+        // スポーン位置を追加
+        redSpawnLocation?.let { locations.add(it) }
+        blueSpawnLocation?.let { locations.add(it) }
+        
+        if (locations.isEmpty()) {
+            mapCenterLocation = null
+            return
+        }
+        
+        // すべての位置の中心を計算
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumZ = 0.0
+        
+        locations.forEach { loc ->
+            sumX += loc.x
+            sumY += loc.y
+            sumZ += loc.z
+        }
+        
+        val avgX = sumX / locations.size
+        val avgY = sumY / locations.size
+        val avgZ = sumZ / locations.size
+        
+        mapCenterLocation = Location(world, avgX, avgY, avgZ)
+    }
+    
+    /**
+     * マップ範囲を設定（POS1/POS2から）
+     */
+    fun setMapBounds(pos1: Location, pos2: Location) {
+        val centerX = (pos1.x + pos2.x) / 2.0
+        val centerY = (pos1.y + pos2.y) / 2.0
+        val centerZ = (pos1.z + pos2.z) / 2.0
+        
+        mapCenterLocation = Location(world, centerX, centerY, centerZ)
     }
 }

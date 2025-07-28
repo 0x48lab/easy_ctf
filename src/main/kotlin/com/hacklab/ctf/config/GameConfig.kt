@@ -26,7 +26,7 @@ data class GameConfig(
     
     // フェーズ設定
     var buildDuration: Int = 300,
-    var buildPhaseGameMode: String = "ADVENTURE",
+    var buildPhaseGameMode: String = "SURVIVAL",
     var combatDuration: Int = 600,
     var resultDuration: Int = 60,
     

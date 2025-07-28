@@ -59,7 +59,7 @@ class ConfigManager(private val plugin: Main) {
         yaml.set("settings.max-players-per-team", config.maxPlayersPerTeam)
         yaml.set("settings.respawn-delay", config.respawnDelay)
         yaml.set("settings.phases.build-duration", config.buildDuration)
-        yaml.set("settings.phases.build-gamemode", config.buildPhaseGameMode)
+        yaml.set("settings.phases.build-phase-gamemode", config.buildPhaseGameMode)
         yaml.set("settings.phases.combat-duration", config.combatDuration)
         yaml.set("settings.phases.result-duration", config.resultDuration)
         
@@ -128,7 +128,9 @@ class ConfigManager(private val plugin: Main) {
         config.maxPlayersPerTeam = yaml.getInt("settings.max-players-per-team", config.maxPlayersPerTeam)
         config.respawnDelay = yaml.getInt("settings.respawn-delay", config.respawnDelay)
         config.buildDuration = yaml.getInt("settings.phases.build-duration", config.buildDuration)
-        config.buildPhaseGameMode = yaml.getString("settings.phases.build-gamemode", config.buildPhaseGameMode)!!
+        val gameModeFromFile = yaml.getString("settings.phases.build-phase-gamemode")
+        plugin.logger.info("[ConfigManager] Loading game ${name}: build-phase-gamemode from file = $gameModeFromFile, default = ${config.buildPhaseGameMode}")
+        config.buildPhaseGameMode = gameModeFromFile ?: config.buildPhaseGameMode
         config.combatDuration = yaml.getInt("settings.phases.combat-duration", config.combatDuration)
         config.resultDuration = yaml.getInt("settings.phases.result-duration", config.resultDuration)
         
@@ -182,9 +184,11 @@ class ConfigManager(private val plugin: Main) {
             autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false),
             minPlayers = plugin.config.getInt("default-game.min-players", 2),
             maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10),
-            respawnDelay = plugin.config.getInt("default-game.respawn-delay", 5),
+            respawnDelay = plugin.config.getInt("default-game.respawn-delay-base", 10),
             buildDuration = plugin.config.getInt("default-phases.build-duration", 300),
-            buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "ADVENTURE")!!,
+            buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!.also {
+                plugin.logger.info("[ConfigManager] buildPhaseGameMode from config: $it")
+            },
             combatDuration = plugin.config.getInt("default-phases.combat-duration", 600),
             resultDuration = plugin.config.getInt("default-phases.result-duration", 60),
             matchMode = MatchMode.FIXED_ROUNDS,

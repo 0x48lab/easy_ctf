@@ -3,6 +3,7 @@ package com.hacklab.ctf.commands
 import com.hacklab.ctf.Main
 import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.utils.GameState
+import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -171,8 +172,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         if (args.size < 2) {
-            sender.sendMessage(Component.text("使用方法: /ctf start <ゲーム名> [マッチモード] [ゲーム数]", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("マッチモード: match (複数ゲーム実施)", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text("使用方法: /ctf start <ゲーム名> [single|match] [ゲーム数]", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("single: 単一ゲーム, match: 複数ゲーム実施", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text("パラメータ未指定時は設定ファイルから自動判定", NamedTextColor.GRAY))
             return true
         }
         
@@ -184,47 +186,63 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
-        // マッチパラメータの解析
-        var isMatch = false
-        var matchTarget: Int? = null
+        // YAMLファイルからゲーム設定を取得
+        val gameConfig = gameManager.getGameConfig(gameName)
         
-        if (args.size >= 3 && args[2].lowercase() == "match") {
-            // マッチモード指定
-            isMatch = true
-            
-            if (args.size >= 4) {
-                // ゲーム数指定あり
-                matchTarget = args[3].toIntOrNull()
-                if (matchTarget == null || matchTarget < 1) {
-                    sender.sendMessage(Component.text("ゲーム数は1以上の数値で指定してください", NamedTextColor.RED))
+        // マッチモードの判定
+        var isMatch = false
+        var matchTarget = plugin.config.getInt("match.default-target", 3)
+        
+        if (args.size >= 3) {
+            when (args[2].lowercase()) {
+                "single" -> {
+                    // 明示的にシングルゲームモード
+                    isMatch = false
+                    sender.sendMessage(Component.text("シングルゲームモードで開始します", NamedTextColor.YELLOW))
+                }
+                "match" -> {
+                    // 明示的にマッチモード
+                    isMatch = true
+                    if (args.size >= 4) {
+                        try {
+                            matchTarget = args[3].toInt()
+                            if (matchTarget < 1) {
+                                sender.sendMessage(Component.text("ゲーム数は1以上を指定してください", NamedTextColor.RED))
+                                return true
+                            }
+                        } catch (e: NumberFormatException) {
+                            sender.sendMessage(Component.text("無効なゲーム数です", NamedTextColor.RED))
+                            return true
+                        }
+                    } else if (gameConfig != null && gameConfig.matchTarget > 1) {
+                        // YAML設定から取得
+                        matchTarget = gameConfig.matchTarget
+                    }
+                }
+                else -> {
+                    sender.sendMessage(Component.text("使用方法: /ctf start <ゲーム名> [single|match] [ゲーム数]", NamedTextColor.RED))
                     return true
                 }
+            }
+        } else {
+            // パラメータが指定されていない場合、YAML設定から自動判定
+            if (gameConfig != null && gameConfig.matchMode == MatchMode.FIXED_ROUNDS && gameConfig.matchTarget > 1) {
+                isMatch = true
+                matchTarget = gameConfig.matchTarget
+                sender.sendMessage(Component.text("設定ファイルに基づいてマッチモード（${matchTarget}ゲーム）で開始します", NamedTextColor.YELLOW))
             } else {
-                // デフォルト値を使用
-                matchTarget = plugin.config.getInt("match.default-target", 3)
+                sender.sendMessage(Component.text("シングルゲームモードで開始します", NamedTextColor.YELLOW))
             }
         }
         
-        // マッチシステムの使用判定
-        if (isMatch) {
-            // マッチモード指定
-            val existingMatch = gameManager.getMatch(gameName)
-            
-            if (existingMatch != null && existingMatch.isActive) {
-                sender.sendMessage(Component.text("既にマッチが実行中です", NamedTextColor.RED))
-                return true
+        if (gameManager.startGame(gameName, isMatch, if (isMatch) matchTarget else null)) {
+            if (isMatch) {
+                sender.sendMessage(Component.text("マッチを開始しました！（$matchTarget ゲーム）", NamedTextColor.GREEN))
+            } else {
+                sender.sendMessage(Component.text("ゲームを開始しました！", NamedTextColor.GREEN))
             }
-            
-            // 新しいマッチを作成して開始
-            gameManager.startGame(gameName, true, matchTarget)
-            
-            sender.sendMessage(Component.text("マッチ '$gameName' を開始しました！", NamedTextColor.GREEN))
-            sender.sendMessage(Component.text("固定ラウンドモード: ${matchTarget}ゲーム", NamedTextColor.YELLOW))
         } else {
-            // 単一ゲームとして開始
-            if (game.start()) {
-                sender.sendMessage(Component.text("ゲーム '$gameName' を開始しました！", NamedTextColor.GREEN))
-            }
+            sender.sendMessage(Component.text("ゲームを開始できませんでした", NamedTextColor.RED))
         }
         
         return true
@@ -673,7 +691,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/ctf create <ゲーム名> - 新規ゲーム作成（対話形式）", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf update <ゲーム名> - ゲーム設定の更新（対話形式）", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf delete <ゲーム名> - ゲーム削除", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf start <ゲーム名> - ゲーム開始", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("/ctf start <ゲーム名> [single|match] [ゲーム数] - ゲーム開始", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("  ※設定ファイルにマッチ設定がある場合は自動でマッチモード", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text("  ※'single'を指定すると強制的に単一ゲーム", NamedTextColor.GRAY))
             sender.sendMessage(Component.text("/ctf stop <ゲーム名> - ゲーム停止", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf setflag <ゲーム名> <red|blue> - 旗位置設定", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("/ctf setspawn <ゲーム名> <red|blue> - スポーン地点設定", NamedTextColor.YELLOW))
@@ -717,16 +737,15 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                         completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
                     }
                     "start" -> {
-                        completions.addAll(listOf("first_to_x", "fixed_rounds").filter { it.startsWith(args[2].lowercase()) })
+                        completions.addAll(listOf("single", "match").filter { it.startsWith(args[2].lowercase()) })
                     }
                 }
             }
             4 -> {
                 when (args[0].lowercase()) {
                     "start" -> {
-                        // 目標値の提案
-                        if (args[2].lowercase() in listOf("first_to_x", "fixed_rounds")) {
-                            completions.addAll(listOf("1", "3", "5", "7", "10").filter { it.startsWith(args[3]) })
+                        if (args[2].equals("match", ignoreCase = true)) {
+                            completions.addAll(listOf("3", "5", "7", "10").filter { it.startsWith(args[3]) })
                         }
                     }
                 }
@@ -805,6 +824,31 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         val gameName = args[1]
+        
+        // WorldEditの選択範囲を確認
+        val worldEditSelection = if (com.hacklab.ctf.utils.WorldEditHelper.isWorldEditAvailable()) {
+            com.hacklab.ctf.utils.WorldEditHelper.getPlayerSelection(sender)
+        } else null
+        
+        // プレイヤーの一時的なマップ範囲を確認
+        val tempPositions = gameManager.getTempMapPositions(sender)
+        val hasTempMapRegion = tempPositions?.pos1 != null && tempPositions.pos2 != null
+        
+        // WorldEditの選択範囲を優先的に使用
+        if (worldEditSelection != null) {
+            gameManager.setMapPos1(gameName, worldEditSelection.first)
+            gameManager.setMapPos2(gameName, worldEditSelection.second)
+            sender.sendMessage(Component.text("WorldEditの選択範囲を使用します", NamedTextColor.GRAY))
+        }
+        // 一時的なマップ範囲がある場合
+        else if (hasTempMapRegion && tempPositions != null) {
+            gameManager.setMapPos1(gameName, tempPositions.pos1!!)
+            gameManager.setMapPos2(gameName, tempPositions.pos2!!)
+            gameManager.clearTempMapPositions(sender)
+            sender.sendMessage(Component.text("一時的なマップ範囲を使用します", NamedTextColor.GRAY))
+        }
+        // ゲーム固有の範囲も確認が必要な場合があるため、そのまま実行
+        
         val result = gameManager.saveMap(gameName)
         
         if (result.success) {
@@ -822,6 +866,10 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         return true
+    }
+    
+    private fun validateGameName(name: String): Boolean {
+        return name.matches(Regex("[a-zA-Z0-9_]+")) && name.length <= 32 && name.lowercase() !in listOf("all", "list", "help")
     }
 }
 
