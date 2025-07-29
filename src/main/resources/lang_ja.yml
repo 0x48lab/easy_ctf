@@ -313,6 +313,11 @@ shop:
   cannot-drop-item: "&cショップアイテムは捨てることができません！"
   shop-only-during-game: "&cショップは建築・戦闘フェーズ中のみ使用可能です"
   team-not-found: "&cチームが見つかりません"
+  phase-restricted: "&cこのアイテムは現在のフェーズでは購入できません"
+  purchase-limit: "&c購入制限に達しています"
+  insufficient-funds: "&c購入に必要なGが不足しています！ (必要: {price}G)"
+  inventory-full: "&yインベントリが満杯のため、アイテムを足元にドロップしました"
+  purchase-success: "{item} を購入しました！"
 
 # Gameplay Messages
 gameplay:

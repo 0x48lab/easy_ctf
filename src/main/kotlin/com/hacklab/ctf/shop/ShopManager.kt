@@ -367,13 +367,13 @@ class ShopManager(private val plugin: Main) {
         
         // フェーズチェック
         if (!item.availablePhases.contains(game.phase)) {
-            player.sendMessage(Component.text("このアイテムは現在のフェーズでは購入できません").color(NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.phase-restricted")).color(NamedTextColor.RED))
             return false
         }
         
         // 購入制限チェック
         if (!checkPurchaseLimit(game.name, player, team, item)) {
-            player.sendMessage(Component.text("購入制限に達しています").color(NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.purchase-limit")).color(NamedTextColor.RED))
             return false
         }
         
@@ -381,7 +381,7 @@ class ShopManager(private val plugin: Main) {
         
         // 通貨チェック
         if (game.getTeamCurrency(team) < price) {
-            player.sendMessage(Component.text("購入に必要なGが不足しています！ (必要: ${price}G)").color(NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.insufficient-funds", "price" to price.toString())).color(NamedTextColor.RED))
             return false
         }
         
@@ -401,7 +401,7 @@ class ShopManager(private val plugin: Main) {
                     leftover.values.forEach { 
                         player.world.dropItem(player.location, it)
                     }
-                    player.sendMessage(Component.text("インベントリが満杯のため、アイテムを足元にドロップしました").color(NamedTextColor.YELLOW))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.inventory-full")).color(NamedTextColor.YELLOW))
                 }
             }
         }
@@ -413,8 +413,10 @@ class ShopManager(private val plugin: Main) {
         // 購入金額統計を記録
         game.playerMoneySpent[player.uniqueId] = (game.playerMoneySpent[player.uniqueId] ?: 0) + price
         
-        player.sendMessage(LegacyComponentSerializer.legacySection().deserialize(item.displayName)
-            .append(Component.text(" を購入しました！").color(NamedTextColor.GREEN)))
+        val itemName = LegacyComponentSerializer.legacySection().serialize(
+            LegacyComponentSerializer.legacySection().deserialize(item.displayName)
+        )
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.purchase-success", "item" to itemName)).color(NamedTextColor.GREEN))
         return true
     }
     

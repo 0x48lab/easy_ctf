@@ -313,6 +313,11 @@ shop:
   cannot-drop-item: "&cCannot drop shop items!"
   shop-only-during-game: "&cShop only available during build/combat phases"
   team-not-found: "&cTeam not found"
+  phase-restricted: "&cThis item cannot be purchased in the current phase"
+  purchase-limit: "&cPurchase limit reached"
+  insufficient-funds: "&cInsufficient funds! (Required: {price}G)"
+  inventory-full: "&yInventory full, item dropped at your feet"
+  purchase-success: "Purchased {item}!"
 
 # Gameplay Messages
 gameplay:
