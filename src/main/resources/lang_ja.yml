@@ -33,6 +33,19 @@ command:
   skip-no-permission: "&cフェーズをスキップする権限がありません！"
   skip-no-game: "&c現在実行中のゲームがありません！"
   skip-cannot: "&c現在フェーズをスキップできません！"
+  player-only: "このコマンドはプレイヤーのみ実行できます"
+  game-deleted: "&aゲーム '{name}' を削除しました"
+  game-not-found: "&cゲーム '{name}' が見つかりません"
+  no-games: "&c現在ゲームはありません"
+  flags-not-set-warning: "   ⚠ 旗が未設定です"
+  auto-param-hint: "&7パラメータ未指定時は設定ファイルから自動判定"
+  single-game-start: "&yシングルゲームモードで開始します"
+  game-count-min: "&cゲーム数は1以上を指定してください"
+  invalid-game-count: "&c無効なゲーム数です"
+  match-start-config: "&y設定ファイルに基づいてマッチモード（{count}ゲーム）で開始します"
+  match-started: "&aマッチを開始しました！（{count} ゲーム）"
+  game-started: "&aゲームを開始しました！"
+  game-start-failed: "&cゲームを開始できませんでした"
 
 # Game Messages
 game:
@@ -53,6 +66,9 @@ block:
 armor:
   cannot-remove: "&cゲーム中は防具を外すことができません！"
   cannot-drop: "&cゲーム中は防具をドロップできません！"
+  cannot-drop-combat: "&c戦闘中は防具を捨てられません！"
+  only-leather-allowed: "&c革の防具以外は装備できません！"
+  cannot-remove-combat: "&c戦闘中は防具を外せません！"
 
 # Time Warnings
 time:
@@ -128,3 +144,189 @@ game-states:
   starting: "開始中"
   running: "実行中"
   ending: "終了中"
+  already-started: "&cこのゲームは既に開始されています"
+  already-ending: "&cこのゲームは終了中です"
+  already-state: "&cゲームは既に{state}状態です"
+
+# Join/Leave Messages
+join-leave:
+  game-joined: "&aゲーム '{game}' の{color}{team}&aに参加しました"
+  game-left: "&yゲーム '{game}' から退出しました"
+  team-full-red: "&c赤チームが満員です"
+  team-full-blue: "&c青チームが満員です"
+  auto-start-cancelled: "&y人数不足のため自動開始がキャンセルされました"
+  countdown-message: "&aゲーム開始まで: {seconds}秒"
+  min-players-required: "&cゲームを開始するには最低{min}名必要です"
+  flags-not-set: "&c両チームの旗位置を設定する必要があります"
+  temp-world-failed: "&cテンポラリワールドの作成に失敗しました"
+
+# Phase Messages Extended
+phase-extended:
+  build-time-format: "建築フェーズ - 残り時間: {time}"
+  combat-time-format: "戦闘フェーズ - 残り時間: {time}"
+  combat-score-format: "戦闘フェーズ - 赤 {red} : {blue} 青 - {time}"
+  intermission-time-format: "作戦会議 - {time}"
+  game-start-title: "&aゲーム開始！"
+  game-start-subtitle: "&y建築フェーズ - 防御を構築しよう"
+  combat-start-title: "&c戦闘フェーズ開始！"
+  combat-start-subtitle: "&y敵の旗を奪取せよ！"
+  phase-end-bonus: "戦闘フェーズ終了ボーナス"
+  winner-title: "{color}{team}&fの勝利！"
+  draw-title: "&y引き分け！"
+  score-display: "&fスコア: 赤 {red} - {blue} 青"
+  game-ended: "&yゲームが終了しました"
+  wait-next-game: "&y次のゲームまでしばらくお待ちください..."
+
+# Spawn Messages  
+spawn:
+  not-set: "&cスポーン地点が設定されていません"
+  protection-active: "&a3秒間スポーン保護が有効です"
+  protection-ended: "&yスポーン保護が解除されました"
+
+# Flag Messages
+flag:
+  concrete-name: "{color}{team}&fのコンクリート (無限)"
+  glass-name: "{color}{team}&fのガラス (無限)"
+  infinite-desc: "&7無限に設置できます"
+  flag-name: "{team}の旗"
+  already-carrying: "&c既に旗を持っています"
+  returned-home: "{color}{team}&fの旗が元の位置に戻りました"
+  returned-uncollectable: "{color}{team}&fの旗が元の位置に戻りました（回収不可能な場所のため）"
+  returned-timeout: "{color}{team}&fの旗が元の位置に戻りました"
+  flag-dropped: "{team}の旗がドロップされました！"
+  cannot-capture-no-flag: "自チームの旗が自陣にないため、キャプチャーできません"
+  captured-by: "{color}{team}&fが得点しました！ ({player})"
+  current-score: "&f現在のスコア - 赤: {red} 青: {blue}"
+  picked-up: "&y{player}が{color}{team}&yの旗を取得しました！"
+  enemy-has-flag: "&c旗が敵に取られた！取り返せ！({carrier})"
+  team-flag-dropped: "&y自チームの旗を回収せよ！"
+  retrieve-enemy-flag: "{color}{team}&fの旗を奪取せよ！"
+  flag-carrier-unknown: "不明"
+  flag-recovered: "{player}が{flagTeam}の旗を回収しました！"
+  scored-title: "{team}が得点！"
+  score-subtitle: "赤: {red} - {blue} :青"
+  returned-void: "{team}の旗が元の位置に戻りました（奈落死のため）"
+  returned-damage: "{team}の旗が元の位置に戻りました（{cause}）"
+  returned-fire: "{team}の旗が元の位置に戻りました（炎上のため）"
+
+# Currency Messages
+currency:
+  team-notification: "&a[チーム] {reason} (+{amount}G)"
+  purchase-notification: "&y[チーム] {player} が {item} を購入しました (-{amount}G)"
+  balance-notification: "&y[チーム] 残高: {balance}G"
+  capture-currency: "{player}が旗をキャプチャー"
+  capture-assist: "{count}名がキャプチャーアシスト"
+
+# Action Bar Messages
+action-bar:
+  build-phase-guide: "&a建築して防御を固めよう！"
+  return-to-base: "&6自陣に戻れ！"
+  cannot-place-flag: "&c旗の周辺にはブロックを設置できません"
+  cannot-place-spawn: "&cスポーン地点の周辺にはブロックを設置できません"
+  cannot-place-block: "&c設置できないブロックです"
+  place-restriction-flag: "旗（3ブロック以内）または設置済みブロックに隣接する位置にのみ設置できます"
+  place-restriction-team: "自チームのブロックから3ブロック以内にのみ設置できます"
+
+# Scoreboard Messages
+scoreboard:
+  title-ctf: "&b&lCTF- {game}"
+  waiting-players: "&f待機中プレイヤー:"
+  game-settings: "&e=== ゲーム設定 ==="
+  build-combat-time: "&f建築{build}分 戦闘{combat}分"
+  first-to-score: "&f先取{score}点"
+  start-countdown: "&a開始まで: &f{seconds}秒"
+  team-players: "&c赤{red} &9青{blue}"
+  match-game: "&e第{number}ゲーム"
+  match-score: "&c赤{red}&f-&9{blue}青"
+  currency-display: "&e{amount}G"
+
+# Report Messages
+report:
+  header: "&6&l========== ゲームレポート =========="
+  match-score-header: "&f現在のマッチスコア:"
+  match-score-format: "&c赤 {red} &f- &9{blue} 青"
+  game-header: "&y今回のゲーム:"
+  winner-format: "&f勝利: {color}{team}"
+  draw-result: "&y引き分け"
+  score-header: "&fスコア:"
+  team-stats-header: "&yチーム統計:"
+  red-team-header: "&c赤チーム:"
+  blue-team-header: "&9青チーム:"
+  player-stats: "&f  {player}: &7{kills}K/{deaths}D (K/D: {kd})"
+  team-funds-header: "&yチーム資金:"
+  team-funds-format: "{color}{team}: &y{amount}G"
+
+# MVP Messages
+mvp:
+  header: "&6&l========== MVP発表 =========="
+  most-kills: "&4🗡 最多キル: &f{name} &7- {kills}キル"
+  most-captures: "&6🚩 最多キャプチャー: &f{name} &7- {captures}回"
+  most-defends: "&b🛡 最多防衛: &f{name} &7- {defends}回"
+  most-assists: "&a🤝 最多アシスト: &f{name} &7- {assists}回"
+  most-builds: "&e🏗 最多建築: &f{name} &7- {blocks}ブロック"
+  most-spending: "&d💰 最多消費: &f{name} &7- {amount}G"
+  least-deaths: "&2💀 最少デス: &f{name} &7- {deaths}回"
+  unknown-player: "不明"
+  deaths-display: "  デス数: {deaths}"
+  star-decoration: "★★★★★★★★★★★★★★★"
+  mvp-title: "MVP！"
+  mvp-subtitle: "おめでとうございます！"
+  kills-display: "  キル: {kills}"
+  assists-display: "  アシスト: {assists}"
+  captures-display: "  旗キャプチャー: {captures}"
+  flag-pickups-display: "  旗取得: {pickups}"
+  flag-defends-display: "  旗防衛: {defends}"
+  money-spent-display: "  使用金額: {amount}G"
+  blocks-placed-display: "  ブロック設置: {blocks}"
+
+# Death Messages
+death:
+  kills-notification: "&e{killer}が{victim}をキル{streak}"
+  streak-format: " ({count}連続キル!)"
+  kill-streak-notification: "&6{player} は {count} 連続キル中！"
+  assist-notification: "&aキルアシスト! +{amount}G"
+
+# Block Placement
+block:
+  cannot-break-decoration: "&c旗とスポーンの装飾は破壊できません"
+  protected-area: "&c保護されたエリアです"
+
+# Item Names
+items:
+  shop-item-name: "&a&lショップ"
+  shop-item-lore: "&7右クリックでショップを開く"
+
+# Game Phases
+game-phases:
+  build: "建築"
+  combat: "戦闘" 
+  intermission: "作戦会議"
+
+# Shield Messages
+shield:
+  decreasing: "敵陣ブロックでシールドが減少しています！"
+  weakening: "シールドが弱まっています！"
+  critical: "シールドが危険レベルです！"
+
+# Shop Messages
+shop:
+  cannot-drop-item: "&cショップアイテムは捨てることができません！"
+  shop-only-during-game: "&cショップは建築・戦闘フェーズ中のみ使用可能です"
+  team-not-found: "&cチームが見つかりません"
+
+# Gameplay Messages
+gameplay:
+  respawn-countdown: "&eリスポーンまで {seconds} 秒..."
+  cannot-attack-teammate: "&cチームメイトを攻撃することはできません！"
+  player-has-spawn-protection: "&cこのプレイヤーはスポーン保護中です！"
+  cannot-fight-build-phase: "&c建築フェーズ中は戦闘できません！"
+  cannot-break-adventure: "&cアドベンチャーモードではブロックを破壊できません"
+  cannot-break-game-blocks: "&cゲーム用のブロックは破壊できません"
+  cannot-place-adventure: "&cアドベンチャーモードではブロックを設置できません"
+  cannot-place-combat: "&c戦闘フェーズ中はブロックを設置できません"
+  cannot-place-on-beacon: "&cビーコンの上にブロックを置くことはできません"
+  flag-info: "&f{team}の旗です。近づくと取得できます"
+  spectator-mode: "&7スペクテーターモードで観戦中..."
+  clear-command-disabled: "&cゲーム中は/clearコマンドは使用できません！"
+  shop-item-redistributed: "&yショップアイテムは削除できません。再配布されました。"
+  item-name-error: "&cアイテム名を取得できませんでした"

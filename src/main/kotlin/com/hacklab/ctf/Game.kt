@@ -211,10 +211,10 @@ class Game(
             plugin.logger.warning("Player ${player.name} cannot join game $name: state is $state")
             when (state) {
                 GameState.STARTING, GameState.RUNNING -> {
-                    player.sendMessage(Component.text("このゲームは既に開始されています", NamedTextColor.RED))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game-states.already-started")))
                 }
                 GameState.ENDING -> {
-                    player.sendMessage(Component.text("このゲームは終了中です", NamedTextColor.RED))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game-states.already-ending")))
                 }
                 GameState.WAITING -> {
                     // このケースは発生しないはず
@@ -227,13 +227,13 @@ class Game(
         
         if (selectedTeam == Team.RED) {
             if (redTeam.size >= maxPlayersPerTeam) {
-                player.sendMessage(Component.text("赤チームが満員です", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.team-full-red")))
                 return false
             }
             redTeam.add(player.uniqueId)
         } else {
             if (blueTeam.size >= maxPlayersPerTeam) {
-                player.sendMessage(Component.text("青チームが満員です", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.team-full-blue")))
                 return false
             }
             blueTeam.add(player.uniqueId)
@@ -242,7 +242,11 @@ class Game(
         // スコアボード表示
         setupScoreboard(player)
         
-        player.sendMessage(Component.text("ゲーム '$gameName' の${selectedTeam.displayName}に参加しました", selectedTeam.color))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.game-joined", 
+            "game" to gameName,
+            "color" to selectedTeam.getChatColor(),
+            "team" to selectedTeam.displayName
+        )))
         
         // マッチに追加
         matchWrapper?.players?.put(player.uniqueId, player)
@@ -269,7 +273,7 @@ class Game(
             dropFlag(player, Team.BLUE)
         }
         
-        player.sendMessage(Component.text("ゲーム '$gameName' から退出しました", NamedTextColor.YELLOW))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.game-left", "game" to gameName)))
         
         // マッチから削除
         matchWrapper?.players?.remove(player.uniqueId)
@@ -343,7 +347,7 @@ class Game(
             if (autoStartCountdown > 0) {
                 autoStartCountdown = -1
                 getAllPlayers().forEach {
-                    it.sendMessage(Component.text("人数不足のため自動開始がキャンセルされました", NamedTextColor.YELLOW))
+                    it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.auto-start-cancelled")))
                 }
             }
             return
@@ -365,14 +369,14 @@ class Game(
                         autoStartCountdown = -1
                         cancel()
                         getAllPlayers().forEach {
-                            it.sendMessage(Component.text("人数不足のため自動開始がキャンセルされました", NamedTextColor.YELLOW))
+                            it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.auto-start-cancelled")))
                         }
                         return
                     }
                     
                     if (autoStartCountdown % 10 == 0 || autoStartCountdown <= 5) {
                         getAllPlayers().forEach {
-                            it.sendMessage(Component.text("ゲーム開始まで: ${autoStartCountdown}秒", NamedTextColor.GREEN))
+                            it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.countdown-message", "seconds" to autoStartCountdown.toString())))
                         }
                     }
                     
@@ -391,7 +395,7 @@ class Game(
         if (state != GameState.WAITING) {
             plugin.logger.warning("Game $name cannot start: current state is $state")
             getAllPlayers().forEach {
-                it.sendMessage(Component.text("ゲームは既に${state}状態です", NamedTextColor.RED))
+                it.sendMessage(Component.text(plugin.languageManager.getMessage("game-states.already-state", "state" to state.toString())))
             }
             return false
         }
@@ -399,7 +403,7 @@ class Game(
         // 最小人数チェック（マッチの場合は最小人数チェックをスキップ）
         if (matchWrapper == null && redTeam.size + blueTeam.size < minPlayers) {
             getAllPlayers().forEach {
-                it.sendMessage(Component.text("ゲームを開始するには最低${minPlayers}名必要です", NamedTextColor.RED))
+                it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.min-players-required", "min" to minPlayers.toString())))
             }
             return false
         }
@@ -407,7 +411,7 @@ class Game(
         // 必須設定チェック
         if (redFlagLocation == null || blueFlagLocation == null) {
             getAllPlayers().forEach {
-                it.sendMessage(Component.text("両チームの旗位置を設定する必要があります", NamedTextColor.RED))
+                it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.flags-not-set")))
             }
             return false
         }
@@ -428,7 +432,7 @@ class Game(
             if (tempWorld == null) {
                 plugin.logger.warning("[Game] テンポラリワールドの作成に失敗しました")
                 getAllPlayers().forEach {
-                    it.sendMessage(Component.text("テンポラリワールドの作成に失敗しました", NamedTextColor.RED))
+                    it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.temp-world-failed")))
                 }
                 state = GameState.WAITING
                 return false
@@ -467,7 +471,7 @@ class Game(
         
         // BossBar作成
         bossBar = Bukkit.createBossBar(
-            "建築フェーズ - 残り時間: ${formatTime(currentPhaseTime)}",
+            plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to formatTime(currentPhaseTime)),
             BarColor.GREEN,
             BarStyle.SOLID
         )
@@ -508,8 +512,8 @@ class Game(
             
             // タイトル表示
             player.showTitle(Title.title(
-                Component.text("ゲーム開始！", NamedTextColor.GREEN),
-                Component.text("建築フェーズ - 防御を構築しよう", NamedTextColor.YELLOW),
+                Component.text(plugin.languageManager.getMessage("phase-extended.game-start-title")),
+                Component.text(plugin.languageManager.getMessage("phase-extended.game-start-subtitle")),
                 Title.Times.times(
                     Duration.ofMillis(500),
                     Duration.ofSeconds(3),
@@ -613,7 +617,7 @@ class Game(
         }
         respawnTasks.clear()
         
-        bossBar?.setTitle("戦闘フェーズ - 残り時間: ${formatTime(currentPhaseTime)}")
+        bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.combat-time-format", "time" to formatTime(currentPhaseTime)))
         bossBar?.color = BarColor.RED
         
         // 窒息チェックタスクを開始
@@ -636,8 +640,8 @@ class Game(
             
             // タイトル表示
             player.showTitle(Title.title(
-                Component.text("戦闘フェーズ開始！", NamedTextColor.RED),
-                Component.text("敵の旗を奪取せよ！", NamedTextColor.YELLOW),
+                Component.text(plugin.languageManager.getMessage("phase-extended.combat-start-title")),
+                Component.text(plugin.languageManager.getMessage("phase-extended.combat-start-subtitle")),
                 Title.Times.times(
                     Duration.ofMillis(500),
                     Duration.ofSeconds(3),
@@ -666,8 +670,9 @@ class Game(
         
         // 戦闘フェーズ終了ボーナス
         val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 50)
-        addTeamCurrency(Team.RED, phaseEndBonus, "戦闘フェーズ終了ボーナス")
-        addTeamCurrency(Team.BLUE, phaseEndBonus, "戦闘フェーズ終了ボーナス")
+        val bonusReason = plugin.languageManager.getMessage("phase-extended.phase-end-bonus")
+        addTeamCurrency(Team.RED, phaseEndBonus, bonusReason)
+        addTeamCurrency(Team.BLUE, phaseEndBonus, bonusReason)
         
         val winner = when {
             score[Team.RED]!! > score[Team.BLUE]!! -> Team.RED
@@ -691,8 +696,14 @@ class Game(
             // 勝負表示
             if (winner != null) {
                 player.showTitle(Title.title(
-                    Component.text("${winner.displayName}の勝利！", winner.color),
-                    Component.text("スコア: 赤 ${score[Team.RED]} - ${score[Team.BLUE]} 青", NamedTextColor.WHITE),
+                    Component.text(plugin.languageManager.getMessage("phase-extended.winner-title", 
+                        "color" to winner.getChatColor(),
+                        "team" to winner.displayName
+                    )),
+                    Component.text(plugin.languageManager.getMessage("phase-extended.score-display",
+                        "red" to score[Team.RED].toString(),
+                        "blue" to score[Team.BLUE].toString()
+                    )),
                     Title.Times.times(
                         Duration.ofMillis(500),
                         Duration.ofSeconds(5),
@@ -701,8 +712,11 @@ class Game(
                 ))
             } else {
                 player.showTitle(Title.title(
-                    Component.text("引き分け！", NamedTextColor.YELLOW),
-                    Component.text("スコア: 赤 ${score[Team.RED]} - ${score[Team.BLUE]} 青", NamedTextColor.WHITE),
+                    Component.text(plugin.languageManager.getMessage("phase-extended.draw-title")),
+                    Component.text(plugin.languageManager.getMessage("phase-extended.score-display",
+                        "red" to score[Team.RED].toString(),
+                        "blue" to score[Team.BLUE].toString()
+                    )),
                     Title.Times.times(
                         Duration.ofMillis(500),
                         Duration.ofSeconds(5),
@@ -821,7 +835,7 @@ class Game(
                 val mainWorld = originalWorld ?: Bukkit.getWorlds()[0]
                 player.teleport(mainWorld.spawnLocation)
                 
-                player.sendMessage(Component.text("ゲームが終了しました", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("phase-extended.game-ended")))
                 
                 // GameManagerからプレイヤーを削除
                 val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
@@ -839,7 +853,7 @@ class Game(
                     }
                 }
                 player.gameMode = GameMode.ADVENTURE
-                player.sendMessage(Component.text("次のゲームまでしばらくお待ちください...", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("phase-extended.wait-next-game")))
             }
         }
         
@@ -978,7 +992,7 @@ class Game(
             
             player.teleport(teleportLocation)
         } else {
-            player.sendMessage(Component.text("スポーン地点が設定されていません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("spawn.not-set")))
             plugin.logger.warning("Game $name: No spawn location for team $team")
         }
     }
@@ -998,8 +1012,11 @@ class Game(
         ).apply {
             amount = 1
             itemMeta = itemMeta?.apply {
-                displayName(Component.text("${team.displayName}のコンクリート (無限)", team.color))
-                lore(listOf(Component.text("無限に設置できます", NamedTextColor.GRAY)))
+                displayName(Component.text(plugin.languageManager.getMessage("flag.concrete-name",
+                    "color" to team.getChatColor(),
+                    "team" to team.displayName
+                )))
+                lore(listOf(Component.text(plugin.languageManager.getMessage("flag.infinite-desc"))))
                 // 無限フラグを設定
                 persistentDataContainer.set(
                     NamespacedKey(plugin, "infinite_block"),
@@ -1017,8 +1034,11 @@ class Game(
         ).apply {
             amount = 1
             itemMeta = itemMeta?.apply {
-                displayName(Component.text("${team.displayName}のガラス (無限)", team.color))
-                lore(listOf(Component.text("無限に設置できます", NamedTextColor.GRAY)))
+                displayName(Component.text(plugin.languageManager.getMessage("flag.glass-name",
+                    "color" to team.getChatColor(),
+                    "team" to team.displayName
+                )))
+                lore(listOf(Component.text(plugin.languageManager.getMessage("flag.infinite-desc"))))
                 // 無限フラグを設定
                 persistentDataContainer.set(
                     NamespacedKey(plugin, "infinite_block"),
@@ -1311,9 +1331,9 @@ class Game(
     
     private fun getPhaseDisplayName(): String {
         return when (phase) {
-            GamePhase.BUILD -> "建築"
-            GamePhase.COMBAT -> "戦闘"
-            GamePhase.INTERMISSION -> "作戦会議"
+            GamePhase.BUILD -> plugin.languageManager.getMessage("game-phases.build")
+            GamePhase.COMBAT -> plugin.languageManager.getMessage("game-phases.combat")
+            GamePhase.INTERMISSION -> plugin.languageManager.getMessage("game-phases.intermission")
         }
     }
     
@@ -1408,7 +1428,9 @@ class Game(
             setupFlagBeacon(flagLocation, team)
             
             getAllPlayers().forEach {
-                it.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました（回収不可能な場所のため）", team.color))
+                it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-uncollectable", 
+                    "color" to team.colorCode,
+                    "team" to team.displayName), team.color))
             }
             return
         }
@@ -1419,13 +1441,13 @@ class Game(
         // 旗をドロップ
         val itemStack = ItemStack(Material.BEACON)
         val meta = itemStack.itemMeta
-        meta.displayName(Component.text("${team.displayName}の旗", team.color))
+        meta.displayName(Component.text(plugin.languageManager.getMessage("flag.flag-name", "team" to team.displayName), team.color))
         meta.isUnbreakable = true
         itemStack.itemMeta = meta
         
         val droppedItem = player.world.dropItem(dropLocation, itemStack)
         droppedItem.setGlowing(true)
-        droppedItem.customName(Component.text("${team.displayName}の旗", team.color))
+        droppedItem.customName(Component.text(plugin.languageManager.getMessage("flag.flag-name", "team" to team.displayName), team.color))
         droppedItem.isCustomNameVisible = true
         droppedItem.isInvulnerable = true
         droppedItem.setGravity(false) // 重力を無効化して落下を防ぐ
@@ -1436,7 +1458,7 @@ class Game(
         
         // メッセージ
         getAllPlayers().forEach {
-            it.sendMessage(Component.text("${team.displayName}の旗がドロップされました！", NamedTextColor.YELLOW))
+            it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.flag-dropped", "team" to team.displayName), NamedTextColor.YELLOW))
         }
     }
     
@@ -1465,7 +1487,9 @@ class Game(
                 iterator.remove()
                 
                 getAllPlayers().forEach {
-                    it.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました", team.color))
+                    it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-home", 
+                        "color" to team.colorCode,
+                        "team" to team.displayName), team.color))
                 }
             }
         }
@@ -1513,7 +1537,9 @@ class Game(
             
             // メッセージ
             getAllPlayers().forEach {
-                it.sendMessage(Component.text("${player.name}が${flagTeam.displayName}の旗を回収しました！", team.color))
+                it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.flag-recovered",
+                    "player" to player.name,
+                    "flagTeam" to flagTeam.displayName), team.color))
             }
             
             return true
@@ -1522,7 +1548,7 @@ class Game(
         // 敵の旗を拾う場合
         // 既に旗を持っているかチェック
         if (player.uniqueId == redFlagCarrier || player.uniqueId == blueFlagCarrier) {
-            player.sendMessage(Component.text("既に旗を持っています", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("flag.already-carrying")))
             return false
         }
         
@@ -1545,7 +1571,10 @@ class Game(
         
         // メッセージ
         getAllPlayers().forEach {
-            it.sendMessage(Component.text("${player.name}が${flagTeam.displayName}の旗を取得しました！", NamedTextColor.YELLOW))
+            it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.picked-up",
+                "player" to player.name,
+                "color" to flagTeam.colorCode,
+                "team" to flagTeam.displayName), NamedTextColor.YELLOW))
         }
         
         return true
@@ -1594,7 +1623,9 @@ class Game(
                         
                         // メッセージ
                         getAllPlayers().forEach { p ->
-                            p.sendMessage(Component.text("${player.name}が${flagTeam.displayName}の旗を回収しました！", team.color))
+                            p.sendMessage(Component.text(plugin.languageManager.getMessage("flag.flag-recovered",
+                                "player" to player.name,
+                                "flagTeam" to flagTeam.displayName), team.color))
                         }
                     }
                     // 敵の旗に触れた場合
@@ -1618,7 +1649,10 @@ class Game(
                         
                         // メッセージ
                         getAllPlayers().forEach { p ->
-                            p.sendMessage(Component.text("${player.name}が${flagTeam.displayName}の旗を取得しました！", NamedTextColor.YELLOW))
+                            p.sendMessage(Component.text(plugin.languageManager.getMessage("flag.picked-up",
+                                "player" to player.name,
+                                "color" to flagTeam.colorCode,
+                                "team" to flagTeam.displayName), NamedTextColor.YELLOW))
                         }
                     }
                 }
@@ -1658,7 +1692,7 @@ class Game(
             val lastShown = actionBarCooldown[player.uniqueId] ?: 0
             
             if (now - lastShown > 10000) { // 10秒に1回新規エラーを設定可能
-                val errorMessage = "自チームの旗が自陣にないため、キャプチャーできません"
+                val errorMessage = plugin.languageManager.getMessage("flag.cannot-capture-no-flag")
                 actionBarErrorDisplay[player.uniqueId] = Pair(errorMessage, now + 5000) // 5秒間表示
                 actionBarCooldown[player.uniqueId] = now
             }
@@ -1674,7 +1708,7 @@ class Game(
         
         // 通貨報酬（マッチがある場合もない場合も）
         val captureReward = plugin.config.getInt("currency.capture-reward", 30)
-        addTeamCurrency(team, captureReward, "${player.name}が旗をキャプチャー")
+        addTeamCurrency(team, captureReward, plugin.languageManager.getMessage("currency.capture-currency", "player" to player.name))
         
         // キャプチャーアシスト報酬
         val assists = captureAssists[team] ?: mutableSetOf()
@@ -1690,7 +1724,7 @@ class Game(
             }
             // チーム全体に一度だけアシスト報酬を追加
             if (assists.size > 0) {
-                addTeamCurrency(team, assistReward * assists.size, "${assists.size}名がキャプチャーアシスト")
+                addTeamCurrency(team, assistReward * assists.size, plugin.languageManager.getMessage("currency.capture-assist", "count" to assists.size.toString()))
             }
         }
         
@@ -1716,8 +1750,13 @@ class Game(
         
         // 全プレイヤーに通知
         getAllPlayers().forEach { p ->
-            p.sendMessage(Component.text("${team.displayName}が得点しました！ (${player.name})", team.color))
-            p.sendMessage(Component.text("現在のスコア - 赤: ${score[Team.RED]} 青: ${score[Team.BLUE]}", NamedTextColor.WHITE))
+            p.sendMessage(Component.text(plugin.languageManager.getMessage("flag.captured-by",
+                "color" to team.colorCode,
+                "team" to team.displayName,
+                "player" to player.name), team.color))
+            p.sendMessage(Component.text(plugin.languageManager.getMessage("flag.current-score",
+                "red" to (score[Team.RED] ?: 0).toString(),
+                "blue" to (score[Team.BLUE] ?: 0).toString()), NamedTextColor.WHITE))
             
             // 効果音を再生
             p.playSound(p.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f)
@@ -1726,8 +1765,10 @@ class Game(
         // タイトル表示
         getAllPlayers().forEach { p ->
             p.showTitle(Title.title(
-                Component.text("${team.displayName}が得点！", team.color),
-                Component.text("赤: ${score[Team.RED]} - ${score[Team.BLUE]} :青", NamedTextColor.WHITE),
+                Component.text(plugin.languageManager.getMessage("flag.scored-title", "team" to team.displayName), team.color),
+                Component.text(plugin.languageManager.getMessage("flag.score-subtitle", 
+                    "red" to (score[Team.RED] ?: 0).toString(),
+                    "blue" to (score[Team.BLUE] ?: 0).toString()), NamedTextColor.WHITE),
                 Title.Times.times(
                     Duration.ofMillis(250),
                     Duration.ofSeconds(2),
@@ -1756,7 +1797,7 @@ class Game(
             override fun run() {
                 if (spawnProtection.remove(player.uniqueId) != null) {
                     player.isGlowing = false
-                    player.sendMessage(Component.text("スポーン保護が解除されました", NamedTextColor.YELLOW))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("spawn.protection-ended")))
                 }
                 spawnProtectionTasks.remove(player.uniqueId)
             }
@@ -1799,7 +1840,7 @@ class Game(
             GamePhase.INTERMISSION -> {}
         }
         
-        player.sendMessage(Component.text("3秒間スポーン保護が有効です", NamedTextColor.GREEN))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("spawn.protection-active")))
     }
     
     fun isUnderSpawnProtection(player: Player): Boolean {
@@ -1831,7 +1872,7 @@ class Game(
             val message = when (phase) {
                 GamePhase.BUILD -> {
                     // 建築フェーズ
-                    Component.text("建築して防御を固めよう！", NamedTextColor.GREEN)
+                    Component.text(plugin.languageManager.getMessage("action-bar.build-phase-guide"))
                 }
                 
                 GamePhase.COMBAT -> {
@@ -1841,28 +1882,31 @@ class Game(
                     when {
                         // 自分が旗を持っている
                         player.uniqueId == redFlagCarrier || player.uniqueId == blueFlagCarrier -> {
-                            Component.text("自陣に戻れ！", NamedTextColor.GOLD)
+                            Component.text(plugin.languageManager.getMessage("action-bar.return-to-base"))
                         }
                         
                         // 自チームの旗が敵に取られている
                         (team == Team.RED && redFlagCarrier != null) || 
                         (team == Team.BLUE && blueFlagCarrier != null) -> {
                             val carrierName = when (team) {
-                                Team.RED -> redFlagCarrier?.let { Bukkit.getPlayer(it)?.name } ?: "不明"
-                                Team.BLUE -> blueFlagCarrier?.let { Bukkit.getPlayer(it)?.name } ?: "不明"
+                                Team.RED -> redFlagCarrier?.let { Bukkit.getPlayer(it)?.name } ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")
+                                Team.BLUE -> blueFlagCarrier?.let { Bukkit.getPlayer(it)?.name } ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")
                             }
-                            Component.text("旗が敵に取られた！取り返せ！($carrierName)", NamedTextColor.RED)
+                            Component.text(plugin.languageManager.getMessage("flag.enemy-has-flag", "carrier" to carrierName))
                         }
                         
                         // 自チームの旗がドロップしている
                         (team == Team.RED && droppedFlags.any { it.value.first == Team.RED }) ||
                         (team == Team.BLUE && droppedFlags.any { it.value.first == Team.BLUE }) -> {
-                            Component.text("自チームの旗を回収せよ！", NamedTextColor.YELLOW)
+                            Component.text(plugin.languageManager.getMessage("flag.team-flag-dropped"))
                         }
                         
                         // 通常状態（敵の旗を取りに行く）
                         else -> {
-                            Component.text("${enemyTeam.displayName}の旗を奪取せよ！", enemyTeam.color)
+                            Component.text(plugin.languageManager.getMessage("flag.retrieve-enemy-flag",
+                                "color" to enemyTeam.getChatColor(),
+                                "team" to enemyTeam.displayName
+                            ))
                         }
                     }
                 }
@@ -1893,7 +1937,10 @@ class Game(
         // チームメンバーに通知
         if (reason.isNotEmpty()) {
             getTeamPlayers(team).forEach { player ->
-                player.sendMessage(Component.text("[チーム] $reason (+${amount}G)", NamedTextColor.GREEN))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("currency.team-notification",
+                    "reason" to reason,
+                    "amount" to amount.toString()
+                )))
             }
         }
         
@@ -1911,8 +1958,14 @@ class Game(
             
             // チームメンバーに通知
             getTeamPlayers(team).forEach { p ->
-                p.sendMessage(Component.text("[チーム] ${player.name} が $itemName を購入しました (-${amount}G)", NamedTextColor.YELLOW))
-                p.sendMessage(Component.text("[チーム] 残高: ${teamCurrency[team]}G", NamedTextColor.YELLOW))
+                p.sendMessage(Component.text(plugin.languageManager.getMessage("currency.purchase-notification",
+                    "player" to player.name,
+                    "item" to itemName,
+                    "amount" to amount.toString()
+                )))
+                p.sendMessage(Component.text(plugin.languageManager.getMessage("currency.balance-notification",
+                    "balance" to teamCurrency[team].toString()
+                )))
             }
             
             return true
@@ -1929,44 +1982,51 @@ class Game(
         // ゲームの詳細レポート
         getAllPlayers().forEach { player ->
             player.sendMessage(Component.text("", NamedTextColor.WHITE))
-            player.sendMessage(Component.text("========== ゲームレポート ==========").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("report.header")))
             
             // マッチ情報（マッチモードの場合）
             matchWrapper?.let { m ->
                 player.sendMessage(Component.text(m.getMatchStatus()).color(NamedTextColor.YELLOW))
                 val wins = m.matchWins
-                player.sendMessage(Component.text("現在のマッチスコア: ").color(NamedTextColor.WHITE)
-                    .append(Component.text("赤 ${wins[Team.RED]} ").color(NamedTextColor.RED))
-                    .append(Component.text("- ").color(NamedTextColor.WHITE))
-                    .append(Component.text("青 ${wins[Team.BLUE]}").color(NamedTextColor.BLUE)))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("report.match-score-header"))
+                    .append(Component.text(plugin.languageManager.getMessage("report.match-score-format",
+                        "red" to wins[Team.RED].toString(),
+                        "blue" to wins[Team.BLUE].toString()
+                    )))
+                )
                 player.sendMessage(Component.text("", NamedTextColor.WHITE))
             }
             
             // 今回のゲーム
-            player.sendMessage(Component.text("今回のゲーム:").color(NamedTextColor.YELLOW))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("report.game-header")))
             if (winner != null) {
-                player.sendMessage(Component.text("勝利: ").color(NamedTextColor.WHITE).append(Component.text(winner.displayName).color(winner.color)))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("report.winner-format",
+                    "color" to winner.getChatColor(),
+                    "team" to winner.displayName
+                )))
             } else {
-                player.sendMessage(Component.text("引き分け").color(NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("report.draw-result")))
             }
-            player.sendMessage(Component.text("スコア: ").color(NamedTextColor.WHITE)
-                .append(Component.text("赤 ${score[Team.RED]} ").color(NamedTextColor.RED))
-                .append(Component.text("- ").color(NamedTextColor.WHITE))
-                .append(Component.text("青 ${score[Team.BLUE]}").color(NamedTextColor.BLUE)))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("report.score-header"))
+                .append(Component.text(plugin.languageManager.getMessage("report.match-score-format",
+                    "red" to score[Team.RED].toString(),
+                    "blue" to score[Team.BLUE].toString()
+                )))
+            )
             
             // チーム統計
             player.sendMessage(Component.text("", NamedTextColor.WHITE))
-            player.sendMessage(Component.text("チーム統計:").color(NamedTextColor.YELLOW))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("report.team-stats-header")))
             
             // 赤チーム
-            player.sendMessage(Component.text("赤チーム:").color(NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("report.red-team-header")))
             val redPlayers = getTeamPlayers(Team.RED)
             redPlayers.forEach { p ->
                 player.sendMessage(Component.text("  - ${p.name}", NamedTextColor.WHITE))
             }
             
             // 青チーム
-            player.sendMessage(Component.text("青チーム:").color(NamedTextColor.BLUE))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("report.blue-team-header")))
             val bluePlayers = getTeamPlayers(Team.BLUE)
             bluePlayers.forEach { p ->
                 player.sendMessage(Component.text("  - ${p.name}", NamedTextColor.WHITE))
@@ -1975,11 +2035,17 @@ class Game(
             // 通貨情報
             if (matchWrapper != null) {
                 player.sendMessage(Component.text("", NamedTextColor.WHITE))
-                player.sendMessage(Component.text("チーム資金:").color(NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("赤チーム: ").color(NamedTextColor.RED)
-                    .append(Component.text("${matchWrapper!!.getTeamCurrency(Team.RED)}G").color(NamedTextColor.YELLOW)))
-                player.sendMessage(Component.text("青チーム: ").color(NamedTextColor.BLUE)
-                    .append(Component.text("${matchWrapper!!.getTeamCurrency(Team.BLUE)}G").color(NamedTextColor.YELLOW)))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("report.team-funds-header")))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("report.team-funds-format",
+                    "color" to Team.RED.getChatColor(),
+                    "team" to Team.RED.displayName,
+                    "amount" to matchWrapper!!.getTeamCurrency(Team.RED).toString()
+                )))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("report.team-funds-format",
+                    "color" to Team.BLUE.getChatColor(),
+                    "team" to Team.BLUE.displayName,
+                    "amount" to matchWrapper!!.getTeamCurrency(Team.BLUE).toString()
+                )))
             }
             
             player.sendMessage(Component.text("===============================").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
@@ -2055,22 +2121,22 @@ class Game(
                     val blocks = playerBlocksPlaced[uuid] ?: 0
                     val deaths = playerDeaths[uuid] ?: 0
                     
-                    if (kills > 0) player.sendMessage(Component.text("  キル: $kills").color(NamedTextColor.GREEN))
-                    if (assists > 0) player.sendMessage(Component.text("  アシスト: $assists").color(NamedTextColor.GREEN))
-                    if (captures > 0) player.sendMessage(Component.text("  旗キャプチャー: $captures").color(NamedTextColor.GOLD))
-                    if (flagPickups > 0) player.sendMessage(Component.text("  旗取得: $flagPickups").color(NamedTextColor.YELLOW))
-                    if (flagDefends > 0) player.sendMessage(Component.text("  旗防衛: $flagDefends").color(NamedTextColor.AQUA))
-                    if (moneySpent > 0) player.sendMessage(Component.text("  使用金額: ${moneySpent}G").color(NamedTextColor.YELLOW))
-                    if (blocks > 0) player.sendMessage(Component.text("  ブロック設置: $blocks").color(NamedTextColor.WHITE))
-                    if (deaths > 0) player.sendMessage(Component.text("  デス数: $deaths").color(NamedTextColor.RED))
+                    if (kills > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.kills-display", "kills" to kills.toString())).color(NamedTextColor.GREEN))
+                    if (assists > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.assists-display", "assists" to assists.toString())).color(NamedTextColor.GREEN))
+                    if (captures > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.captures-display", "captures" to captures.toString())).color(NamedTextColor.GOLD))
+                    if (flagPickups > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.flag-pickups-display", "pickups" to flagPickups.toString())).color(NamedTextColor.YELLOW))
+                    if (flagDefends > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.flag-defends-display", "defends" to flagDefends.toString())).color(NamedTextColor.AQUA))
+                    if (moneySpent > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.money-spent-display", "amount" to moneySpent.toString())).color(NamedTextColor.YELLOW))
+                    if (blocks > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.blocks-placed-display", "blocks" to blocks.toString())).color(NamedTextColor.WHITE))
+                    if (deaths > 0) player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.deaths-display", "deaths" to deaths.toString())).color(NamedTextColor.RED))
                     
-                    player.sendMessage(Component.text("★★★★★★★★★★★★★★★").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("mvp.star-decoration")).color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
                     
                     // MVPにタイトル表示
                     if (player == mvpPlayer) {
                         player.showTitle(Title.title(
-                            Component.text("MVP！").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD),
-                            Component.text("おめでとうございます！").color(NamedTextColor.YELLOW),
+                            Component.text(plugin.languageManager.getMessage("mvp.mvp-title")).color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD),
+                            Component.text(plugin.languageManager.getMessage("mvp.mvp-subtitle")).color(NamedTextColor.YELLOW),
                             Title.Times.times(
                                 Duration.ofMillis(500),
                                 Duration.ofSeconds(3),
@@ -2344,7 +2410,7 @@ class Game(
         redFlagLocation?.let { flagLoc ->
             if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
-                player.sendActionBar(Component.text("旗の周辺にはブロックを設置できません", NamedTextColor.RED))
+                player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.cannot-place-flag")))
                 return null
             }
         }
@@ -2353,7 +2419,7 @@ class Game(
         blueFlagLocation?.let { flagLoc ->
             if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
-                player.sendActionBar(Component.text("旗の周辺にはブロックを設置できません", NamedTextColor.RED))
+                player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.cannot-place-flag")))
                 return null
             }
         }
@@ -2362,7 +2428,7 @@ class Game(
         redSpawnLocation?.let { spawnLoc ->
             if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
-                player.sendActionBar(Component.text("スポーン地点の周辺にはブロックを設置できません", NamedTextColor.RED))
+                player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.cannot-place-spawn")))
                 return null
             }
         }
@@ -2371,7 +2437,7 @@ class Game(
         blueSpawnLocation?.let { spawnLoc ->
             if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
-                player.sendActionBar(Component.text("スポーン地点の周辺にはブロックを設置できません", NamedTextColor.RED))
+                player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.cannot-place-spawn")))
                 return null
             }
         }
@@ -2404,7 +2470,7 @@ class Game(
             }
             
             // どちらの条件も満たさない場合は設置不可
-            player.sendActionBar(Component.text("旗（3ブロック以内）または設置済みブロックに隣接する位置にのみ設置できます", NamedTextColor.RED))
+            player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.place-restriction-flag"), NamedTextColor.RED))
             return null
             
         } else if (isDeviceOrFence(block.type)) {
@@ -2430,12 +2496,12 @@ class Game(
                 return teamFlagLocation
             }
             
-            player.sendActionBar(Component.text("自チームのブロックから3ブロック以内にのみ設置できます", NamedTextColor.RED))
+            player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.place-restriction-team"), NamedTextColor.RED))
             return null
             
         } else {
             // その他のブロックは設置不可
-            player.sendActionBar(Component.text("設置できないブロックです", NamedTextColor.RED))
+            player.sendActionBar(Component.text(plugin.languageManager.getMessage("action-bar.cannot-place-block")))
             return null
         }
     }
@@ -2660,7 +2726,7 @@ class Game(
                             // 初めて敵陣に乗った時だけ警告
                             if (!player.hasMetadata("on_enemy_block")) {
                                 player.setMetadata("on_enemy_block", org.bukkit.metadata.FixedMetadataValue(plugin, true))
-                                player.sendMessage(Component.text("敵陣ブロックでシールドが減少しています！", NamedTextColor.AQUA))
+                                player.sendMessage(Component.text(plugin.languageManager.getMessage("shield.decreasing"), NamedTextColor.AQUA))
                             }
                             
                             // シールドを減らす（0.5秒ごとに2減少 = 25秒で枯渇）
@@ -2668,10 +2734,10 @@ class Game(
                             
                             // シールドが少なくなったら警告
                             if (shield == 40f) {
-                                player.sendMessage(Component.text("シールドが弱まっています！", NamedTextColor.YELLOW))
+                                player.sendMessage(Component.text(plugin.languageManager.getMessage("shield.weakening"), NamedTextColor.YELLOW))
                                 player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.5f)
                             } else if (shield == 20f) {
-                                player.sendMessage(Component.text("シールドが危険レベルです！", NamedTextColor.RED))
+                                player.sendMessage(Component.text(plugin.languageManager.getMessage("shield.critical"), NamedTextColor.RED))
                                 player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.3f)
                             }
                             

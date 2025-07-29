@@ -65,7 +65,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         // ショップアイテムのドロップを防止（ゲーム参加有無に関わらず）
         if (shopManager.isShopItem(item)) {
             event.isCancelled = true
-            player.sendMessage(Component.text("ショップアイテムは捨てることができません！", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.cannot-drop-item"), NamedTextColor.RED))
             return
         }
         
@@ -74,7 +74,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         if (game.state == GameState.RUNNING && game.phase == GamePhase.COMBAT) {
             if (isArmor(item.type)) {
                 event.isCancelled = true
-                player.sendMessage(Component.text("戦闘中は防具を捨てられません！", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("armor.cannot-drop-combat"), NamedTextColor.RED))
             }
         }
     }
@@ -128,7 +128,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     // メッセージ
                     game.getAllPlayers().forEach {
-                        it.sendMessage(Component.text("${player.name}が${enemyTeam.displayName}の旗を取得しました！", NamedTextColor.YELLOW))
+                        it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.picked-up",
+                            "player" to player.name,
+                            "color" to enemyTeam.colorCode,
+                            "team" to enemyTeam.displayName), NamedTextColor.YELLOW))
                     }
                     
                     // 効果音
@@ -262,7 +265,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     // キルストリーク通知
                     if (streak >= 2) {
                         game.getAllPlayers().forEach { p ->
-                            p.sendMessage(Component.text("${killer.name} は ${streak} 連続キル中！", NamedTextColor.GOLD))
+                            p.sendMessage(Component.text(plugin.languageManager.getMessage("death.kill-streak-notification",
+                                "player" to killer.name,
+                                "count" to streak.toString()), NamedTextColor.GOLD))
                         }
                     }
                 }
@@ -378,7 +383,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     game.setupFlagBeacon(flagLocation, flagTeam)
                     
                     game.getAllPlayers().forEach {
-                        it.sendMessage(Component.text("${flagTeam.displayName}の旗が元の位置に戻りました（奈落死のため）", flagTeam.color))
+                        it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-void",
+                            "team" to flagTeam.displayName), flagTeam.color))
                     }
                 } else {
                     // 通常の死亡の場合はドロップ処理
@@ -394,7 +400,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
             
             // 死亡メッセージにリスポーン時間を表示
-            player.sendMessage(Component.text("リスポーンまで ${respawnDelay} 秒...", NamedTextColor.YELLOW))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.respawn-countdown",
+                "seconds" to respawnDelay.toString()), NamedTextColor.YELLOW))
             
             // 死亡位置を保存
             player.setMetadata("death_location", org.bukkit.metadata.FixedMetadataValue(plugin, deathLocation))
@@ -477,21 +484,21 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 同じチームのプレイヤー同士はダメージなし
             if (victimTeam != null && attackerTeam != null && victimTeam == attackerTeam) {
                 event.isCancelled = true
-                attacker.sendMessage(Component.text("チームメイトを攻撃することはできません！", NamedTextColor.RED))
+                attacker.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-attack-teammate"), NamedTextColor.RED))
                 return
             }
             
             // スポーン保護チェック
             if (game.isUnderSpawnProtection(victim)) {
                 event.isCancelled = true
-                attacker.sendMessage(Component.text("このプレイヤーはスポーン保護中です！", NamedTextColor.YELLOW))
+                attacker.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.player-has-spawn-protection"), NamedTextColor.YELLOW))
                 return
             }
             
             // 建築フェーズ中はPVP禁止
             if (game.phase == GamePhase.BUILD) {
                 event.isCancelled = true
-                attacker.sendMessage(Component.text("建築フェーズ中は戦闘できません！", NamedTextColor.RED))
+                attacker.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-fight-build-phase"), NamedTextColor.RED))
                 return
             }
             
@@ -539,13 +546,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 when (gameMode) {
                     GameMode.ADVENTURE -> {
                         event.isCancelled = true
-                        player.sendMessage(Component.text("アドベンチャーモードではブロックを破壊できません", NamedTextColor.RED))
+                        player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-break-adventure"), NamedTextColor.RED))
                     }
                     GameMode.SURVIVAL, GameMode.CREATIVE -> {
                         // 旗とスポーン装飾は破壊不可
                         if (isProtectedBlock(game, event.block.location)) {
                             event.isCancelled = true
-                            player.sendMessage(Component.text("ゲーム用のブロックは破壊できません", NamedTextColor.RED))
+                            player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-break-game-blocks"), NamedTextColor.RED))
                             plugin.logger.info("[BlockBreak] Protected block at ${event.block.location}")
                         } else {
                             val blockType = event.block.type
@@ -579,7 +586,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 // 戦闘フェーズ：旗とスポーン装飾は破壊不可
                 if (isProtectedBlock(game, event.block.location)) {
                     event.isCancelled = true
-                    player.sendMessage(Component.text("ゲーム用のブロックは破壊できません", NamedTextColor.RED))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-break-game-blocks"), NamedTextColor.RED))
                 } else {
                     // 戦闘フェーズではアイテムをドロップしない
                     event.isDropItems = false
@@ -624,7 +631,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val blockBelow = blockLocation.clone().subtract(0.0, 1.0, 0.0).block
         if (blockBelow.type == Material.BEACON) {
             event.isCancelled = true
-            player.sendMessage(Component.text("ビーコンの上にブロックを置くことはできません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-place-on-beacon"), NamedTextColor.RED))
             return
         }
         
@@ -636,7 +643,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 when (gameMode) {
                     GameMode.ADVENTURE -> {
                         event.isCancelled = true
-                        player.sendMessage(Component.text("アドベンチャーモードではブロックを設置できません", NamedTextColor.RED))
+                        player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-place-adventure"), NamedTextColor.RED))
                     }
                     GameMode.SURVIVAL, GameMode.CREATIVE -> {
                         // ブロック設置制限をチェック
@@ -668,7 +675,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             GamePhase.COMBAT -> {
                 // 戦闘フェーズ：ブロック設置禁止
                 event.isCancelled = true
-                player.sendMessage(Component.text("戦闘フェーズ中はブロックを設置できません", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-place-combat"), NamedTextColor.RED))
             }
             GamePhase.INTERMISSION -> {
                 // 作戦会議フェーズ：全面的に設置禁止
@@ -736,7 +743,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     if (isRedFlag || isBlueFlag) {
                         val flagTeam = if (isRedFlag) Team.RED else Team.BLUE
-                        player.sendMessage(Component.text("${flagTeam.displayName}の旗です。近づくと取得できます", flagTeam.color))
+                        player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.flag-info",
+                            "team" to flagTeam.displayName), flagTeam.color))
                     }
                 }
             }
@@ -755,7 +763,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     val team = game.getPlayerTeam(player.uniqueId)
                     if (team == null) {
-                        player.sendMessage(Component.text("チームが見つかりません", NamedTextColor.RED))
+                        player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.team-not-found"), NamedTextColor.RED))
                         return
                     }
                     
@@ -763,7 +771,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     // フェーズチェック
                     if (game.phase != GamePhase.BUILD && game.phase != GamePhase.COMBAT) {
-                        player.sendMessage(Component.text("ショップは建築・戦闘フェーズ中のみ使用可能です", NamedTextColor.RED))
+                        player.sendMessage(Component.text(plugin.languageManager.getMessage("shop.shop-only-during-game"), NamedTextColor.RED))
                         return
                     }
                     
@@ -788,12 +796,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
             if (event.slot in 36..39) { // 防具スロット
                 if (clickedItem != null && isArmor(clickedItem.type) && !clickedItem.type.name.startsWith("LEATHER_")) {
                     event.isCancelled = true
-                    player.sendMessage(Component.text("革の防具以外は装備できません！", NamedTextColor.RED))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("armor.only-leather-allowed"), NamedTextColor.RED))
                     return
                 }
                 if (cursor != null && isArmor(cursor.type) && !cursor.type.name.startsWith("LEATHER_")) {
                     event.isCancelled = true
-                    player.sendMessage(Component.text("革の防具以外は装備できません！", NamedTextColor.RED))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("armor.only-leather-allowed"), NamedTextColor.RED))
                     return
                 }
             }
@@ -801,7 +809,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // Shift+クリックでの防具装備チェック
             if (event.isShiftClick && clickedItem != null && isArmor(clickedItem.type) && !clickedItem.type.name.startsWith("LEATHER_")) {
                 event.isCancelled = true
-                player.sendMessage(Component.text("革の防具以外は装備できません！", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("armor.only-leather-allowed"), NamedTextColor.RED))
                 return
             }
             
@@ -810,7 +818,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 val item = event.currentItem
                 if (item != null && isArmor(item.type)) {
                     event.isCancelled = true
-                    player.sendMessage(Component.text("戦闘中は防具を外せません！", NamedTextColor.RED))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("armor.cannot-remove-combat"), NamedTextColor.RED))
                     return
                 }
             }
@@ -858,7 +866,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val meta = clickedItem.itemMeta ?: return
             val displayNameComponent = meta.displayName()
             if (displayNameComponent == null) {
-                player.sendMessage(Component.text("アイテム名を取得できませんでした", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.item-name-error"), NamedTextColor.RED))
                 return
             }
             // レガシーフォーマットを含むテキストを取得
@@ -954,7 +962,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // スペクテーターモードに設定
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 player.gameMode = GameMode.SPECTATOR
-                player.sendMessage(Component.text("スペクテーターモードで観戦中...", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.spectator-mode"), NamedTextColor.GRAY))
                 
                 // 死亡回数を取得してリスポーン遅延を計算
                 val deaths = game.playerDeaths[player.uniqueId] ?: 1
@@ -1042,7 +1050,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             if (flagLocation != null) {
                                 game.setupFlagBeacon(flagLocation, team)
                                 game.getAllPlayers().forEach { player ->
-                                    player.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました（${getDamageCauseMessage(event.cause)}）", team.color))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-damage",
+                                        "team" to team.displayName,
+                                        "cause" to getDamageCauseMessage(event.cause)), team.color))
                                 }
                                 plugin.logger.info("[Flag] Flag returned due to ${event.cause}")
                             }
@@ -1095,7 +1105,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     if (flagLocation != null) {
                         game.setupFlagBeacon(flagLocation, team)
                         game.getAllPlayers().forEach { player ->
-                            player.sendMessage(Component.text("${team.displayName}の旗が元の位置に戻りました（炎上のため）", team.color))
+                            player.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-fire",
+                                "team" to team.displayName), team.color))
                         }
                         plugin.logger.info("[Flag] Flag returned due to combustion")
                     }
@@ -1124,7 +1135,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             if (game != null && game.state == GameState.RUNNING) {
                 // ゲーム中は/clearコマンドを無効化
                 event.isCancelled = true
-                player.sendMessage(Component.text("ゲーム中は/clearコマンドは使用できません！", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.clear-command-disabled"), NamedTextColor.RED))
                 return
             }
             
@@ -1138,7 +1149,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 plugin.server.scheduler.runTaskLater(plugin, Runnable {
                     if (!player.inventory.contains(Material.EMERALD)) {
                         player.inventory.addItem(shopManager.createShopItem())
-                        player.sendMessage(Component.text("ショップアイテムは削除できません。再配布されました。", NamedTextColor.YELLOW))
+                        player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.shop-item-redistributed"), NamedTextColor.YELLOW))
                     }
                 }, 1L)
             }

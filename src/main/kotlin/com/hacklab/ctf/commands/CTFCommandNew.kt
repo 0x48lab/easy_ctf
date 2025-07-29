@@ -57,12 +57,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
 
     private fun handleCreateCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -79,12 +79,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleUpdateCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -101,7 +101,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleDeleteCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -112,9 +112,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val gameName = args[1]
         if (gameManager.deleteGame(gameName)) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' を削除しました", NamedTextColor.GREEN))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-deleted", "name" to gameName), NamedTextColor.GREEN))
         } else {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
         }
         
         return true
@@ -124,7 +124,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val games = gameManager.getAllGames()
         
         if (games.isEmpty()) {
-            sender.sendMessage(Component.text("現在ゲームはありません", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-games"), NamedTextColor.YELLOW))
             return true
         }
         
@@ -158,7 +158,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             )
             
             if (game.getRedFlagLocation() == null || game.getBlueFlagLocation() == null) {
-                sender.sendMessage(Component.text("   ⚠ 旗が未設定です", NamedTextColor.YELLOW))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.flags-not-set-warning"), NamedTextColor.YELLOW))
             }
         }
         
@@ -167,14 +167,14 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleStartCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
         if (args.size < 2) {
             sender.sendMessage(Component.text("使用方法: /ctf start <ゲーム名> [single|match] [ゲーム数]", NamedTextColor.YELLOW))
             sender.sendMessage(Component.text("single: 単一ゲーム, match: 複数ゲーム実施", NamedTextColor.GRAY))
-            sender.sendMessage(Component.text("パラメータ未指定時は設定ファイルから自動判定", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.auto-param-hint"), NamedTextColor.GRAY))
             return true
         }
         
@@ -182,7 +182,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val game = gameManager.getGame(gameName)
         
         if (game == null) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return true
         }
         
@@ -198,7 +198,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                 "single" -> {
                     // 明示的にシングルゲームモード
                     isMatch = false
-                    sender.sendMessage(Component.text("シングルゲームモードで開始します", NamedTextColor.YELLOW))
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.single-game-start"), NamedTextColor.YELLOW))
                 }
                 "match" -> {
                     // 明示的にマッチモード
@@ -207,11 +207,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                         try {
                             matchTarget = args[3].toInt()
                             if (matchTarget < 1) {
-                                sender.sendMessage(Component.text("ゲーム数は1以上を指定してください", NamedTextColor.RED))
+                                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-count-min"), NamedTextColor.RED))
                                 return true
                             }
                         } catch (e: NumberFormatException) {
-                            sender.sendMessage(Component.text("無効なゲーム数です", NamedTextColor.RED))
+                            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.invalid-game-count"), NamedTextColor.RED))
                             return true
                         }
                     } else if (gameConfig != null && gameConfig.matchTarget > 1) {
@@ -229,20 +229,20 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             if (gameConfig != null && gameConfig.matchMode == MatchMode.FIXED_ROUNDS && gameConfig.matchTarget > 1) {
                 isMatch = true
                 matchTarget = gameConfig.matchTarget
-                sender.sendMessage(Component.text("設定ファイルに基づいてマッチモード（${matchTarget}ゲーム）で開始します", NamedTextColor.YELLOW))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-start-config", "count" to matchTarget.toString()), NamedTextColor.YELLOW))
             } else {
-                sender.sendMessage(Component.text("シングルゲームモードで開始します", NamedTextColor.YELLOW))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.single-game-start"), NamedTextColor.YELLOW))
             }
         }
         
         if (gameManager.startGame(gameName, isMatch, if (isMatch) matchTarget else null)) {
             if (isMatch) {
-                sender.sendMessage(Component.text("マッチを開始しました！（$matchTarget ゲーム）", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-started", "count" to matchTarget.toString()), NamedTextColor.GREEN))
             } else {
-                sender.sendMessage(Component.text("ゲームを開始しました！", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-started"), NamedTextColor.GREEN))
             }
         } else {
-            sender.sendMessage(Component.text("ゲームを開始できませんでした", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-start-failed"), NamedTextColor.RED))
         }
         
         return true
@@ -250,7 +250,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleStopCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -264,7 +264,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val matchWrapper = gameManager.getMatch(gameName)
         
         if (game == null) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return true
         }
         
@@ -286,7 +286,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleJoinCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
@@ -334,7 +334,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             } else {
                 val game = gameManager.getGame(gameName)
                 if (game == null) {
-                    sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
                 } else if (game.state != GameState.WAITING) {
                     sender.sendMessage(Component.text("ゲームが${game.state}状態のため参加できません", NamedTextColor.RED))
                 } else if (game.redTeam.size + game.blueTeam.size >= game.maxPlayersPerTeam * 2) {
@@ -350,7 +350,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleLeaveCommand(sender: CommandSender): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
@@ -368,7 +368,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleTeamCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
@@ -449,12 +449,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleSetFlagCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -467,7 +467,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val game = gameManager.getGame(gameName)
         
         if (game == null) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return true
         }
         
@@ -503,12 +503,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleSetSpawnCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -521,7 +521,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val game = gameManager.getGame(gameName)
         
         if (game == null) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return true
         }
         
@@ -571,7 +571,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val game = gameManager.getGame(gameName)
         if (game == null) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return true
         }
         
@@ -609,7 +609,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val game = gameManager.getGame(gameName)
         
         if (game == null) {
-            sender.sendMessage(Component.text("ゲーム '$gameName' が見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return true
         }
         
@@ -757,12 +757,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleSetPos1Command(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -783,12 +783,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleSetPos2Command(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         
@@ -809,12 +809,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleSaveMapCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("このコマンドはプレイヤーのみ実行できます")
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
             return true
         }
         
         if (!sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("このコマンドを実行する権限がありません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
             return true
         }
         

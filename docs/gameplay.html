@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基本的な遊び方 - EasyCTF</title>
+    <title>遊び方ガイド - EasyCTF</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -30,100 +30,177 @@
 
     <header class="page-header">
         <div class="container">
-            <h1>基本的な遊び方</h1>
-            <p>EasyCTFのゲームプレイを詳しく解説します</p>
+            <h1>遊び方ガイド</h1>
+            <p>EasyCTFの詳しい遊び方を解説します</p>
         </div>
     </header>
 
     <main class="container">
         <section class="content-section">
-            <h2>ゲームの目的</h2>
-            <p>EasyCTFは、2つのチーム（赤チームと青チーム）が相手の旗を奪い合うゲームです。自陣の旗を守りながら、敵陣の旗を奪取して自陣に持ち帰ることで得点します。</p>
+            <h2>🎮 基本的な遊び方</h2>
+            <p>EasyCTFは、<span class="team-red">赤チーム</span>と<span class="team-blue">青チーム</span>に分かれて戦うキャプチャー・ザ・フラッグゲームです。相手チームの旗を奪い、自陣に持ち帰ることで得点を競います。</p>
             
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i>
-                <strong>重要:</strong> 得点するには、自陣の旗がある状態で敵の旗を持ち帰る必要があります。
+                <strong>基本ルール:</strong> 敵の旗（ビーコン）を取得し、自陣の旗がある状態で持ち帰ると1点獲得。先に設定スコアに到達したチームの勝利！
             </div>
         </section>
 
         <section class="content-section">
-            <h2>ゲーム参加方法</h2>
-            <div class="command-block">
-                <code>/ctf join &lt;ゲーム名&gt;</code>
-                <button class="copy-btn">コピー</button>
-            </div>
+            <h2>🚀 ゲーム参加の流れ</h2>
             
-            <ul class="feature-list">
-                <li><i class="fas fa-check"></i> 自動的に人数の少ないチームに配置されます</li>
-                <li><i class="fas fa-check"></i> 最大20人（各チーム10人）まで参加可能</li>
-                <li><i class="fas fa-check"></i> 一度に参加できるゲームは1つのみ</li>
-            </ul>
-        </section>
-
-        <section class="content-section">
-            <h2>ゲームフェーズ詳細</h2>
-            
-            <div class="phase-detail">
-                <h3><i class="fas fa-hammer"></i> 建築フェーズ（5分）</h3>
-                <p>自陣の旗を守るための防御設備を建築する準備期間です。</p>
-                
-                <div class="phase-features">
-                    <div class="feature-item">
-                        <h4>特徴</h4>
-                        <ul>
-                            <li>PvP無効 - 敵を攻撃できません</li>
-                            <li>建築可能 - ブロックの設置・破壊が可能</li>
-                            <li>ショップ利用可 - エメラルドを右クリック</li>
-                            <li>初期通貨 - 50G（チーム共有）</li>
-                        </ul>
+            <div class="step-list">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>ゲーム一覧を確認</h3>
+                        <div class="command-block">
+                            <code>/ctf list</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p>現在実行可能なゲームの一覧が表示されます。状態（待機中/進行中）も確認できます。</p>
                     </div>
-                    
-                    <div class="feature-item">
-                        <h4>おすすめの準備</h4>
-                        <ul>
-                            <li>旗の周りに壁や障害物を設置</li>
-                            <li>敵の侵入ルートを制限する構造物</li>
-                            <li>高所からの防衛ポイントの構築</li>
-                            <li>チームメイトと役割分担</li>
-                        </ul>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>ゲームに参加</h3>
+                        <div class="command-block">
+                            <code>/ctf join &lt;ゲーム名&gt;</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p>自動的に人数の少ないチームに配属されます。友達と同じチームになりたい場合は、事前に相談しておきましょう。</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>ゲーム開始を待つ</h3>
+                        <p>最小人数（デフォルト2名）が揃うと30秒のカウントダウンが始まります。この間に準備を整えましょう。</p>
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-lightbulb"></i>
+                            管理者は <code>/ctf start &lt;ゲーム名&gt;</code> で即座に開始できます
+                        </div>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section class="content-section">
+            <h2>⚡ ゲームの3つのフェーズ</h2>
             
             <div class="phase-detail">
-                <h3><i class="fas fa-sword"></i> 戦闘フェーズ（10分）</h3>
-                <p>敵の旗を奪い、自陣に持ち帰って得点する本番フェーズです。</p>
+                <h3><i class="fas fa-hammer"></i> フェーズ1: 建築フェーズ（5分）</h3>
+                <p>戦闘の準備をする重要な時間です。</p>
                 
                 <div class="phase-features">
                     <div class="feature-item">
-                        <h4>旗の奪取方法</h4>
-                        <ol>
-                            <li>敵陣のビーコン（旗）に1.5ブロック以内に接近</li>
-                            <li>自動的に旗を取得（ビーコンが消える）</li>
-                            <li>旗を持つと以下の効果:
-                                <ul>
-                                    <li>発光効果（全員から見える）</li>
-                                    <li>エンダーパール使用不可</li>
-                                    <li>移動速度制限なし</li>
-                                </ul>
-                            </li>
-                        </ol>
-                    </div>
-                    
-                    <div class="feature-item">
-                        <h4>得点方法</h4>
+                        <h4>基本情報</h4>
+                        <ul>
+                            <li><strong>目的:</strong> 防御施設の建築、戦略的な配置</li>
+                            <li><strong>PvP:</strong> 無効（攻撃できません）</li>
+                            <li><strong>死亡:</strong> 即座にリスポーン、アイテム保持</li>
+                            <li><strong>建築材料:</strong> 無限のチームカラーブロック（コンクリート・ガラス）</li>
+                            <li><strong>ゲームモード:</strong> ADVENTURE/SURVIVAL/CREATIVE（サーバー設定による）</li>
+                        </ul>
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            自陣の旗がある状態で敵旗を持ち帰る必要があります
+                            旗とスポーン地点の3×3エリア（高さ無制限）は建築禁止！
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="phase-detail">
+                <h3><i class="fas fa-sword"></i> フェーズ2: 戦闘フェーズ（10分）</h3>
+                <p>いよいよ本番！敵の旗を奪い、自陣に持ち帰りましょう。</p>
+                
+                <div class="phase-features">
+                    <div class="feature-item">
+                        <h4>基本情報</h4>
                         <ul>
-                            <li>自陣の旗位置に到達すると自動的に得点</li>
-                            <li>得点すると敵の旗は元の位置に復活</li>
+                            <li><strong>目的:</strong> 旗の奪取と防衛</li>
+                            <li><strong>PvP:</strong> 有効（戦闘可能）</li>
+                            <li><strong>死亡:</strong> 10〜20秒後にリスポーン（死亡回数で増加）</li>
+                            <li><strong>旗の取得:</strong> 敵のビーコンに1.5ブロック以内に接近</li>
+                            <li><strong>得点条件:</strong> 自陣の旗がある状態で敵の旗を持ち帰る</li>
+                        </ul>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            旗を持っている間は発光し、エンダーパールなどの移動アイテムが使用不可に！
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="phase-detail">
+                <h3><i class="fas fa-trophy"></i> フェーズ3: 作戦会議フェーズ（15秒〜1分）</h3>
+                <p>ゲーム結果の確認と次への準備時間です。</p>
+                
+                <div class="phase-features">
+                    <div class="feature-item">
+                        <h4>フェーズの内容</h4>
+                        <ul>
+                            <li><strong>単独ゲーム:</strong> 最終結果と統計の表示（1分）</li>
+                            <li><strong>マッチモード:</strong> 次のゲームへの準備（15秒）</li>
+                            <li><strong>表示内容:</strong> スコア、キル数、MVP等</li>
                         </ul>
                     </div>
                 </div>
-                
-                <h4>通貨獲得方法</h4>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🚩 旗（フラッグ）システム</h2>
+            
+            <div class="subsection">
+                <h3>旗の取得方法</h3>
+                    <li>敵チームのビーコン（旗）に1.5ブロック以内に接近</li>
+                    <li>自動的に旗を取得し、プレイヤーが発光</li>
+                    <li>ビーコンとその上の色付きガラスが消える</li>
+                </ol>
+            </div>
+            
+            <div class="subsection">
+                <h3>得点する方法</h3>
+                <ol>
+                    <li>敵の旗を持った状態で自陣へ向かう</li>
+                    <li>自陣の旗が設置されていることを確認</li>
+                    <li>自陣の旗の3ブロック以内に近づくと自動的に得点</li>
+                </ol>
+            </div>
+            
+            <div class="subsection">
+                <h3>旗のドロップと回収</h3>
+                <ul>
+                    <li>旗を持ったまま死亡すると、その場に旗がドロップ</li>
+                    <li>味方が触れると即座に自陣に旗が戻る</li>
+                    <li>敵が触れると旗を奪取</li>
+                    <li>30秒間誰も触れないと自動的に元の位置に戻る</li>
+                </ul>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    奈落に落ちて死亡した場合、旗は即座に元の位置に戻ります
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>💰 ショップシステム</h2>
+            
+            <div class="subsection">
+                <h3>基本的な使い方</h3>
+                <ol>
+                    <li>インベントリ内のエメラルドを右クリック</li>
+                    <li>スポーン地点から15ブロック以内でのみ使用可能</li>
+                    <li>チームメンバー全員で通貨（G）を共有</li>
+                </ol>
+            </div>
+            
+            <div class="subsection">
+                <h3>通貨の獲得方法</h3>
                 <table>
                     <thead>
                         <tr>
@@ -134,131 +211,265 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>通常キル</td>
-                            <td>10G</td>
-                            <td>敵プレイヤーを倒す</td>
-                        </tr>
-                        <tr>
-                            <td>旗キャリアキル</td>
-                            <td>20G</td>
-                            <td>旗を持った敵を倒す</td>
-                        </tr>
-                        <tr>
-                            <td>旗キャプチャ</td>
-                            <td>30G</td>
-                            <td>旗を自陣に持ち帰る</td>
-                        </tr>
-                        <tr>
-                            <td>フェーズ終了ボーナス</td>
+                            <td>ゲーム開始時</td>
                             <td>50G</td>
-                            <td>建築/戦闘フェーズ終了時</td>
+                            <td>初期資金</td>
+                        </tr>
+                        <tr>
+                            <td>敵をキル</td>
+                            <td>10G</td>
+                            <td>基本報酬</td>
+                        </tr>
+                        <tr>
+                            <td>旗持ちをキル</td>
+                            <td>20G</td>
+                            <td>防衛ボーナス</td>
+                        </tr>
+                        <tr>
+                            <td>キルアシスト</td>
+                            <td>5G</td>
+                            <td>5秒以内にダメージを与えた敵が死亡</td>
+                        </tr>
+                        <tr>
+                            <td>旗をキャプチャ</td>
+                            <td>30G</td>
+                            <td>得点時のボーナス</td>
+                        </tr>
+                        <tr>
+                            <td>フェーズ終了</td>
+                            <td>50G</td>
+                            <td>各フェーズ終了時</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             
-            <div class="phase-detail">
-                <h3><i class="fas fa-trophy"></i> 結果フェーズ（1分）</h3>
+            <div class="subsection">
+                <h3>割引システム</h3>
+                <p>スコアで負けているチームには自動的に割引が適用されます：</p>
                 <ul>
-                    <li>最終スコアと勝敗結果を表示</li>
-                    <li>各プレイヤーの統計情報</li>
-                    <li>マッチモードの場合は5秒後に次のゲーム開始</li>
+                    <li>1点差: 10%割引</li>
+                    <li>2点差: 20%割引</li>
+                    <li>3点差: 30%割引</li>
+                    <li>4点差以上: 40%割引</li>
+                </ul>
+            </div>
+            
+            <div class="subsection">
+                <h3>購入可能なアイテム</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>武器</h4>
+                        <ul>
+                            <li>剣（鉄/ダイヤ/ネザライト）</li>
+                            <li>斧（鉄/ダイヤ/ネザライト）</li>
+                            <li>弓・クロスボウ</li>
+                            <li>盾</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>防具</h4>
+                        <ul>
+                            <li>鉄防具セット</li>
+                            <li>ダイヤ防具セット</li>
+                            <li>ネザライト防具セット</li>
+                            <li>エリトラ（高額）</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>消耗品</h4>
+                        <ul>
+                            <li>エンダーパール</li>
+                            <li>金のリンゴ</li>
+                            <li>ポーション各種</li>
+                            <li>矢</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>建築ブロック</h4>
+                        <ul>
+                            <li>石・木材・土</li>
+                            <li>ガラス・黒曜石</li>
+                            <li>TNT・レッドストーン</li>
+                            <li>水バケツ・溶岩バケツ</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    アイテムには死亡時の扱いが設定されています：<br>
+                    • KEEP: 死亡しても保持<br>
+                    • DROP: 死亡時にドロップ<br>
+                    • DESTROY: 死亡時に消失
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>⚔️ 戦闘のコツ</h2>
+            
+            <div class="subsection">
+                <h3>リスポーンシステム</h3>
+                <ul>
+                    <li>基本リスポーン時間: 10秒</li>
+                    <li>死亡回数による追加: +2秒/死亡（最大20秒）</li>
+                    <li>リスポーン後3秒間の無敵時間（発光状態）</li>
+                    <li>無敵中に攻撃すると即座に解除</li>
+                </ul>
+            </div>
+            
+            <div class="subsection">
+                <h3>敵陣シールドシステム</h3>
+                <p>敵チームの色付きブロック（コンクリート・ガラス）の上にいると：</p>
+                <ol>
+                    <li>シールドが徐々に減少（25秒で枯渇）</li>
+                    <li>シールドが0になるとダメージを受ける</li>
+                    <li>自陣に戻るとシールドが回復（10秒で全回復）</li>
+                </ol>
+                <div class="alert alert-secondary">
+                    <i class="fas fa-lightbulb"></i>
+                    敵陣での長期戦は避け、素早く行動しましょう！
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3>革防具について</h3>
+                <ul>
+                    <li>チーム識別用の革防具は死亡しても失われません</li>
+                    <li>色は変更できないので、チームの識別に使用</li>
+                    <li>防御力は低いので、ショップで強化を検討</li>
                 </ul>
             </div>
         </section>
 
         <section class="content-section">
-            <h2>戦術ガイド</h2>
+            <h2>🏆 マッチモード</h2>
+            <p>複数のゲームを連続して行い、最多勝利チームを決めるモードです。</p>
+
+            <div class="subsection">
+                <h3>マッチの開始方法</h3>
+                <div class="command-block">
+                    <code>/ctf start &lt;ゲーム名&gt; match &lt;ゲーム数&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>例: <code>/ctf start arena1 match 5</code> → 5ゲームのマッチを開始</p>
+            </div>
+
+            <div class="subsection">
+                <h3>マッチの特徴</h3>
+                <ul>
+                    <li>プレイヤーとチーム編成はゲーム間で維持</li>
+                    <li>通貨（G）はゲーム間で引き継ぎ</li>
+                    <li>各ゲーム後15秒の作戦会議時間</li>
+                    <li>途中参加・離脱は不可</li>
+                </ul>
+            </div>
+
+            <div class="subsection">
+                <h3>勝利条件</h3>
+                <ul>
+                    <li>設定したゲーム数を完走</li>
+                    <li>最多勝利チームが優勝</li>
+                    <li>同点の場合: 総ブロック設置数で判定</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>📊 画面表示の見方</h2>
             
-            <div class="tactics-grid">
-                <div class="tactic-card">
-                    <h3><i class="fas fa-crosshairs"></i> 攻撃時のコツ</h3>
+            <div class="subsection">
+                <h3>ボスバー（画面上部）</h3>
+                <ul>
+                    <li>現在のフェーズと残り時間</li>
+                    <li>緑色: 建築フェーズ</li>
+                    <li>赤色: 戦闘フェーズ</li>
+                    <li>黄色: 作戦会議フェーズ</li>
+                </ul>
+            </div>
+
+            <div class="subsection">
+                <h3>サイドバー（画面右）</h3>
+                <p>ゲーム中の重要情報を常時表示：</p>
+                <ul>
+                    <li><strong>ゲーム名:</strong> 現在のゲーム</li>
+                    <li><strong>スコア:</strong> 赤●青● （マッチ時）</li>
+                    <li><strong>チーム人数:</strong> 赤N 青N</li>
+                    <li><strong>マッチ状況:</strong> 第Nゲーム（マッチ時）</li>
+                    <li><strong>通貨:</strong> NG（チーム共有）</li>
+                </ul>
+            </div>
+
+            <div class="subsection">
+                <h3>アクションバー（画面下部中央）</h3>
+                <p>状況に応じたガイドメッセージ：</p>
+                <ul>
+                    <li>「建築して防御を固めよう！」（建築フェーズ）</li>
+                    <li>「敵の旗を奪取せよ！」（戦闘フェーズ）</li>
+                    <li>「自陣に戻れ！」（旗所持時）</li>
+                    <li>「[ショップ使用可能]」（スポーン付近）</li>
+                    <li>シールド残量（敵陣ブロック上）</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🎯 戦略のヒント</h2>
+            
+            <div class="tip-cards">
+                <div class="tip-card">
+                    <h3>建築フェーズの戦略</h3>
                     <ul>
-                        <li><strong>チーム連携:</strong> 単独行動は避け、2-3人で行動</li>
-                        <li><strong>陽動作戦:</strong> 一部が注意を引きつけ、別ルートから侵入</li>
-                        <li><strong>装備強化:</strong> ショップでより良い武器・防具を購入</li>
-                        <li><strong>エンダーパール:</strong> 旗を持つ前の移動に活用</li>
+                        <li>旗の周りに迷路や高い壁を作って防御</li>
+                        <li>偽の通路で敵を混乱させる</li>
+                        <li>味方の脱出ルートも確保</li>
+                        <li>水や溶岩を効果的に配置</li>
                     </ul>
                 </div>
                 
-                <div class="tactic-card">
-                    <h3><i class="fas fa-shield-alt"></i> 防御時のコツ</h3>
+                <div class="tip-card">
+                    <h3>戦闘フェーズの戦略</h3>
                     <ul>
-                        <li><strong>視界確保:</strong> 高所から敵の接近を監視</li>
-                        <li><strong>罠の設置:</strong> TNTや溶岩バケツで侵入を妨害</li>
-                        <li><strong>役割分担:</strong> 旗守備と前線迎撃で分担</li>
-                        <li><strong>通信:</strong> チャットで敵の位置を共有</li>
+                        <li>攻撃組と防御組で役割分担</li>
+                        <li>旗持ちは単独行動を避ける</li>
+                        <li>敵の旗持ちを優先的に狙う</li>
+                        <li>通貨を稼いで装備を強化</li>
                     </ul>
                 </div>
                 
-                <div class="tactic-card">
-                    <h3><i class="fas fa-shopping-cart"></i> ショップ活用術</h3>
-                    <ol>
-                        <li>基本的な防具（鉄装備）</li>
-                        <li>強力な武器（ダイヤ剣など）</li>
-                        <li>消耗品（金リンゴ、エンダーパール）</li>
-                        <li>建築ブロック（黒曜石など）</li>
-                    </ol>
-                    <p class="tip">スコアで負けているチームは最大40%割引！</p>
+                <div class="tip-card">
+                    <h3>チームワークのコツ</h3>
+                    <ul>
+                        <li>チャットで情報共有</li>
+                        <li>ショップ購入は相談して</li>
+                        <li>死亡中は敵の動きを報告</li>
+                        <li>旗の護衛と攻撃のバランス</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
         <section class="content-section">
-            <h2>システム詳細</h2>
-            
-            <h3>リスポーンシステム</h3>
-            <ul>
-                <li>死亡後、5秒でチームスポーン地点に復活</li>
-                <li>3秒間のスポーン保護（無敵時間）</li>
-                <li>攻撃または旗取得でスポーン保護解除</li>
-            </ul>
-            
-            <h3>アイテムの死亡時挙動</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>挙動</th>
-                        <th>説明</th>
-                        <th>対象アイテム</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="badge badge-success">保持</span></td>
-                        <td>死んでも失わない</td>
-                        <td>武器、防具、ツール</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-warning">ドロップ</span></td>
-                        <td>その場に落とす</td>
-                        <td>消耗品、食料</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-danger">消失</span></td>
-                        <td>完全に失う</td>
-                        <td>（現在なし）</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section class="content-section">
-            <h2>よくある質問</h2>
+            <h2>❓ よくある質問</h2>
             
             <div class="faq-item">
-                <h4>Q: 旗を取ったのに得点できない</h4>
-                <p>A: 自陣の旗が敵に奪われていると得点できません。先に自陣の旗を取り戻しましょう。</p>
+                <h4>Q: 途中参加はできますか？</h4>
+                <p>A: 建築フェーズまでなら可能です。戦闘フェーズ以降は参加できません。</p>
             </div>
             
             <div class="faq-item">
-                <h4>Q: ショップが開けない</h4>
-                <p>A: スポーン地点から15ブロック以内でのみ使用可能です。また、エメラルドを右クリックで開きます。</p>
+                <h4>Q: チームを変更できますか？</h4>
+                <p>A: ゲーム開始前なら <code>/ctf team [red/blue]</code> で変更可能です（人数差2名以内）。</p>
             </div>
             
             <div class="faq-item">
-                <h4>Q: チームを変更したい</h4>
-                <p>A: ゲーム開始前なら <code>/ctf team red</code> または <code>/ctf team blue</code> で変更可能です。</p>
+                <h4>Q: 旗が見つからない場合は？</h4>
+                <p>A: ビーコンの光を探しましょう。また、サイドバーに旗の状態が表示されます。</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Q: ゲームから抜けたい場合は？</h4>
+                <p>A: <code>/ctf leave</code> で離脱できます。ただし、マッチモード中は離脱できません。</p>
             </div>
         </section>
 

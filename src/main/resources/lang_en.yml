@@ -33,6 +33,19 @@ command:
   skip-no-permission: "&cYou don't have permission to skip phases!"
   skip-no-game: "&cNo game is currently running!"
   skip-cannot: "&cCannot skip phase at this time!"
+  player-only: "This command can only be executed by players"
+  game-deleted: "&aGame '{name}' deleted"
+  game-not-found: "&cGame '{name}' not found"
+  no-games: "&cNo games currently exist"
+  flags-not-set-warning: "   ⚠ Flags not set"
+  auto-param-hint: "&7Auto-detect from config when parameters not specified"
+  single-game-start: "&yStarting in single game mode"
+  game-count-min: "&cGame count must be at least 1"
+  invalid-game-count: "&cInvalid game count"
+  match-start-config: "&yStarting match mode ({count} games) based on config"
+  match-started: "&aMatch started! ({count} games)"
+  game-started: "&aGame started!"
+  game-start-failed: "&cFailed to start game"
 
 # Game Messages
 game:
@@ -53,6 +66,9 @@ block:
 armor:
   cannot-remove: "&cYou cannot remove your armor during the game!"
   cannot-drop: "&cYou cannot drop armor during the game!"
+  cannot-drop-combat: "&cCannot drop armor during combat!"
+  only-leather-allowed: "&cOnly leather armor allowed!"
+  cannot-remove-combat: "&cCannot remove armor during combat!"
 
 # Time Warnings
 time:
@@ -128,3 +144,189 @@ game-states:
   starting: "STARTING"
   running: "RUNNING"
   ending: "ENDING"
+  already-started: "&cThis game has already started"
+  already-ending: "&cThis game is ending"
+  already-state: "&cGame is already in {state} state"
+
+# Join/Leave Messages
+join-leave:
+  game-joined: "&aJoined game '{game}' on {color}{team}&a team"
+  game-left: "&yLeft game '{game}'"
+  team-full-red: "&cRed team is full"
+  team-full-blue: "&cBlue team is full"
+  auto-start-cancelled: "&yAuto-start cancelled due to insufficient players"
+  countdown-message: "&aGame starting in: {seconds} seconds"
+  min-players-required: "&cNeed at least {min} players to start"
+  flags-not-set: "&cBoth team flag locations must be set"
+  temp-world-failed: "&cFailed to create temporary world"
+
+# Phase Messages Extended
+phase-extended:
+  build-time-format: "Build Phase - Time: {time}"
+  combat-time-format: "Combat Phase - Time: {time}"
+  combat-score-format: "Combat Phase - Red {red} : {blue} Blue - {time}"
+  intermission-time-format: "Strategy Meeting - {time}"
+  game-start-title: "&aGame Started!"
+  game-start-subtitle: "&yBuild Phase - Construct your defenses"
+  combat-start-title: "&cCombat Phase Started!"
+  combat-start-subtitle: "&yCapture the enemy flag!"
+  phase-end-bonus: "Combat phase end bonus"
+  winner-title: "{color}{team}&f Wins!"
+  draw-title: "&yDraw!"
+  score-display: "&fScore: Red {red} - {blue} Blue"
+  game-ended: "&yGame has ended"
+  wait-next-game: "&yPlease wait for the next game..."
+
+# Spawn Messages  
+spawn:
+  not-set: "&cSpawn point not set"
+  protection-active: "&aSpawn protection active for 3 seconds"
+  protection-ended: "&ySpawn protection ended"
+
+# Flag Messages
+flag:
+  concrete-name: "{color}{team}&f Concrete (Infinite)"
+  glass-name: "{color}{team}&f Glass (Infinite)"
+  infinite-desc: "&7Can be placed infinitely"
+  flag-name: "{team} Flag"
+  already-carrying: "&cYou are already carrying a flag"
+  returned-home: "{color}{team}&f flag returned to base"
+  returned-uncollectable: "{color}{team}&f flag returned to base (uncollectable location)"
+  returned-timeout: "{color}{team}&f flag returned to base"
+  flag-dropped: "{team} flag has been dropped!"
+  cannot-capture-no-flag: "Cannot capture - your team's flag is not at base"
+  captured-by: "{color}{team}&f scored! ({player})"
+  current-score: "&fCurrent Score - Red: {red} Blue: {blue}"
+  picked-up: "&y{player} picked up the {color}{team}&y flag!"
+  enemy-has-flag: "&cEnemy has your flag! Get it back! ({carrier})"
+  team-flag-dropped: "&yRecover your team's flag!"
+  retrieve-enemy-flag: "Capture the {color}{team}&f flag!"
+  flag-carrier-unknown: "Unknown"
+  flag-recovered: "{player} recovered the {flagTeam} flag!"
+  scored-title: "{team} Scored!"
+  score-subtitle: "Red: {red} - {blue} :Blue"
+  returned-void: "{team} flag returned to base (void death)"
+  returned-damage: "{team} flag returned to base ({cause})"
+  returned-fire: "{team} flag returned to base (burned)"
+
+# Currency Messages
+currency:
+  team-notification: "&a[Team] {reason} (+{amount}G)"
+  purchase-notification: "&y[Team] {player} purchased {item} (-{amount}G)"
+  balance-notification: "&y[Team] Balance: {balance}G"
+  capture-currency: "{player} captured the flag"
+  capture-assist: "{count} capture assists"
+
+# Action Bar Messages
+action-bar:
+  build-phase-guide: "&aBuild and fortify your defenses!"
+  return-to-base: "&6Return to base!"
+  cannot-place-flag: "&cCannot place blocks near flags"
+  cannot-place-spawn: "&cCannot place blocks near spawn points"
+  cannot-place-block: "&cCannot place this block"
+  place-restriction-flag: "Can only place blocks within 3 blocks of flag or adjacent to placed blocks"
+  place-restriction-team: "Can only place blocks within 3 blocks of team blocks"
+
+# Scoreboard Messages
+scoreboard:
+  title-ctf: "&b&lCTF- {game}"
+  waiting-players: "&fWaiting Players:"
+  game-settings: "&e=== Game Settings ==="
+  build-combat-time: "&fBuild {build}m Combat {combat}m"
+  first-to-score: "&fFirst to {score} points"
+  start-countdown: "&aStarting in: &f{seconds}s"
+  team-players: "&cRed{red} &9Blue{blue}"
+  match-game: "&eGame {number}"
+  match-score: "&cRed{red}&f-&9{blue}Blue"
+  currency-display: "&e{amount}G"
+
+# Report Messages
+report:
+  header: "&6&l========== GAME REPORT =========="
+  match-score-header: "&fCurrent Match Score:"
+  match-score-format: "&cRed {red} &f- &9{blue} Blue"
+  game-header: "&yThis Game:"
+  winner-format: "&fWinner: {color}{team}"
+  draw-result: "&yDraw"
+  score-header: "&fScore:"
+  team-stats-header: "&yTeam Statistics:"
+  red-team-header: "&cRed Team:"
+  blue-team-header: "&9Blue Team:"
+  player-stats: "&f  {player}: &7{kills}K/{deaths}D (K/D: {kd})"
+  team-funds-header: "&yTeam Funds:"
+  team-funds-format: "{color}{team}: &y{amount}G"
+
+# MVP Messages
+mvp:
+  header: "&6&l========== MVP ANNOUNCEMENT =========="
+  most-kills: "&4🗡 Most Kills: &f{name} &7- {kills} kills"
+  most-captures: "&6🚩 Most Captures: &f{name} &7- {captures} captures"
+  most-defends: "&b🛡 Most Defends: &f{name} &7- {defends} defends"
+  most-assists: "&a🤝 Most Assists: &f{name} &7- {assists} assists"
+  most-builds: "&e🏗 Most Builds: &f{name} &7- {blocks} blocks"
+  most-spending: "&d💰 Most Spending: &f{name} &7- {amount}G"
+  least-deaths: "&2💀 Least Deaths: &f{name} &7- {deaths} deaths"
+  unknown-player: "Unknown"
+  deaths-display: "  Deaths: {deaths}"
+  star-decoration: "★★★★★★★★★★★★★★★"
+  mvp-title: "MVP!"
+  mvp-subtitle: "Congratulations!"
+  kills-display: "  Kills: {kills}"
+  assists-display: "  Assists: {assists}"
+  captures-display: "  Flag Captures: {captures}"
+  flag-pickups-display: "  Flag Pickups: {pickups}"
+  flag-defends-display: "  Flag Defends: {defends}"
+  money-spent-display: "  Money Spent: {amount}G"
+  blocks-placed-display: "  Blocks Placed: {blocks}"
+
+# Death Messages
+death:
+  kills-notification: "&e{killer} killed {victim}{streak}"
+  streak-format: " ({count} kill streak!)"
+  kill-streak-notification: "&6{player} is on a {count} kill streak!"
+  assist-notification: "&aKill assist! +{amount}G"
+
+# Block Placement
+block:
+  cannot-break-decoration: "&cCannot break flag and spawn decorations"
+  protected-area: "&cProtected area"
+
+# Item Names
+items:
+  shop-item-name: "&a&lSHOP"
+  shop-item-lore: "&7Right-click to open shop"
+
+# Game Phases
+game-phases:
+  build: "BUILD"
+  combat: "COMBAT" 
+  intermission: "STRATEGY"
+
+# Shield Messages
+shield:
+  decreasing: "Shield decreasing on enemy blocks!"
+  weakening: "Shield weakening!"
+  critical: "Shield at critical level!"
+
+# Shop Messages
+shop:
+  cannot-drop-item: "&cCannot drop shop items!"
+  shop-only-during-game: "&cShop only available during build/combat phases"
+  team-not-found: "&cTeam not found"
+
+# Gameplay Messages
+gameplay:
+  respawn-countdown: "&eRespawning in {seconds} seconds..."
+  cannot-attack-teammate: "&cCannot attack teammates!"
+  player-has-spawn-protection: "&cThis player has spawn protection!"
+  cannot-fight-build-phase: "&cCannot fight during build phase!"
+  cannot-break-adventure: "&cCannot break blocks in adventure mode"
+  cannot-break-game-blocks: "&cCannot break game blocks"
+  cannot-place-adventure: "&cCannot place blocks in adventure mode"
+  cannot-place-combat: "&cCannot place blocks during combat phase"
+  cannot-place-on-beacon: "&cCannot place blocks on beacons"
+  flag-info: "&fThis is {team}'s flag. Get close to pick it up"
+  spectator-mode: "&7Watching in spectator mode..."
+  clear-command-disabled: "&cCannot use /clear command during game!"
+  shop-item-redistributed: "&yShop item cannot be removed. Redistributed."
+  item-name-error: "&cCould not get item name"
