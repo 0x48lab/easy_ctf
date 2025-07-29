@@ -41,14 +41,20 @@ body {
     box-shadow: var(--box-shadow);
 }
 
-/* 言語切り替えボタン - 上段 */
-.language-toggle {
+/* 上段ヘッダー（ロゴ + 言語切り替え） */
+.top-header {
     display: flex;
-    justify-content: flex-end;
-    gap: 5px;
+    justify-content: space-between;
+    align-items: center;
     padding: 8px 20px;
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 言語切り替えボタン - 上段右 */
+.language-toggle {
+    display: flex;
+    gap: 5px;
 }
 
 /* メインナビゲーション - 下段 */
@@ -91,8 +97,12 @@ body {
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
-    .language-toggle {
+    .top-header {
         padding: 5px 15px;
+    }
+    
+    .top-brand {
+        font-size: 1rem;
     }
     
     .lang-btn {
@@ -103,6 +113,21 @@ body {
     .lang-flag {
         font-size: 14px;
     }
+}
+
+/* 上段のロゴ */
+.top-brand {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.top-brand i {
+    color: var(--primary-color);
 }
 
 .nav-brand {

@@ -251,22 +251,27 @@ function setupLanguageToggle() {
     const currentLang = localStorage.getItem('language') || 'ja';
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     
-    // 言語切り替えボタンを作成
-    const langToggle = document.createElement('div');
-    langToggle.className = 'language-toggle';
-    langToggle.innerHTML = `
-        <button class="lang-btn ${currentLang === 'ja' ? 'active' : ''}" data-lang="ja">
-            <span class="lang-flag">🇯🇵</span> 日本語
-        </button>
-        <button class="lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">
-            <span class="lang-flag">🇺🇸</span> English
-        </button>
+    // 上段ヘッダーを作成（ロゴ + 言語切り替え）
+    const topHeader = document.createElement('div');
+    topHeader.className = 'top-header';
+    topHeader.innerHTML = `
+        <a href="${currentLang === 'en' ? 'index-en.html' : 'index.html'}" class="top-brand">
+            <i class="fas fa-flag"></i> EasyCTF
+        </a>
+        <div class="language-toggle">
+            <button class="lang-btn ${currentLang === 'ja' ? 'active' : ''}" data-lang="ja">
+                <span class="lang-flag">🇯🇵</span> 日本語
+            </button>
+            <button class="lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">
+                <span class="lang-flag">🇺🇸</span> English
+            </button>
+        </div>
     `;
     
     // ナビゲーションバーの上部に追加
     const navbar = document.querySelector('.navbar');
     if (navbar) {
-        navbar.insertBefore(langToggle, navbar.firstChild);
+        navbar.insertBefore(topHeader, navbar.firstChild);
     }
     
     // 言語切り替えイベント
