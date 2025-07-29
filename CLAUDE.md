@@ -141,9 +141,12 @@ src/main/resources/
      - 旗・スポーン装飾は破壊不可
 
 3. **INTERMISSION PHASE（作戦会議フェーズ）**
-   - 時間: デフォルト1分（固定）
+   - 時間: デフォルト15秒（設定可能）
    - 試合結果の表示
    - マッチモード時は次ゲームへの準備
+   - **注意**: マッチの中間と最終で異なる時間設定が可能
+     - `result-duration`: 最終ゲーム後の時間（デフォルト15秒）
+     - `intermediate-result-duration`: マッチ中間の時間（デフォルト15秒）
 
 ### 旗システム
 - **実装**: ビーコン（3x3の鉄ブロックベース付き）
@@ -352,7 +355,8 @@ default-phases:
   build-duration: 300        # 建築フェーズ（秒）
   build-phase-gamemode: "ADVENTURE"
   combat-duration: 600       # 戦闘フェーズ（秒）
-  result-duration: 60        # 作戦会議フェーズ（秒）
+  result-duration: 15        # 作戦会議フェーズ（秒）
+  intermediate-result-duration: 15  # マッチ中間の作戦会議（秒）
 
 # マッチ設定
 match:
