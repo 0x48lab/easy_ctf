@@ -140,10 +140,10 @@ src/main/resources/
      - デフォルト: ピッケル、シャベル、バケツ
      - 旗・スポーン装飾は破壊不可
 
-3. **RESULT PHASE（リザルトフェーズ）**
+3. **INTERMISSION PHASE（作戦会議フェーズ）**
    - 時間: デフォルト1分（固定）
    - 試合結果の表示
-   - 次ゲームへの準備
+   - マッチモード時は次ゲームへの準備
 
 ### 旗システム
 - **実装**: ビーコン（3x3の鉄ブロックベース付き）
@@ -352,7 +352,7 @@ default-phases:
   build-duration: 300        # 建築フェーズ（秒）
   build-phase-gamemode: "ADVENTURE"
   combat-duration: 600       # 戦闘フェーズ（秒）
-  result-duration: 60        # リザルトフェーズ（秒）
+  result-duration: 60        # 作戦会議フェーズ（秒）
 
 # マッチ設定
 match:
