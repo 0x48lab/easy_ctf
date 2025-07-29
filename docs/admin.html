@@ -68,7 +68,79 @@
         <section class="content-section">
             <h2><i class="fas fa-map"></i> ゲームアリーナの作成</h2>
             
-            <h3>対話形式での作成</h3>
+            <h3>方法1: マップ自動検出方式（推奨）</h3>
+            <p>事前に作成したマップをゲームに登録する最も簡単な方法です。</p>
+            
+            <div class="setup-steps">
+                <div class="setup-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>マップ領域を設定</h4>
+                        <div class="command-block">
+                            <code>/ctf setpos1 arena1</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <div class="command-block">
+                            <code>/ctf setpos2 arena1</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p class="note">対角の2点を指定してマップ範囲を設定</p>
+                    </div>
+                </div>
+                
+                <div class="setup-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>必須ブロックを配置</h4>
+                        <table class="block-table">
+                            <tr>
+                                <th>ブロック</th>
+                                <th>用途</th>
+                                <th>個数</th>
+                            </tr>
+                            <tr>
+                                <td><span style="color: #ff4444;">■</span> 赤のコンクリート</td>
+                                <td>赤チームスポーン地点</td>
+                                <td>1個のみ</td>
+                            </tr>
+                            <tr>
+                                <td><span style="color: #4444ff;">■</span> 青のコンクリート</td>
+                                <td>青チームスポーン地点</td>
+                                <td>1個のみ</td>
+                            </tr>
+                            <tr>
+                                <td>ビーコン + 赤のガラス</td>
+                                <td>赤チームの旗</td>
+                                <td>1セット</td>
+                            </tr>
+                            <tr>
+                                <td>ビーコン + 青のガラス</td>
+                                <td>青チームの旗</td>
+                                <td>1セット</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="setup-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>マップを保存</h4>
+                        <div class="command-block">
+                            <code>/ctf savemap arena1</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p class="note">ブロックが自動検出され、ゲームが作成されます</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>重要:</strong> 旗とスポーン地点は最低3ブロック離してください
+            </div>
+            
+            <h3>方法2: 対話形式での作成</h3>
             <div class="command-block">
                 <code>/ctf create arena1</code>
                 <button class="copy-btn">コピー</button>
@@ -78,34 +150,18 @@
                 <div class="setup-step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <h4>赤チーム旗位置</h4>
-                        <p>旗を設置したい場所を見て「set」と入力</p>
-                        <p class="note">ビーコンと鉄ブロックの土台が自動設置される</p>
+                        <h4>位置設定</h4>
+                        <p>視線の先のブロックを指定して、各チームの旗とスポーン地点を設定</p>
+                        <p class="note">チャットで「set」と入力して確定</p>
                     </div>
                 </div>
                 
                 <div class="setup-step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h4>赤チームスポーン地点</h4>
-                        <p>スポーン地点にしたい場所を見て「set」と入力</p>
-                        <p class="note">旗から3ブロック以上離れている必要あり</p>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>青チーム設定</h4>
-                        <p>赤チームと同様に旗位置とスポーン地点を設定</p>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
                         <h4>フェーズ設定</h4>
-                        <p>建築フェーズのゲームモード選択と各フェーズの時間設定</p>
+                        <p>建築フェーズのゲームモード（ADVENTURE/SURVIVAL/CREATIVE）</p>
+                        <p>各フェーズの時間（秒単位）</p>
                     </div>
                 </div>
             </div>

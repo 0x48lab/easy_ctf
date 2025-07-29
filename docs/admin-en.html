@@ -68,7 +68,79 @@
         <section class="content-section">
             <h2><i class="fas fa-map"></i> Creating Game Arenas</h2>
             
-            <h3>Interactive Creation</h3>
+            <h3>Method 1: Automatic Map Detection (Recommended)</h3>
+            <p>The easiest way to register a pre-built map into the game.</p>
+            
+            <div class="setup-steps">
+                <div class="setup-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Set Map Area</h4>
+                        <div class="command-block">
+                            <code>/ctf setpos1 arena1</code>
+                            <button class="copy-btn">Copy</button>
+                        </div>
+                        <div class="command-block">
+                            <code>/ctf setpos2 arena1</code>
+                            <button class="copy-btn">Copy</button>
+                        </div>
+                        <p class="note">Specify two diagonal points to set the map range</p>
+                    </div>
+                </div>
+                
+                <div class="setup-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Place Required Blocks</h4>
+                        <table class="block-table">
+                            <tr>
+                                <th>Block</th>
+                                <th>Purpose</th>
+                                <th>Quantity</th>
+                            </tr>
+                            <tr>
+                                <td><span style="color: #ff4444;">■</span> Red Concrete</td>
+                                <td>Red team spawn point</td>
+                                <td>1 only</td>
+                            </tr>
+                            <tr>
+                                <td><span style="color: #4444ff;">■</span> Blue Concrete</td>
+                                <td>Blue team spawn point</td>
+                                <td>1 only</td>
+                            </tr>
+                            <tr>
+                                <td>Beacon + Red Glass</td>
+                                <td>Red team flag</td>
+                                <td>1 set</td>
+                            </tr>
+                            <tr>
+                                <td>Beacon + Blue Glass</td>
+                                <td>Blue team flag</td>
+                                <td>1 set</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="setup-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Save the Map</h4>
+                        <div class="command-block">
+                            <code>/ctf savemap arena1</code>
+                            <button class="copy-btn">Copy</button>
+                        </div>
+                        <p class="note">Blocks are automatically detected and the game is created</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Important:</strong> Flags and spawn points must be at least 3 blocks apart
+            </div>
+            
+            <h3>Method 2: Interactive Creation</h3>
             <div class="command-block">
                 <code>/ctf create arena1</code>
                 <button class="copy-btn">Copy</button>
@@ -78,34 +150,18 @@
                 <div class="setup-step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <h4>Red Team Flag Position</h4>
-                        <p>Look at where you want to place the flag and type "set"</p>
-                        <p class="note">Beacon and iron block base are automatically placed</p>
+                        <h4>Position Setup</h4>
+                        <p>Look at blocks to specify flag and spawn positions for each team</p>
+                        <p class="note">Type "set" in chat to confirm</p>
                     </div>
                 </div>
                 
                 <div class="setup-step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h4>Red Team Spawn Point</h4>
-                        <p>Look at where you want the spawn point and type "set"</p>
-                        <p class="note">Must be at least 3 blocks away from the flag</p>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Blue Team Setup</h4>
-                        <p>Set flag position and spawn point for blue team same as red team</p>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
                         <h4>Phase Settings</h4>
-                        <p>Select build phase game mode and set duration for each phase</p>
+                        <p>Build phase game mode (ADVENTURE/SURVIVAL/CREATIVE)</p>
+                        <p>Duration for each phase (in seconds)</p>
                     </div>
                 </div>
             </div>
