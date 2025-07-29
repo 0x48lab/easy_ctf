@@ -7,25 +7,40 @@ English | [日本語](README.md)
 
 **🏆 Official hackCraft2 Plugin**
 
-A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and run multiple CTF games simultaneously with an intuitive UI and guide system that provides an enjoyable competitive experience for players from beginners to experts.
+A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and run multiple CTF games simultaneously with an intuitive UI and guide system that provides an enjoyable competitive experience for beginners to advanced players.
 
-📚 **[Documentation](https://0x48lab.github.io/easy_ctf/)** - How to play and detailed feature explanations
+📚 **[Documentation](https://0x48lab.github.io/easy_ctf/)** - Learn how to play and detailed feature explanations
 
-## Key Features
+## Main Features
 
-- **🎮 Multiple Games Simultaneously**: Manage multiple CTF games in parallel on one server
-- **💬 Interactive Configuration**: Intuitive game creation/update via commands and chat
-- **📍 Real-time Guide**: Current objective display system via ActionBar
-- **🏗️ 3-Phase System**: Progressive game flow: Build → Combat → Result
-- **🚩 Advanced Flag System**: Proximity capture, team flag recovery, conditional capture
-- **👥 Team Management**: Auto-balance, disconnect/reconnect support
-- **🛡️ Spawn Protection**: 3-second invincibility
-- **⚔️ Force PVP**: PVP enabled during combat phase regardless of server settings
-- **📊 Persistence**: Automatic save/restore of game settings via YAML
-- **🛒 Shop System**: Team-shared currency for item purchases, discounts for losing team
-- **🏆 Match Mode**: Consecutive games to determine overall winner
-- **🔗 Block Connection System**: Building blocks must connect to team beacon, disconnected blocks become neutral
-- **💢 Enemy Territory Damage**: Continuous damage on enemy team blocks, deep infiltration is high risk
+### 🎮 Game System
+- **Multiple Concurrent Games**: Manage multiple CTF games in parallel on one server
+- **3-Phase System**: Progressive gameplay through Build → Combat → Strategy Meeting phases
+- **Temporary Worlds**: Automatically generate and delete dedicated worlds for each game
+- **Map Save/Restore**: Save created maps with compression, auto-restore at game start
+
+### 💰 Economy & Shop System
+- **Team-Shared Currency**: All team members share currency (G)
+- **Shop System**: Purchase weapons, armor, blocks, and consumables
+- **Dynamic Pricing**: Automatic discounts for losing teams (up to 40%)
+- **Death Behavior**: KEEP/DROP/DESTROY settings per item
+
+### 🏆 Match System
+- **Fixed Rounds Mode**: Run a specified number of consecutive games
+- **Inventory Persistence**: Keep items during matches
+- **Detailed Statistics**: Track kills, captures, assists, building, etc.
+- **MVP Awards**: Announce top players in each category
+
+### 🏗️ Building System
+- **Block Connection Management**: Team blocks must connect to beacon or existing blocks
+- **Disconnected Block Neutralization**: Disconnected blocks turn white
+- **Team-Exclusive Blocks**: Infinite colored concrete and glass
+- **Enemy Territory Shield System**: Take continuous damage on enemy team blocks
+
+### 🌍 Multi-Language Support
+- **Japanese & English Support**: All messages managed in language files
+- **Easy Switching**: Change language in config.yml
+- **Customizable**: Edit lang_ja.yml, lang_en.yml
 
 ## Installation
 
@@ -33,175 +48,162 @@ A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and r
 
 **📦 Download pre-built files from [GitHub Releases](https://github.com/0x48lab/easy_ctf/releases)**
 
-All releases include the following pre-built files:
-- `EasyCTF-x.x.x.jar` - Main plugin file (ready to use)
-- `plugin.yml` - Plugin configuration file
-- Auto-generated changelog
-- Installation and setup instructions
-
 **Installation Steps:**
 1. **[📥 Download Latest Release](https://github.com/0x48lab/easy_ctf/releases/latest)** and get `EasyCTF-x.x.x.jar`
 2. Place the JAR file in your server's `plugins` directory
 3. Restart the server
-4. Configure the plugin with `/ctf` command
-
-> **💡 Tip**: The [Releases page](https://github.com/0x48lab/easy_ctf/releases) shows version history and detailed changes for each version.
+4. Configure the plugin with `/ctf` commands
 
 ### From Source
 
 1. Clone this repository
 2. Run `./gradlew shadowJar`
-3. Copy `build/libs/EasyCTF-x.x.x.jar` to plugins directory
+3. Copy `build/libs/EasyCTF-x.x.x-all.jar` to plugins directory
 
 ## Requirements
 
-- **Minecraft Server**: Paper 1.21+ (or compatible fork)
+- **Minecraft Server**: Paper 1.21.5+ (or compatible forks)
 - **Java**: 21 or higher
 - **Permission Plugin**: Optional (uses Bukkit permissions)
 
 ## Quick Start
 
-### Create New Game (Interactive)
-1. Start game creation: `/ctf create <game-name>`
-2. Follow chat instructions to set:
-   - Red team flag position (type `set` while looking at location)
-   - Red team spawn point
-   - Blue team flag position
-   - Blue team spawn point
-   - Build phase game mode
-   - Phase durations
-3. Players join: `/ctf join <game-name>`
-4. Start game: `/ctf start <game-name>`
+### Method 1: Automatic Map Detection (Recommended)
 
-### Pre-create Maps (Recommended)
-Creating dedicated CTF maps in advance ensures more balanced and enjoyable games.
-
-#### Auto-detect Map Creation
 1. **Set Map Area**
    ```
    /ctf setpos1 <game-name>  # Set start point at current location
    /ctf setpos2 <game-name>  # Set end point at current location
    ```
 
-2. **Build the Map**
-   Place the following blocks within the designated area:
-   - **Red Concrete**: Red team spawn point (only one)
-   - **Blue Concrete**: Blue team spawn point (only one)
-   - **Beacon + Red Stained Glass**: Red team flag position
-   - **Beacon + Blue Stained Glass**: Blue team flag position
+2. **Place Required Blocks**
+   - Red Concrete: Red team spawn point (1 only)
+   - Blue Concrete: Blue team spawn point (1 only)
+   - Beacon + Red Glass: Red team flag location
+   - Beacon + Blue Glass: Blue team flag location
 
 3. **Save the Map**
    ```
    /ctf savemap <game-name>
    ```
-   Automatically detects blocks and creates game configuration.
 
-#### Map Creation Tips
-- **Symmetry**: Recommend symmetric maps for fairness between teams
-- **Distance**: Flags and spawns must be at least 3 blocks apart
-- **Defense**: Can pre-build defensive structures around flags
-- **Routes**: Multiple infiltration/escape routes make games more interesting
-- **Elevation**: 3D maps increase strategic depth
+### Method 2: Interactive Creation
 
-#### Starting Game with Saved Map
-After saving the map, start the game normally:
+1. Start game creation: `/ctf create <game-name>`
+2. Follow chat instructions to configure
+3. Players join: `/ctf join <game-name>`
+4. Start game: `/ctf start <game-name>`
+
+### Starting Match Mode
+
+To run multiple consecutive games:
 ```
-/ctf start <game-name>
+/ctf start <game-name> match [number-of-games]
 ```
-A temporary world is automatically created and the saved map is restored when the game starts.
+Example: `/ctf start arena1 match 5` (runs 5 games)
 
-## Commands
+## Main Commands
 
-### Player Commands
-- `/ctf list` - Display all games
-- `/ctf join <game-name>` - Join specified game (auto team assignment)
+### For Players
+- `/ctf list` - Show all games
+- `/ctf join <game-name>` - Join specified game
 - `/ctf leave` - Leave current game
-- `/ctf team [red|blue]` - Check/change team (before game start only)
+- `/ctf team [red|blue]` - Check/change team (before start only)
 - `/ctf status [game-name]` - Check game status
 
-### Admin Commands
-- `/ctf create <game-name>` - Create new game (interactive)
-- `/ctf update <game-name>` - Update game settings (interactive)
+### For Admins
+- `/ctf create <game-name>` - Create new game
+- `/ctf update <game-name>` - Update game settings
 - `/ctf delete <game-name>` - Delete game
-- `/ctf start <game-name>` - Start game
+- `/ctf start <game-name> [match] [number]` - Start game/match
 - `/ctf stop <game-name>` - Force stop game
-- `/ctf setflag <game-name> <red|blue>` - Set flag position directly
-- `/ctf setspawn <game-name> <red|blue>` - Set spawn point directly
-- `/ctf setpos1 [game-name]` - Set map area start point
-- `/ctf setpos2 [game-name]` - Set map area end point
-- `/ctf savemap <game-name>` - Save map (auto-detect)
+- `/ctf setpos1/setpos2 <game-name>` - Set map area
+- `/ctf savemap <game-name>` - Save map
 
-## Configuration
+## Gameplay
 
-### Global Settings (`config.yml`)
+### Phases
 
-```yaml
-# Plugin settings
-plugin:
-  auto-save: true           # Auto-save game settings
-  max-games: -1             # Max number of games (-1 for unlimited)
-  force-pvp: true           # Force enable PVP during combat phase
+1. **Build Phase** 🏗️
+   - Default 2 minutes (configurable)
+   - Construct defensive structures
+   - PvP disabled
+   - Shop available
 
-# Default game settings
-default-game:
-  min-players: 2            # Minimum players for auto-start
-  max-players-per-team: 10  # Max players per team
-  respawn-delay: 5          # Respawn delay (seconds)
+2. **Combat Phase** ⚔️
+   - Default 2 minutes (configurable)
+   - Capture enemy flag and bring it back
+   - PvP force enabled
+   - Block placement disabled, some breaking allowed
 
-# Default phase settings
-default-phases:
-  build-duration: 300           # Build phase duration (seconds)
-  build-phase-gamemode: "ADVENTURE"  # ADVENTURE/SURVIVAL/CREATIVE
-  combat-duration: 600          # Combat phase duration (seconds)
-  result-duration: 60           # Result phase duration (seconds)
-```
-
-### Individual Game Settings (`games/<game-name>.yml`)
-
-Each game's settings are automatically saved and restored on server restart.
-
-## Game System
-
-### Game Phases
-
-#### 1. Build Phase 🏗️
-- **Objective**: Build defenses to strengthen your base
-- **ActionBar Guide**: "Build and fortify your defenses!"
-- **Equipment**: Wooden tools, building blocks, food
-- **Game Mode**: Configurable (Adventure/Survival/Creative)
-- **Restrictions**: PVP disabled, flag/spawn decorations unbreakable
-
-#### 2. Combat Phase ⚔️
-- **Objective**: Capture enemy flag and bring it back to base
-- **ActionBar Guide**: Dynamic instructions based on situation
-  - Normal: "Capture the [enemy team] flag!"
-  - Carrying flag: "Return to base!"
-  - Own flag taken: "Enemy has your flag! Get it back! (player name)"
-- **Equipment**: Team-colored armor, iron sword, bow & arrows, food
-- **Restrictions**: All blocks unbreakable, PVP force enabled
-
-#### 3. Result Phase 🏆
-- **Objective**: Review match results
-- **Content**: Winning team announcement, final score display
-- **Restrictions**: Movement and combat disabled
+3. **Strategy Meeting Phase** 💭
+   - Default 15 seconds (configurable)
+   - View match results and MVP announcements
+   - Prepare for next game (in match mode)
 
 ### Flag System
 
-- **Implementation**: Beacon (with team-colored stained glass)
-- **Capture Method**: Get within 1.5 blocks of enemy flag
-- **Carrier Effects**: Glowing, no ender pearl/elytra use
-- **Drop**: Itemizes on death at location
-- **Recovery**: 
-  - Own team: Instantly restores beacon at base
-  - Enemy team: Continue carrying
-- **Auto-restore**: Returns to original position after 30 seconds
-- **Scoring Condition**: Can only capture when own flag is at base
+- **Capture**: Get within 1.5 blocks of enemy flag (beacon)
+- **Carrier Effects**: Glowing, cannot use ender pearls/elytra
+- **Scoring Condition**: Can only capture when your team's flag is at base
+- **Drop**: Drops on death (auto-returns after 15 seconds)
 
-### Spawn Protection
+### Shop System
 
-- **Invincibility**: 3 seconds after respawn
-- **Visual Effect**: Glowing during protection
-- **Cancel Conditions**: Time expiry, attacking, flag capture
+- **How to Open**: Right-click emerald in inventory
+- **Usage Location**: Within 15 blocks of spawn point
+- **Categories**: Weapons, armor, consumables, blocks
+- **Special Features**: Death behavior settings (KEEP/DROP/DESTROY)
+
+## Configuration
+
+### config.yml (Main Settings)
+
+```yaml
+# Language settings
+language: "en"  # "en" or "ja"
+
+# Default game settings
+default-game:
+  min-players: 2
+  max-players-per-team: 10
+  respawn-delay-base: 10
+  respawn-delay-per-death: 2
+  respawn-delay-max: 20
+
+# Phase settings
+default-phases:
+  build-duration: 120        # Build phase (seconds)
+  build-phase-gamemode: "SURVIVAL"
+  combat-duration: 120       # Combat phase (seconds)
+  result-duration: 15        # Strategy meeting phase (seconds)
+  intermediate-result-duration: 15  # Time between match games
+
+# Currency settings
+currency:
+  initial: 50
+  kill-reward: 10
+  carrier-kill-reward: 20
+  capture-reward: 30
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Shop won't open**
+   - Use within 15 blocks of spawn point
+
+2. **Can't capture flag**
+   - Need to be within 1.5 blocks
+   - Check if you're already carrying a flag
+
+3. **Can't place blocks**
+   - Block placement disabled during combat phase
+   - In build phase, connect to team blocks
+
+4. **Language won't change**
+   - Server restart required after changing config.yml
 
 ## Development
 
@@ -215,52 +217,17 @@ Each game's settings are automatically saved and restored on server restart.
 ./gradlew test
 ```
 
-### Run Development Server
+### Development Server
 ```bash
 ./gradlew runServer
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Support
 
 - **Issue Reports**: [GitHub Issues](https://github.com/0x48lab/easy_ctf/issues)
 - **Documentation**: [Online Documentation](https://0x48lab.github.io/easy_ctf/)
-- **For Developers**: [CLAUDE.md](CLAUDE.md)
 - **Wiki**: [GitHub Wiki](https://github.com/0x48lab/easy_ctf/wiki)
 
-## Releases
+## License
 
-### Automated Build System
-
-This project uses GitHub Actions automated build system:
-
-- **🏷️ Tag Push**: Auto-release when tags matching `v*.*.*` pattern (e.g., v1.0.0) are pushed
-- **🔨 Auto Build**: Full Gradle build in Java 21 environment
-- **📝 Changelog**: Auto-generated changes since last release
-- **📦 Artifacts**: Pre-built JAR files and documentation automatically attached
-
-### 📥 Download
-
-- **[🚀 Latest Release](https://github.com/0x48lab/easy_ctf/releases/latest)** - Latest stable version
-- **[📋 All Release History](https://github.com/0x48lab/easy_ctf/releases)** - All versions
-
-### Files Included in Each Release
-
-- **`EasyCTF-x.x.x.jar`** - Main plugin file (ready to use)
-- **`plugin.yml`** - Plugin configuration file (reference)
-- **Changelog** - Changes and fixes in that version
-- **Installation Instructions** - Detailed setup guide
-- **Requirements** - Required Minecraft/Java version information
-
-> **🔄 Auto Updates**: New releases are automatically created when new features or fixes are added. Watch the [Releases page](https://github.com/0x48lab/easy_ctf/releases) to stay up to date!
+This project is licensed under the MIT License.
