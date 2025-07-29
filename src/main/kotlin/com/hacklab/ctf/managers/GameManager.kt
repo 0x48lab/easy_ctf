@@ -209,10 +209,14 @@ class GameManager(private val plugin: Main) {
         if (isMatch && target != null) {
             plugin.logger.info("[GameManager] Starting as match with $target games")
             
+            plugin.logger.info("[GameManager] Creating match with target: $target games")
+            
             val matchWrapper = MatchWrapper(config.copy().apply {
                 matchMode = MatchMode.FIXED_ROUNDS
                 matchTarget = target
             }, plugin)
+            
+            plugin.logger.info("[GameManager] Match created with config.matchTarget: ${matchWrapper.config.matchTarget}")
             
             matches[name.lowercase()] = matchWrapper
             game.setMatchContext(matchWrapper)
@@ -376,9 +380,12 @@ class GameManager(private val plugin: Main) {
      * マッチ内のゲーム終了処理
      */
     private fun handleMatchGameEnd(gameName: String, winner: Team?) {
+        plugin.logger.info("[GameManager] handleMatchGameEnd called for $gameName, winner: $winner")
+        
         val game = games[gameName.lowercase()] ?: return
         val match = matches[gameName.lowercase()] ?: return
         
+        plugin.logger.info("[GameManager] Current match state - Game ${match.currentGameNumber}/${match.config.matchTarget}, isComplete: ${match.isMatchComplete()}")
         
         // マッチのスコアを更新
         match.onGameEnd(winner)
@@ -397,7 +404,7 @@ class GameManager(private val plugin: Main) {
             
             
             if (match.isMatchComplete()) {
-                val matchWinner = match.getMatchWinner()
+                val matchWinner = match.getMatchWinner(game)
                 val matchWinnerText = when (matchWinner) {
                     Team.RED -> "§c§l赤チームがマッチに勝利！"
                     Team.BLUE -> "§9§l青チームがマッチに勝利！"
@@ -406,9 +413,17 @@ class GameManager(private val plugin: Main) {
                 player.sendMessage("")
                 player.sendMessage("§6§l=== マッチ終了 ===")
                 player.sendMessage(matchWinnerText)
+                
+                // 5ゲーム終了時で同点の場合、色ブロック数も表示
+                if (match.currentGameNumber >= 5 && match.matchWins[Team.RED] == match.matchWins[Team.BLUE]) {
+                    val redBlocks = game.teamPlacedBlocks[Team.RED]?.size ?: 0
+                    val blueBlocks = game.teamPlacedBlocks[Team.BLUE]?.size ?: 0
+                    player.sendMessage("§7色ブロック数: §c赤 $redBlocks §f- §9青 $blueBlocks")
+                }
             } else {
+                val intervalSeconds = match.config.matchIntervalDuration
                 player.sendMessage("")
-                player.sendMessage("§a5秒後に次のゲームが開始されます...")
+                player.sendMessage("§a${intervalSeconds}秒後に次のゲームが開始されます...")
             }
         }
         
@@ -426,13 +441,13 @@ class GameManager(private val plugin: Main) {
      * マッチインターバル表示
      */
     private fun showMatchInterval(game: Game, match: MatchWrapper, gameName: String) {
-        // 15秒の休憩時間を設定
-        var remainingSeconds = 15
+        // 設定から休憩時間を取得
+        var remainingSeconds = match.config.matchIntervalDuration
         
         // プレイヤーに次のゲームまでの時間を通知
         game.getAllPlayers().forEach { player ->
             player.sendMessage(Component.text(""))
-            player.sendMessage(Component.text("15秒後に次のゲームが開始されます...", NamedTextColor.GREEN))
+            player.sendMessage(Component.text("${remainingSeconds}秒後に次のゲームが開始されます...", NamedTextColor.GREEN))
         }
         
         object : BukkitRunnable() {
@@ -522,14 +537,29 @@ class GameManager(private val plugin: Main) {
      * 次のマッチゲームを開始
      */
     private fun startNextMatchGame(gameName: String) {
+        plugin.logger.info("[GameManager] Starting next match game for $gameName")
+        
         val game = games[gameName.lowercase()] ?: return
         val match = matches[gameName.lowercase()] ?: return
+        
+        plugin.logger.info("[GameManager] Current game state: ${game.state}, Match game number: ${match.currentGameNumber}")
         
         // 次のゲーム番号に進める
         match.nextGame()
         
+        plugin.logger.info("[GameManager] Advanced to game ${match.currentGameNumber}")
+        
+        // ゲームの状態をリセット
+        if (game.state != GameState.WAITING) {
+            plugin.logger.info("[GameManager] Resetting game state from ${game.state} to WAITING")
+            game.resetForNextMatchGame()
+        }
+        
         // ゲームを再開（プレイヤーは既に保持されている）
         if (!game.start()) {
+            plugin.logger.warning("[GameManager] Failed to start next match game")
+        } else {
+            plugin.logger.info("[GameManager] Successfully started game ${match.currentGameNumber}")
         }
     }
     

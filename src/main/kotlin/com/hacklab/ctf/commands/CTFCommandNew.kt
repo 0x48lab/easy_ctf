@@ -629,7 +629,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("建築フェーズ: ${game.buildDuration}秒 (${game.buildDuration / 60}分)", NamedTextColor.WHITE))
         sender.sendMessage(Component.text("建築時ゲームモード: ${game.buildPhaseGameMode}", NamedTextColor.WHITE))
         sender.sendMessage(Component.text("戦闘フェーズ: ${game.combatDuration}秒 (${game.combatDuration / 60}分)", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("リザルトフェーズ: ${game.resultDuration}秒", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text("作戦会議フェーズ: ${game.resultDuration}秒", NamedTextColor.WHITE))
         
         // 位置設定
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))

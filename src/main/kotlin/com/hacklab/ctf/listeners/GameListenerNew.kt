@@ -303,20 +303,43 @@ class GameListenerNew(private val plugin: Main) : Listener {
             
             // 死亡時はすべてのアイテムを保持（旗以外ドロップしない）
             val itemsToKeep = mutableListOf<ItemStack>()
+            val leatherArmorToKeep = mutableListOf<ItemStack>()
             
-            // インベントリ内のアイテムをすべて保持（革防具以外）
+            // インベントリ内のアイテムを分類
             for (item in player.inventory.contents) {
-                if (item != null && !isLeatherArmor(item.type)) {
-                    itemsToKeep.add(item)
+                if (item != null) {
+                    if (isLeatherArmor(item.type)) {
+                        // 革防具は別途保存
+                        leatherArmorToKeep.add(item.clone())
+                    } else {
+                        // その他のアイテムは通常通り保持
+                        itemsToKeep.add(item)
+                    }
+                }
+            }
+            
+            // 装備中の革防具も保存
+            player.equipment?.let { equipment ->
+                listOf(
+                    equipment.helmet,
+                    equipment.chestplate,
+                    equipment.leggings,
+                    equipment.boots
+                ).forEach { armorItem ->
+                    if (armorItem != null && isLeatherArmor(armorItem.type)) {
+                        leatherArmorToKeep.add(armorItem.clone())
+                    }
                 }
             }
             
             // アイテムはドロップしない
             event.drops.clear()
             
-            // 保持するアイテムを記録
+            // 保持するアイテムと革防具を記録
             player.setMetadata("ctf_items_to_keep", 
                 org.bukkit.metadata.FixedMetadataValue(plugin, itemsToKeep))
+            player.setMetadata("ctf_leather_armor_to_keep", 
+                org.bukkit.metadata.FixedMetadataValue(plugin, leatherArmorToKeep))
             
             event.keepInventory = false
             event.droppedExp = 0
@@ -382,20 +405,43 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }, 1L) // 1 tick後
             
             // 指定時間後にサバイバルモードで復活
-            plugin.server.scheduler.runTaskLater(plugin, Runnable {
-                game.handleRespawn(player)
-                player.gameMode = GameMode.SURVIVAL
-                
-                // 保持アイテムを再配布
-                val keptItems = player.getMetadata("ctf_items_to_keep")
-                    .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
-                
-                for (item in keptItems) {
-                    player.inventory.addItem(item)
+            val respawnTask = object : BukkitRunnable() {
+                override fun run() {
+                    // ゲームが終了している場合はリスポーンしない
+                    if (game.state != GameState.RUNNING) {
+                        plugin.logger.info("[Respawn] Game not running, cancelling respawn for ${player.name}")
+                        game.respawnTasks.remove(player.uniqueId)
+                        return
+                    }
+                    
+                    // プレイヤーがまだゲームに参加しているか確認
+                    if (game.getPlayerTeam(player.uniqueId) == null) {
+                        plugin.logger.info("[Respawn] Player not in game, cancelling respawn for ${player.name}")
+                        game.respawnTasks.remove(player.uniqueId)
+                        return
+                    }
+                    
+                    game.handleRespawn(player)
+                    player.gameMode = GameMode.SURVIVAL
+                    
+                    // 保持アイテムを再配布
+                    val keptItems = player.getMetadata("ctf_items_to_keep")
+                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
+                    
+                    for (item in keptItems) {
+                        player.inventory.addItem(item)
+                    }
+                    
+                    player.removeMetadata("ctf_items_to_keep", plugin)
+                    
+                    // タスクをマップから削除
+                    game.respawnTasks.remove(player.uniqueId)
                 }
-                
-                player.removeMetadata("ctf_items_to_keep", plugin)
-            }, respawnDelay * 20L) // 秒をticksに変換
+            }
+            
+            // リスポーンタスクを記録
+            game.respawnTasks[player.uniqueId] = respawnTask
+            respawnTask.runTaskLater(plugin, respawnDelay * 20L) // 秒をticksに変換
             }
         }
     }
@@ -542,8 +588,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     game.recordBlockBreak(event.block.location)
                 }
             }
-            GamePhase.RESULT -> {
-                // リザルトフェーズ：全面的に破壊禁止
+            GamePhase.INTERMISSION -> {
+                // 作戦会議フェーズ：全面的に破壊禁止
                 event.isCancelled = true
             }
         }
@@ -624,8 +670,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 event.isCancelled = true
                 player.sendMessage(Component.text("戦闘フェーズ中はブロックを設置できません", NamedTextColor.RED))
             }
-            GamePhase.RESULT -> {
-                // リザルトフェーズ：全面的に設置禁止
+            GamePhase.INTERMISSION -> {
+                // 作戦会議フェーズ：全面的に設置禁止
                 event.isCancelled = true
             }
         }
@@ -930,7 +976,23 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         player.inventory.addItem(item)
                     }
                     
+                    // 革防具を再装備
+                    val keptArmor = player.getMetadata("ctf_leather_armor_to_keep")
+                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
+                    
+                    player.equipment?.let { equipment ->
+                        for (armor in keptArmor) {
+                            when {
+                                armor.type == Material.LEATHER_HELMET -> equipment.helmet = armor
+                                armor.type == Material.LEATHER_CHESTPLATE -> equipment.chestplate = armor
+                                armor.type == Material.LEATHER_LEGGINGS -> equipment.leggings = armor
+                                armor.type == Material.LEATHER_BOOTS -> equipment.boots = armor
+                            }
+                        }
+                    }
+                    
                     player.removeMetadata("ctf_items_to_keep", plugin)
+                    player.removeMetadata("ctf_leather_armor_to_keep", plugin)
                 }, respawnDelay * 20L) // 秒をticksに変換
             }, 1L)
         } else if (game.state == GameState.RUNNING && game.phase == GamePhase.BUILD) {
@@ -1116,6 +1178,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     }
                 }
             }
+            
+            // 旗周辺3x3の縦方向全て（Y座標制限なし）
+            if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
+                kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
+                return true
+            }
         }
         
         // スポーン装飾チェック（スポーン地点が設定されている場合のみ）
@@ -1131,6 +1199,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         return true
                     }
                 }
+            }
+            
+            // スポーン地点周辺3x3の縦方向全て（Y座標制限なし）
+            if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
+                kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
+                return true
             }
         }
         

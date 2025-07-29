@@ -50,22 +50,50 @@ class MatchWrapper(
     
     /**
      * マッチ完了判定
+     * 先行3勝制: いずれかのチームが3勝、または5ゲーム終了
      */
     fun isMatchComplete(): Boolean {
-        return currentGameNumber >= config.matchTarget
+        val redWins = matchWins[Team.RED] ?: 0
+        val blueWins = matchWins[Team.BLUE] ?: 0
+        
+        // いずれかのチームが3勝した場合
+        if (redWins >= 3 || blueWins >= 3) {
+            return true
+        }
+        
+        // 5ゲーム終了した場合
+        if (currentGameNumber > 5) {
+            return true
+        }
+        
+        return false
     }
     
     /**
      * マッチ勝者取得
      */
-    fun getMatchWinner(): Team? {
+    fun getMatchWinner(game: Game? = null): Team? {
         val redWins = matchWins[Team.RED] ?: 0
         val blueWins = matchWins[Team.BLUE] ?: 0
         
         return when {
             redWins > blueWins -> Team.RED
             blueWins > redWins -> Team.BLUE
-            else -> null
+            else -> {
+                // 同点の場合、色ブロック数で判定
+                if (game != null) {
+                    val redBlocks = game.teamPlacedBlocks[Team.RED]?.size ?: 0
+                    val blueBlocks = game.teamPlacedBlocks[Team.BLUE]?.size ?: 0
+                    
+                    when {
+                        redBlocks > blueBlocks -> Team.RED
+                        blueBlocks > redBlocks -> Team.BLUE
+                        else -> null // 完全に同じ場合は引き分け
+                    }
+                } else {
+                    null
+                }
+            }
         }
     }
     
@@ -80,7 +108,7 @@ class MatchWrapper(
      * マッチステータス文字列
      */
     fun getMatchStatus(): String {
-        return "ゲーム $currentGameNumber / ${config.matchTarget}"
+        return "第${currentGameNumber}ゲーム"
     }
     
     /**

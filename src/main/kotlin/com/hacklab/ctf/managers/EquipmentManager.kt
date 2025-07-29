@@ -27,7 +27,7 @@ class EquipmentManager(private val plugin: Main) {
         giveArmor(player, team)
     }
     
-    private fun giveArmor(player: Player, team: Team) {
+    fun giveArmor(player: Player, team: Team) {
         val unbreakable = plugin.config.getBoolean("equipment.combat-phase.armor.unbreakable", true)
         val teamColor = if (team == Team.RED) Color.RED else Color.BLUE
         

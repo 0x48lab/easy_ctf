@@ -119,6 +119,10 @@ class Game(
     // タスク
     private var gameTask: BukkitRunnable? = null
     private var suffocationTask: BukkitRunnable? = null
+    private var scoreboardUpdateTask: BukkitRunnable? = null
+    private var actionBarTask: BukkitRunnable? = null
+    private val spawnProtectionTasks = mutableMapOf<UUID, BukkitRunnable>()
+    private val respawnTasks = mutableMapOf<UUID, BukkitRunnable>()
     
     // ゲッター
     val name: String get() = gameName
@@ -237,7 +241,6 @@ class Game(
         
         // スコアボード表示
         setupScoreboard(player)
-        updateScoreboard()
         
         player.sendMessage(Component.text("ゲーム '$gameName' の${selectedTeam.displayName}に参加しました", selectedTeam.color))
         
@@ -304,7 +307,7 @@ class Game(
                 // 戦闘フェーズ中の途中参加の場合は初期装備を配布
                 giveCombatPhaseItems(player, team)
             }
-            GamePhase.RESULT -> {}
+            GamePhase.INTERMISSION -> {}
         }
         
         // スポーン地点に転送
@@ -374,12 +377,17 @@ class Game(
                     }
                     
                     autoStartCountdown--
+                    
+                    // スコアボード更新（カウントダウン表示のため）
+                    updateScoreboard()
                 }
             }.runTaskTimer(plugin, 0L, 20L)
         }
     }
     
     fun start(): Boolean {
+        plugin.logger.info("[Game] Attempting to start game $name, current state: $state, phase: $phase")
+        
         if (state != GameState.WAITING) {
             plugin.logger.warning("Game $name cannot start: current state is $state")
             getAllPlayers().forEach {
@@ -432,17 +440,23 @@ class Game(
         // ワールドを切り替え
         world = tempWorld!!
         
-        // マップを復元（マッチモードの2回目以降も必要）
-        val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
-        val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
-        
-        // 保存されたマップがある場合は復元
-        if (mapManager.hasMap(gameName)) {
-            if (!gameManager.resetGameMap(gameName, tempWorld)) {
-                plugin.logger.warning("[Game] マップの復元に失敗しました")
+        // マップを復元（マッチの最初のゲームのみ）
+        if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
+            val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
+            val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
+            
+            // 保存されたマップがある場合は復元
+            if (mapManager.hasMap(gameName)) {
+                if (!gameManager.resetGameMap(gameName, tempWorld)) {
+                    plugin.logger.warning("[Game] マップの復元に失敗しました")
+                } else {
+                    plugin.logger.info("[Game] マップを復元しました")
+                }
             } else {
+                plugin.logger.info("[Game] 保存されたマップがありません")
             }
         } else {
+            plugin.logger.info("[Game] マッチ継続中のため、マップ復元をスキップ")
         }
         
         // 位置情報をテンポラリワールドに更新
@@ -476,6 +490,9 @@ class Game(
             // インベントリクリア
             player.inventory.clear()
             
+            // アクションバーをクリア
+            player.sendActionBar(Component.empty())
+            
             // ゲームモード設定
             val targetGameMode = GameMode.valueOf(buildPhaseGameMode)
             player.gameMode = targetGameMode
@@ -508,17 +525,22 @@ class Game(
         // ショップの購入履歴をリセット
         plugin.shopManager.resetGamePurchases(name)
         
-        // ブロック設置記録をクリア
-        teamPlacedBlocks.clear()
-        teamPlacedBlocks[Team.RED] = mutableSetOf()
-        teamPlacedBlocks[Team.BLUE] = mutableSetOf()
-        
-        // ブロックツリーをクリア
-        teamBlockTrees.clear()
-        teamBlockTrees[Team.RED] = mutableMapOf()
-        teamBlockTrees[Team.BLUE] = mutableMapOf()
+        // マッチモードでない場合、またはマッチの最初のゲームの場合のみブロック記録をクリア
+        if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
+            // ブロック設置記録をクリア
+            teamPlacedBlocks.clear()
+            teamPlacedBlocks[Team.RED] = mutableSetOf()
+            teamPlacedBlocks[Team.BLUE] = mutableSetOf()
+            
+            // ブロックツリーをクリア
+            teamBlockTrees.clear()
+            teamBlockTrees[Team.RED] = mutableMapOf()
+            teamBlockTrees[Team.BLUE] = mutableMapOf()
+        }
         
         state = GameState.RUNNING
+        
+        plugin.logger.info("[Game] Starting game loop for $name")
         
         // ゲームループ開始
         startGameLoop()
@@ -527,6 +549,10 @@ class Game(
     }
     
     private fun startGameLoop() {
+        // 既存のタスクをキャンセル
+        gameTask?.cancel()
+        gameTask = null
+        
         gameTask = object : BukkitRunnable() {
             override fun run() {
                 if (state != GameState.RUNNING) {
@@ -550,22 +576,42 @@ class Game(
                     when (phase) {
                         GamePhase.BUILD -> transitionToCombatPhase()
                         GamePhase.COMBAT -> transitionToResultPhase()
-                        GamePhase.RESULT -> endGame()
+                        GamePhase.INTERMISSION -> endGame()
                     }
                 }
                 
                 // UI更新
                 updateBossBar()
                 updateScoreboard()
-                updateActionBarGuides()
             }
         }
         gameTask?.runTaskTimer(plugin, 0L, 20L)
+        
+        // アクションバー更新タスクを別で管理（5ティックごと）
+        actionBarTask?.cancel()
+        actionBarTask = object : BukkitRunnable() {
+            override fun run() {
+                if (state != GameState.RUNNING) {
+                    cancel()
+                    actionBarTask = null
+                    return
+                }
+                updateActionBarGuides()
+            }
+        }
+        actionBarTask?.runTaskTimer(plugin, 0L, 5L)
     }
     
     private fun transitionToCombatPhase() {
         phase = GamePhase.COMBAT
         currentPhaseTime = combatDuration
+        
+        // リスポーンタスクをクリア（建築フェーズからの移行時）
+        respawnTasks.values.forEach { task ->
+            plugin.logger.info("[Respawn] Cancelling respawn task during combat phase transition")
+            task.cancel()
+        }
+        respawnTasks.clear()
         
         bossBar?.setTitle("戦闘フェーズ - 残り時間: ${formatTime(currentPhaseTime)}")
         bossBar?.color = BarColor.RED
@@ -602,13 +648,20 @@ class Game(
     }
     
     private fun transitionToResultPhase() {
-        phase = GamePhase.RESULT
+        phase = GamePhase.INTERMISSION
+        
+        // リスポーンタスクをキャンセル
+        respawnTasks.values.forEach { task ->
+            plugin.logger.info("[Respawn] Cancelling respawn task during phase transition")
+            task.cancel()
+        }
+        respawnTasks.clear()
         
         // マッチモードで、かつ最終ゲームでない場合は短縮
         currentPhaseTime = if (matchWrapper != null && !matchWrapper!!.isMatchComplete()) {
-            plugin.config.getInt("default-phases.intermediate-result-duration", 15)  // 中間結果
+            plugin.config.getInt("default-phases.intermediate-result-duration", 15)  // マッチ間の作戦会議
         } else {
-            resultDuration  // 最終結果は通常の時間
+            resultDuration  // 最終ゲーム後は通常の時間
         }
         
         // 戦闘フェーズ終了ボーナス
@@ -625,7 +678,7 @@ class Game(
         bossBar?.setTitle("試合終了！")
         bossBar?.color = BarColor.YELLOW
         
-        // ゲーム結果レポートを作成
+        // ゲームレポートを作成
         displayGameReport(winner)
         
         getAllPlayers().forEach { player ->
@@ -635,7 +688,7 @@ class Game(
             // ゲームモード変更
             player.gameMode = GameMode.SPECTATOR
             
-            // 結果表示
+            // 勝負表示
             if (winner != null) {
                 player.showTitle(Title.title(
                     Component.text("${winner.displayName}の勝利！", winner.color),
@@ -660,13 +713,85 @@ class Game(
         }
     }
     
-    fun stop() {
-        plugin.logger.info("Stopping game: $gameName")
-        state = GameState.ENDING
+    /**
+     * マッチの次のゲームのために状態をリセット
+     */
+    fun resetForNextMatchGame() {
+        plugin.logger.info("[Game] Resetting for next match game")
         
-        // タスクキャンセル
+        // 全てのタスクをキャンセル
         gameTask?.cancel()
         suffocationTask?.cancel()
+        scoreboardUpdateTask?.cancel()
+        spawnProtectionTasks.values.forEach { it.cancel() }
+        actionBarTask?.cancel()
+        
+        // リスポーンタスクをキャンセル
+        respawnTasks.values.forEach { task ->
+            plugin.logger.info("[Respawn] Cancelling respawn task during match reset")
+            task.cancel()
+        }
+        
+        // タスク参照をクリア
+        gameTask = null
+        suffocationTask = null
+        scoreboardUpdateTask = null
+        spawnProtectionTasks.clear()
+        actionBarTask = null
+        respawnTasks.clear()
+        
+        // ボスバーをリセット
+        bossBar?.removeAll()
+        bossBar = null
+        
+        // 状態をリセット
+        state = GameState.WAITING
+        phase = GamePhase.BUILD
+        currentPhaseTime = 0
+        autoStartCountdown = -1
+        
+        // ゲーム状態データはリセット
+        score.clear()
+        score[Team.RED] = 0
+        score[Team.BLUE] = 0
+        droppedFlags.clear()
+        spawnProtection.clear()
+        actionBarCooldown.clear()
+        actionBarErrorDisplay.clear()
+        redFlagCarrier = null
+        blueFlagCarrier = null
+        
+        // 旗とスポーン装飾を再設置
+        setupFlags()
+        setupSpawnAreas()
+        
+        plugin.logger.info("[Game] Reset complete, state is now: $state")
+    }
+    
+    fun stop() {
+        plugin.logger.info("Stopping game: $gameName, current state: $state, matchWrapper: ${matchWrapper != null}")
+        state = GameState.ENDING
+        
+        // 全てのタスクをキャンセル
+        gameTask?.cancel()
+        suffocationTask?.cancel()
+        scoreboardUpdateTask?.cancel()
+        spawnProtectionTasks.values.forEach { it.cancel() }
+        actionBarTask?.cancel()
+        
+        // リスポーンタスクをキャンセル
+        respawnTasks.values.forEach { task ->
+            plugin.logger.info("[Respawn] Cancelling respawn task during game stop")
+            task.cancel()
+        }
+        
+        // タスク参照をクリア
+        gameTask = null
+        suffocationTask = null
+        scoreboardUpdateTask = null
+        spawnProtectionTasks.clear()
+        actionBarTask = null
+        respawnTasks.clear()
         
         // マッチモードかどうかチェック
         val isMatchMode = matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()
@@ -727,6 +852,7 @@ class Game(
         objective = null
         
         // 旗とスポーン装飾を削除（マッチモードでもクリアする）
+        // ただし、マッチ継続中はプレイヤーが設置したブロックは保持
         cleanupGameBlocks()
         
         // データクリアの前に状態をリセット
@@ -766,16 +892,37 @@ class Game(
     }
     
     private fun endGame() {
-        plugin.logger.info("Game $gameName ended naturally")
+        // 既に終了処理中の場合は何もしない
+        if (state == GameState.ENDING) {
+            plugin.logger.info("Game $gameName is already ending, skipping duplicate endGame call")
+            return
+        }
+        
+        plugin.logger.info("Game $gameName ended naturally, state: $state, matchWrapper: ${matchWrapper != null}")
+        
+        // 状態を終了中に設定（重複防止）
+        state = GameState.ENDING
         
         // 勝者を決定
         val winner = getWinner()
         
+        plugin.logger.info("Game $gameName winner: $winner, has callback: ${gameEndCallback != null}")
+        
         // コールバックを実行（マッチがある場合は、マッチが次のゲームを管理）
         if (gameEndCallback != null) {
+            plugin.logger.info("Invoking game end callback for match")
             gameEndCallback?.invoke(winner)
+            // マッチモードの場合、stop()を呼ばない（次のゲームのために状態をリセット）
+            if (matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()) {
+                plugin.logger.info("Match continues, not stopping game")
+                // 状態はhandleMatchGameEndで適切にリセットされる
+            } else {
+                plugin.logger.info("Match complete or no match, stopping game")
+                stop()
+            }
         } else {
             // マッチがない場合のみ、ゲームを停止
+            plugin.logger.info("No match callback, stopping game")
             stop()
         }
         
@@ -1072,16 +1219,17 @@ class Game(
     
     private fun setupScoreboard(player: Player) {
         try {
-            // 共通のスコアボードを使用（初回のみ作成）
-            if (scoreboard == null) {
-                scoreboard = Bukkit.getScoreboardManager().newScoreboard
-                objective = scoreboard!!.registerNewObjective("ctf_game", "dummy", 
-                    Component.text("CTF - $gameName", NamedTextColor.GOLD))
-                objective!!.displaySlot = DisplaySlot.SIDEBAR
-            }
+            // プレイヤーごとに個別のスコアボードを作成
+            val playerScoreboard = Bukkit.getScoreboardManager().newScoreboard
+            val playerObjective = playerScoreboard.registerNewObjective("ctf_game", "dummy", 
+                Component.text("CTF - $gameName", NamedTextColor.GOLD))
+            playerObjective.displaySlot = DisplaySlot.SIDEBAR
             
-            // プレイヤーに共通のスコアボードを設定
-            player.scoreboard = scoreboard!!
+            // プレイヤーに設定
+            player.scoreboard = playerScoreboard
+            
+            // 初回更新
+            updatePlayerScoreboard(player)
             
         } catch (e: Exception) {
             plugin.logger.warning("Failed to setup scoreboard for player ${player.name}: ${e.message}")
@@ -1089,86 +1237,75 @@ class Game(
     }
     
     fun updateScoreboard() {
-        val obj = objective ?: return
-        
         // スコアボードの更新を1秒に1回に制限（ゲームループと同期）
         if (System.currentTimeMillis() - lastScoreboardUpdate < 1000) {
             return
         }
         lastScoreboardUpdate = System.currentTimeMillis()
         
+        // 全プレイヤーのスコアボードを更新
+        getAllPlayers().forEach { player ->
+            updatePlayerScoreboard(player)
+        }
+    }
+    
+    private fun updatePlayerScoreboard(player: Player) {
+        val playerScoreboard = player.scoreboard
+        val obj = playerScoreboard.getObjective("ctf_game") ?: return
+        
         // 既存のエントリをクリア
-        scoreboard?.entries?.forEach { entry ->
-            scoreboard?.resetScores(entry)
+        playerScoreboard.entries.forEach { entry ->
+            playerScoreboard.resetScores(entry)
         }
         
         var line = 15
         
-        // フェーズごとに異なる表示
-        when (phase) {
-            GamePhase.BUILD -> {
-                // 建築フェーズ
-                obj.getScore("§e§l[建築] §f残り: ${formatTime(currentPhaseTime)}").score = line--
-                obj.getScore(" ").score = line--
-                
-                // チーム通貨
-                if (matchWrapper != null) {
-                    obj.getScore("§c赤チーム: §e${matchWrapper!!.getTeamCurrency(Team.RED)}G").score = line--
-                    obj.getScore("§9青チーム: §e${matchWrapper!!.getTeamCurrency(Team.BLUE)}G").score = line--
-                } else {
-                    obj.getScore("§c赤チーム: §e${getTeamCurrency(Team.RED)}G").score = line--
-                    obj.getScore("§9青チーム: §e${getTeamCurrency(Team.BLUE)}G").score = line--
-                }
+        // ゲーム開始前の表示
+        if (state == GameState.WAITING || state == GameState.STARTING) {
+            // 参加人数
+            val redCount = redTeam.size
+            val blueCount = blueTeam.size
+            obj.getScore("§c赤${redCount} §9青${blueCount}").score = line--
+            
+            // マッチモードの場合、先行勝利数を表示
+            if (matchWrapper != null) {
+                obj.getScore("§e先行3勝制").score = line--
             }
             
-            GamePhase.COMBAT -> {
-                // 戦闘フェーズ
-                obj.getScore("§c§l[戦闘] §f残り: ${formatTime(currentPhaseTime)}").score = line--
-                obj.getScore(" ").score = line--
-                
-                // スコア
-                obj.getScore("§c赤: ${score[Team.RED] ?: 0} §f- §9青: ${score[Team.BLUE] ?: 0}").score = line--
-                obj.getScore("  ").score = line--
-                
-                // チーム通貨
-                if (matchWrapper != null) {
-                    obj.getScore("§c赤チーム: §e${matchWrapper!!.getTeamCurrency(Team.RED)}G").score = line--
-                    obj.getScore("§9青チーム: §e${matchWrapper!!.getTeamCurrency(Team.BLUE)}G").score = line--
-                } else {
-                    obj.getScore("§c赤チーム: §e${getTeamCurrency(Team.RED)}G").score = line--
-                    obj.getScore("§9青チーム: §e${getTeamCurrency(Team.BLUE)}G").score = line--
-                }
-                obj.getScore("   ").score = line--
-                
-                // 旗の状態（持っている場合のみ）
-                if (redFlagCarrier != null) {
-                    val carrier = Bukkit.getPlayer(redFlagCarrier!!)
-                    obj.getScore("§c赤旗: §e${carrier?.name ?: "不明"}が所持").score = line--
-                }
-                if (blueFlagCarrier != null) {
-                    val carrier = Bukkit.getPlayer(blueFlagCarrier!!)
-                    obj.getScore("§9青旗: §e${carrier?.name ?: "不明"}が所持").score = line--
-                }
+            // ゲーム設定
+            obj.getScore("§f建築${buildDuration / 60}分 戦闘${combatDuration / 60}分").score = line--
+            obj.getScore("§f開始${minPlayers}人～").score = line--
+            
+            // カウントダウン表示
+            if (state == GameState.STARTING && autoStartCountdown > 0) {
+                obj.getScore("§a開始まで: §f${autoStartCountdown}秒").score = line--
             }
             
-            GamePhase.RESULT -> {
-                // リザルトフェーズ
-                obj.getScore("§6§l[結果発表]").score = line--
-                obj.getScore(" ").score = line--
-                
-                // 最終スコア
-                obj.getScore("§c赤チーム: §f${score[Team.RED] ?: 0}").score = line--
-                obj.getScore("§9青チーム: §f${score[Team.BLUE] ?: 0}").score = line--
-                obj.getScore("  ").score = line--
-                
-                // 勝者
-                val winner = when {
-                    score[Team.RED]!! > score[Team.BLUE]!! -> "§c赤チームの勝利！"
-                    score[Team.BLUE]!! > score[Team.RED]!! -> "§9青チームの勝利！"
-                    else -> "§e引き分け！"
-                }
-                obj.getScore(winner).score = line--
+            return
+        }
+        
+        // ゲーム中の表示
+        // マッチモードの場合
+        if (matchWrapper != null) {
+            // 第Nゲーム表示
+            obj.getScore("§e第${matchWrapper!!.currentGameNumber}ゲーム").score = line--
+            
+            val redWins = matchWrapper!!.matchWins[Team.RED] ?: 0
+            val blueWins = matchWrapper!!.matchWins[Team.BLUE] ?: 0
+            
+            // マッチスコア
+            obj.getScore("§c赤${redWins}§f-§9${blueWins}青").score = line--
+        }
+        
+        // 自チームの通貨を表示
+        val playerTeam = getPlayerTeam(player.uniqueId)
+        if (playerTeam != null) {
+            val currency = if (matchWrapper != null) {
+                matchWrapper!!.getTeamCurrency(playerTeam)
+            } else {
+                getTeamCurrency(playerTeam)
             }
+            obj.getScore("§e${currency}G").score = line--
         }
     }
     
@@ -1176,62 +1313,48 @@ class Game(
         return when (phase) {
             GamePhase.BUILD -> "建築"
             GamePhase.COMBAT -> "戦闘"
-            GamePhase.RESULT -> "結果"
+            GamePhase.INTERMISSION -> "作戦会議"
         }
     }
     
     private fun updateBossBar() {
         val bar = bossBar ?: return
         
-        // フェーズ情報
-        val phaseText = when (phase) {
-            GamePhase.BUILD -> "建築フェーズ"
-            GamePhase.COMBAT -> "戦闘フェーズ"
-            GamePhase.RESULT -> "リザルト"
-        }
-        
         // 時間情報
         val timeText = formatTime(currentPhaseTime)
         
-        // マッチ情報（マッチモードの場合）
-        val matchInfo = matchWrapper?.let { m ->
-            val wins = m.matchWins
-            "[${m.currentGameNumber}/${m.config.matchTarget}] | " + "赤${wins[Team.RED]}勝 青${wins[Team.BLUE]}勝 | "
-        } ?: ""
-        
-        // 現在のスコア（戦闘・結果フェーズのみ）
-        val scoreInfo = if (phase == GamePhase.COMBAT || phase == GamePhase.RESULT) {
-            "スコア: 赤${score[Team.RED] ?: 0} - 青${score[Team.BLUE] ?: 0} | "
-        } else ""
-        
-        // 旗の状態（戦闘フェーズのみ）
-        val flagInfo = if (phase == GamePhase.COMBAT) {
-            val redCarrierName = redFlagCarrier?.let { Bukkit.getPlayer(it)?.name }
-            val blueCarrierName = blueFlagCarrier?.let { Bukkit.getPlayer(it)?.name }
-            
-            when {
-                redCarrierName != null && blueCarrierName != null -> "旗: 赤→${blueCarrierName} 青→${redCarrierName} | "
-                redCarrierName != null -> "青旗: ${redCarrierName}が保持 | "
-                blueCarrierName != null -> "赤旗: ${blueCarrierName}が保持 | "
-                else -> ""
+        // フェーズごとに異なる表示
+        val barTitle = when (phase) {
+            GamePhase.BUILD -> {
+                // 建築フェーズ: シンプルに時間のみ
+                "建築フェーズ - $timeText"
             }
-        } else ""
+            GamePhase.COMBAT -> {
+                // 戦闘フェーズ: 旗の取得数を表示
+                val redScore = score[Team.RED] ?: 0
+                val blueScore = score[Team.BLUE] ?: 0
+                "戦闘フェーズ - 赤 $redScore : $blueScore 青 - $timeText"
+            }
+            GamePhase.INTERMISSION -> {
+                // 作戦会議フェーズ
+                "作戦会議 - $timeText"
+            }
+        }
         
-        // タイトルを組み立て
-        bar.setTitle("$matchInfo$scoreInfo$flagInfo$phaseText - $timeText")
+        bar.setTitle(barTitle)
         
         // フェーズに応じて色を変更
         bar.color = when (phase) {
             GamePhase.BUILD -> BarColor.GREEN
             GamePhase.COMBAT -> BarColor.RED
-            GamePhase.RESULT -> BarColor.YELLOW
+            GamePhase.INTERMISSION -> BarColor.YELLOW
         }
         
         // 進行度を更新
         val totalTime = when (phase) {
             GamePhase.BUILD -> buildDuration
             GamePhase.COMBAT -> combatDuration
-            GamePhase.RESULT -> resultDuration
+            GamePhase.INTERMISSION -> resultDuration
         }
         
         val progress = currentPhaseTime.toDouble() / totalTime.toDouble()
@@ -1625,20 +1748,26 @@ class Game(
         // 保護中は光る
         player.isGlowing = true
         
+        // 既存のスポーン保護タスクをキャンセル
+        spawnProtectionTasks[player.uniqueId]?.cancel()
+        
         // 3秒後に保護を解除
-        object : BukkitRunnable() {
+        val task = object : BukkitRunnable() {
             override fun run() {
                 if (spawnProtection.remove(player.uniqueId) != null) {
                     player.isGlowing = false
                     player.sendMessage(Component.text("スポーン保護が解除されました", NamedTextColor.YELLOW))
                 }
+                spawnProtectionTasks.remove(player.uniqueId)
             }
-        }.runTaskLater(plugin, 60L) // 3秒後
+        }
+        task.runTaskLater(plugin, 60L) // 3秒後
+        spawnProtectionTasks[player.uniqueId] = task
         
         // スポーン地点に転送
         teleportToSpawn(player, team)
         
-        // 戦闘フェーズではリスポーン時に装備を再配布しない
+        // 戦闘フェーズではリスポーン時に装備を再配布しない（革防具は死亡時処理で保持される）
         // 建築フェーズでは、リスポーン時にツールを復元する
         when (phase) {
             GamePhase.BUILD -> {
@@ -1654,11 +1783,20 @@ class Game(
                         }
                     }
                 }
+                
+                // 革防具がない場合は再配布（初回死亡時など）
+                if (player.equipment?.helmet?.type != Material.LEATHER_HELMET) {
+                    plugin.equipmentManager.giveArmor(player, team)
+                }
             }
             GamePhase.COMBAT -> {
-                // 戦闘フェーズではリスポーン時に装備を再配布しない
+                // 戦闘フェーズでは革防具の確認のみ（死亡時処理で保持されているはず）
+                // 万が一ない場合は再配布
+                if (player.equipment?.helmet?.type != Material.LEATHER_HELMET) {
+                    plugin.equipmentManager.giveArmor(player, team)
+                }
             }
-            GamePhase.RESULT -> {}
+            GamePhase.INTERMISSION -> {}
         }
         
         player.sendMessage(Component.text("3秒間スポーン保護が有効です", NamedTextColor.GREEN))
@@ -1729,8 +1867,8 @@ class Game(
                     }
                 }
                 
-                GamePhase.RESULT -> {
-                    // リザルトフェーズは何も表示しない
+                GamePhase.INTERMISSION -> {
+                    // 作戦会議フェーズでは何も表示しない
                     return@forEach
                 }
             }
@@ -1788,10 +1926,10 @@ class Game(
     }
     
     private fun displayGameReport(winner: Team?) {
-        // ゲーム結果の詳細レポート
+        // ゲームの詳細レポート
         getAllPlayers().forEach { player ->
             player.sendMessage(Component.text("", NamedTextColor.WHITE))
-            player.sendMessage(Component.text("========== ゲーム結果 ==========").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+            player.sendMessage(Component.text("========== ゲームレポート ==========").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
             
             // マッチ情報（マッチモードの場合）
             matchWrapper?.let { m ->
@@ -1804,7 +1942,7 @@ class Game(
                 player.sendMessage(Component.text("", NamedTextColor.WHITE))
             }
             
-            // 今回のゲーム結果
+            // 今回のゲーム
             player.sendMessage(Component.text("今回のゲーム:").color(NamedTextColor.YELLOW))
             if (winner != null) {
                 player.sendMessage(Component.text("勝利: ").color(NamedTextColor.WHITE).append(Component.text(winner.displayName).color(winner.color)))
@@ -2201,6 +2339,43 @@ class Game(
         val team = getPlayerTeam(player.uniqueId) ?: return null
         val location = block.location
         
+        // スポーン地点と旗周辺の建築制限チェック（3x3、Y座標全て）
+        // 赤チームの旗周辺チェック
+        redFlagLocation?.let { flagLoc ->
+            if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
+                kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
+                player.sendActionBar(Component.text("旗の周辺にはブロックを設置できません", NamedTextColor.RED))
+                return null
+            }
+        }
+        
+        // 青チームの旗周辺チェック
+        blueFlagLocation?.let { flagLoc ->
+            if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
+                kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
+                player.sendActionBar(Component.text("旗の周辺にはブロックを設置できません", NamedTextColor.RED))
+                return null
+            }
+        }
+        
+        // 赤チームのスポーン地点周辺チェック
+        redSpawnLocation?.let { spawnLoc ->
+            if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
+                kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
+                player.sendActionBar(Component.text("スポーン地点の周辺にはブロックを設置できません", NamedTextColor.RED))
+                return null
+            }
+        }
+        
+        // 青チームのスポーン地点周辺チェック
+        blueSpawnLocation?.let { spawnLoc ->
+            if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
+                kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
+                player.sendActionBar(Component.text("スポーン地点の周辺にはブロックを設置できません", NamedTextColor.RED))
+                return null
+            }
+        }
+        
         // チームカラーのブロックかチェック
         val teamBlocks = TEAM_BLOCKS[team] ?: return null
         
@@ -2502,9 +2677,9 @@ class Game(
                             
                             // シールドがゼロになったらダメージ
                             if (shield == 0f) {
-                                // 満腹度を減らして自動回復を防ぐ
-                                if (player.foodLevel > 6) {
-                                    player.foodLevel = 6
+                                // 満腹度を少しずつ減らして自動回復を防ぐ
+                                if (player.foodLevel > 17) {
+                                    player.foodLevel = player.foodLevel - 1
                                 }
                                 
                                 val currentTime = System.currentTimeMillis()
