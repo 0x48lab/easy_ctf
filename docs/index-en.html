@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyCTF - Minecraft Capture The Flag Plugin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index-en.html" class="active">Home</a></li>
+                <li><a href="gameplay-en.html">How to Play</a></li>
+                <li><a href="commands-en.html">Commands</a></li>
+                <li><a href="shop-en.html">Shop</a></li>
+                <li><a href="match-en.html">Match</a></li>
+                <li><a href="map-creation-en.html">Map Creation</a></li>
+                <li><a href="admin-en.html">Admin</a></li>
+                <li><a href="faq-en.html">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero hero-with-image">
+        <div class="hero-background">
+            <img src="images/hero.png" alt="EasyCTF Hero Image" class="hero-image">
+            <div class="hero-overlay"></div>
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-title">EasyCTF</h1>
+            <p class="hero-subtitle">Minecraft Capture The Flag Plugin</p>
+            <p class="hero-description">Easy to play, Hard to master!</p>
+            <div class="hero-buttons">
+                <a href="#quick-start" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/yourusername/easy_ctf/releases" class="btn btn-secondary">
+                    <i class="fab fa-github"></i> Download
+                </a>
+            </div>
+            <div class="hero-features">
+                <span class="hero-feature"><i class="fas fa-check"></i> Paper 1.21.5 Compatible</span>
+                <span class="hero-feature"><i class="fas fa-check"></i> Multiple Games Support</span>
+                <span class="hero-feature"><i class="fas fa-check"></i> Japanese/English Support</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="features">
+            <h2 class="section-title">🎮 Game Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Team Battle</h3>
+                    <p>Intense battles with up to 10 players per team. Includes automatic team balancing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>3 Phase System</h3>
+                    <p>Build → Combat → Result flow for strategic gameplay.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>Match Mode</h3>
+                    <p>Fixed rounds system for continuous play. The team with most wins takes the championship!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Shop System</h3>
+                    <p>Purchase items with team-shared currency. Automatic discounts for losing teams.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-ghost"></i>
+                    </div>
+                    <h3>Spectator Mode</h3>
+                    <p>Watch as spectator when killed in combat. Analyze the battlefield for your next strategy.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3>Flexible Settings</h3>
+                    <p>Customize auto-start, phase duration, game modes, and more.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="quick-start" class="quick-start">
+            <h2 class="section-title">🚀 Quick Start Guide</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Download Plugin</h3>
+                        <p>Download the latest version of EasyCTF.</p>
+                        <a href="https://github.com/yourusername/easy_ctf/releases" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-download"></i> Latest Release
+                        </a>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Install to Server</h3>
+                        <p>Place easy_ctf.jar in your Paper server's plugins folder.</p>
+                        <code>plugins/easy_ctf.jar</code>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Create a Game</h3>
+                        <p>Create your first CTF game with this command:</p>
+                        <code>/ctf create mygame</code>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Join and Play!</h3>
+                        <p>Players can join with:</p>
+                        <code>/ctf join mygame</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="hero-cta">
+            <h2 class="section-title">🏆 Start Your First Battle</h2>
+            <p>EasyCTF makes CTF gameplay simple, strategic, and fun for everyone!</p>
+            <div class="cta-buttons">
+                <a href="gameplay-en.html" class="btn btn-primary">Learn How to Play</a>
+                <a href="commands-en.html" class="btn btn-secondary">View Commands</a>
+            </div>
+        </section>
+
+        <section class="highlights">
+            <h2 class="section-title">✨ Highlights</h2>
+            <div class="highlight-grid">
+                <div class="highlight-card">
+                    <h3><i class="fas fa-globe"></i> Multi-Language Support</h3>
+                    <p>Full support for Japanese and English. Switch languages easily in config.</p>
+                </div>
+                <div class="highlight-card">
+                    <h3><i class="fas fa-server"></i> Multiple Games</h3>
+                    <p>Run multiple CTF games simultaneously on the same server.</p>
+                </div>
+                <div class="highlight-card">
+                    <h3><i class="fas fa-map"></i> Temporary Worlds</h3>
+                    <p>Each game creates its own temporary world. Your main world stays safe!</p>
+                </div>
+                <div class="highlight-card">
+                    <h3><i class="fas fa-shield-alt"></i> Spawn Protection</h3>
+                    <p>3-second invincibility after respawn prevents spawn camping.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="requirements">
+            <h2 class="section-title">📋 Requirements</h2>
+            <div class="requirement-list">
+                <div class="requirement-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Paper Server 1.21.5+</span>
+                </div>
+                <div class="requirement-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Java 21 or newer</span>
+                </div>
+                <div class="requirement-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Minimum 2GB RAM (4GB+ recommended)</span>
+                </div>
+                <div class="requirement-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>WorldEdit (Optional - for map creation)</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EasyCTF</h3>
+                    <p>Advanced CTF plugin for Minecraft Paper servers</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links</h3>
+                    <ul>
+                        <li><a href="https://github.com/0x48lab/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/wiki">Wiki</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/issues">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Documentation</h3>
+                    <ul>
+                        <li><a href="gameplay-en.html">How to Play</a></li>
+                        <li><a href="commands-en.html">Commands</a></li>
+                        <li><a href="admin-en.html">Admin Guide</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF - MIT License</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

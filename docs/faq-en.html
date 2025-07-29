@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - EasyCTF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index-en.html">Home</a></li>
+                <li><a href="gameplay-en.html">How to Play</a></li>
+                <li><a href="commands-en.html">Commands</a></li>
+                <li><a href="shop-en.html">Shop</a></li>
+                <li><a href="match-en.html">Match</a></li>
+                <li><a href="map-creation-en.html">Map Creation</a></li>
+                <li><a href="admin-en.html">Admin</a></li>
+                <li><a href="faq-en.html" class="active">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Frequently Asked Questions (FAQ)</h1>
+            <p>Common questions and answers about EasyCTF</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2><i class="fas fa-gamepad"></i> Gameplay Related</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I captured the flag but didn't score</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>If your team's flag has been taken by the enemy, you cannot score. First retrieve your own flag, then bring the enemy flag back home.</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-lightbulb"></i>
+                            Check your flag status on the scoreboard.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I can't open the shop</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Please check the following:</p>
+                        <ul>
+                            <li>Are you right-clicking the emerald?</li>
+                            <li>Are you within 15 blocks of the spawn point?</li>
+                            <li>Is the game running (build/combat phase)?</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I can't change teams</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Team changes are only possible before game start (WAITING phase). Once the game begins, you cannot change teams.</p>
+                        <p>Commands: <code>/ctf team red</code> or <code>/ctf team blue</code></p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Items don't disappear when I die</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Equipment purchased from the shop (weapons/armor) is kept on death. Consumables (food/ender pearls etc.) are dropped.</p>
+                        <table>
+                            <tr>
+                                <td><span class="badge badge-success">Keep</span></td>
+                                <td>Weapons, armor, tools</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">Drop</span></td>
+                                <td>Consumables, food</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I can't use ender pearls</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Ender pearls cannot be used while carrying a flag. This is intended to restrict flag carrier movement.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-wrench"></i> Technical Issues</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I can't join the game</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Please check the following:</p>
+                        <ul>
+                            <li>Are you already in another game? (Use <code>/ctf leave</code> to leave)</li>
+                            <li>Is the game full? (Max 10 players per team)</li>
+                            <li>Did you enter the game name correctly?</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>There's severe lag</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Ask the administrator to try the following:</p>
+                        <ul>
+                            <li>Reduce number of concurrent games</li>
+                            <li>Increase server RAM</li>
+                            <li>Disable unnecessary plugins</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Text appears garbled</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Check the server's character encoding settings. Language files must be saved in UTF-8 format.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-user-shield"></i> Admin FAQ</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Games don't start automatically</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Check if minimum player count (default 2) is met. You can adjust <code>min-players</code> in config.yml.</p>
+                        <pre><code>default-game:
+  min-players: 2</code></pre>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Can't place flags</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Please check the following:</p>
+                        <ul>
+                            <li>Are you looking at the target block? (Up to 100 blocks away)</li>
+                            <li>Are world protection settings interfering?</li>
+                            <li>Do you have the permission (ctf.admin)?</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Settings aren't applied</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Most settings require a server restart. They also don't affect games already running.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Match stopped mid-way</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Force stop with <code>/ctf stop &lt;game-name&gt;</code> and restart. If there are errors in the log, please report them on GitHub Issues.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-palette"></i> Game Design FAQ</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>What's the recommended arena size?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Recommended by player count:</p>
+                        <ul>
+                            <li>2v2~4v4: 50×50 blocks</li>
+                            <li>5v5~7v7: 100×100 blocks</li>
+                            <li>8v8~10v10: 150×150 blocks</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>What should I build in build phase?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Priority order:</p>
+                        <ol>
+                            <li>Walls around the flag (most important)</li>
+                            <li>Sniper positions (high ground)</li>
+                            <li>Moats or obstacles to prevent invasion</li>
+                            <li>Decoy structures</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>What are balanced shop prices?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Default settings are already balanced. If changing:</p>
+                        <ul>
+                            <li>Basic equipment should cost 2-3x initial currency</li>
+                            <li>Top-tier equipment should require 3-4 kill rewards</li>
+                            <li>Consumables should be affordable</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-question-circle"></i> Other Questions</h2>
+            
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I have a feature request</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Please post your request on GitHub Issues. We'll consider implementation feasibility.</p>
+                        <a href="https://github.com/yourusername/easy_ctf/issues" class="btn btn-primary">
+                            <i class="fab fa-github"></i> Issues
+                        </a>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>I found a bug</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Please report on GitHub Issues with the following information:</p>
+                        <ul>
+                            <li>Server version</li>
+                            <li>Plugin version</li>
+                            <li>Error logs (if any)</li>
+                            <li>Steps to reproduce</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>It conflicts with other plugins</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Known conflicts with the following plugins:</p>
+                        <ul>
+                            <li>World protection plugins → Exclude CTF worlds</li>
+                            <li>PvP management plugins → Disable during CTF</li>
+                            <li>Inventory management → Compatibility patches under consideration</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Is the source code available?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Yes, it's available on GitHub. Pull requests are welcome.</p>
+                        <a href="https://github.com/yourusername/easy_ctf" class="btn btn-secondary">
+                            <i class="fab fa-github"></i> Source Code
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <nav class="page-nav">
+            <a href="admin-en.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Admin Guide
+            </a>
+            <a href="index-en.html" class="btn btn-primary">
+                Home Page <i class="fas fa-home"></i>
+            </a>
+        </nav>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EasyCTF</h4>
+                    <p>Full-featured CTF plugin for Minecraft Paper Server</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/releases">Downloads</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="gameplay-en.html">How to Play</a></li>
+                        <li><a href="admin-en.html">Admin Guide</a></li>
+                        <li><a href="faq-en.html">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

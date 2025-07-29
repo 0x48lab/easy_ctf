@@ -246,6 +246,59 @@ function setupDarkMode() {
     }
 }
 
+// 言語切り替え機能
+function setupLanguageToggle() {
+    const currentLang = localStorage.getItem('language') || 'ja';
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
+    // 言語切り替えボタンを作成
+    const langToggle = document.createElement('div');
+    langToggle.className = 'language-toggle';
+    langToggle.innerHTML = `
+        <button class="lang-btn ${currentLang === 'ja' ? 'active' : ''}" data-lang="ja">
+            <span class="lang-flag">🇯🇵</span> 日本語
+        </button>
+        <button class="lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">
+            <span class="lang-flag">🇺🇸</span> English
+        </button>
+    `;
+    
+    // ナビゲーションバーに追加
+    const navMenu = document.querySelector('.nav-menu');
+    if (navMenu) {
+        navMenu.appendChild(langToggle);
+    }
+    
+    // 言語切り替えイベント
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const newLang = this.dataset.lang;
+            if (newLang !== currentLang) {
+                localStorage.setItem('language', newLang);
+                
+                // ページをリダイレクト
+                let newPage = currentPage;
+                if (currentLang === 'ja' && newLang === 'en') {
+                    // 日本語から英語へ
+                    newPage = currentPage.replace('.html', '-en.html');
+                } else if (currentLang === 'en' && newLang === 'ja') {
+                    // 英語から日本語へ
+                    newPage = currentPage.replace('-en.html', '.html');
+                }
+                
+                window.location.href = newPage;
+            }
+        });
+    });
+    
+    // 初回アクセス時の言語リダイレクト
+    if (currentLang === 'en' && !currentPage.includes('-en.html')) {
+        window.location.href = currentPage.replace('.html', '-en.html');
+    } else if (currentLang === 'ja' && currentPage.includes('-en.html')) {
+        window.location.href = currentPage.replace('-en.html', '.html');
+    }
+}
+
 // 初期化
 document.addEventListener('DOMContentLoaded', function() {
     setupCopyButtons();
@@ -254,6 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupTableSort();
     setupSearch();
     setupDarkMode();
+    setupLanguageToggle();
 });
 
 // ページトップへ戻るボタン

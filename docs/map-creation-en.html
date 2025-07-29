@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Creation Guide - EasyCTF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index-en.html">Home</a></li>
+                <li><a href="gameplay-en.html">How to Play</a></li>
+                <li><a href="commands-en.html">Commands</a></li>
+                <li><a href="shop-en.html">Shop</a></li>
+                <li><a href="match-en.html">Match</a></li>
+                <li><a href="map-creation-en.html" class="active">Map Creation</a></li>
+                <li><a href="admin-en.html">Admin</a></li>
+                <li><a href="faq-en.html">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Map Creation Guide</h1>
+            <p>Create balanced and enjoyable CTF maps</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2>🗺️ What is Map Creation</h2>
+            <p>In EasyCTF, you can create and save dedicated CTF maps in advance. Created maps are automatically saved and restored to temporary worlds when games start.</p>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Benefits:</strong> Using pre-created maps enables balanced and fair games. You can also create multiple different maps to provide various gaming experiences.
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🚀 Map Creation Process</h2>
+            
+            <div class="step-list">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Set Map Region</h3>
+                        <p>First, specify the range of the area to be used as a map.</p>
+                        <div class="command-block">
+                            <code>/ctf setpos1 &lt;game-name&gt;</code>
+                            <button class="copy-btn">Copy</button>
+                        </div>
+                        <p>Execute while standing at the starting position</p>
+                        <div class="command-block">
+                            <code>/ctf setpos2 &lt;game-name&gt;</code>
+                            <button class="copy-btn">Copy</button>
+                        </div>
+                        <p>Execute while standing at the ending position</p>
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-lightbulb"></i>
+                            By specifying two diagonal points, a rectangular region is set
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Place Required Blocks</h3>
+                        <p>Place the following special blocks within the set region.</p>
+                        
+                        <div class="block-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Block</th>
+                                        <th>Purpose</th>
+                                        <th>Quantity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="block-red">Red Concrete</span></td>
+                                        <td>Red team spawn point</td>
+                                        <td>Only 1</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="block-blue">Blue Concrete</span></td>
+                                        <td>Blue team spawn point</td>
+                                        <td>Only 1</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-cube"></i> Beacon + Red Glass</td>
+                                        <td>Red team flag position</td>
+                                        <td>1 set</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-cube"></i> Beacon + Blue Glass</td>
+                                        <td>Blue team flag position</td>
+                                        <td>1 set</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Important:</strong> Flags and spawn points must be at least 3 blocks apart
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Save the Map</h3>
+                        <p>Once block placement is complete, save the map.</p>
+                        <div class="command-block">
+                            <code>/ctf savemap &lt;game-name&gt;</code>
+                            <button class="copy-btn">Copy</button>
+                        </div>
+                        <p>The system automatically detects blocks and creates game settings.</p>
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            Saved maps are stored in compressed format at <code>plugins/EasyCTF/maps/&lt;game-name&gt;.yml</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🎨 Map Design Tips</h2>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-balance-scale"></i></div>
+                    <h3>Symmetry</h3>
+                    <p>Aim for symmetrical map design to ensure fairness for both teams.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-route"></i></div>
+                    <h3>Multiple Routes</h3>
+                    <p>Provide multiple attack routes to increase tactical options.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-mountain"></i></div>
+                    <h3>Elevation</h3>
+                    <p>Three-dimensional structures enable strategic gameplay.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Defensive Structures</h3>
+                    <p>Place moderate defensive structures around flags to balance offense and defense.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-eye-slash"></i></div>
+                    <h3>Line of Sight</h3>
+                    <p>Use walls and obstacles to limit visibility, enabling surprise attacks and stealth.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-crosshairs"></i></div>
+                    <h3>Central Area</h3>
+                    <p>A strategically valuable central area can create intense battles.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>⚙️ Temporary World System</h2>
+            <p>Saved maps are automatically restored to temporary worlds when games start.</p>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h4><i class="fas fa-globe"></i> Independent Worlds</h4>
+                    <p>A dedicated world (<code>ctf_temp_&lt;game-name&gt;</code>) is created for each game.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-shield-alt"></i> Protect Original World</h4>
+                    <p>Destruction and changes during games don't affect the original world.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-sync"></i> Auto Cleanup</h4>
+                    <p>Temporary worlds are automatically deleted when games end.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-users"></i> Multiple Game Support</h4>
+                    <p>Multiple games can run simultaneously on different maps.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>❌ Common Errors</h2>
+            
+            <div class="faq-list">
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> Required blocks not found</h4>
+                    <p>Check that required blocks (concrete, beacon+glass) are placed within the specified region.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> Multiple blocks of the same type found</h4>
+                    <p>Only one concrete block per color and one beacon per team can be placed. Remove extra blocks.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> Flag and spawn too close</h4>
+                    <p>The distance between flag and spawn point is less than 3 blocks. Adjust placement.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> Map region not set</h4>
+                    <p>Set the map region using <code>/ctf setpos1</code> and <code>/ctf setpos2</code>.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>📋 Map Creation Checklist</h2>
+            
+            <div class="checklist-card">
+                <h3>Pre-Creation Preparation</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> Work in creative mode</li>
+                    <li><i class="far fa-square"></i> Secure sufficient flat area</li>
+                    <li><i class="far fa-square"></i> Prepare necessary blocks</li>
+                </ul>
+            </div>
+            
+            <div class="checklist-card">
+                <h3>Required Element Placement</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> Set map region (setpos1/setpos2)</li>
+                    <li><i class="far fa-square"></i> Placed one red concrete</li>
+                    <li><i class="far fa-square"></i> Placed one blue concrete</li>
+                    <li><i class="far fa-square"></i> Placed beacon + red glass</li>
+                    <li><i class="far fa-square"></i> Placed beacon + blue glass</li>
+                    <li><i class="far fa-square"></i> Flags and spawns are 3+ blocks apart</li>
+                </ul>
+            </div>
+            
+            <div class="checklist-card">
+                <h3>Design Verification</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> Map is symmetrical and well-balanced</li>
+                    <li><i class="far fa-square"></i> Multiple attack/defense routes exist</li>
+                    <li><i class="far fa-square"></i> Appropriate defensive structures present</li>
+                    <li><i class="far fa-square"></i> Utilizes elevation differences</li>
+                </ul>
+            </div>
+            
+            <div class="checklist-card">
+                <h3>Final Check</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> Saved map with savemap command</li>
+                    <li><i class="far fa-square"></i> No error messages displayed</li>
+                    <li><i class="far fa-square"></i> Test play showed no issues</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EasyCTF</h3>
+                    <p>Feature-rich CTF plugin for Minecraft Paper servers</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links</h3>
+                    <ul>
+                        <li><a href="https://github.com/0x48lab/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/wiki">Wiki</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/issues">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Documentation</h3>
+                    <ul>
+                        <li><a href="gameplay-en.html">How to Play</a></li>
+                        <li><a href="commands-en.html">Command List</a></li>
+                        <li><a href="admin-en.html">Admin Guide</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF - MIT License</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

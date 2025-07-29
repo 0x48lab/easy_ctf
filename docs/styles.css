@@ -48,6 +48,60 @@ body {
     align-items: center;
 }
 
+/* 言語切り替えボタン */
+.language-toggle {
+    display: flex;
+    gap: 5px;
+    margin-left: 20px;
+}
+
+.lang-btn {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lang-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+.lang-btn.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.lang-flag {
+    font-size: 16px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .language-toggle {
+        position: absolute;
+        top: 60px;
+        right: 20px;
+        background-color: var(--dark-color);
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .nav-menu.active + .language-toggle {
+        display: none;
+    }
+}
+
 .nav-brand {
     color: white;
     font-size: 1.5rem;

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command List - EasyCTF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index-en.html">Home</a></li>
+                <li><a href="gameplay-en.html">How to Play</a></li>
+                <li><a href="commands-en.html" class="active">Commands</a></li>
+                <li><a href="shop-en.html">Shop</a></li>
+                <li><a href="match-en.html">Match</a></li>
+                <li><a href="map-creation-en.html">Map Creation</a></li>
+                <li><a href="admin-en.html">Admin</a></li>
+                <li><a href="faq-en.html">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Command List</h1>
+            <p>All available commands in EasyCTF</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2><i class="fas fa-user"></i> Player Commands</h2>
+            
+            <h3>Game Join/Leave</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf join &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Join the specified game. You'll be automatically placed on the team with fewer players.</p>
+                <p class="example">Example: <code>/ctf join arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf leave</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Leave the current game. You can leave even during gameplay.</p>
+            </div>
+            
+            <h3>Team Related</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf team</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Check your current team.</p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf team &lt;red|blue&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Change teams (only before game starts).</p>
+                <p class="example">Example: <code>/ctf team red</code></p>
+            </div>
+            
+            <h3>Game Information</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf list</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Display all games on the server.</p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf status [game-name]</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Check detailed game status. If game name is omitted, shows current game info.</p>
+                <p class="example">Example: <code>/ctf status arena1</code></p>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-crown"></i> Admin Commands</h2>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                These commands require <code>ctf.admin</code> permission.
+            </div>
+            
+            <h3>Game Creation & Management</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf create &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Create a new game (interactive mode).</p>
+                <ol>
+                    <li>Set red team flag location</li>
+                    <li>Set red team spawn point</li>
+                    <li>Set blue team flag location</li>
+                    <li>Set blue team spawn point</li>
+                    <li>Select build phase game mode</li>
+                    <li>Set phase durations</li>
+                </ol>
+                <p class="example">Example: <code>/ctf create arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf update &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Update existing game settings (interactive mode). You can select and update individual settings.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Cannot update while game is running.
+                </div>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf delete &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Delete a game. A confirmation prompt will appear.</p>
+            </div>
+            
+            <h3>Game Start/Stop</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf start &lt;game-name&gt; [match] [game-count]</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Start a game or match.</p>
+                
+                <h4>Single Game Start:</h4>
+                <pre><code>/ctf start arena1</code></pre>
+                
+                <h4>Match Mode Start:</h4>
+                <pre><code>/ctf start arena1 match 3          # Play 3 games
+/ctf start arena1 match 5          # Play 5 games
+/ctf start arena1 match            # Default setting (3 games)</code></pre>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mode</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>first_to_x</code></td>
+                            <td>First team to reach specified wins wins the match</td>
+                        </tr>
+                        <tr>
+                            <td><code>fixed_rounds</code></td>
+                            <td>Play specified number of games</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf stop &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Force stop a running game or match.</p>
+            </div>
+            
+            <h3>Position Settings</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setflag &lt;game-name&gt; &lt;red|blue&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Set flag position to current location. Can also set to the block you're looking at.</p>
+                <p class="example">Example: <code>/ctf setflag arena1 red</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setspawn &lt;game-name&gt; &lt;red|blue&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Set spawn point to current location.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Must be at least 3 blocks away from the flag.
+                </div>
+                <p class="example">Example: <code>/ctf setspawn arena1 blue</code></p>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-key"></i> Permission System</h2>
+            
+            <table class="sortable">
+                <thead>
+                    <tr>
+                        <th>Permission</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                        <th>Included Commands</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>ctf.use</code></td>
+                        <td>Basic player commands</td>
+                        <td>Everyone</td>
+                        <td>join, leave, team, list, status</td>
+                    </tr>
+                    <tr>
+                        <td><code>ctf.admin</code></td>
+                        <td>Admin commands</td>
+                        <td>OP</td>
+                        <td>create, update, delete, start, stop, setflag, setspawn</td>
+                    </tr>
+                    <tr>
+                        <td><code>ctf.*</code></td>
+                        <td>All commands</td>
+                        <td>OP</td>
+                        <td>All commands</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2><i class="fas fa-lightbulb"></i> Command Examples</h2>
+            
+            <div class="example-grid">
+                <div class="example-card">
+                    <h3>Create and Start New Arena</h3>
+                    <pre><code>/ctf create arena1
+# Complete interactive setup
+/ctf start arena1</code></pre>
+                </div>
+                
+                <div class="example-card">
+                    <h3>Host First-to-5 Match</h3>
+                    <pre><code>/ctf start arena1 first_to_x 5</code></pre>
+                </div>
+                
+                <div class="example-card">
+                    <h3>Check Game Information</h3>
+                    <pre><code>/ctf list               # All games list
+/ctf status             # Current game
+/ctf status arena1      # Specific game</code></pre>
+                </div>
+                
+                <div class="example-card">
+                    <h3>Change Team and Join Game</h3>
+                    <pre><code>/ctf join arena1
+/ctf team blue
+# Wait for game start</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <nav class="page-nav">
+            <a href="gameplay-en.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> How to Play
+            </a>
+            <a href="shop-en.html" class="btn btn-primary">
+                Shop System <i class="fas fa-arrow-right"></i>
+            </a>
+        </nav>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EasyCTF</h4>
+                    <p>Full-featured CTF plugin for Minecraft Paper Server</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/releases">Downloads</a></li>
+                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="gameplay-en.html">How to Play</a></li>
+                        <li><a href="admin-en.html">Admin Guide</a></li>
+                        <li><a href="faq-en.html">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
