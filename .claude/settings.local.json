@@ -19,7 +19,10 @@
       "Bash(java:*)",
       "Bash(for file in admin.html commands.html faq.html gameplay.html match.html shop.html)",
       "Bash(do sed -i '' 's|<li><a href=\"\"match.html\"\">マッチ</a></li>|<li><a href=\"\"match.html\"\">マッチ</a></li>\\\n                <li><a href=\"\"map-creation.html\"\">マップ作成</a></li>|g' \"$file\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git config:*)",
+      "Bash(cat:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

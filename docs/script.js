@@ -263,10 +263,10 @@ function setupLanguageToggle() {
         </button>
     `;
     
-    // ナビゲーションバーに追加
-    const navMenu = document.querySelector('.nav-menu');
-    if (navMenu) {
-        navMenu.appendChild(langToggle);
+    // ナビゲーションバーの上部に追加
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        navbar.insertBefore(langToggle, navbar.firstChild);
     }
     
     // 言語切り替えイベント

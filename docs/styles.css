@@ -34,7 +34,6 @@ body {
 /* ナビゲーション */
 .navbar {
     background-color: var(--dark-color);
-    padding: 1rem 0;
     position: fixed;
     width: 100%;
     top: 0;
@@ -42,17 +41,22 @@ body {
     box-shadow: var(--box-shadow);
 }
 
+/* 言語切り替えボタン - 上段 */
+.language-toggle {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+    padding: 8px 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* メインナビゲーション - 下段 */
 .navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-/* 言語切り替えボタン */
-.language-toggle {
-    display: flex;
-    gap: 5px;
-    margin-left: 20px;
+    padding: 1rem 20px;
 }
 
 .lang-btn {
@@ -88,17 +92,16 @@ body {
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     .language-toggle {
-        position: absolute;
-        top: 60px;
-        right: 20px;
-        background-color: var(--dark-color);
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: var(--box-shadow);
+        padding: 5px 15px;
     }
     
-    .nav-menu.active + .language-toggle {
-        display: none;
+    .lang-btn {
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+    
+    .lang-flag {
+        font-size: 14px;
     }
 }
 
@@ -146,7 +149,7 @@ body {
     color: white;
     padding: 120px 0 80px;
     text-align: center;
-    margin-top: 60px;
+    margin-top: 100px; /* 言語切り替えボタンの分だけ増加 */
 }
 
 .hero-with-image {
@@ -764,7 +767,7 @@ tr:hover {
     color: white;
     padding: 100px 0 60px;
     text-align: center;
-    margin-top: 60px;
+    margin-top: 100px; /* 言語切り替えボタンの分だけ増加 */
 }
 
 .page-header h1 {
