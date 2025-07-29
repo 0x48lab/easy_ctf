@@ -67,32 +67,32 @@ mechanics:
   # Blocks must be adjacent to existing blocks (except within 3 blocks of flag)
   # Adjacent = horizontally, vertically, or diagonally touching
 
-# Equipment Settings (DEPRECATED - Now using initial-equipment and shop system)
-equipment:
-  # Build phase equipment
-  build-phase:
-    tools:
-      - "WOODEN_PICKAXE"
-      - "WOODEN_AXE"
-      - "WOODEN_SHOVEL"
-    blocks:
-      - "COBBLESTONE:64"
-      - "OAK_PLANKS:64"
-      - "DIRT:32"
-  
-  # Combat phase equipment
-  combat-phase:
-    weapons:
-      - "IRON_SWORD"
-      - "BOW"
-    ammunition:
-      - "ARROW:64"
-    food:
-      - "COOKED_BEEF:16"
-    armor:
-      enable: true
-      type: "LEATHER"  # LEATHER, CHAINMAIL, IRON, DIAMOND, NETHERITE
-      unbreakable: true
+# Equipment Settings (DEPRECATED - Now using shop system only)
+# equipment:
+#   # Build phase equipment
+#   build-phase:
+#     tools:
+#       - "WOODEN_PICKAXE"
+#       - "WOODEN_AXE"
+#       - "WOODEN_SHOVEL"
+#     blocks:
+#       - "COBBLESTONE:64"
+#       - "OAK_PLANKS:64"
+#       - "DIRT:32"
+#   
+#   # Combat phase equipment
+#   combat-phase:
+#     weapons:
+#       - "IRON_SWORD"
+#       - "BOW"
+#     ammunition:
+#       - "ARROW:64"
+#     food:
+#       - "COOKED_BEEF:16"
+#     armor:
+#       enable: true
+#       type: "LEATHER"  # LEATHER, CHAINMAIL, IRON, DIAMOND, NETHERITE
+#       unbreakable: true
 
 # Team Settings
 teams:

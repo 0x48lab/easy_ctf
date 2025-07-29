@@ -327,7 +327,7 @@ class ShopManager(private val plugin: Main) {
     
     fun handlePurchase(player: Player, itemName: String, game: Game, team: Team): Boolean {
         // デバッグログ
-        plugin.logger.info("handlePurchase called with itemName: '$itemName'")
+        plugin.logger.info(plugin.languageManager.getMessage("log.shop-purchase-called", "item" to itemName))
         
         // アイテムを名前で検索（完全一致を試みる）
         var item = shopItems.find { it.displayName == itemName }
@@ -356,11 +356,11 @@ class ShopManager(private val plugin: Main) {
         }
         
         if (item == null) {
-            plugin.logger.warning("Item not found for name: '$itemName'")
+            plugin.logger.warning(plugin.languageManager.getMessage("log.shop-item-not-found", "item" to itemName))
             // 利用可能なアイテム名をログ出力
-            plugin.logger.info("Available items:")
+            plugin.logger.info(plugin.languageManager.getMessage("log.shop-available-items"))
             shopItems.forEach { shopItem ->
-                plugin.logger.info("  - '${shopItem.displayName}'")
+                plugin.logger.info(plugin.languageManager.getMessage("log.shop-item-list", "item" to shopItem.displayName))
             }
             return false
         }

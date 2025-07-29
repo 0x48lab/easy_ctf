@@ -50,23 +50,22 @@ class MatchWrapper(
     
     /**
      * マッチ完了判定
-     * 先行3勝制: いずれかのチームが3勝、または5ゲーム終了
+     * 固定ラウンド方式: 設定されたゲーム数を完了したら終了
      */
     fun isMatchComplete(): Boolean {
-        val redWins = matchWins[Team.RED] ?: 0
-        val blueWins = matchWins[Team.BLUE] ?: 0
-        
-        // いずれかのチームが3勝した場合
-        if (redWins >= 3 || blueWins >= 3) {
-            return true
+        // 固定ラウンド方式の場合
+        when (config.matchMode) {
+            MatchMode.FIXED_ROUNDS -> {
+                // 設定されたゲーム数に達したら完了
+                val isComplete = currentGameNumber > config.matchTarget
+                plugin.logger.info("[MatchWrapper] isMatchComplete check: currentGame=$currentGameNumber, target=${config.matchTarget}, isComplete=$isComplete")
+                return isComplete
+            }
+            else -> {
+                // その他のモード（将来の拡張用）
+                return currentGameNumber > config.matchTarget
+            }
         }
-        
-        // 5ゲーム終了した場合
-        if (currentGameNumber > 5) {
-            return true
-        }
-        
-        return false
     }
     
     /**
@@ -108,7 +107,7 @@ class MatchWrapper(
      * マッチステータス文字列
      */
     fun getMatchStatus(): String {
-        return "第${currentGameNumber}ゲーム"
+        return plugin.languageManager.getMessage("match.game-number", "number" to currentGameNumber.toString())
     }
     
     /**

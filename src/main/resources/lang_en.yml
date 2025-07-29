@@ -3,12 +3,12 @@
 # Game Phase Messages
 phase:
   build-start: "&a=== BUILD PHASE STARTED ==="
-  build-info: "&yBuild your defenses! Combat will start in {time} minutes!"
+  build-info: "&eBuild your defenses! Combat will start in {time} minutes!"
   combat-start: "&c=== COMBAT PHASE STARTED ==="
-  combat-info: "&yCapture the enemy flag! Phase ends in {time} minutes!"
+  combat-info: "&eCapture the enemy flag! Phase ends in {time} minutes!"
   result-start: "&6=== GAME RESULTS ==="
-  result-winner: "&yWinner: {color}{team} TEAM!"
-  result-score: "&yFinal Score - Red: {red} | Blue: {blue}"
+  result-winner: "&eWinner: {color}{team} TEAM!"
+  result-score: "&eFinal Score - Red: {red} | Blue: {blue}"
 
 # Team Messages
 team:
@@ -16,7 +16,7 @@ team:
   leave: "&cYou left your team!"
   full: "&cThat team is full!"
   set-success: "&aSuccessfully set {player} to {color}{team} Team&a!"
-  set-notification: "&yAn administrator has set you to the {color}{team} Team&y!"
+  set-notification: "&eAn administrator has set you to the {color}{team} Team&e!"
   set-failed: "&cFailed to set team for {player}. The team might be full."
 
 # Command Messages
@@ -29,7 +29,7 @@ command:
   flag-too-close-spawn: "&cFlag location is too close to spawn point! Distance: {distance}, minimum required: {minimum}"
   spawn-too-close-flag: "&cSpawn location is too close to flag! Distance: {distance}, minimum required: {minimum}"
   location-too-close: "&cLocation is too close to other important points! Please maintain proper distance."
-  phase-skipped: "&yAdministrator skipped {phase} phase!"
+  phase-skipped: "&eAdministrator skipped {phase} phase!"
   skip-no-permission: "&cYou don't have permission to skip phases!"
   skip-no-game: "&cNo game is currently running!"
   skip-cannot: "&cCannot skip phase at this time!"
@@ -39,10 +39,29 @@ command:
   no-games: "&cNo games currently exist"
   flags-not-set-warning: "   ⚠ Flags not set"
   auto-param-hint: "&7Auto-detect from config when parameters not specified"
-  single-game-start: "&yStarting in single game mode"
+  match-stopped: "&aMatch '{name}' stopped"
+  game-stopped: "&aGame '{name}' stopped"
+  game-not-running: "&cGame '{name}' is not running"
+  game-joined: "&aJoined game '{name}'"
+  join-failed: "&cFailed to join game"
+  already-in-game: "&eAlready in game '{name}'."
+  join-confirm: "&eLeave and join '{name}'?"
+  join-confirm-time: "&7To join, execute the same command again within 30 seconds."
+  game-list-header: "===== CTF Game List ====="
+  status-configuring: "Configuring"
+  status-waiting: "Waiting"
+  status-running: "Running"
+  status-ending: "Ending"
+  list-red-count: "Red: {count}"
+  list-blue-count: "Blue: {count}"
+  usage-start: "&eUsage: /ctf start <game> [single|match] [games]"
+  start-mode-hint: "&7single: Single game, match: Multiple games"
+  red-spawn-set: "&aRed team spawn point set: {x}, {y}, {z}"
+  blue-spawn-set: "&aBlue team spawn point set: {x}, {y}, {z}"
+  single-game-start: "&eStarting in single game mode"
   game-count-min: "&cGame count must be at least 1"
   invalid-game-count: "&cInvalid game count"
-  match-start-config: "&yStarting match mode ({count} games) based on config"
+  match-start-config: "&eStarting match mode ({count} games) based on config"
   match-started: "&aMatch started! ({count} games)"
   game-started: "&aGame started!"
   game-start-failed: "&cFailed to start game"
@@ -50,7 +69,7 @@ command:
 # Game Messages
 game:
   build-phase-player: "&aBuild Phase! You are on {color}{team}&a team!"
-  build-phase-info: "&yBuild your defenses and prepare for combat!"
+  build-phase-info: "&eBuild your defenses and prepare for combat!"
   combat-phase-player: "&aCombat Phase! You are on {color}{team}&a team!"
   combat-phase-info: "&cCapture the enemy flag!"
   
@@ -72,7 +91,7 @@ armor:
 
 # Time Warnings
 time:
-  warning: "&y⚠ {phase} ends in {time} seconds!"
+  warning: "&e⚠ {phase} ends in {time} seconds!"
 
 # General
 general:
@@ -151,10 +170,10 @@ game-states:
 # Join/Leave Messages
 join-leave:
   game-joined: "&aJoined game '{game}' on {color}{team}&a team"
-  game-left: "&yLeft game '{game}'"
+  game-left: "&eLeft game '{game}'"
   team-full-red: "&cRed team is full"
   team-full-blue: "&cBlue team is full"
-  auto-start-cancelled: "&yAuto-start cancelled due to insufficient players"
+  auto-start-cancelled: "&eAuto-start cancelled due to insufficient players"
   countdown-message: "&aGame starting in: {seconds} seconds"
   min-players-required: "&cNeed at least {min} players to start"
   flags-not-set: "&cBoth team flag locations must be set"
@@ -167,21 +186,21 @@ phase-extended:
   combat-score-format: "Combat Phase - Red {red} : {blue} Blue - {time}"
   intermission-time-format: "Strategy Meeting - {time}"
   game-start-title: "&aGame Started!"
-  game-start-subtitle: "&yBuild Phase - Construct your defenses"
+  game-start-subtitle: "&eBuild Phase - Construct your defenses"
   combat-start-title: "&cCombat Phase Started!"
-  combat-start-subtitle: "&yCapture the enemy flag!"
+  combat-start-subtitle: "&eCapture the enemy flag!"
   phase-end-bonus: "Combat phase end bonus"
   winner-title: "{color}{team}&f Wins!"
-  draw-title: "&yDraw!"
+  draw-title: "&eDraw!"
   score-display: "&fScore: Red {red} - {blue} Blue"
-  game-ended: "&yGame has ended"
-  wait-next-game: "&yPlease wait for the next game..."
+  game-ended: "&eGame has ended"
+  wait-next-game: "&ePlease wait for the next game..."
 
 # Spawn Messages  
 spawn:
   not-set: "&cSpawn point not set"
   protection-active: "&aSpawn protection active for 3 seconds"
-  protection-ended: "&ySpawn protection ended"
+  protection-ended: "&eSpawn protection ended"
 
 # Flag Messages
 flag:
@@ -197,9 +216,9 @@ flag:
   cannot-capture-no-flag: "Cannot capture - your team's flag is not at base"
   captured-by: "{color}{team}&f scored! ({player})"
   current-score: "&fCurrent Score - Red: {red} Blue: {blue}"
-  picked-up: "&y{player} picked up the {color}{team}&y flag!"
+  picked-up: "&e{player} picked up the {color}{team}&e flag!"
   enemy-has-flag: "&cEnemy has your flag! Get it back! ({carrier})"
-  team-flag-dropped: "&yRecover your team's flag!"
+  team-flag-dropped: "&eRecover your team's flag!"
   retrieve-enemy-flag: "Capture the {color}{team}&f flag!"
   flag-carrier-unknown: "Unknown"
   flag-recovered: "{player} recovered the {flagTeam} flag!"
@@ -209,11 +228,15 @@ flag:
   returned-damage: "{team} flag returned to base ({cause})"
   returned-fire: "{team} flag returned to base (burned)"
 
+# Match Messages
+match:
+  game-number: "Game {number}"
+
 # Currency Messages
 currency:
   team-notification: "&a[Team] {reason} (+{amount}G)"
-  purchase-notification: "&y[Team] {player} purchased {item} (-{amount}G)"
-  balance-notification: "&y[Team] Balance: {balance}G"
+  purchase-notification: "&e[Team] {player} purchased {item} (-{amount}G)"
+  balance-notification: "&e[Team] Balance: {balance}G"
   capture-currency: "{player} captured the flag"
   capture-assist: "{count} capture assists"
 
@@ -245,16 +268,16 @@ report:
   header: "&6&l========== GAME REPORT =========="
   match-score-header: "&fCurrent Match Score:"
   match-score-format: "&cRed {red} &f- &9{blue} Blue"
-  game-header: "&yThis Game:"
+  game-header: "&eThis Game:"
   winner-format: "&fWinner: {color}{team}"
-  draw-result: "&yDraw"
+  draw-result: "&eDraw"
   score-header: "&fScore:"
-  team-stats-header: "&yTeam Statistics:"
+  team-stats-header: "&eTeam Statistics:"
   red-team-header: "&cRed Team:"
   blue-team-header: "&9Blue Team:"
   player-stats: "&f  {player}: &7{kills}K/{deaths}D (K/D: {kd})"
-  team-funds-header: "&yTeam Funds:"
-  team-funds-format: "{color}{team}: &y{amount}G"
+  team-funds-header: "&eTeam Funds:"
+  team-funds-format: "{color}{team}: &e{amount}G"
 
 # MVP Messages
 mvp:
@@ -285,6 +308,10 @@ death:
   streak-format: " ({count} kill streak!)"
   kill-streak-notification: "&6{player} is on a {count} kill streak!"
   assist-notification: "&aKill assist! +{amount}G"
+  cause-lava: "fell into lava"
+  cause-fire: "burned"
+  cause-void: "fell into the void"
+  cause-damage: "took damage"
 
 # Block Placement
 block:
@@ -316,8 +343,82 @@ shop:
   phase-restricted: "&cThis item cannot be purchased in the current phase"
   purchase-limit: "&cPurchase limit reached"
   insufficient-funds: "&cInsufficient funds! (Required: {price}G)"
-  inventory-full: "&yInventory full, item dropped at your feet"
+  inventory-full: "&eInventory full, item dropped at your feet"
   purchase-success: "Purchased {item}!"
+
+# Setup Messages
+setup:
+  invalid-answer: "&ePlease answer with Y or n"
+  map-auto-detect-prompt: "&eMap region is set. Create game with auto-detection?"
+  map-auto-detect-hint: "&7[Y/n] Y for auto-create, n for interactive"
+  invalid-game-name: "&cInvalid game name. Only alphanumeric and underscore allowed."
+  invalid-selection: "&cInvalid selection."
+  red-flag-prompt: "&eLook at red team flag location and type 'set'"
+  red-spawn-prompt: "&eLook at red team spawn point and type 'set'"
+  blue-flag-prompt: "&eLook at blue team flag location and type 'set'"
+  blue-spawn-prompt: "&eLook at blue team spawn point and type 'set'"
+  skip-to-flag: "&7'skip' to spawn at flag location"
+  build-mode-prompt: "&eBuild phase game mode (ADVENTURE/SURVIVAL/CREATIVE)"
+  skip-adventure: "&7'skip' for ADVENTURE"
+  build-time-prompt: "&eBuild phase time (seconds)"
+  skip-300: "&7'skip' for 300 seconds"
+  combat-time-prompt: "&eCombat phase time (seconds)"
+  skip-600: "&7'skip' for 600 seconds"
+  skip-first-to-x: "&7'skip' for first_to_x"
+  game-count-prompt: "&eEnter game count"
+  skip-3: "&7'skip' for 3"
+  update-all: "&f8. Update all"
+  block-not-found: "&cBlock not found"
+  flag-required: "&cFlag position is required"
+  invalid-mode: "&cInvalid mode"
+  time-range-error: "&cEnter between 10-3600"
+  match-range-error: "&cEnter between 1-10"
+  flag-position-required: "&cFlag position required"
+  game-created: "&aGame '{name}' created!"
+  update-menu-header: "&6=== Update Menu ==="
+  red-flag-menu: "&c1. Red team flag position"
+  red-spawn-menu: "&c2. Red team spawn point"
+  blue-flag-menu: "&93. Blue team flag position"
+  blue-spawn-menu: "&94. Blue team spawn point"
+  build-mode-menu: "&e5. Build phase game mode"
+  build-time-menu: "&e6. Build phase time"
+  combat-time-menu: "&e7. Combat phase time"
+  exit-menu: "&79. Exit"
+  setting-prompt: "Look at {text} and type 'set'"
+  updated: "&aUpdated"
+  cancelled: "&eCancelled"
+  timeout: "&cTimeout"
+  create-header: "Game Creation: {name}"
+  update-header: "Game Update: {name}"
+  match-mode-prompt: "Match Mode"
+  first-to-x-mode: "first_to_x: First to X Mode"
+  fixed-rounds-mode: "fixed_rounds: Fixed Rounds Mode"
+  red-flag-set: "Red Flag: {x}, {y}, {z}"
+  red-spawn-set: "Red Spawn: {x}, {y}, {z}"
+  blue-flag-set: "Blue Flag: {x}, {y}, {z}"
+  blue-spawn-set: "Blue Spawn: {x}, {y}, {z}"
+  build-mode-set: "Build Mode: {mode}"
+  build-time-set: "Build Time: {time}s"
+  combat-time-set: "Combat Time: {time}s"
+  match-mode-set: "Match Mode: {mode}"
+  match-target-set: "Target: {target}"
+  red-flag-location: "Red team flag location"
+  red-spawn-location: "Red team spawn point"
+  blue-flag-location: "Blue team flag location"
+  blue-spawn-location: "Blue team spawn point"
+
+# Manager Messages
+manager:
+  game-name-exists: "&cGame name already exists"
+  using-existing-map: "&7Using existing map area"
+  auto-detect-failed: "&cAuto-detection failed"
+  place-required-blocks: "&ePlease place required blocks in the map and try again"
+  map-area-not-set: "&cMap area not set"
+  cannot-update-running: "&cCannot update running game"
+  config-not-found: "&cConfiguration file not found"
+  map-range-not-set: "Map range not set"
+  cannot-save-running: "Cannot save while game is running"
+  map-save-failed: "Failed to save map"
 
 # Gameplay Messages
 gameplay:
@@ -333,5 +434,31 @@ gameplay:
   flag-info: "&fThis is {team}'s flag. Get close to pick it up"
   spectator-mode: "&7Watching in spectator mode..."
   clear-command-disabled: "&cCannot use /clear command during game!"
-  shop-item-redistributed: "&yShop item cannot be removed. Redistributed."
+  shop-item-redistributed: "&eShop item cannot be removed. Redistributed."
   item-name-error: "&cCould not get item name"
+
+# Log messages
+log:
+  player-cannot-join: "Player {player} cannot join game {game}: state is {state}"
+  game-starting: "[Game] Starting game {game}, current state: {state}, phase: {phase}"
+  game-cannot-start: "Game {game} cannot start: current state is {state}"
+  temp-world-failed: "[Game] Failed to create temporary world"
+  map-restore-failed: "[Game] Failed to restore map"
+  map-restored: "[Game] Map restored"
+  no-saved-map: "[Game] No saved map available"
+  skip-map-restore: "[Game] Skipping map restore during match continuation"
+  game-loop-started: "[Game] Starting game loop for {game}"
+  respawn-task-cancel-combat: "[Respawn] Cancelling respawn task during combat phase transition"
+  respawn-task-cancel-phase: "[Respawn] Cancelling respawn task during phase transition"
+  respawn-task-cancel-match: "[Respawn] Cancelling respawn task during match reset"
+  respawn-task-cancel-stop: "[Respawn] Cancelling respawn task during game stop"
+  map-saved: "Saved map for game {game} ({blocks} blocks)"
+  map-save-failed: "Failed to save map for {game}: {error}"
+  block-restore-failed: "Failed to restore block at {x},{y},{z}: {error}"
+  map-restored-blocks: "Restored map for {game} ({blocks} blocks)"
+  map-restore-error: "Failed to restore map for {game}: {error}"
+  shop-purchase-called: "handlePurchase called with item name: '{item}'"
+  shop-item-not-found: "Item not found: '{item}'"
+  shop-available-items: "Available items:"
+  shop-item-list: "  - '{item}'"
+  safe-spawn-not-found: "Could not find safe spawn location for team {team} after {attempts} attempts, using fallback"

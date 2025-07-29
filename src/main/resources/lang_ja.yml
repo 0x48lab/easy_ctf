@@ -3,12 +3,12 @@
 # Game Phase Messages
 phase:
   build-start: "&a=== 建築フェーズ開始 ==="
-  build-info: "&y防御設備を建築してください！ {time}分後に戦闘が開始されます！"
+  build-info: "&e防御設備を建築してください！ {time}分後に戦闘が開始されます！"
   combat-start: "&c=== 戦闘フェーズ開始 ==="
-  combat-info: "&y敵の旗を奪取しよう！フェーズ終了まで{time}分！"
+  combat-info: "&e敵の旗を奪取しよう！フェーズ終了まで{time}分！"
   result-start: "&6=== ゲーム結果 ==="
-  result-winner: "&y勝利: {color}{team} チーム!"
-  result-score: "&y最終スコア - 赤: {red} | 青: {blue}"
+  result-winner: "&e勝利: {color}{team} チーム!"
+  result-score: "&e最終スコア - 赤: {red} | 青: {blue}"
 
 # Team Messages
 team:
@@ -16,7 +16,7 @@ team:
   leave: "&cチームから離脱しました！"
   full: "&cそのチームは満員です！"
   set-success: "&a{player}を{color}{team}チーム&aに設定しました！"
-  set-notification: "&y管理者によって{color}{team}チーム&yに設定されました！"
+  set-notification: "&e管理者によって{color}{team}チーム&eに設定されました！"
   set-failed: "&c{player}のチーム設定に失敗しました。チームが満員の可能性があります。"
 
 # Command Messages
@@ -29,7 +29,7 @@ command:
   flag-too-close-spawn: "&c旗の位置がスポーン地点に近すぎます！距離: {distance}、必要最小距離: {minimum}"
   spawn-too-close-flag: "&cスポーン地点が旗に近すぎます！距離: {distance}、必要最小距離: {minimum}"
   location-too-close: "&c設定位置が他の重要地点に近すぎます！適切な距離を保ってください。"
-  phase-skipped: "&y管理者が{phase}フェーズをスキップしました！"
+  phase-skipped: "&e管理者が{phase}フェーズをスキップしました！"
   skip-no-permission: "&cフェーズをスキップする権限がありません！"
   skip-no-game: "&c現在実行中のゲームがありません！"
   skip-cannot: "&c現在フェーズをスキップできません！"
@@ -39,10 +39,29 @@ command:
   no-games: "&c現在ゲームはありません"
   flags-not-set-warning: "   ⚠ 旗が未設定です"
   auto-param-hint: "&7パラメータ未指定時は設定ファイルから自動判定"
-  single-game-start: "&yシングルゲームモードで開始します"
+  match-stopped: "&aマッチ '{name}' を停止しました"
+  game-stopped: "&aゲーム '{name}' を停止しました"
+  game-not-running: "&cゲーム '{name}' は実行されていません"
+  game-joined: "&aゲーム '{name}' に参加しました"
+  join-failed: "&cゲームへの参加に失敗しました"
+  already-in-game: "&e既に '{name}' に参加中です。"
+  join-confirm: "&e退出して '{name}' に参加しますか？"
+  join-confirm-time: "&7参加する場合は30秒以内にもう一度同じコマンドを実行してください。"
+  game-list-header: "===== CTFゲーム一覧 ====="
+  status-configuring: "設定中"
+  status-waiting: "待機中"
+  status-running: "実行中"
+  status-ending: "終了中"
+  list-red-count: "赤: {count}名"
+  list-blue-count: "青: {count}名"
+  usage-start: "&e使用方法: /ctf start <ゲーム名> [single|match] [ゲーム数]"
+  start-mode-hint: "&7single: 単一ゲーム, match: 複数ゲーム実施"
+  red-spawn-set: "&a赤チームのスポーン地点を設定しました: {x}, {y}, {z}"
+  blue-spawn-set: "&a青チームのスポーン地点を設定しました: {x}, {y}, {z}"
+  single-game-start: "&eシングルゲームモードで開始します"
   game-count-min: "&cゲーム数は1以上を指定してください"
   invalid-game-count: "&c無効なゲーム数です"
-  match-start-config: "&y設定ファイルに基づいてマッチモード（{count}ゲーム）で開始します"
+  match-start-config: "&e設定ファイルに基づいてマッチモード（{count}ゲーム）で開始します"
   match-started: "&aマッチを開始しました！（{count} ゲーム）"
   game-started: "&aゲームを開始しました！"
   game-start-failed: "&cゲームを開始できませんでした"
@@ -50,7 +69,7 @@ command:
 # Game Messages
 game:
   build-phase-player: "&a建築フェーズ！あなたは{color}{team}&aチームです！"
-  build-phase-info: "&y防御設備を建築して戦闘に備えましょう！"
+  build-phase-info: "&e防御設備を建築して戦闘に備えましょう！"
   combat-phase-player: "&a戦闘フェーズ！あなたは{color}{team}&aチームです！"
   combat-phase-info: "&c敵の旗を奪取しよう！"
 
@@ -72,7 +91,7 @@ armor:
 
 # Time Warnings
 time:
-  warning: "&y⚠ {phase}終了まで{time}秒！"
+  warning: "&e⚠ {phase}終了まで{time}秒！"
 
 # General
 general:
@@ -151,10 +170,10 @@ game-states:
 # Join/Leave Messages
 join-leave:
   game-joined: "&aゲーム '{game}' の{color}{team}&aに参加しました"
-  game-left: "&yゲーム '{game}' から退出しました"
+  game-left: "&eゲーム '{game}' から退出しました"
   team-full-red: "&c赤チームが満員です"
   team-full-blue: "&c青チームが満員です"
-  auto-start-cancelled: "&y人数不足のため自動開始がキャンセルされました"
+  auto-start-cancelled: "&e人数不足のため自動開始がキャンセルされました"
   countdown-message: "&aゲーム開始まで: {seconds}秒"
   min-players-required: "&cゲームを開始するには最低{min}名必要です"
   flags-not-set: "&c両チームの旗位置を設定する必要があります"
@@ -167,21 +186,21 @@ phase-extended:
   combat-score-format: "戦闘フェーズ - 赤 {red} : {blue} 青 - {time}"
   intermission-time-format: "作戦会議 - {time}"
   game-start-title: "&aゲーム開始！"
-  game-start-subtitle: "&y建築フェーズ - 防御を構築しよう"
+  game-start-subtitle: "&e建築フェーズ - 防御を構築しよう"
   combat-start-title: "&c戦闘フェーズ開始！"
-  combat-start-subtitle: "&y敵の旗を奪取せよ！"
+  combat-start-subtitle: "&e敵の旗を奪取せよ！"
   phase-end-bonus: "戦闘フェーズ終了ボーナス"
   winner-title: "{color}{team}&fの勝利！"
-  draw-title: "&y引き分け！"
+  draw-title: "&e引き分け！"
   score-display: "&fスコア: 赤 {red} - {blue} 青"
-  game-ended: "&yゲームが終了しました"
-  wait-next-game: "&y次のゲームまでしばらくお待ちください..."
+  game-ended: "&eゲームが終了しました"
+  wait-next-game: "&e次のゲームまでしばらくお待ちください..."
 
 # Spawn Messages  
 spawn:
   not-set: "&cスポーン地点が設定されていません"
   protection-active: "&a3秒間スポーン保護が有効です"
-  protection-ended: "&yスポーン保護が解除されました"
+  protection-ended: "&eスポーン保護が解除されました"
 
 # Flag Messages
 flag:
@@ -197,9 +216,9 @@ flag:
   cannot-capture-no-flag: "自チームの旗が自陣にないため、キャプチャーできません"
   captured-by: "{color}{team}&fが得点しました！ ({player})"
   current-score: "&f現在のスコア - 赤: {red} 青: {blue}"
-  picked-up: "&y{player}が{color}{team}&yの旗を取得しました！"
+  picked-up: "&e{player}が{color}{team}&eの旗を取得しました！"
   enemy-has-flag: "&c旗が敵に取られた！取り返せ！({carrier})"
-  team-flag-dropped: "&y自チームの旗を回収せよ！"
+  team-flag-dropped: "&e自チームの旗を回収せよ！"
   retrieve-enemy-flag: "{color}{team}&fの旗を奪取せよ！"
   flag-carrier-unknown: "不明"
   flag-recovered: "{player}が{flagTeam}の旗を回収しました！"
@@ -209,11 +228,15 @@ flag:
   returned-damage: "{team}の旗が元の位置に戻りました（{cause}）"
   returned-fire: "{team}の旗が元の位置に戻りました（炎上のため）"
 
+# Match Messages
+match:
+  game-number: "第{number}ゲーム"
+
 # Currency Messages
 currency:
   team-notification: "&a[チーム] {reason} (+{amount}G)"
-  purchase-notification: "&y[チーム] {player} が {item} を購入しました (-{amount}G)"
-  balance-notification: "&y[チーム] 残高: {balance}G"
+  purchase-notification: "&e[チーム] {player} が {item} を購入しました (-{amount}G)"
+  balance-notification: "&e[チーム] 残高: {balance}G"
   capture-currency: "{player}が旗をキャプチャー"
   capture-assist: "{count}名がキャプチャーアシスト"
 
@@ -245,16 +268,16 @@ report:
   header: "&6&l========== ゲームレポート =========="
   match-score-header: "&f現在のマッチスコア:"
   match-score-format: "&c赤 {red} &f- &9{blue} 青"
-  game-header: "&y今回のゲーム:"
+  game-header: "&e今回のゲーム:"
   winner-format: "&f勝利: {color}{team}"
-  draw-result: "&y引き分け"
+  draw-result: "&e引き分け"
   score-header: "&fスコア:"
-  team-stats-header: "&yチーム統計:"
+  team-stats-header: "&eチーム統計:"
   red-team-header: "&c赤チーム:"
   blue-team-header: "&9青チーム:"
   player-stats: "&f  {player}: &7{kills}K/{deaths}D (K/D: {kd})"
-  team-funds-header: "&yチーム資金:"
-  team-funds-format: "{color}{team}: &y{amount}G"
+  team-funds-header: "&eチーム資金:"
+  team-funds-format: "{color}{team}: &e{amount}G"
 
 # MVP Messages
 mvp:
@@ -285,6 +308,10 @@ death:
   streak-format: " ({count}連続キル!)"
   kill-streak-notification: "&6{player} は {count} 連続キル中！"
   assist-notification: "&aキルアシスト! +{amount}G"
+  cause-lava: "溶岩に落ちたため"
+  cause-fire: "炎上のため"
+  cause-void: "奈落に落ちたため"
+  cause-damage: "ダメージを受けたため"
 
 # Block Placement
 block:
@@ -316,8 +343,82 @@ shop:
   phase-restricted: "&cこのアイテムは現在のフェーズでは購入できません"
   purchase-limit: "&c購入制限に達しています"
   insufficient-funds: "&c購入に必要なGが不足しています！ (必要: {price}G)"
-  inventory-full: "&yインベントリが満杯のため、アイテムを足元にドロップしました"
+  inventory-full: "&eインベントリが満杯のため、アイテムを足元にドロップしました"
   purchase-success: "{item} を購入しました！"
+
+# Setup Messages
+setup:
+  invalid-answer: "&eY または n で回答してください"
+  map-auto-detect-prompt: "&eマップ領域が設定されています。自動検出でゲームを作成しますか？"
+  map-auto-detect-hint: "&7[Y/n] Yで自動作成、nで対話形式"
+  invalid-game-name: "&c無効なゲーム名です。英数字とアンダースコアのみ使用可能です。"
+  invalid-selection: "&c無効な選択です。"
+  red-flag-prompt: "&e赤チームの旗を設置する場所を見て 'set' と入力"
+  red-spawn-prompt: "&e赤チームのスポーン地点を見て 'set' と入力"
+  blue-flag-prompt: "&e青チームの旗を設置する場所を見て 'set' と入力"
+  blue-spawn-prompt: "&e青チームのスポーン地点を見て 'set' と入力"
+  skip-to-flag: "&7'skip' で旗位置にスポーン"
+  build-mode-prompt: "&e建築フェーズのゲームモード (ADVENTURE/SURVIVAL/CREATIVE)"
+  skip-adventure: "&7'skip' でADVENTURE"
+  build-time-prompt: "&e建築フェーズの時間（秒）"
+  skip-300: "&7'skip' で300秒"
+  combat-time-prompt: "&e戦闘フェーズの時間（秒）"
+  skip-600: "&7'skip' で600秒"
+  skip-first-to-x: "&7'skip' でfirst_to_x"
+  game-count-prompt: "&eゲーム数を入力"
+  skip-3: "&7'skip' で3"
+  update-all: "&f8. すべて更新"
+  block-not-found: "&cブロックが見つかりません"
+  flag-required: "&c旗位置は必須です"
+  invalid-mode: "&c無効なモード"
+  time-range-error: "&c10〜3600の間で入力"
+  match-range-error: "&c1〜10の間で入力"
+  flag-position-required: "&c旗位置が必要です"
+  game-created: "&aゲーム '{name}' を作成しました！"
+  update-menu-header: "&6=== 更新メニュー ==="
+  red-flag-menu: "&c1. 赤チームの旗位置"
+  red-spawn-menu: "&c2. 赤チームのスポーン地点"
+  blue-flag-menu: "&93. 青チームの旗位置"
+  blue-spawn-menu: "&94. 青チームのスポーン地点"
+  build-mode-menu: "&e5. 建築フェーズゲームモード"
+  build-time-menu: "&e6. 建築フェーズ時間"
+  combat-time-menu: "&e7. 戦闘フェーズ時間"
+  exit-menu: "&79. 終了"
+  setting-prompt: "{text} を見て 'set' と入力"
+  updated: "&a更新しました"
+  cancelled: "&eキャンセルしました"
+  timeout: "&cタイムアウトしました"
+  create-header: "ゲーム作成: {name}"
+  update-header: "ゲーム更新: {name}"
+  match-mode-prompt: "マッチモード"
+  first-to-x-mode: "first_to_x: 先取モード"
+  fixed-rounds-mode: "fixed_rounds: 固定回数モード"
+  red-flag-set: "赤旗: {x}, {y}, {z}"
+  red-spawn-set: "赤スポーン: {x}, {y}, {z}"
+  blue-flag-set: "青旗: {x}, {y}, {z}"
+  blue-spawn-set: "青スポーン: {x}, {y}, {z}"
+  build-mode-set: "建築モード: {mode}"
+  build-time-set: "建築時間: {time}秒"
+  combat-time-set: "戦闘時間: {time}秒"
+  match-mode-set: "マッチモード: {mode}"
+  match-target-set: "目標: {target}"
+  red-flag-location: "赤チームの旗位置"
+  red-spawn-location: "赤チームのスポーン"
+  blue-flag-location: "青チームの旗位置"
+  blue-spawn-location: "青チームのスポーン"
+
+# Manager Messages
+manager:
+  game-name-exists: "&c既に存在するゲーム名です"
+  using-existing-map: "&7設定済みのマップ範囲を使用します"
+  auto-detect-failed: "&c自動検出に失敗しました"
+  place-required-blocks: "&eマップ内に必要なブロックを配置してから再度実行してください"
+  map-area-not-set: "&cマップ領域が設定されていません"
+  cannot-update-running: "&c実行中のゲームは更新できません"
+  config-not-found: "&c設定ファイルが見つかりません"
+  map-range-not-set: "マップ範囲が設定されていません"
+  cannot-save-running: "ゲームが実行中は保存できません"
+  map-save-failed: "マップの保存に失敗しました"
 
 # Gameplay Messages
 gameplay:
@@ -333,5 +434,31 @@ gameplay:
   flag-info: "&f{team}の旗です。近づくと取得できます"
   spectator-mode: "&7スペクテーターモードで観戦中..."
   clear-command-disabled: "&cゲーム中は/clearコマンドは使用できません！"
-  shop-item-redistributed: "&yショップアイテムは削除できません。再配布されました。"
+  shop-item-redistributed: "&eショップアイテムは削除できません。再配布されました。"
   item-name-error: "&cアイテム名を取得できませんでした"
+
+# ログメッセージ
+log:
+  player-cannot-join: "プレイヤー {player} はゲーム {game} に参加できません: 状態は {state}"
+  game-starting: "[Game] ゲーム {game} を開始します。現在の状態: {state}、フェーズ: {phase}"
+  game-cannot-start: "ゲーム {game} は開始できません: 現在の状態は {state}"
+  temp-world-failed: "[Game] テンポラリワールドの作成に失敗しました"
+  map-restore-failed: "[Game] マップの復元に失敗しました"
+  map-restored: "[Game] マップを復元しました"
+  no-saved-map: "[Game] 保存されたマップがありません"
+  skip-map-restore: "[Game] マッチ継続中のため、マップ復元をスキップ"
+  game-loop-started: "[Game] ゲーム {game} のゲームループを開始"
+  respawn-task-cancel-combat: "[Respawn] 戦闘フェーズ移行中のリスポーンタスクをキャンセル"
+  respawn-task-cancel-phase: "[Respawn] フェーズ移行中のリスポーンタスクをキャンセル"
+  respawn-task-cancel-match: "[Respawn] マッチリセット中のリスポーンタスクをキャンセル"
+  respawn-task-cancel-stop: "[Respawn] ゲーム停止中のリスポーンタスクをキャンセル"
+  map-saved: "ゲーム {game} のマップを保存しました ({blocks} ブロック)"
+  map-save-failed: "ゲーム {game} のマップ保存に失敗しました: {error}"
+  block-restore-failed: "{x},{y},{z} のブロック復元に失敗しました: {error}"
+  map-restored-blocks: "ゲーム {game} のマップを復元しました ({blocks} ブロック)"
+  map-restore-error: "ゲーム {game} のマップ復元に失敗しました: {error}"
+  shop-purchase-called: "handlePurchase が呼び出されました。アイテム名: '{item}'"
+  shop-item-not-found: "アイテムが見つかりません: '{item}'"
+  shop-available-items: "利用可能なアイテム:"
+  shop-item-list: "  - '{item}'"
+  safe-spawn-not-found: "チーム {team} の安全なスポーン位置が {attempts} 回の試行後も見つかりませんでした。フォールバック位置を使用します"

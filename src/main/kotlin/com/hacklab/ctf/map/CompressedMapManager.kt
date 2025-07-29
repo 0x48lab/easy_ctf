@@ -80,11 +80,11 @@ class CompressedMapManager(private val plugin: Main) {
             config.set("block_count", blockDataList.size)
             
             config.save(file)
-            plugin.logger.info("Saved compressed map for $gameName (${blockDataList.size} blocks)")
+            plugin.logger.info(plugin.languageManager.getMessage("log.map-saved", "game" to gameName, "blocks" to blockDataList.size.toString()))
             return true
             
         } catch (e: Exception) {
-            plugin.logger.severe("Failed to save map for $gameName: ${e.message}")
+            plugin.logger.severe(plugin.languageManager.getMessage("log.map-save-failed", "game" to gameName, "error" to (e.message ?: "Unknown error")))
             return false
         }
     }
@@ -164,7 +164,7 @@ class CompressedMapManager(private val plugin: Main) {
                                 world.getBlockAt(x, y, z).blockData = blockData
                                 restoredBlocks++
                             } catch (e: Exception) {
-                                plugin.logger.warning("Failed to restore block at $x,$y,$z: ${e.message}")
+                                plugin.logger.warning(plugin.languageManager.getMessage("log.block-restore-failed", "x" to x.toString(), "y" to y.toString(), "z" to z.toString(), "error" to (e.message ?: "Unknown error")))
                             }
                         } else {
                             println("[CompressedMapManager] 無効な座標形式: ${parts[0]}")
@@ -176,11 +176,11 @@ class CompressedMapManager(private val plugin: Main) {
             }
             
             println("[CompressedMapManager] 復元完了: $restoredBlocks ブロックを復元")
-            plugin.logger.info("Restored map for $gameName ($restoredBlocks blocks)")
+            plugin.logger.info(plugin.languageManager.getMessage("log.map-restored-blocks", "game" to gameName, "blocks" to restoredBlocks.toString()))
             return true
             
         } catch (e: Exception) {
-            plugin.logger.severe("Failed to restore map for $gameName: ${e.message}")
+            plugin.logger.severe(plugin.languageManager.getMessage("log.map-restore-error", "game" to gameName, "error" to (e.message ?: "Unknown error")))
             return false
         }
     }

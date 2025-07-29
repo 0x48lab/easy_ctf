@@ -37,6 +37,7 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.ItemDespawnEvent
 import org.bukkit.event.entity.EntityCombustEvent
 import org.bukkit.entity.Item
+import org.bukkit.scheduler.BukkitRunnable
 
 class GameListenerNew(private val plugin: Main) : Listener {
     
@@ -306,19 +307,41 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 game.damageTracking.remove(player.uniqueId)
             }
             
-            // 死亡時はすべてのアイテムを保持（旗以外ドロップしない）
+            // 死亡時のアイテム処理
             val itemsToKeep = mutableListOf<ItemStack>()
+            val itemsToDrop = mutableListOf<ItemStack>()
             val leatherArmorToKeep = mutableListOf<ItemStack>()
             
-            // インベントリ内のアイテムを分類
-            for (item in player.inventory.contents) {
-                if (item != null) {
-                    if (isLeatherArmor(item.type)) {
-                        // 革防具は別途保存
-                        leatherArmorToKeep.add(item.clone())
-                    } else {
-                        // その他のアイテムは通常通り保持
-                        itemsToKeep.add(item)
+            // フェーズによる処理分岐
+            if (game.phase == GamePhase.BUILD) {
+                // 建築フェーズ：すべてのアイテムを保持
+                for (item in player.inventory.contents) {
+                    if (item != null) {
+                        if (isLeatherArmor(item.type)) {
+                            leatherArmorToKeep.add(item.clone())
+                        } else {
+                            itemsToKeep.add(item.clone())
+                        }
+                    }
+                }
+            } else if (game.phase == GamePhase.COMBAT) {
+                // 戦闘フェーズ：ショップアイテムと革装備以外をドロップ
+                for (item in player.inventory.contents) {
+                    if (item != null) {
+                        when {
+                            isLeatherArmor(item.type) -> {
+                                // 革防具は保持
+                                leatherArmorToKeep.add(item.clone())
+                            }
+                            shopManager.isShopItem(item) -> {
+                                // ショップアイテム（エメラルド）は保持
+                                itemsToKeep.add(item.clone())
+                            }
+                            else -> {
+                                // それ以外はドロップ
+                                itemsToDrop.add(item.clone())
+                            }
+                        }
                     }
                 }
             }
@@ -337,8 +360,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
             
-            // アイテムはドロップしない
+            // ドロップするアイテムを設定
             event.drops.clear()
+            event.drops.addAll(itemsToDrop)
             
             // 保持するアイテムと革防具を記録
             player.setMetadata("ctf_items_to_keep", 
@@ -787,6 +811,36 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val player = event.whoClicked as? Player ?: return
         val game = gameManager.getPlayerGame(player) ?: return
         
+        // ショップアイテム（エメラルド）の移動制限
+        if (game.state == GameState.RUNNING) {
+            val clickedItem = event.currentItem
+            val hotbarSlot = event.hotbarButton
+            
+            // スロット8（9番目）のアイテムをクリックした場合
+            if (event.slot == 8 && clickedItem != null && shopManager.isShopItem(clickedItem)) {
+                event.isCancelled = true
+                return
+            }
+            
+            // スロット8へアイテムを移動しようとした場合
+            if (event.slot == 8 && event.cursor != null) {
+                event.isCancelled = true
+                return
+            }
+            
+            // 数字キーでスロット8のアイテムを移動しようとした場合
+            if (hotbarSlot == 8 && event.clickedInventory == player.inventory) {
+                event.isCancelled = true
+                return
+            }
+            
+            // Shift+クリックでショップアイテムを移動しようとした場合
+            if (event.isShiftClick && clickedItem != null && shopManager.isShopItem(clickedItem)) {
+                event.isCancelled = true
+                return
+            }
+        }
+        
         // 防具の装備制限
         if (game.state == GameState.RUNNING) {
             val clickedItem = event.currentItem
@@ -908,6 +962,21 @@ class GameListenerNew(private val plugin: Main) : Listener {
     fun onInventoryDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player ?: return
         val game = gameManager.getPlayerGame(player) ?: return
+        
+        // ショップアイテムのドラッグ制限
+        if (game.state == GameState.RUNNING) {
+            // スロット8が含まれている場合はキャンセル
+            if (event.rawSlots.contains(8) || event.inventorySlots.contains(8)) {
+                event.isCancelled = true
+                return
+            }
+            
+            // ドラッグしているアイテムがショップアイテムの場合はキャンセル
+            if (shopManager.isShopItem(event.oldCursor)) {
+                event.isCancelled = true
+                return
+            }
+        }
         
         // ショップUIでのドラッグを防止
         val title = event.view.title()
@@ -1117,10 +1186,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
     
     private fun getDamageCauseMessage(cause: EntityDamageEvent.DamageCause): String {
         return when (cause) {
-            EntityDamageEvent.DamageCause.LAVA -> "溶岩に落ちたため"
-            EntityDamageEvent.DamageCause.FIRE, EntityDamageEvent.DamageCause.FIRE_TICK -> "炎上のため"
-            EntityDamageEvent.DamageCause.VOID -> "奈落に落ちたため"
-            else -> "ダメージを受けたため"
+            EntityDamageEvent.DamageCause.LAVA -> plugin.languageManager.getMessage("death.cause-lava")
+            EntityDamageEvent.DamageCause.FIRE, EntityDamageEvent.DamageCause.FIRE_TICK -> plugin.languageManager.getMessage("death.cause-fire")
+            EntityDamageEvent.DamageCause.VOID -> plugin.languageManager.getMessage("death.cause-void")
+            else -> plugin.languageManager.getMessage("death.cause-damage")
         }
     }
 

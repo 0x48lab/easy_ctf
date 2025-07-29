@@ -16,7 +16,10 @@
       "Bash(mv:*)",
       "Bash(cp:*)",
       "Bash(echo $JAVA_HOME)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(for file in admin.html commands.html faq.html gameplay.html match.html shop.html)",
+      "Bash(do sed -i '' 's|<li><a href=\"\"match.html\"\">マッチ</a></li>|<li><a href=\"\"match.html\"\">マッチ</a></li>\\\n                <li><a href=\"\"map-creation.html\"\">マップ作成</a></li>|g' \"$file\")",
+      "Bash(done)"
     ],
     "deny": []
   }

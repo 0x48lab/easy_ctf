@@ -75,7 +75,7 @@ class GameManager(private val plugin: Main) {
      */
     fun startCreateGame(player: Player, gameName: String): Boolean {
         if (games.containsKey(gameName.lowercase())) {
-            player.sendMessage(Component.text("既に存在するゲーム名です", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.game-name-exists"), NamedTextColor.RED))
             return false
         }
         
@@ -107,7 +107,7 @@ class GameManager(private val plugin: Main) {
                     tempPositions.pos2?.clone()
                 )
                 clearTempMapPositions(player)
-                player.sendMessage(Component.text("設定済みのマップ範囲を使用します", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.using-existing-map"), NamedTextColor.GRAY))
             }
             
             // 自動検出でゲーム作成
@@ -120,11 +120,11 @@ class GameManager(private val plugin: Main) {
                 player.sendMessage(Component.text("- 赤チーム旗: ${result.redFlag}", NamedTextColor.RED))
                 player.sendMessage(Component.text("- 青チーム旗: ${result.blueFlag}", NamedTextColor.BLUE))
             } else {
-                player.sendMessage(Component.text("自動検出に失敗しました", NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.auto-detect-failed"), NamedTextColor.RED))
                 result.errors.forEach { error ->
                     player.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
                 }
-                player.sendMessage(Component.text("マップ内に必要なブロックを配置してから再度実行してください", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.place-required-blocks"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text("必要なブロック:", NamedTextColor.GRAY))
                 player.sendMessage(Component.text("- 赤コンクリート: 赤チームスポーン", NamedTextColor.GRAY))
                 player.sendMessage(Component.text("- 青コンクリート: 青チームスポーン", NamedTextColor.GRAY))
@@ -135,7 +135,7 @@ class GameManager(private val plugin: Main) {
         }
         
         // マップ領域が設定されていない場合
-        player.sendMessage(Component.text("マップ領域が設定されていません", NamedTextColor.RED))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.map-area-not-set"), NamedTextColor.RED))
         player.sendMessage(Component.text("以下のいずれかの方法で範囲を設定してください:", NamedTextColor.YELLOW))
         if (WorldEditHelper.isWorldEditAvailable()) {
             player.sendMessage(Component.text("1. WorldEdit: //pos1 と //pos2", NamedTextColor.GRAY))
@@ -149,17 +149,17 @@ class GameManager(private val plugin: Main) {
      */
     fun startUpdateGame(player: Player, gameName: String): Boolean {
         val game = games[gameName.lowercase()] ?: run {
-            player.sendMessage(Component.text("ゲームが見つかりません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
             return false
         }
         
         if (game.state != GameState.WAITING) {
-            player.sendMessage(Component.text("実行中のゲームは更新できません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.cannot-update-running"), NamedTextColor.RED))
             return false
         }
         
         val config = configManager.loadConfig(gameName) ?: run {
-            player.sendMessage(Component.text("設定ファイルが見つかりません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.config-not-found"), NamedTextColor.RED))
             return false
         }
         
@@ -629,7 +629,7 @@ class GameManager(private val plugin: Main) {
      */
     fun saveMap(gameName: String): MapSaveResult {
         val positions = mapPositions[gameName.lowercase()] 
-            ?: return MapSaveResult(false, listOf("マップ範囲が設定されていません"))
+            ?: return MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.map-range-not-set")))
         
         val pos1 = positions.pos1 
             ?: return MapSaveResult(false, listOf("始点（pos1）が設定されていません"))
@@ -642,7 +642,7 @@ class GameManager(private val plugin: Main) {
         // ゲームが実行中の場合はエラー
         val game = getGame(gameName)
         if (game != null && game.state != GameState.WAITING) {
-            return MapSaveResult(false, listOf("ゲームが実行中は保存できません"))
+            return MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.cannot-save-running")))
         }
         
         // マップ領域を作成
@@ -691,7 +691,7 @@ class GameManager(private val plugin: Main) {
         
         // 圧縮形式で保存
         if (!mapManager.saveMap(gameName, region)) {
-            return MapSaveResult(false, listOf("マップの保存に失敗しました"))
+            return MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.map-save-failed")))
         }
         
         // pos設定をクリア

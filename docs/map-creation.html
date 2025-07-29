@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マップ作成ガイド - EasyCTF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-flag"></i> EasyCTF
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">ホーム</a></li>
+                <li><a href="gameplay.html">遊び方</a></li>
+                <li><a href="commands.html">コマンド</a></li>
+                <li><a href="shop.html">ショップ</a></li>
+                <li><a href="match.html">マッチ</a></li>
+                <li><a href="map-creation.html" class="active">マップ作成</a></li>
+                <li><a href="admin.html">管理者</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>マップ作成ガイド</h1>
+            <p>バランスの取れた楽しいCTFマップを作成しましょう</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2>🗺️ マップ作成とは</h2>
+            <p>EasyCTFでは、専用のCTFマップを事前に作成・保存できます。作成したマップは自動的に保存され、ゲーム開始時にテンポラリワールドに復元されます。</p>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>メリット:</strong> 事前に作成したマップを使用することで、バランスの取れた公平なゲームが実現できます。また、複数の異なるマップを作成して、様々なゲーム体験を提供できます。
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🚀 マップ作成の流れ</h2>
+            
+            <div class="step-list">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>マップ領域の設定</h3>
+                        <p>まず、マップとして使用する領域の範囲を指定します。</p>
+                        <div class="command-block">
+                            <code>/ctf setpos1 &lt;ゲーム名&gt;</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p>始点となる位置に立って実行</p>
+                        <div class="command-block">
+                            <code>/ctf setpos2 &lt;ゲーム名&gt;</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p>終点となる位置に立って実行</p>
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-lightbulb"></i>
+                            対角線上の2点を指定することで、直方体の領域が設定されます
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>必須ブロックの配置</h3>
+                        <p>設定した領域内に、以下の特殊ブロックを配置します。</p>
+                        
+                        <div class="block-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ブロック</th>
+                                        <th>用途</th>
+                                        <th>個数</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="block-red">赤のコンクリート</span></td>
+                                        <td>赤チームのスポーン地点</td>
+                                        <td>1個のみ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="block-blue">青のコンクリート</span></td>
+                                        <td>青チームのスポーン地点</td>
+                                        <td>1個のみ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-cube"></i> ビーコン + 赤ガラス</td>
+                                        <td>赤チームの旗位置</td>
+                                        <td>1セット</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-cube"></i> ビーコン + 青ガラス</td>
+                                        <td>青チームの旗位置</td>
+                                        <td>1セット</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>重要:</strong> 旗とスポーン地点は最低3ブロック離してください
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>マップの保存</h3>
+                        <p>ブロックの配置が完了したら、マップを保存します。</p>
+                        <div class="command-block">
+                            <code>/ctf savemap &lt;ゲーム名&gt;</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        <p>システムが自動的にブロックを検出し、ゲーム設定を作成します。</p>
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            保存されたマップは <code>plugins/EasyCTF/maps/&lt;ゲーム名&gt;.yml</code> に圧縮形式で保存されます
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🎨 マップデザインのヒント</h2>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-balance-scale"></i></div>
+                    <h3>対称性</h3>
+                    <p>両チームに公平になるよう、対称的なマップ設計を心がけましょう。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-route"></i></div>
+                    <h3>複数ルート</h3>
+                    <p>攻撃・防御の選択肢を増やすため、複数の侵入経路を用意しましょう。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-mountain"></i></div>
+                    <h3>高低差</h3>
+                    <p>立体的な構造により、戦略性の高いゲームプレイが可能になります。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>防御設備</h3>
+                    <p>旗の周りに適度な防御構造を配置し、攻防のバランスを取りましょう。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-eye-slash"></i></div>
+                    <h3>視界管理</h3>
+                    <p>壁や障害物で視界を制限し、奇襲や隠密行動を可能にしましょう。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-crosshairs"></i></div>
+                    <h3>中央エリア</h3>
+                    <p>マップ中央に戦略的価値のあるエリアを設けると、激しい戦いが生まれます。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>⚙️ テンポラリワールドシステム</h2>
+            <p>保存したマップは、ゲーム開始時に自動的にテンポラリワールドに復元されます。</p>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h4><i class="fas fa-globe"></i> 独立したワールド</h4>
+                    <p>各ゲームごとに専用のワールド（<code>ctf_temp_&lt;ゲーム名&gt;</code>）が作成されます。</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-shield-alt"></i> 元のワールドを保護</h4>
+                    <p>ゲーム中の破壊や変更は元のワールドに影響しません。</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-sync"></i> 自動クリーンアップ</h4>
+                    <p>ゲーム終了時にテンポラリワールドは自動的に削除されます。</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-users"></i> 複数ゲーム対応</h4>
+                    <p>複数のゲームが同時に異なるマップで実行可能です。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>❌ よくあるエラー</h2>
+            
+            <div class="faq-list">
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> 必要なブロックが見つかりません</h4>
+                    <p>指定した領域内に必須ブロック（コンクリート、ビーコン+ガラス）が配置されているか確認してください。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> 同じ種類のブロックが複数あります</h4>
+                    <p>各色のコンクリートとビーコンは1つずつしか配置できません。余分なブロックを削除してください。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> 旗とスポーンが近すぎます</h4>
+                    <p>旗とスポーン地点の距離が3ブロック未満です。配置を調整してください。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4><i class="fas fa-exclamation-circle"></i> マップ範囲が設定されていません</h4>
+                    <p><code>/ctf setpos1</code> と <code>/ctf setpos2</code> でマップ範囲を設定してください。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>📋 マップ作成チェックリスト</h2>
+            
+            <div class="checklist-card">
+                <h3>作成前の準備</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> クリエイティブモードで作業する</li>
+                    <li><i class="far fa-square"></i> 十分な広さの平地を確保する</li>
+                    <li><i class="far fa-square"></i> 必要なブロックを準備する</li>
+                </ul>
+            </div>
+            
+            <div class="checklist-card">
+                <h3>必須要素の配置</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> マップ領域を設定した（setpos1/setpos2）</li>
+                    <li><i class="far fa-square"></i> 赤のコンクリートを1つ配置した</li>
+                    <li><i class="far fa-square"></i> 青のコンクリートを1つ配置した</li>
+                    <li><i class="far fa-square"></i> ビーコン+赤ガラスを配置した</li>
+                    <li><i class="far fa-square"></i> ビーコン+青ガラスを配置した</li>
+                    <li><i class="far fa-square"></i> 旗とスポーンが3ブロック以上離れている</li>
+                </ul>
+            </div>
+            
+            <div class="checklist-card">
+                <h3>デザインの確認</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> マップが対称的でバランスが良い</li>
+                    <li><i class="far fa-square"></i> 複数の攻撃/防御ルートがある</li>
+                    <li><i class="far fa-square"></i> 適度な防御設備がある</li>
+                    <li><i class="far fa-square"></i> 高低差を活用している</li>
+                </ul>
+            </div>
+            
+            <div class="checklist-card">
+                <h3>最終確認</h3>
+                <ul class="checklist">
+                    <li><i class="far fa-square"></i> savemapコマンドでマップを保存した</li>
+                    <li><i class="far fa-square"></i> エラーメッセージが表示されなかった</li>
+                    <li><i class="far fa-square"></i> テストプレイで問題がなかった</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EasyCTF</h3>
+                    <p>Minecraft Paper サーバー向けの高機能CTFプラグイン</p>
+                </div>
+                <div class="footer-section">
+                    <h3>リンク</h3>
+                    <ul>
+                        <li><a href="https://github.com/0x48lab/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/wiki">Wiki</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/issues">サポート</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>ドキュメント</h3>
+                    <ul>
+                        <li><a href="gameplay.html">遊び方</a></li>
+                        <li><a href="commands.html">コマンド一覧</a></li>
+                        <li><a href="admin.html">管理者ガイド</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EasyCTF - MIT License</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

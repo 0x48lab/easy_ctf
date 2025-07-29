@@ -19,6 +19,7 @@
                 <li><a href="commands.html">コマンド</a></li>
                 <li><a href="shop.html">ショップ</a></li>
                 <li><a href="match.html">マッチ</a></li>
+                <li><a href="map-creation.html">マップ作成</a></li>
                 <li><a href="admin.html">管理者</a></li>
                 <li><a href="faq.html">FAQ</a></li>
             </ul>
@@ -92,7 +93,7 @@
             <h2>⚡ ゲームの3つのフェーズ</h2>
             
             <div class="phase-detail">
-                <h3><i class="fas fa-hammer"></i> フェーズ1: 建築フェーズ（5分）</h3>
+                <h3><i class="fas fa-hammer"></i> フェーズ1: 建築フェーズ（2分）</h3>
                 <p>戦闘の準備をする重要な時間です。</p>
                 
                 <div class="phase-features">
@@ -109,12 +110,16 @@
                             <i class="fas fa-exclamation-triangle"></i>
                             旗とスポーン地点の3×3エリア（高さ無制限）は建築禁止！
                         </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-link"></i>
+                            <strong>ブロック接続システム:</strong> ブロックは自チームのビーコンまたは既存のチームブロックに接続している必要があります。接続が切れたブロックは自動的に白色（クォーツブロック）に変化し、どちらのチームでも利用可能になります。
+                        </div>
                     </div>
                 </div>
             </div>
             
             <div class="phase-detail">
-                <h3><i class="fas fa-sword"></i> フェーズ2: 戦闘フェーズ（10分）</h3>
+                <h3><i class="fas fa-sword"></i> フェーズ2: 戦闘フェーズ（2分）</h3>
                 <p>いよいよ本番！敵の旗を奪い、自陣に持ち帰りましょう。</p>
                 
                 <div class="phase-features">
@@ -301,6 +306,47 @@
                     • KEEP: 死亡しても保持<br>
                     • DROP: 死亡時にドロップ<br>
                     • DESTROY: 死亡時に消失
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🔗 ブロック接続システム</h2>
+            
+            <div class="subsection">
+                <h3>基本ルール</h3>
+                <p>建築フェーズでブロックを設置する際の重要なシステムです：</p>
+                <ul>
+                    <li><strong>接続必須</strong>: 新しいブロックは自チームのビーコン（旗）または既存のチームブロックに接続している必要があります</li>
+                    <li><strong>接続の定義</strong>: 上下左右前後の6方向のいずれかで隣接していること</li>
+                    <li><strong>斜め接続は無効</strong>: 対角線上の接続では有効な接続とみなされません</li>
+                </ul>
+            </div>
+            
+            <div class="subsection">
+                <h3>切断と中立化</h3>
+                <ul>
+                    <li><strong>接続チェック</strong>: ブロックが破壊されると、周囲のブロックの接続状態が自動的にチェックされます</li>
+                    <li><strong>孤立ブロックの中立化</strong>: ビーコンへの接続経路がなくなったブロックは自動的に白色（クォーツブロック）に変化</li>
+                    <li><strong>再利用可能</strong>: 中立化されたブロックは、どちらのチームも新たな接続基点として利用可能</li>
+                </ul>
+            </div>
+            
+            <div class="subsection">
+                <h3>戦略的な活用</h3>
+                <div class="strategy-tips">
+                    <div class="tip-card">
+                        <h4>防御建築</h4>
+                        <p>重要な接続ポイントを複数経路で補強し、1箇所破壊されても全体が崩壊しないように</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>攻撃戦術</h4>
+                        <p>敵の建築物の「要」となる接続ポイントを狙い、大規模な中立化を引き起こす</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>橋の建設</h4>
+                        <p>長い橋を作る際は、複数の支柱で接続を維持し、切断リスクを分散</p>
+                    </div>
                 </div>
             </div>
         </section>

@@ -122,7 +122,7 @@ class Game(
     private var scoreboardUpdateTask: BukkitRunnable? = null
     private var actionBarTask: BukkitRunnable? = null
     private val spawnProtectionTasks = mutableMapOf<UUID, BukkitRunnable>()
-    private val respawnTasks = mutableMapOf<UUID, BukkitRunnable>()
+    val respawnTasks = mutableMapOf<UUID, BukkitRunnable>()
     
     // ゲッター
     val name: String get() = gameName
@@ -208,7 +208,7 @@ class Game(
     
     fun addPlayer(player: Player, team: Team? = null): Boolean {
         if (state != GameState.WAITING) {
-            plugin.logger.warning("Player ${player.name} cannot join game $name: state is $state")
+            plugin.logger.warning(plugin.languageManager.getMessage("log.player-cannot-join", "player" to player.name, "game" to name, "state" to state.toString()))
             when (state) {
                 GameState.STARTING, GameState.RUNNING -> {
                     player.sendMessage(Component.text(plugin.languageManager.getMessage("game-states.already-started")))
@@ -390,10 +390,10 @@ class Game(
     }
     
     fun start(): Boolean {
-        plugin.logger.info("[Game] Attempting to start game $name, current state: $state, phase: $phase")
+        plugin.logger.info(plugin.languageManager.getMessage("log.game-starting", "game" to name, "state" to state.toString(), "phase" to phase.toString()))
         
         if (state != GameState.WAITING) {
-            plugin.logger.warning("Game $name cannot start: current state is $state")
+            plugin.logger.warning(plugin.languageManager.getMessage("log.game-cannot-start", "game" to name, "state" to state.toString()))
             getAllPlayers().forEach {
                 it.sendMessage(Component.text(plugin.languageManager.getMessage("game-states.already-state", "state" to state.toString())))
             }
@@ -422,7 +422,7 @@ class Game(
         
         // マッチモードで既にテンポラリワールドがある場合は再利用
         val isMatchMode = matchWrapper != null && matchWrapper!!.isActive
-        val needNewWorld = tempWorld == null || !isMatchMode
+        val needNewWorld = tempWorld == null
         
         if (needNewWorld) {
             // テンポラリワールドを作成
@@ -430,7 +430,7 @@ class Game(
             tempWorld = worldManager.createTempWorld(gameName)
             
             if (tempWorld == null) {
-                plugin.logger.warning("[Game] テンポラリワールドの作成に失敗しました")
+                plugin.logger.warning(plugin.languageManager.getMessage("log.temp-world-failed"))
                 getAllPlayers().forEach {
                     it.sendMessage(Component.text(plugin.languageManager.getMessage("join-leave.temp-world-failed")))
                 }
@@ -439,6 +439,7 @@ class Game(
             }
             
         } else {
+            plugin.logger.info("[Game] Reusing existing temporary world for match game ${matchWrapper?.currentGameNumber}")
         }
         
         // ワールドを切り替え
@@ -452,15 +453,15 @@ class Game(
             // 保存されたマップがある場合は復元
             if (mapManager.hasMap(gameName)) {
                 if (!gameManager.resetGameMap(gameName, tempWorld)) {
-                    plugin.logger.warning("[Game] マップの復元に失敗しました")
+                    plugin.logger.warning(plugin.languageManager.getMessage("log.map-restore-failed"))
                 } else {
-                    plugin.logger.info("[Game] マップを復元しました")
+                    plugin.logger.info(plugin.languageManager.getMessage("log.map-restored"))
                 }
             } else {
-                plugin.logger.info("[Game] 保存されたマップがありません")
+                plugin.logger.info(plugin.languageManager.getMessage("log.no-saved-map"))
             }
         } else {
-            plugin.logger.info("[Game] マッチ継続中のため、マップ復元をスキップ")
+            plugin.logger.info(plugin.languageManager.getMessage("log.skip-map-restore"))
         }
         
         // 位置情報をテンポラリワールドに更新
@@ -487,31 +488,33 @@ class Game(
         playerBlocksPlaced.clear()
         playerAssists.clear()
         
-        // プレイヤーの準備
-        getAllPlayers().forEach { player ->
-            val team = getPlayerTeam(player.uniqueId)!!
-            
-            // インベントリクリア
-            player.inventory.clear()
-            
-            // アクションバーをクリア
-            player.sendActionBar(Component.empty())
-            
-            // ゲームモード設定
-            val targetGameMode = GameMode.valueOf(buildPhaseGameMode)
-            player.gameMode = targetGameMode
-            
-            // スポーン地点に転送
-            teleportToSpawn(player, team)
-            
-            // 建築フェーズアイテム配布
-            giveBuildPhaseItems(player, team)
-            
-            // BossBar追加
-            bossBar?.addPlayer(player)
-            
-            // タイトル表示
-            player.showTitle(Title.title(
+        // チャンクの事前読み込み
+        preloadSpawnChunks()
+        
+        // プレイヤーの準備（バッチ処理で安全にテレポート）
+        val allPlayers = getAllPlayers().toList()
+        
+        // 新しいゲーム開始時（またはマッチの最初のゲーム）のみインベントリをクリア
+        if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
+            allPlayers.forEach { player ->
+                player.inventory.clear()
+            }
+        }
+        
+        val redPlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.RED }
+        val bluePlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.BLUE }
+        
+        // チームごとにバッチ処理
+        processTeleportBatch(redPlayers, Team.RED, 0L)
+        processTeleportBatch(bluePlayers, Team.BLUE, 2L)
+        
+        // 全プレイヤーの初期化処理（テレポート後に実行）
+        plugin.server.scheduler.runTaskLater(plugin, Runnable {
+            getAllPlayers().forEach { player ->
+                val team = getPlayerTeam(player.uniqueId)!!
+                
+                // タイトル表示
+                player.showTitle(Title.title(
                 Component.text(plugin.languageManager.getMessage("phase-extended.game-start-title")),
                 Component.text(plugin.languageManager.getMessage("phase-extended.game-start-subtitle")),
                 Title.Times.times(
@@ -520,7 +523,8 @@ class Game(
                     Duration.ofMillis(500)
                 )
             ))
-        }
+            }
+        }, 10L) // 0.5秒後に実行
         
         // 旗とスポーン地点の設置
         setupFlags()
@@ -544,7 +548,7 @@ class Game(
         
         state = GameState.RUNNING
         
-        plugin.logger.info("[Game] Starting game loop for $name")
+        plugin.logger.info(plugin.languageManager.getMessage("log.game-loop-started", "game" to name))
         
         // ゲームループ開始
         startGameLoop()
@@ -612,7 +616,7 @@ class Game(
         
         // リスポーンタスクをクリア（建築フェーズからの移行時）
         respawnTasks.values.forEach { task ->
-            plugin.logger.info("[Respawn] Cancelling respawn task during combat phase transition")
+            plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-combat"))
             task.cancel()
         }
         respawnTasks.clear()
@@ -623,32 +627,14 @@ class Game(
         // 窒息チェックタスクを開始
         startSuffocationTask()
         
-        getAllPlayers().forEach { player ->
-            val team = getPlayerTeam(player.uniqueId)!!
-            
-            // インベントリクリア
-            player.inventory.clear()
-            
-            // ゲームモード変更
-            player.gameMode = GameMode.SURVIVAL
-            
-            // スポーン地点に転送
-            teleportToSpawn(player, team)
-            
-            // 戦闘フェーズアイテム配布
-            giveCombatPhaseItems(player, team)
-            
-            // タイトル表示
-            player.showTitle(Title.title(
-                Component.text(plugin.languageManager.getMessage("phase-extended.combat-start-title")),
-                Component.text(plugin.languageManager.getMessage("phase-extended.combat-start-subtitle")),
-                Title.Times.times(
-                    Duration.ofMillis(500),
-                    Duration.ofSeconds(3),
-                    Duration.ofMillis(500)
-                )
-            ))
-        }
+        // プレイヤーの準備（バッチ処理で安全にテレポート）
+        val allPlayers = getAllPlayers().toList()
+        val redPlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.RED }
+        val bluePlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.BLUE }
+        
+        // チームごとにバッチ処理
+        processCombatTeleportBatch(redPlayers, Team.RED, 0L)
+        processCombatTeleportBatch(bluePlayers, Team.BLUE, 2L)
     }
     
     private fun transitionToResultPhase() {
@@ -656,7 +642,7 @@ class Game(
         
         // リスポーンタスクをキャンセル
         respawnTasks.values.forEach { task ->
-            plugin.logger.info("[Respawn] Cancelling respawn task during phase transition")
+            plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-phase"))
             task.cancel()
         }
         respawnTasks.clear()
@@ -687,8 +673,10 @@ class Game(
         displayGameReport(winner)
         
         getAllPlayers().forEach { player ->
-            // インベントリクリア
-            player.inventory.clear()
+            // マッチモードでない場合のみインベントリクリア
+            if (matchWrapper == null || matchWrapper!!.isMatchComplete()) {
+                player.inventory.clear()
+            }
             
             // ゲームモード変更
             player.gameMode = GameMode.SPECTATOR
@@ -742,7 +730,7 @@ class Game(
         
         // リスポーンタスクをキャンセル
         respawnTasks.values.forEach { task ->
-            plugin.logger.info("[Respawn] Cancelling respawn task during match reset")
+            plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-match"))
             task.cancel()
         }
         
@@ -775,9 +763,12 @@ class Game(
         redFlagCarrier = null
         blueFlagCarrier = null
         
-        // 旗とスポーン装飾を再設置
-        setupFlags()
-        setupSpawnAreas()
+        // マッチモードの場合は旗とスポーン装飾の再設置をスキップ（start()で行う）
+        // 通常モードの場合のみ再設置
+        if (matchWrapper == null || !matchWrapper!!.isActive) {
+            setupFlags()
+            setupSpawnAreas()
+        }
         
         plugin.logger.info("[Game] Reset complete, state is now: $state")
     }
@@ -795,7 +786,7 @@ class Game(
         
         // リスポーンタスクをキャンセル
         respawnTasks.values.forEach { task ->
-            plugin.logger.info("[Respawn] Cancelling respawn task during game stop")
+            plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-stop"))
             task.cancel()
         }
         
@@ -815,9 +806,6 @@ class Game(
         
         // プレイヤー処理
         playerUUIDs.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
-            // インベントリクリア
-            player.inventory.clear()
-            
             // 発光効果を解除
             player.isGlowing = false
             
@@ -825,6 +813,8 @@ class Game(
             player.removeMetadata("on_enemy_block", plugin)
             
             if (!isMatchMode) {
+                // マッチモードでない場合のみインベントリクリア
+                player.inventory.clear()
                 // マッチモードでない場合のみ、元のワールドに転送してゲームから削除
                 player.gameMode = GameMode.SURVIVAL
                 
@@ -841,15 +831,22 @@ class Game(
                 val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
                 gameManager.removePlayerFromGame(player)
             } else {
-                // マッチモードの場合は、スポーン地点に戻してアドベンチャーモードに
+                // マッチモードの場合は、テンポラリワールド内でスポーン地点に戻してアドベンチャーモードに
                 val team = getPlayerTeam(player.uniqueId)
-                if (team != null) {
+                if (team != null && tempWorld != null) {
                     val spawnLocation = when (team) {
                         Team.RED -> redSpawnLocation ?: redFlagLocation
                         Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
                     }
-                    if (spawnLocation != null) {
+                    if (spawnLocation != null && spawnLocation.world == tempWorld) {
+                        // テンポラリワールド内でテレポート
                         player.teleport(spawnLocation)
+                        plugin.logger.info("[Game] Teleporting ${player.name} to spawn in temp world: ${tempWorld!!.name}")
+                    } else {
+                        // スポーン地点が正しく設定されていない場合は、ワールドの中心にテレポート
+                        val centerLocation = Location(tempWorld, 0.0, 64.0, 0.0)
+                        player.teleport(centerLocation)
+                        plugin.logger.warning("[Game] Spawn location not in temp world, teleporting ${player.name} to center")
                     }
                 }
                 player.gameMode = GameMode.ADVENTURE
@@ -902,6 +899,11 @@ class Game(
             
             // ワールドを元に戻す
             world = originalWorld
+        }
+        
+        // マッチモードでもワールド参照は保持する
+        if (isMatchMode && tempWorld != null) {
+            plugin.logger.info("[Game] Keeping temp world for match continuation: ${tempWorld!!.name}")
         }
     }
     
@@ -962,36 +964,215 @@ class Game(
         
     }
     
-    private fun teleportToSpawn(player: Player, team: Team) {
-        val spawnLocation = when (team) {
+    /**
+     * スポーン地点周辺のチャンクを事前読み込み
+     */
+    private fun preloadSpawnChunks() {
+        val locations = listOfNotNull(redSpawnLocation, blueSpawnLocation, redFlagLocation, blueFlagLocation)
+        locations.forEach { location ->
+            val chunkX = location.blockX shr 4
+            val chunkZ = location.blockZ shr 4
+            
+            // 3x3チャンクを事前読み込み
+            for (x in -1..1) {
+                for (z in -1..1) {
+                    location.world.loadChunk(chunkX + x, chunkZ + z, true)
+                }
+            }
+        }
+    }
+    
+    /**
+     * プレイヤーをバッチ処理で安全にテレポート
+     */
+    private fun processTeleportBatch(players: List<Player>, team: Team, initialDelay: Long) {
+        if (players.isEmpty()) return
+        
+        val batchSize = 5 // 一度にテレポートする人数
+        var currentDelay = initialDelay
+        
+        players.chunked(batchSize).forEachIndexed { batchIndex, batch ->
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                batch.forEachIndexed { playerIndex, player ->
+                    // 各プレイヤーに少しずつ遅延を追加
+                    plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                        // 安全なスポーン位置を計算
+                        val safeLocation = getSafeSpawnLocation(team)
+                        
+                        // フェーズ間の移行ではインベントリをクリアしない
+                        // （ゲーム開始時のstart()で既にクリアされている）
+                        
+                        // アクションバーをクリア
+                        player.sendActionBar(Component.empty())
+                        
+                        // ゲームモード設定
+                        val targetGameMode = GameMode.valueOf(buildPhaseGameMode)
+                        player.gameMode = targetGameMode
+                        
+                        // 安全な位置にテレポート
+                        player.teleport(safeLocation)
+                        
+                        // 建築フェーズアイテム配布
+                        giveBuildPhaseItems(player, team)
+                        
+                        // BossBar追加
+                        bossBar?.addPlayer(player)
+                    }, playerIndex.toLong()) // 各プレイヤーに0.05秒の遅延
+                }
+            }, currentDelay)
+            currentDelay += 5L // バッチ間は0.25秒の遅延
+        }
+    }
+    
+    /**
+     * 戦闘フェーズ用のプレイヤーバッチテレポート処理
+     */
+    private fun processCombatTeleportBatch(players: List<Player>, team: Team, initialDelay: Long) {
+        if (players.isEmpty()) return
+        
+        val batchSize = 5
+        var currentDelay = initialDelay
+        
+        players.chunked(batchSize).forEachIndexed { batchIndex, batch ->
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                batch.forEachIndexed { playerIndex, player ->
+                    plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                        val safeLocation = getSafeSpawnLocation(team)
+                        
+                        // フェーズ間の移行ではインベントリをクリアしない
+                        // （ゲーム開始時のstart()で既にクリアされている）
+                        
+                        // 建築フェーズ専用アイテム（色付きコンクリート・ガラス）を削除
+                        removeTeamColoredBlocks(player)
+                        
+                        // ゲームモード変更
+                        player.gameMode = GameMode.SURVIVAL
+                        
+                        // 安全な位置にテレポート
+                        player.teleport(safeLocation)
+                        
+                        // 戦闘フェーズアイテム配布
+                        giveCombatPhaseItems(player, team)
+                        
+                        // タイトル表示
+                        player.showTitle(Title.title(
+                            Component.text(plugin.languageManager.getMessage("phase-extended.combat-start-title")),
+                            Component.text(plugin.languageManager.getMessage("phase-extended.combat-start-subtitle")),
+                            Title.Times.times(
+                                Duration.ofMillis(500),
+                                Duration.ofSeconds(3),
+                                Duration.ofMillis(500)
+                            )
+                        ))
+                    }, playerIndex.toLong())
+                }
+            }, currentDelay)
+            currentDelay += 5L
+        }
+    }
+    
+    /**
+     * 安全なスポーン位置を計算（プレイヤーが重ならないように分散）
+     */
+    private fun getSafeSpawnLocation(team: Team): Location {
+        val baseLocation = when (team) {
             Team.RED -> redSpawnLocation ?: redFlagLocation
             Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
+        } ?: throw IllegalStateException("No spawn location for team $team")
+        
+        val world = baseLocation.world
+        val baseX = baseLocation.blockX
+        val baseY = baseLocation.blockY
+        val baseZ = baseLocation.blockZ
+        
+        // スポーン地点から9ブロック範囲内でランダムに試行
+        val maxAttempts = 50
+        var attempts = 0
+        
+        while (attempts < maxAttempts) {
+            attempts++
+            
+            // -4〜+4の範囲でランダムな位置を選択（9x9の範囲）
+            val offsetX = (Math.random() * 9 - 4).toInt()
+            val offsetZ = (Math.random() * 9 - 4).toInt()
+            
+            val checkX = baseX + offsetX
+            val checkZ = baseZ + offsetZ
+            
+            // その位置で安全な高さを探す
+            for (checkY in (baseY - 5)..(baseY + 5)) {
+                if (checkY < 0 || checkY > world.maxHeight - 3) continue
+                
+                val floor = world.getBlockAt(checkX, checkY, checkZ)
+                val space1 = world.getBlockAt(checkX, checkY + 1, checkZ)
+                val space2 = world.getBlockAt(checkX, checkY + 2, checkZ)
+                
+                // 床が固体で、上2ブロックが空気の場合
+                if (floor.type.isSolid && !floor.type.name.contains("SLAB") && !floor.type.name.contains("STAIRS") &&
+                    !space1.type.isSolid && space1.type != Material.WATER && space1.type != Material.LAVA &&
+                    !space2.type.isSolid && space2.type != Material.WATER && space2.type != Material.LAVA) {
+                    
+                    // 足元が安定しているか確認（周囲にもブロックがあるか）
+                    var stableGround = 0
+                    for (dx in -1..1) {
+                        for (dz in -1..1) {
+                            val nearbyBlock = world.getBlockAt(checkX + dx, checkY, checkZ + dz)
+                            if (nearbyBlock.type.isSolid) {
+                                stableGround++
+                            }
+                        }
+                    }
+                    
+                    // 少なくとも5ブロック以上の安定した足場がある場合のみ使用
+                    if (stableGround >= 5) {
+                        val safeLocation = Location(world, checkX + 0.5, checkY + 1.0, checkZ + 0.5)
+                        
+                        // 相手チームの旗の方向を向くように設定
+                        val targetFlagLocation = when (team) {
+                            Team.RED -> blueFlagLocation
+                            Team.BLUE -> redFlagLocation
+                        }
+                        
+                        if (targetFlagLocation != null) {
+                            val direction = targetFlagLocation.toVector().subtract(safeLocation.toVector())
+                            val yaw = Math.toDegrees(Math.atan2(-direction.x, direction.z)).toFloat()
+                            safeLocation.yaw = yaw
+                            safeLocation.pitch = 0f
+                        }
+                        
+                        return safeLocation
+                    }
+                }
+            }
         }
         
-        if (spawnLocation != null) {
-            // 相手チームの旗の位置を取得
-            val targetFlagLocation = when (team) {
-                Team.RED -> blueFlagLocation
-                Team.BLUE -> redFlagLocation
+        // 安全な場所が見つからない場合は、元のベース位置を使用（ただし高さは調整）
+        val fallbackLocation = baseLocation.clone()
+        
+        // 最後の手段として、ベース位置の高さを調整
+        for (checkY in baseY..(baseY + 10)) {
+            if (checkY > world.maxHeight - 3) break
+            
+            val floor = world.getBlockAt(baseX, checkY, baseZ)
+            val space1 = world.getBlockAt(baseX, checkY + 1, baseZ)
+            val space2 = world.getBlockAt(baseX, checkY + 2, baseZ)
+            
+            if (floor.type.isSolid && !space1.type.isSolid && !space2.type.isSolid) {
+                fallbackLocation.y = checkY + 1.0
+                break
             }
-            
-            // スポーン位置をクローンして、向きを設定
-            val teleportLocation = spawnLocation.clone()
-            
-            if (targetFlagLocation != null) {
-                // 相手の旗の方向を向くように計算
-                val direction = targetFlagLocation.toVector().subtract(teleportLocation.toVector())
-                
-                // Yaw（水平方向の回転）を計算
-                val yaw = Math.toDegrees(Math.atan2(-direction.x, direction.z)).toFloat()
-                
-                // Pitch（上下の角度）は0に設定（水平に保つ）
-                teleportLocation.yaw = yaw
-                teleportLocation.pitch = 0f
-            }
-            
-            player.teleport(teleportLocation)
-        } else {
+        }
+        
+        plugin.logger.warning(plugin.languageManager.getMessage("log.safe-spawn-not-found", "team" to team.displayName, "attempts" to attempts.toString()))
+        return fallbackLocation
+    }
+    
+    private fun teleportToSpawn(player: Player, team: Team) {
+        try {
+            // 既にテレポート済みのプレイヤー数を考慮して安全な位置を計算
+            val safeLocation = getSafeSpawnLocation(team)
+            player.teleport(safeLocation)
+        } catch (e: IllegalStateException) {
             player.sendMessage(Component.text(plugin.languageManager.getMessage("spawn.not-set")))
             plugin.logger.warning("Game $name: No spawn location for team $team")
         }
@@ -1051,9 +1232,12 @@ class Game(
         player.inventory.setItem(0, infiniteConcrete)
         player.inventory.setItem(1, infiniteGlass)
         
-        // ショップアイテムをホットバー9番目に配置
-        val shopItem = plugin.shopManager.createShopItem()
-        player.inventory.setItem(8, shopItem)
+        // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
+        val existingItem = player.inventory.getItem(8)
+        if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
+            val shopItem = plugin.shopManager.createShopItem()
+            player.inventory.setItem(8, shopItem)
+        }
     }
     
     
@@ -1069,9 +1253,12 @@ class Game(
         
         // 戦闘フェーズではチームカラーブロックは配布しない
         
-        // ショップアイテムをホットバー9番目に配置
-        val shopItem = plugin.shopManager.createShopItem()
-        player.inventory.setItem(8, shopItem)
+        // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
+        val existingItem = player.inventory.getItem(8)
+        if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
+            val shopItem = plugin.shopManager.createShopItem()
+            player.inventory.setItem(8, shopItem)
+        }
     }
     
     private fun giveDefaultCombatItems(player: Player, team: Team) {
@@ -1080,9 +1267,12 @@ class Game(
         
         // 戦闘フェーズではチームカラーブロックは配布しない
         
-        // ショップアイテムをホットバー9番目に配置
-        val shopItem = plugin.shopManager.createShopItem()
-        player.inventory.setItem(8, shopItem)
+        // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
+        val existingItem = player.inventory.getItem(8)
+        if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
+            val shopItem = plugin.shopManager.createShopItem()
+            player.inventory.setItem(8, shopItem)
+        }
     }
     
     private fun giveColoredLeatherArmor(player: Player, team: Team) {
@@ -1809,20 +1999,31 @@ class Game(
         teleportToSpawn(player, team)
         
         // 戦闘フェーズではリスポーン時に装備を再配布しない（革防具は死亡時処理で保持される）
-        // 建築フェーズでは、リスポーン時にツールを復元する
+        // 建築フェーズでは、リスポーン時に基本アイテムを復元する
         when (phase) {
             GamePhase.BUILD -> {
-                // 建築ツールのみ再配布（防具とショップアイテムは既に持っているはず）
-                val buildEquipment = plugin.config.getConfigurationSection("initial-equipment.build-phase")
-                if (buildEquipment != null) {
-                    buildEquipment.getStringList("tools").forEach { toolStr ->
-                        val parts = toolStr.split(":")
-                        val material = Material.getMaterial(parts[0]) ?: return@forEach
-                        if (!player.inventory.contains(material)) {
-                            val amount = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                            player.inventory.addItem(ItemStack(material, amount))
-                        }
-                    }
+                // 建築フェーズの基本アイテムを再配布
+                // チームカラーブロック（無限）が失われていた場合のみ再配布
+                val hasConcrete = player.inventory.any { item ->
+                    item?.type == when(team) {
+                        Team.RED -> Material.RED_CONCRETE
+                        Team.BLUE -> Material.BLUE_CONCRETE
+                    } && item.itemMeta?.persistentDataContainer?.has(
+                        NamespacedKey(plugin, "infinite_block"),
+                        PersistentDataType.BOOLEAN
+                    ) == true
+                }
+                
+                if (!hasConcrete) {
+                    // 無限ブロックを再配布（ショップアイテムは重複配布しない）
+                    giveBuildPhaseItems(player, team)
+                }
+                
+                // ショップアイテムがない場合のみ再配布
+                val existingShopItem = player.inventory.getItem(8)
+                if (existingShopItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingShopItem)) {
+                    val shopItem = plugin.shopManager.createShopItem()
+                    player.inventory.setItem(8, shopItem)
                 }
                 
                 // 革防具がない場合は再配布（初回死亡時など）
@@ -2918,5 +3119,36 @@ class Game(
         val centerZ = (pos1.z + pos2.z) / 2.0
         
         mapCenterLocation = Location(world, centerX, centerY, centerZ)
+    }
+    
+    /**
+     * プレイヤーのインベントリから色付きコンクリート・ガラスを削除
+     */
+    private fun removeTeamColoredBlocks(player: Player) {
+        val inventory = player.inventory
+        val itemsToRemove = mutableListOf<Material>()
+        
+        // 削除対象のマテリアル
+        itemsToRemove.addAll(listOf(
+            Material.RED_CONCRETE,
+            Material.BLUE_CONCRETE,
+            Material.RED_STAINED_GLASS,
+            Material.BLUE_STAINED_GLASS
+        ))
+        
+        // インベントリから削除
+        for (i in 0 until inventory.size) {
+            val item = inventory.getItem(i)
+            if (item != null && itemsToRemove.contains(item.type)) {
+                // 無限ブロックマークがあるアイテムのみ削除
+                val meta = item.itemMeta
+                if (meta != null && meta.persistentDataContainer.has(
+                        NamespacedKey(plugin, "infinite_block"),
+                        PersistentDataType.BOOLEAN
+                    )) {
+                    inventory.setItem(i, null)
+                }
+            }
+        }
     }
 }

@@ -28,13 +28,15 @@ class GameSetupSession(private val plugin: Main) {
     ) {
         abstract fun handleInput(input: String)
         abstract fun showCurrentStep()
+        abstract val plugin: Main
     }
     
     // 作成セッション
     class CreateSession(
         player: Player,
         val config: GameConfig,
-        var step: Step = Step.RED_FLAG
+        var step: Step = Step.RED_FLAG,
+        override val plugin: Main
     ) : Session(player) {
         
         enum class Step {
@@ -57,7 +59,8 @@ class GameSetupSession(private val plugin: Main) {
         player: Player,
         val config: GameConfig,
         var menu: Menu = Menu.MAIN,
-        var waitingForInput: Boolean = false
+        var waitingForInput: Boolean = false,
+        override val plugin: Main
     ) : Session(player) {
         
         enum class Menu {
@@ -79,7 +82,8 @@ class GameSetupSession(private val plugin: Main) {
         player: Player,
         val gameName: String,
         val callback: (Boolean) -> Unit,
-        val onComplete: (Player) -> Unit
+        val onComplete: (Player) -> Unit,
+        override val plugin: Main
     ) : Session(player) {
         
         override fun handleInput(input: String) {
@@ -93,15 +97,15 @@ class GameSetupSession(private val plugin: Main) {
                     onComplete(player)
                 }
                 else -> {
-                    player.sendMessage(Component.text("Y または n で回答してください", NamedTextColor.YELLOW))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-answer"), NamedTextColor.YELLOW))
                     return
                 }
             }
         }
         
         override fun showCurrentStep() {
-            player.sendMessage(Component.text("マップ領域が設定されています。自動検出でゲームを作成しますか？", NamedTextColor.YELLOW))
-            player.sendMessage(Component.text("[Y/n] Yで自動作成、nで対話形式", NamedTextColor.GRAY))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.map-auto-detect-prompt"), NamedTextColor.YELLOW))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.map-auto-detect-hint"), NamedTextColor.GRAY))
         }
     }
     
@@ -110,12 +114,12 @@ class GameSetupSession(private val plugin: Main) {
      */
     fun startCreateSession(player: Player, gameName: String, world: org.bukkit.World): Boolean {
         if (!validateGameName(gameName)) {
-            player.sendMessage(Component.text("無効なゲーム名です。英数字とアンダースコアのみ使用可能です。", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-game-name"), NamedTextColor.RED))
             return false
         }
         
         val config = GameConfig(gameName, world)
-        val session = CreateSession(player, config)
+        val session = CreateSession(player, config, plugin = plugin)
         activeSessions[player.uniqueId] = session
         
         startTimeout(player.uniqueId)
@@ -127,7 +131,7 @@ class GameSetupSession(private val plugin: Main) {
      * 更新セッション開始
      */
     fun startUpdateSession(player: Player, config: GameConfig): Boolean {
-        val session = UpdateSession(player, config.copy())
+        val session = UpdateSession(player, config.copy(), plugin = plugin)
         activeSessions[player.uniqueId] = session
         
         startTimeout(player.uniqueId)
@@ -192,7 +196,7 @@ class GameSetupSession(private val plugin: Main) {
                 "7" -> startUpdateValue(session, UpdateSession.Menu.COMBAT_TIME)
                 "8" -> convertToCreateSession(session)
                 "9", "exit" -> cancelSession(session.player)
-                else -> session.player.sendMessage(Component.text("無効な選択です。", NamedTextColor.RED))
+                else -> session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-selection"), NamedTextColor.RED))
             }
         } else {
             // 値の更新
@@ -205,41 +209,41 @@ class GameSetupSession(private val plugin: Main) {
         
         when (session.step) {
             CreateSession.Step.RED_FLAG -> {
-                player.sendMessage(Component.text("=== ゲーム作成: ${session.config.name} ===", NamedTextColor.GOLD))
-                player.sendMessage(Component.text("赤チームの旗を設置する場所を見て 'set' と入力", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("=== ${plugin.languageManager.getMessage("setup.create-header", "name" to session.config.name)} ===", NamedTextColor.GOLD))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-flag-prompt"), NamedTextColor.YELLOW))
             }
             CreateSession.Step.RED_SPAWN -> {
-                player.sendMessage(Component.text("赤チームのスポーン地点を見て 'set' と入力", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("'skip' で旗位置にスポーン", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-spawn-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-to-flag"), NamedTextColor.GRAY))
             }
             CreateSession.Step.BLUE_FLAG -> {
-                player.sendMessage(Component.text("青チームの旗を設置する場所を見て 'set' と入力", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-flag-prompt"), NamedTextColor.YELLOW))
             }
             CreateSession.Step.BLUE_SPAWN -> {
-                player.sendMessage(Component.text("青チームのスポーン地点を見て 'set' と入力", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("'skip' で旗位置にスポーン", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-spawn-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-to-flag"), NamedTextColor.GRAY))
             }
             CreateSession.Step.BUILD_MODE -> {
-                player.sendMessage(Component.text("建築フェーズのゲームモード (ADVENTURE/SURVIVAL/CREATIVE)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("'skip' でADVENTURE", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-mode-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-adventure"), NamedTextColor.GRAY))
             }
             CreateSession.Step.BUILD_TIME -> {
-                player.sendMessage(Component.text("建築フェーズの時間（秒）", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("'skip' で300秒", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-300"), NamedTextColor.GRAY))
             }
             CreateSession.Step.COMBAT_TIME -> {
-                player.sendMessage(Component.text("戦闘フェーズの時間（秒）", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("'skip' で600秒", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-600"), NamedTextColor.GRAY))
             }
             CreateSession.Step.MATCH_MODE -> {
-                player.sendMessage(Component.text("マッチモード", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("first_to_x: 先取モード", NamedTextColor.WHITE))
-                player.sendMessage(Component.text("fixed_rounds: 固定回数モード", NamedTextColor.WHITE))
-                player.sendMessage(Component.text("'skip' でfirst_to_x", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-mode-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.first-to-x-mode"), NamedTextColor.WHITE))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.fixed-rounds-mode"), NamedTextColor.WHITE))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-first-to-x"), NamedTextColor.GRAY))
             }
             CreateSession.Step.MATCH_TARGET -> {
-                player.sendMessage(Component.text("ゲーム数を入力", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("'skip' で3", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.game-count-prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-3"), NamedTextColor.GRAY))
             }
             CreateSession.Step.COMPLETE -> completeCreate(session)
         }
@@ -248,16 +252,16 @@ class GameSetupSession(private val plugin: Main) {
     private fun showUpdateMenu(session: UpdateSession) {
         val player = session.player
         
-        player.sendMessage(Component.text("=== ゲーム更新: ${session.config.name} ===", NamedTextColor.GOLD))
-        player.sendMessage(Component.text("1. 赤チーム旗位置", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("2. 赤チームスポーン", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("3. 青チーム旗位置", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("4. 青チームスポーン", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("5. 建築ゲームモード", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("6. 建築時間", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("7. 戦闘時間", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("8. すべて更新", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("9. 終了", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("=== ${plugin.languageManager.getMessage("setup.update-header", "name" to session.config.name)} ===", NamedTextColor.GOLD))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-flag-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-spawn-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-flag-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-spawn-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-mode-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.update-all"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.exit-menu"), NamedTextColor.WHITE))
     }
     
     private fun setLocationFromView(session: CreateSession) {
@@ -265,7 +269,7 @@ class GameSetupSession(private val plugin: Main) {
         val targetBlock = player.getTargetBlock(null, 100)
         
         if (targetBlock == null || targetBlock.type == Material.AIR) {
-            player.sendMessage(Component.text("ブロックが見つかりません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.block-not-found"), NamedTextColor.RED))
             return
         }
         
@@ -277,22 +281,22 @@ class GameSetupSession(private val plugin: Main) {
         when (session.step) {
             CreateSession.Step.RED_FLAG -> {
                 session.config.redFlagLocation = location
-                player.sendMessage(Component.text("赤旗: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-flag-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
                 session.step = CreateSession.Step.RED_SPAWN
             }
             CreateSession.Step.RED_SPAWN -> {
                 session.config.redSpawnLocation = location
-                player.sendMessage(Component.text("赤スポーン: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-spawn-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
                 session.step = CreateSession.Step.BLUE_FLAG
             }
             CreateSession.Step.BLUE_FLAG -> {
                 session.config.blueFlagLocation = location
-                player.sendMessage(Component.text("青旗: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-flag-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
                 session.step = CreateSession.Step.BLUE_SPAWN
             }
             CreateSession.Step.BLUE_SPAWN -> {
                 session.config.blueSpawnLocation = location
-                player.sendMessage(Component.text("青スポーン: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-spawn-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
                 session.step = CreateSession.Step.BUILD_MODE
             }
             else -> return
@@ -304,7 +308,7 @@ class GameSetupSession(private val plugin: Main) {
     private fun skipCreateStep(session: CreateSession) {
         when (session.step) {
             CreateSession.Step.RED_FLAG, CreateSession.Step.BLUE_FLAG -> {
-                session.player.sendMessage(Component.text("旗位置は必須です", NamedTextColor.RED))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.flag-required"), NamedTextColor.RED))
             }
             CreateSession.Step.RED_SPAWN -> {
                 session.step = CreateSession.Step.BLUE_FLAG
@@ -342,13 +346,13 @@ class GameSetupSession(private val plugin: Main) {
         val mode = when (input.uppercase()) {
             "ADVENTURE", "SURVIVAL", "CREATIVE" -> input.uppercase()
             else -> {
-                session.player.sendMessage(Component.text("無効なモード", NamedTextColor.RED))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-mode"), NamedTextColor.RED))
                 return
             }
         }
         
         session.config.buildPhaseGameMode = mode
-        session.player.sendMessage(Component.text("建築モード: $mode", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-mode-set", "mode" to mode), NamedTextColor.GREEN))
         session.step = CreateSession.Step.BUILD_TIME
         showCreateStep(session)
     }
@@ -356,12 +360,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setBuildTime(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 10 || time > 3600) {
-            session.player.sendMessage(Component.text("10〜3600の間で入力", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.time-range-error"), NamedTextColor.RED))
             return
         }
         
         session.config.buildDuration = time
-        session.player.sendMessage(Component.text("建築時間: ${time}秒", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-set", "time" to time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.COMBAT_TIME
         showCreateStep(session)
     }
@@ -369,12 +373,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setCombatTime(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 10 || time > 3600) {
-            session.player.sendMessage(Component.text("10〜3600の間で入力", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.time-range-error"), NamedTextColor.RED))
             return
         }
         
         session.config.combatDuration = time
-        session.player.sendMessage(Component.text("戦闘時間: ${time}秒", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-set", "time" to time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.MATCH_MODE
         showCreateStep(session)
     }
@@ -382,12 +386,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setMatchMode(session: CreateSession, input: String) {
         val mode = MatchMode.fromString(input)
         if (mode == null) {
-            session.player.sendMessage(Component.text("無効なモード", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-mode"), NamedTextColor.RED))
             return
         }
         
         session.config.matchMode = mode
-        session.player.sendMessage(Component.text("マッチモード: ${mode.displayName}", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-mode-set", "mode" to mode.displayName), NamedTextColor.GREEN))
         session.step = CreateSession.Step.MATCH_TARGET
         showCreateStep(session)
     }
@@ -395,19 +399,19 @@ class GameSetupSession(private val plugin: Main) {
     private fun setMatchTarget(session: CreateSession, input: String) {
         val target = input.toIntOrNull()
         if (target == null || target < 1 || target > 10) {
-            session.player.sendMessage(Component.text("1〜10の間で入力", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-range-error"), NamedTextColor.RED))
             return
         }
         
         session.config.matchTarget = target
-        session.player.sendMessage(Component.text("目標: $target", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-target-set", "target" to target.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.COMPLETE
         showCreateStep(session)
     }
     
     private fun completeCreate(session: CreateSession) {
         if (!session.config.isValid()) {
-            session.player.sendMessage(Component.text("旗位置が必要です", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.flag-position-required"), NamedTextColor.RED))
             cancelSession(session.player)
             return
         }
@@ -415,7 +419,7 @@ class GameSetupSession(private val plugin: Main) {
         activeSessions.remove(session.player.uniqueId)
         onCreateComplete?.invoke(session.config)
         
-        session.player.sendMessage(Component.text("ゲーム '${session.config.name}' を作成しました！", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.game-created", "name" to session.config.name), NamedTextColor.GREEN))
     }
     
     private fun startUpdateLocation(session: UpdateSession, menu: UpdateSession.Menu) {
@@ -423,14 +427,14 @@ class GameSetupSession(private val plugin: Main) {
         session.waitingForInput = true
         
         val text = when (menu) {
-            UpdateSession.Menu.RED_FLAG -> "赤チームの旗位置"
-            UpdateSession.Menu.RED_SPAWN -> "赤チームのスポーン"
-            UpdateSession.Menu.BLUE_FLAG -> "青チームの旗位置"
-            UpdateSession.Menu.BLUE_SPAWN -> "青チームのスポーン"
+            UpdateSession.Menu.RED_FLAG -> plugin.languageManager.getMessage("setup.red-flag-location")
+            UpdateSession.Menu.RED_SPAWN -> plugin.languageManager.getMessage("setup.red-spawn-location")
+            UpdateSession.Menu.BLUE_FLAG -> plugin.languageManager.getMessage("setup.blue-flag-location")
+            UpdateSession.Menu.BLUE_SPAWN -> plugin.languageManager.getMessage("setup.blue-spawn-location")
             else -> return
         }
         
-        session.player.sendMessage(Component.text("$text を見て 'set' と入力", NamedTextColor.YELLOW))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.setting-prompt", "text" to text), NamedTextColor.YELLOW))
     }
     
     private fun startUpdateValue(session: UpdateSession, menu: UpdateSession.Menu) {
@@ -439,13 +443,13 @@ class GameSetupSession(private val plugin: Main) {
         
         when (menu) {
             UpdateSession.Menu.BUILD_MODE -> {
-                session.player.sendMessage(Component.text("ゲームモード (ADVENTURE/SURVIVAL/CREATIVE)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-mode-prompt"), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.BUILD_TIME -> {
-                session.player.sendMessage(Component.text("建築時間（秒）", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-prompt"), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.COMBAT_TIME -> {
-                session.player.sendMessage(Component.text("戦闘時間（秒）", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
             }
             else -> {}
         }
@@ -473,7 +477,7 @@ class GameSetupSession(private val plugin: Main) {
         val targetBlock = player.getTargetBlock(null, 100)
         
         if (targetBlock == null || targetBlock.type == Material.AIR) {
-            player.sendMessage(Component.text("ブロックが見つかりません", NamedTextColor.RED))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.block-not-found"), NamedTextColor.RED))
             return
         }
         
@@ -490,7 +494,7 @@ class GameSetupSession(private val plugin: Main) {
             else -> return
         }
         
-        player.sendMessage(Component.text("更新しました", NamedTextColor.GREEN))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -502,13 +506,13 @@ class GameSetupSession(private val plugin: Main) {
         val mode = when (input.uppercase()) {
             "ADVENTURE", "SURVIVAL", "CREATIVE" -> input.uppercase()
             else -> {
-                session.player.sendMessage(Component.text("無効なモード", NamedTextColor.RED))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-mode"), NamedTextColor.RED))
                 return
             }
         }
         
         session.config.buildPhaseGameMode = mode
-        session.player.sendMessage(Component.text("更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -519,12 +523,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateBuildTime(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 10 || time > 3600) {
-            session.player.sendMessage(Component.text("10〜3600の間で入力", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.time-range-error"), NamedTextColor.RED))
             return
         }
         
         session.config.buildDuration = time
-        session.player.sendMessage(Component.text("更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -535,12 +539,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateCombatTime(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 10 || time > 3600) {
-            session.player.sendMessage(Component.text("10〜3600の間で入力", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.time-range-error"), NamedTextColor.RED))
             return
         }
         
         session.config.combatDuration = time
-        session.player.sendMessage(Component.text("更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -550,14 +554,14 @@ class GameSetupSession(private val plugin: Main) {
     
     private fun convertToCreateSession(session: UpdateSession) {
         activeSessions.remove(session.player.uniqueId)
-        val createSession = CreateSession(session.player, session.config)
+        val createSession = CreateSession(session.player, session.config, plugin = plugin)
         activeSessions[session.player.uniqueId] = createSession
         showCreateStep(createSession)
     }
     
     private fun cancelSession(player: Player) {
         activeSessions.remove(player.uniqueId)
-        player.sendMessage(Component.text("キャンセルしました", NamedTextColor.YELLOW))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.cancelled"), NamedTextColor.YELLOW))
     }
     
     private fun startTimeout(uuid: UUID) {
@@ -565,7 +569,7 @@ class GameSetupSession(private val plugin: Main) {
             override fun run() {
                 val session = activeSessions[uuid] ?: return
                 if (System.currentTimeMillis() - session.startTime > 60000) {
-                    session.player.sendMessage(Component.text("タイムアウトしました", NamedTextColor.RED))
+                    session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.timeout"), NamedTextColor.RED))
                     cancelSession(session.player)
                 }
             }
@@ -586,9 +590,9 @@ class GameSetupSession(private val plugin: Main) {
      * マップ自動確認セッション開始
      */
     fun waitForMapAutoConfirm(player: Player, gameName: String, callback: (Boolean) -> Unit) {
-        val session = MapAutoConfirmSession(player, gameName, callback) { p ->
+        val session = MapAutoConfirmSession(player, gameName, callback, { p ->
             activeSessions.remove(p.uniqueId)
-        }
+        }, plugin = plugin)
         activeSessions[player.uniqueId] = session
         session.showCurrentStep()
         startTimeout(player.uniqueId)
