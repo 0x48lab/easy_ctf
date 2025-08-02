@@ -18,6 +18,15 @@ team:
   set-success: "&a{player}を{color}{team}チーム&aに設定しました！"
   set-notification: "&e管理者によって{color}{team}チーム&eに設定されました！"
   set-failed: "&c{player}のチーム設定に失敗しました。チームが満員の可能性があります。"
+  
+# Spectator Messages
+spectator:
+  joined: "&7観戦者として参加しました"
+  switched: "&7観戦者モードに切り替わりました"
+  mode-label: "&7[観戦モード]"
+  usage: "&e使用方法: /ctf spectator [ゲーム名]"
+  hint: "&7ゲームに参加していない場合はゲーム名を指定してください"
+  join-failed: "&c観戦者として参加できませんでした"
 
 # Command Messages
 command:

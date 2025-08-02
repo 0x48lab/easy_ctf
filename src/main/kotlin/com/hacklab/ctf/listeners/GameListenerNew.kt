@@ -97,6 +97,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val enemyFlagLocation = when (enemyTeam) {
                 Team.RED -> game.getRedFlagLocation()
                 Team.BLUE -> game.getBlueFlagLocation()
+                Team.SPECTATOR -> return  // Spectators cannot pick up flags
             } ?: return
             
             // 敵の旗に近づいたら取得（1.5ブロック以内）
@@ -105,6 +106,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 val enemyCarrier = when (enemyTeam) {
                     Team.RED -> game.redFlagCarrier
                     Team.BLUE -> game.blueFlagCarrier
+                    Team.SPECTATOR -> return  // Spectators cannot pick up flags
                 }
                 
                 if (enemyCarrier == null) {
@@ -112,6 +114,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     when (enemyTeam) {
                         Team.RED -> game.redFlagCarrier = player.uniqueId
                         Team.BLUE -> game.blueFlagCarrier = player.uniqueId
+                        Team.SPECTATOR -> return  // Spectators cannot pick up flags
                     }
                 
                     // ビーコンと色付きガラスを削除
@@ -145,6 +148,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val ownFlagLocation = when (playerTeam) {
             Team.RED -> game.getRedFlagLocation()
             Team.BLUE -> game.getBlueFlagLocation()
+            Team.SPECTATOR -> return  // Spectators cannot capture flags
         } ?: return
         
         if (playerLoc.distance(ownFlagLocation) < 3.0) {
@@ -156,6 +160,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val spawnLocation = when (playerTeam) {
                 Team.RED -> game.getRedSpawnLocation() ?: game.getRedFlagLocation()
                 Team.BLUE -> game.getBlueSpawnLocation() ?: game.getBlueFlagLocation()
+                Team.SPECTATOR -> return  // Spectators don't have shop access
             } ?: return
             
             val useRange = plugin.config.getDouble("shop.use-range", 15.0)
@@ -177,6 +182,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
         val player = event.entity as? Player ?: return
         val game = gameManager.getPlayerGame(player) ?: return
+        
+        // 観戦者はアイテム拾得不可
+        if (game.getPlayerTeam(player.uniqueId) == Team.SPECTATOR) {
+            event.isCancelled = true
+            return
+        }
         
         if (game.state != GameState.RUNNING || game.phase != GamePhase.COMBAT) return
         
@@ -393,6 +404,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     when (flagTeam) {
                         Team.RED -> game.redFlagCarrier = null
                         Team.BLUE -> game.blueFlagCarrier = null
+                        Team.SPECTATOR -> {}  // No-op for spectators
                     }
                     
                     // グロー効果を解除
@@ -402,6 +414,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val flagLocation = when (flagTeam) {
                         Team.RED -> game.getRedFlagLocation()
                         Team.BLUE -> game.getBlueFlagLocation()
+                        Team.SPECTATOR -> return  // Spectators don't have flags
                     } ?: return
                     
                     game.setupFlagBeacon(flagLocation, flagTeam)
@@ -493,6 +506,17 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val victimGame = gameManager.getPlayerGame(victim)
         val attackerGame = gameManager.getPlayerGame(attacker)
         
+        // 観戦者の攻撃/被攻撃を無効化
+        if (attackerGame != null && attackerGame.getPlayerTeam(attacker.uniqueId) == Team.SPECTATOR) {
+            event.isCancelled = true
+            return
+        }
+        
+        if (victimGame != null && victimGame.getPlayerTeam(victim.uniqueId) == Team.SPECTATOR) {
+            event.isCancelled = true
+            return
+        }
+        
         // 異なるゲームのプレイヤー同士はダメージなし
         if (victimGame != attackerGame) {
             event.isCancelled = true
@@ -551,6 +575,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val game = gameManager.getPlayerGame(player) ?: return
+        
+        // 観戦者はブロック破壊不可
+        if (game.getPlayerTeam(player.uniqueId) == Team.SPECTATOR) {
+            event.isCancelled = true
+            return
+        }
         
         // デバッグログ
         plugin.logger.info("[BlockBreak] Player: ${player.name}, GameState: ${game.state}, Phase: ${game.phase}, BuildPhaseGameMode: ${game.buildPhaseGameMode}, PlayerGameMode: ${player.gameMode}")
@@ -630,6 +660,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
     fun onBlockPlace(event: BlockPlaceEvent) {
         val player = event.player
         val game = gameManager.getPlayerGame(player) ?: return
+        
+        // 観戦者はブロック設置不可
+        if (game.getPlayerTeam(player.uniqueId) == Team.SPECTATOR) {
+            event.isCancelled = true
+            return
+        }
         
         // デバッグログ
         plugin.logger.info("[BlockPlace] Player: ${player.name}, GameState: ${game.state}, Phase: ${game.phase}, BuildPhaseGameMode: ${game.buildPhaseGameMode}, PlayerGameMode: ${player.gameMode}")
@@ -1078,6 +1114,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val spawnLocation = when (team) {
                 Team.RED -> game.getRedSpawnLocation()
                 Team.BLUE -> game.getBlueSpawnLocation()
+                Team.SPECTATOR -> game.getCenterLocation()
             }
             if (spawnLocation != null) {
                 event.respawnLocation = spawnLocation

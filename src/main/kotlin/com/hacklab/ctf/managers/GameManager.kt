@@ -260,6 +260,32 @@ class GameManager(private val plugin: Main) {
     }
     
     /**
+     * プレイヤーを観戦者として追加
+     */
+    fun addPlayerAsSpectator(player: Player, gameName: String): Boolean {
+        val game = games[gameName.lowercase()] ?: return false
+        
+        // 既に参加している場合は何もしない
+        if (getPlayerGame(player) == game) {
+            // 既にプレイヤーとして参加している場合は観戦者に切り替え
+            game.switchToSpectator(player)
+            return true
+        }
+        
+        // 他のゲームから削除
+        val currentGame = getPlayerGame(player)
+        currentGame?.let { removePlayerFromGame(player) }
+        
+        if (game.addSpectator(player)) {
+            playerGames[player.uniqueId] = gameName.lowercase()
+            matches[gameName.lowercase()]?.players?.put(player.uniqueId, player)
+            return true
+        }
+        
+        return false
+    }
+    
+    /**
      * プレイヤーをゲームから削除
      */
     fun removePlayerFromGame(player: Player) {
@@ -394,6 +420,7 @@ class GameManager(private val plugin: Main) {
         val winnerText = when (winner) {
             Team.RED -> "§c赤チームの勝利！"
             Team.BLUE -> "§9青チームの勝利！"
+            Team.SPECTATOR -> "§e引き分け！"  // Spectators cannot win, treat as draw
             null -> "§e引き分け！"
         }
         
@@ -408,6 +435,7 @@ class GameManager(private val plugin: Main) {
                 val matchWinnerText = when (matchWinner) {
                     Team.RED -> "§c§l赤チームがマッチに勝利！"
                     Team.BLUE -> "§9§l青チームがマッチに勝利！"
+                    Team.SPECTATOR -> "§e§lマッチは引き分け！"  // Spectators cannot win, treat as draw
                     null -> "§e§lマッチは引き分け！"
                 }
                 player.sendMessage("")
@@ -468,13 +496,14 @@ class GameManager(private val plugin: Main) {
                     }
                     3 -> {
                         game.getAllPlayers().forEach { player ->
+                            player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
                                 Component.text("3", NamedTextColor.YELLOW),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(0),
-                                    java.time.Duration.ofMillis(1000),
-                                    java.time.Duration.ofMillis(0)
+                                    java.time.Duration.ofMillis(100),
+                                    java.time.Duration.ofMillis(700),
+                                    java.time.Duration.ofMillis(200)
                                 )
                             ))
                             player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f)
@@ -482,13 +511,14 @@ class GameManager(private val plugin: Main) {
                     }
                     2 -> {
                         game.getAllPlayers().forEach { player ->
+                            player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
                                 Component.text("2", NamedTextColor.GOLD),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(0),
-                                    java.time.Duration.ofMillis(1000),
-                                    java.time.Duration.ofMillis(0)
+                                    java.time.Duration.ofMillis(100),
+                                    java.time.Duration.ofMillis(700),
+                                    java.time.Duration.ofMillis(200)
                                 )
                             ))
                             player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f)
@@ -496,13 +526,14 @@ class GameManager(private val plugin: Main) {
                     }
                     1 -> {
                         game.getAllPlayers().forEach { player ->
+                            player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
                                 Component.text("1", NamedTextColor.RED),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(0),
-                                    java.time.Duration.ofMillis(1000),
-                                    java.time.Duration.ofMillis(0)
+                                    java.time.Duration.ofMillis(100),
+                                    java.time.Duration.ofMillis(700),
+                                    java.time.Duration.ofMillis(200)
                                 )
                             ))
                             player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f)
@@ -510,12 +541,13 @@ class GameManager(private val plugin: Main) {
                     }
                     0 -> {
                         game.getAllPlayers().forEach { player ->
+                            player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
                                 Component.text("START!", NamedTextColor.GREEN),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(0),
-                                    java.time.Duration.ofMillis(500),
+                                    java.time.Duration.ofMillis(200),
+                                    java.time.Duration.ofMillis(1000),
                                     java.time.Duration.ofMillis(500)
                                 )
                             ))

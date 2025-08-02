@@ -297,6 +297,7 @@ class ShopManager(private val plugin: Main) {
         val scoreDiff = when (team) {
             Team.RED -> game.getBlueScore() - game.getRedScore()
             Team.BLUE -> game.getRedScore() - game.getBlueScore()
+            Team.SPECTATOR -> 0  // Spectators get no discount
         }
         
         if (scoreDiff <= 0) return item.basePrice
