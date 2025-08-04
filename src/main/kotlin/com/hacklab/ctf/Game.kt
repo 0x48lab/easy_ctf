@@ -1337,6 +1337,23 @@ class Game(
             inv.addItem(pickaxe)
         }
         
+        // ダイヤシャベル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasInitialItem(player, InitialItemType.SHOVEL, Material.DIAMOND_SHOVEL)) {
+            val shovel = ItemStack(Material.DIAMOND_SHOVEL).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤシャベル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                }
+            }
+            markAsInitialItem(shovel, InitialItemType.SHOVEL)
+            inv.addItem(shovel)
+        }
+        
         // チームカラーブロック（無限）をスロット0と1に固定
         val infiniteConcrete = ItemStack(
             when (team) {
@@ -1419,6 +1436,23 @@ class Game(
             inv.addItem(pickaxe)
         }
         
+        // ダイヤシャベル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasInitialItem(player, InitialItemType.SHOVEL, Material.DIAMOND_SHOVEL)) {
+            val shovel = ItemStack(Material.DIAMOND_SHOVEL).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤシャベル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                }
+            }
+            markAsInitialItem(shovel, InitialItemType.SHOVEL)
+            inv.addItem(shovel)
+        }
+        
         // チーム識別用にプレイヤー名を色付け
         player.setDisplayName("${team.getChatColor()}${player.name}")
         player.setPlayerListName("${team.getChatColor()}${player.name}")
@@ -1461,6 +1495,7 @@ class Game(
      */
     private enum class InitialItemType(val key: String) {
         PICKAXE("initial_pickaxe"),
+        SHOVEL("initial_shovel"),
         LEATHER_ARMOR("initial_armor"),
         SHOP_EMERALD("initial_shop")
     }

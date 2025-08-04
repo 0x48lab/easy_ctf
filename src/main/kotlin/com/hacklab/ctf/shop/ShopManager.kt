@@ -81,8 +81,6 @@ class ShopManager(private val plugin: Main) {
         // 特殊アイテム
         
         // 建築用ツール（建築フェーズのみ）
-        shopItems.add(ShopItem("wooden_shovel", "§6木のシャベル", Material.WOODEN_SHOVEL, 1, 8, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.BUILD)))
         shopItems.add(ShopItem("shears", "§fハサミ", Material.SHEARS, 1, 15, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.BUILD)))
         
