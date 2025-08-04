@@ -13,7 +13,9 @@ import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
+import org.bukkit.persistence.PersistentDataType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -30,8 +32,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
-import org.bukkit.persistence.PersistentDataType
 import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.ItemDespawnEvent
@@ -346,6 +346,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             }
                             shopManager.isShopItem(item) -> {
                                 // ショップアイテム（エメラルド）は保持
+                                itemsToKeep.add(item.clone())
+                            }
+                            item.itemMeta?.persistentDataContainer?.has(
+                                NamespacedKey(plugin, "no_drop"),
+                                PersistentDataType.BOOLEAN
+                            ) == true -> {
+                                // ドロップ不可アイテムは保持
                                 itemsToKeep.add(item.clone())
                             }
                             else -> {

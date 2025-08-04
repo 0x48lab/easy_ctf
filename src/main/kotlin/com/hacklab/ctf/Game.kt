@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.*
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.block.BlockFace
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
@@ -1319,6 +1320,40 @@ class Game(
         // 革の防具（チームカラー）
         giveColoredLeatherArmor(player, team)
         
+        // ダイヤピッケル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasInitialItem(player, InitialItemType.PICKAXE, Material.DIAMOND_PICKAXE)) {
+            val pickaxe = ItemStack(Material.DIAMOND_PICKAXE).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤピッケル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                }
+            }
+            markAsInitialItem(pickaxe, InitialItemType.PICKAXE)
+            inv.addItem(pickaxe)
+        }
+        
+        // ダイヤシャベル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasInitialItem(player, InitialItemType.SHOVEL, Material.DIAMOND_SHOVEL)) {
+            val shovel = ItemStack(Material.DIAMOND_SHOVEL).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤシャベル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                }
+            }
+            markAsInitialItem(shovel, InitialItemType.SHOVEL)
+            inv.addItem(shovel)
+        }
+        
         // チームカラーブロック（無限）をスロット0と1に固定
         val infiniteConcrete = ItemStack(
             when (team) {
@@ -1370,9 +1405,9 @@ class Game(
         player.inventory.setItem(1, infiniteGlass)
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
-        val existingItem = player.inventory.getItem(8)
-        if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
+        if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
             val shopItem = plugin.shopManager.createShopItem()
+            markAsInitialItem(shopItem, InitialItemType.SHOP_EMERALD)
             player.inventory.setItem(8, shopItem)
         }
     }
@@ -1384,6 +1419,40 @@ class Game(
         // 革の防具（チームカラー）を再装備（防具をリセットして確実に着用）
         giveColoredLeatherArmor(player, team)
         
+        // ダイヤピッケル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasInitialItem(player, InitialItemType.PICKAXE, Material.DIAMOND_PICKAXE)) {
+            val pickaxe = ItemStack(Material.DIAMOND_PICKAXE).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤピッケル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                }
+            }
+            markAsInitialItem(pickaxe, InitialItemType.PICKAXE)
+            inv.addItem(pickaxe)
+        }
+        
+        // ダイヤシャベル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasInitialItem(player, InitialItemType.SHOVEL, Material.DIAMOND_SHOVEL)) {
+            val shovel = ItemStack(Material.DIAMOND_SHOVEL).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤシャベル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                }
+            }
+            markAsInitialItem(shovel, InitialItemType.SHOVEL)
+            inv.addItem(shovel)
+        }
+        
         // チーム識別用にプレイヤー名を色付け
         player.setDisplayName("${team.getChatColor()}${player.name}")
         player.setPlayerListName("${team.getChatColor()}${player.name}")
@@ -1391,9 +1460,9 @@ class Game(
         // 戦闘フェーズではチームカラーブロックは配布しない
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
-        val existingItem = player.inventory.getItem(8)
-        if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
+        if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
             val shopItem = plugin.shopManager.createShopItem()
+            markAsInitialItem(shopItem, InitialItemType.SHOP_EMERALD)
             player.inventory.setItem(8, shopItem)
         }
     }
@@ -1405,16 +1474,82 @@ class Game(
         // 戦闘フェーズではチームカラーブロックは配布しない
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
-        val existingItem = player.inventory.getItem(8)
-        if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
+        if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
             val shopItem = plugin.shopManager.createShopItem()
+            markAsInitialItem(shopItem, InitialItemType.SHOP_EMERALD)
             player.inventory.setItem(8, shopItem)
         }
+    }
+    
+    private fun isLeatherArmor(material: Material): Boolean {
+        return material in listOf(
+            Material.LEATHER_HELMET,
+            Material.LEATHER_CHESTPLATE,
+            Material.LEATHER_LEGGINGS,
+            Material.LEATHER_BOOTS
+        )
+    }
+    
+    /**
+     * 初期配布アイテムのタイプを定義
+     */
+    private enum class InitialItemType(val key: String) {
+        PICKAXE("initial_pickaxe"),
+        SHOVEL("initial_shovel"),
+        LEATHER_ARMOR("initial_armor"),
+        SHOP_EMERALD("initial_shop")
+    }
+    
+    /**
+     * プレイヤーが特定の初期アイテムを既に持っているかチェック
+     */
+    private fun hasInitialItem(player: Player, itemType: InitialItemType, material: Material? = null): Boolean {
+        val key = NamespacedKey(plugin, itemType.key)
+        
+        return when (itemType) {
+            InitialItemType.LEATHER_ARMOR -> {
+                // 革防具の場合は装備スロットもチェック
+                val equipment = player.equipment ?: return false
+                listOf(equipment.helmet, equipment.chestplate, equipment.leggings, equipment.boots).any { item ->
+                    item != null && isLeatherArmor(item.type) &&
+                    item.itemMeta?.persistentDataContainer?.has(key, PersistentDataType.BOOLEAN) == true
+                }
+            }
+            else -> {
+                // その他のアイテムはインベントリをチェック
+                player.inventory.contents.any { item ->
+                    item != null &&
+                    (material == null || item.type == material) &&
+                    item.itemMeta?.persistentDataContainer?.has(key, PersistentDataType.BOOLEAN) == true
+                }
+            }
+        }
+    }
+    
+    /**
+     * アイテムに初期配布マークを付ける
+     */
+    private fun markAsInitialItem(item: ItemStack, itemType: InitialItemType): ItemStack {
+        item.itemMeta = item.itemMeta?.apply {
+            val key = NamespacedKey(plugin, itemType.key)
+            persistentDataContainer.set(key, PersistentDataType.BOOLEAN, true)
+            
+            // ドロップ不可フラグも同時に設定
+            persistentDataContainer.set(
+                NamespacedKey(plugin, "no_drop"),
+                PersistentDataType.BOOLEAN,
+                true
+            )
+        }
+        return item
     }
     
     private fun giveColoredLeatherArmor(player: Player, team: Team) {
         // 観戦者には防具を配布しない
         if (team == Team.SPECTATOR) return
+        
+        // 既に初期配布の革防具を持っている場合はスキップ
+        if (hasInitialItem(player, InitialItemType.LEATHER_ARMOR)) return
         
         val color = when (team) {
             Team.RED -> org.bukkit.Color.RED
@@ -1428,6 +1563,7 @@ class Game(
         helmetMeta?.setColor(color)
         helmetMeta?.isUnbreakable = true
         helmet.itemMeta = helmetMeta
+        markAsInitialItem(helmet, InitialItemType.LEATHER_ARMOR)
         
         // 革のチェストプレート
         val chestplate = ItemStack(Material.LEATHER_CHESTPLATE)
@@ -1435,6 +1571,7 @@ class Game(
         chestMeta?.setColor(color)
         chestMeta?.isUnbreakable = true
         chestplate.itemMeta = chestMeta
+        markAsInitialItem(chestplate, InitialItemType.LEATHER_ARMOR)
         
         // 革のレギンス
         val leggings = ItemStack(Material.LEATHER_LEGGINGS)
@@ -1442,6 +1579,7 @@ class Game(
         legMeta?.setColor(color)
         legMeta?.isUnbreakable = true
         leggings.itemMeta = legMeta
+        markAsInitialItem(leggings, InitialItemType.LEATHER_ARMOR)
         
         // 革のブーツ
         val boots = ItemStack(Material.LEATHER_BOOTS)
@@ -1449,6 +1587,7 @@ class Game(
         bootMeta?.setColor(color)
         bootMeta?.isUnbreakable = true
         boots.itemMeta = bootMeta
+        markAsInitialItem(boots, InitialItemType.LEATHER_ARMOR)
         
         // 装備
         player.inventory.helmet = helmet
