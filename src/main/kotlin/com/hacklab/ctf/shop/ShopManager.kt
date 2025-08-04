@@ -83,8 +83,6 @@ class ShopManager(private val plugin: Main) {
         
         
         // 特殊アイテム
-        shopItems.add(ShopItem("water_bucket", "§9水バケツ", Material.WATER_BUCKET, 1, 15, ShopCategory.BLOCKS))
-        shopItems.add(ShopItem("lava_bucket", "§c溶岩バケツ", Material.LAVA_BUCKET, 1, 20, ShopCategory.BLOCKS))
         
         // 建築用ツール（建築フェーズのみ）
         shopItems.add(ShopItem("wooden_pickaxe", "§6木のツルハシ", Material.WOODEN_PICKAXE, 1, 10, ShopCategory.WEAPONS,

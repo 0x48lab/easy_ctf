@@ -3082,7 +3082,7 @@ class Game(
             Material.REDSTONE_TORCH, Material.STONE_BUTTON, Material.LEVER,
             Material.STONE_PRESSURE_PLATE, Material.PISTON, Material.STICKY_PISTON,
             Material.REDSTONE, Material.REDSTONE_BLOCK, Material.HOPPER,
-            Material.DISPENSER, Material.TNT, Material.WATER_BUCKET, Material.LAVA_BUCKET
+            Material.DISPENSER, Material.TNT
         )
     }
     
