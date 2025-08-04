@@ -32,8 +32,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
-import org.bukkit.persistence.PersistentDataType
 import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.ItemDespawnEvent
