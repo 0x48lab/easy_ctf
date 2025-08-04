@@ -18,6 +18,15 @@ team:
   set-success: "&aSuccessfully set {player} to {color}{team} Team&a!"
   set-notification: "&eAn administrator has set you to the {color}{team} Team&e!"
   set-failed: "&cFailed to set team for {player}. The team might be full."
+  
+# Spectator Messages
+spectator:
+  joined: "&7Joined as spectator"
+  switched: "&7Switched to spectator mode"
+  mode-label: "&7[Spectator Mode]"
+  usage: "&eUsage: /ctf spectator [game_name]"
+  hint: "&7Please specify game name if not currently in a game"
+  join-failed: "&cFailed to join as spectator"
 
 # Command Messages
 command:

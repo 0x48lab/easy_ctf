@@ -40,6 +40,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "join" -> return handleJoinCommand(sender, args)
             "leave" -> return handleLeaveCommand(sender)
             "team" -> return handleTeamCommand(sender, args)
+            "spectator" -> return handleSpectatorCommand(sender, args)
             "setflag" -> return handleSetFlagCommand(sender, args)
             "setspawn" -> return handleSetSpawnCommand(sender, args)
             "status" -> return handleStatusCommand(sender, args)
@@ -269,13 +270,13 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         if (matchWrapper != null && matchWrapper.isActive) {
-            // マッチを停止
-            game.stop()
+            // マッチを強制停止
+            game.stop(forceStop = true)
             matchWrapper.isActive = false
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-stopped", "name" to gameName), NamedTextColor.GREEN))
         } else if (game.state != GameState.WAITING) {
-            // 単一ゲームを停止
-            game.stop()
+            // 単一ゲームを強制停止
+            game.stop(forceStop = true)
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-stopped", "name" to gameName), NamedTextColor.GREEN))
         } else {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-running", "name" to gameName), NamedTextColor.RED))
@@ -422,6 +423,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             when (currentTeam) {
                 com.hacklab.ctf.utils.Team.RED -> currentGame.redTeam.remove(sender.uniqueId)
                 com.hacklab.ctf.utils.Team.BLUE -> currentGame.blueTeam.remove(sender.uniqueId)
+                com.hacklab.ctf.utils.Team.SPECTATOR -> currentGame.spectators.remove(sender.uniqueId)
             }
         }
         
@@ -429,6 +431,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         when (newTeam) {
             com.hacklab.ctf.utils.Team.RED -> currentGame.redTeam.add(sender.uniqueId)
             com.hacklab.ctf.utils.Team.BLUE -> currentGame.blueTeam.add(sender.uniqueId)
+            com.hacklab.ctf.utils.Team.SPECTATOR -> {} // 観戦者への変更はspectatorコマンドで行う
         }
         
         // メッセージ送信
@@ -441,8 +444,62 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
         }
         
+        // タブリストの色を更新
+        currentGame.updatePlayerTabColor(sender)
+        
         // スコアボード更新
         currentGame.updateScoreboard()
+        
+        return true
+    }
+    
+    private fun handleSpectatorCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (sender !is Player) {
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
+            return true
+        }
+        
+        // 引数なしでも処理可能（現在参加しているゲームで観戦者になる）
+        val gameName: String? = if (args.size >= 2) {
+            args[1]
+        } else {
+            // 現在参加しているゲームを取得
+            val currentGame = gameManager.getPlayerGame(sender)
+            currentGame?.name
+        }
+        
+        if (gameName == null) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("spectator.usage"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("spectator.hint"), NamedTextColor.GRAY))
+            return true
+        }
+        
+        val game = gameManager.getGame(gameName)
+        if (game == null) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
+            return true
+        }
+        
+        // 既に他のゲームに参加している場合の処理
+        val currentGame = gameManager.getPlayerGame(sender)
+        if (currentGame != null && currentGame.name != gameName) {
+            gameManager.removePlayerFromGame(sender)
+        }
+        
+        // 観戦者として追加
+        if (gameManager.addPlayerAsSpectator(sender, gameName)) {
+            // メッセージはGame側で表示されるため、ここでは追加処理のみ
+            
+            // ゲームが実行中の場合、適切な位置にテレポート
+            if (game.state == GameState.RUNNING || game.state == GameState.STARTING) {
+                val centerLocation = game.getCenterLocation()
+                if (centerLocation != null) {
+                    sender.teleport(centerLocation)
+                }
+            }
+        } else {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("spectator.join-failed"), NamedTextColor.RED))
+        }
         
         return true
     }
@@ -706,6 +763,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("/ctf join <ゲーム名> - ゲーム参加", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf leave - ゲーム退出", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf team [red|blue] - チーム確認・変更", NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text("/ctf spectator [ゲーム名] - 観戦者として参加", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf status [ゲーム名] - ゲーム状態確認", NamedTextColor.YELLOW))
         sender.sendMessage(Component.text("/ctf info <ゲーム名> - ゲーム設定の詳細表示", NamedTextColor.YELLOW))
     }
@@ -715,7 +773,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args.size) {
             1 -> {
-                val subcommands = mutableListOf("list", "join", "leave", "team", "status", "info")
+                val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info")
                 if (sender.hasPermission("ctf.admin")) {
                     subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap"))
                 }
@@ -723,7 +781,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
             2 -> {
                 when (args[0].lowercase()) {
-                    "update", "delete", "start", "stop", "join", "status", "info", "setflag", "setspawn", "setpos1", "setpos2", "savemap" -> {
+                    "update", "delete", "start", "stop", "join", "spectator", "status", "info", "setflag", "setspawn", "setpos1", "setpos2", "savemap" -> {
                         completions.addAll(gameManager.getAllGames().keys.filter { it.startsWith(args[1].lowercase()) })
                     }
                     "team" -> {
