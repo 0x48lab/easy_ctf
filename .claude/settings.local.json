@@ -22,7 +22,8 @@
       "Bash(done)",
       "Bash(git config:*)",
       "Bash(cat:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }
