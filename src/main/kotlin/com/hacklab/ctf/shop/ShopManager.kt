@@ -65,10 +65,6 @@ class ShopManager(private val plugin: Main) {
             lore = listOf("§7ダメージ増加 III", "§7ノックバック I")
         ))
         
-        shopItems.add(ShopItem("unbreaking_pickaxe", "§b耐久無限ツルハシ", Material.IRON_PICKAXE, 1, 40, ShopCategory.WEAPONS,
-            unbreakable = true,
-            lore = listOf("§7壊れない")
-        ))
         
         // 消耗品
         shopItems.add(ShopItem("bread", "§6パン x8", Material.BREAD, 8, 5, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
@@ -85,10 +81,6 @@ class ShopManager(private val plugin: Main) {
         // 特殊アイテム
         
         // 建築用ツール（建築フェーズのみ）
-        shopItems.add(ShopItem("wooden_pickaxe", "§6木のツルハシ", Material.WOODEN_PICKAXE, 1, 10, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.BUILD)))
-        shopItems.add(ShopItem("stone_pickaxe", "§7石のツルハシ", Material.STONE_PICKAXE, 1, 15, ShopCategory.WEAPONS,
-            availablePhases = setOf(GamePhase.BUILD)))
         shopItems.add(ShopItem("wooden_shovel", "§6木のシャベル", Material.WOODEN_SHOVEL, 1, 8, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.BUILD)))
         shopItems.add(ShopItem("shears", "§fハサミ", Material.SHEARS, 1, 15, ShopCategory.WEAPONS,

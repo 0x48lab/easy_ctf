@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.*
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.block.BlockFace
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
@@ -1319,6 +1320,34 @@ class Game(
         // 革の防具（チームカラー）
         giveColoredLeatherArmor(player, team)
         
+        // ダイヤピッケル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasEfficiencyPickaxe(player)) {
+            val pickaxe = ItemStack(Material.DIAMOND_PICKAXE).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤピッケル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                    // ドロップ不可フラグ
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "no_drop"),
+                        PersistentDataType.BOOLEAN,
+                        true
+                    )
+                    // 初期装備フラグ
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "initial_pickaxe"),
+                        PersistentDataType.BOOLEAN,
+                        true
+                    )
+                }
+            }
+            inv.addItem(pickaxe)
+        }
+        
         // チームカラーブロック（無限）をスロット0と1に固定
         val infiniteConcrete = ItemStack(
             when (team) {
@@ -1384,6 +1413,34 @@ class Game(
         // 革の防具（チームカラー）を再装備（防具をリセットして確実に着用）
         giveColoredLeatherArmor(player, team)
         
+        // ダイヤピッケル（効率エンチャント付き）を配布（重複チェック）
+        if (!hasEfficiencyPickaxe(player)) {
+            val pickaxe = ItemStack(Material.DIAMOND_PICKAXE).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text("§b§l効率的なダイヤピッケル"))
+                    lore(listOf(
+                        Component.text("§7死亡時にドロップしません"),
+                        Component.text("§7初期装備")
+                    ))
+                    addEnchant(Enchantment.EFFICIENCY, 3, false)
+                    isUnbreakable = true
+                    // ドロップ不可フラグ
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "no_drop"),
+                        PersistentDataType.BOOLEAN,
+                        true
+                    )
+                    // 初期装備フラグ
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "initial_pickaxe"),
+                        PersistentDataType.BOOLEAN,
+                        true
+                    )
+                }
+            }
+            inv.addItem(pickaxe)
+        }
+        
         // チーム識別用にプレイヤー名を色付け
         player.setDisplayName("${team.getChatColor()}${player.name}")
         player.setPlayerListName("${team.getChatColor()}${player.name}")
@@ -1409,6 +1466,16 @@ class Game(
         if (existingItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingItem)) {
             val shopItem = plugin.shopManager.createShopItem()
             player.inventory.setItem(8, shopItem)
+        }
+    }
+    
+    private fun hasEfficiencyPickaxe(player: Player): Boolean {
+        return player.inventory.contents.any { item ->
+            item?.type == Material.DIAMOND_PICKAXE &&
+            item.itemMeta?.persistentDataContainer?.has(
+                NamespacedKey(plugin, "initial_pickaxe"),
+                PersistentDataType.BOOLEAN
+            ) == true
         }
     }
     
