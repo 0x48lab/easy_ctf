@@ -53,6 +53,22 @@ class ConfigManager(private val plugin: Main) {
             yaml.set("teams.blue.spawn-location.z", it.z)
         }
         
+        // 複数スポーン地点の保存
+        if (config.redSpawnLocations.isNotEmpty()) {
+            config.redSpawnLocations.forEachIndexed { index, location ->
+                yaml.set("teams.red.spawn-locations.$index.x", location.x)
+                yaml.set("teams.red.spawn-locations.$index.y", location.y)
+                yaml.set("teams.red.spawn-locations.$index.z", location.z)
+            }
+        }
+        if (config.blueSpawnLocations.isNotEmpty()) {
+            config.blueSpawnLocations.forEachIndexed { index, location ->
+                yaml.set("teams.blue.spawn-locations.$index.x", location.x)
+                yaml.set("teams.blue.spawn-locations.$index.y", location.y)
+                yaml.set("teams.blue.spawn-locations.$index.z", location.z)
+            }
+        }
+        
         // ゲーム設定
         yaml.set("settings.auto-start-enabled", config.autoStartEnabled)
         yaml.set("settings.min-players", config.minPlayers)
@@ -127,6 +143,32 @@ class ConfigManager(private val plugin: Main) {
                 yaml.getDouble("teams.blue.spawn-location.y"),
                 yaml.getDouble("teams.blue.spawn-location.z")
             )
+        }
+        
+        // 複数スポーン地点の読み込み
+        if (yaml.contains("teams.red.spawn-locations")) {
+            val redSpawnSection = yaml.getConfigurationSection("teams.red.spawn-locations")
+            redSpawnSection?.getKeys(false)?.forEach { key ->
+                val location = Location(
+                    world,
+                    yaml.getDouble("teams.red.spawn-locations.$key.x"),
+                    yaml.getDouble("teams.red.spawn-locations.$key.y"),
+                    yaml.getDouble("teams.red.spawn-locations.$key.z")
+                )
+                config.redSpawnLocations.add(location)
+            }
+        }
+        if (yaml.contains("teams.blue.spawn-locations")) {
+            val blueSpawnSection = yaml.getConfigurationSection("teams.blue.spawn-locations")
+            blueSpawnSection?.getKeys(false)?.forEach { key ->
+                val location = Location(
+                    world,
+                    yaml.getDouble("teams.blue.spawn-locations.$key.x"),
+                    yaml.getDouble("teams.blue.spawn-locations.$key.y"),
+                    yaml.getDouble("teams.blue.spawn-locations.$key.z")
+                )
+                config.blueSpawnLocations.add(location)
+            }
         }
         
         // ゲーム設定の読み込み

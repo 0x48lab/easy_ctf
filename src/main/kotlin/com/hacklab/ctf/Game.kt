@@ -1210,11 +1210,14 @@ class Game(
     
     /**
      * 安全なスポーン位置を計算（プレイヤーが重ならないように分散）
+     * 複数スポーン地点がある場合はランダムに選択
      */
     private fun getSafeSpawnLocation(team: Team): Location {
+        // GameConfigを使用してランダムスポーン地点を取得
+        val config = gameManager?.getGameConfig(name)
         val baseLocation = when (team) {
-            Team.RED -> redSpawnLocation ?: redFlagLocation
-            Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
+            Team.RED -> config?.getEffectiveRedSpawn() ?: (redSpawnLocation ?: redFlagLocation)
+            Team.BLUE -> config?.getEffectiveBlueSpawn() ?: (blueSpawnLocation ?: blueFlagLocation)
             Team.SPECTATOR -> mapCenterLocation ?: redFlagLocation
         } ?: throw IllegalStateException("No spawn location for team $team")
         
