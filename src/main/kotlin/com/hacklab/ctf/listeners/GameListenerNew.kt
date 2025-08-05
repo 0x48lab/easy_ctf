@@ -437,9 +437,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }
             
             // リスポーン処理（死亡回数に応じた遅延）
-            val baseDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
-            val deathPenalty = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
-            val maxDelay = plugin.config.getInt("default-game.respawn-delay-max", 20)
+            // ゲーム固有の設定を使用
+            val config = gameManager.getGameConfig(game.name)
+            val baseDelay = config?.respawnDelayBase ?: plugin.config.getInt("default-game.respawn-delay-base", 10)
+            val deathPenalty = config?.respawnDelayPerDeath ?: plugin.config.getInt("default-game.respawn-delay-per-death", 2)
+            val maxDelay = config?.respawnDelayMax ?: plugin.config.getInt("default-game.respawn-delay-max", 20)
             
             val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
             
@@ -1035,9 +1037,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 
                 // 死亡回数を取得してリスポーン遅延を計算
                 val deaths = game.playerDeaths[player.uniqueId] ?: 1
-                val baseDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
-                val deathPenalty = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
-                val maxDelay = plugin.config.getInt("default-game.respawn-delay-max", 20)
+                val config = gameManager.getGameConfig(game.name)
+                val baseDelay = config?.respawnDelayBase ?: plugin.config.getInt("default-game.respawn-delay-base", 10)
+                val deathPenalty = config?.respawnDelayPerDeath ?: plugin.config.getInt("default-game.respawn-delay-per-death", 2)
+                val maxDelay = config?.respawnDelayMax ?: plugin.config.getInt("default-game.respawn-delay-max", 20)
                 val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
                 
                 // 指定時間後にサバイバルモードで復活

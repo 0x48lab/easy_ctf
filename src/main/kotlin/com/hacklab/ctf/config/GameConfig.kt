@@ -14,15 +14,23 @@ data class GameConfig(
     
     // 位置設定
     var redFlagLocation: Location? = null,
-    var redSpawnLocation: Location? = null,
+    var redSpawnLocation: Location? = null,  // 後方互換性のため残す（最初のスポーン地点として使用）
     var blueFlagLocation: Location? = null,
-    var blueSpawnLocation: Location? = null,
+    var blueSpawnLocation: Location? = null,  // 後方互換性のため残す（最初のスポーン地点として使用）
+    
+    // 複数スポーン地点
+    var redSpawnLocations: MutableList<Location> = mutableListOf(),
+    var blueSpawnLocations: MutableList<Location> = mutableListOf(),
     
     // ゲーム設定
     var autoStartEnabled: Boolean = false,
     var minPlayers: Int = 2,
     var maxPlayersPerTeam: Int = 10,
-    var respawnDelay: Int = 5,
+    
+    // リスポーン設定
+    var respawnDelayBase: Int = 10,        // 基本リスポーン時間（秒）
+    var respawnDelayPerDeath: Int = 2,     // 死亡ごとの追加ペナルティ（秒）
+    var respawnDelayMax: Int = 20,         // 最大リスポーン時間（秒）
     
     // フェーズ設定
     var buildDuration: Int = 300,
@@ -52,9 +60,68 @@ data class GameConfig(
     
     /**
      * スポーン地点が設定されていない場合、旗位置をスポーン地点として使用
+     * 複数スポーン地点がある場合はランダムに選択
      */
-    fun getEffectiveRedSpawn(): Location? = redSpawnLocation ?: redFlagLocation
-    fun getEffectiveBlueSpawn(): Location? = blueSpawnLocation ?: blueFlagLocation
+    fun getEffectiveRedSpawn(): Location? {
+        // 複数スポーン地点がある場合はランダムに選択
+        if (redSpawnLocations.isNotEmpty()) {
+            return redSpawnLocations.random()
+        }
+        // 後方互換性: 単一スポーン地点または旗位置を使用
+        return redSpawnLocation ?: redFlagLocation
+    }
+    
+    fun getEffectiveBlueSpawn(): Location? {
+        // 複数スポーン地点がある場合はランダムに選択
+        if (blueSpawnLocations.isNotEmpty()) {
+            return blueSpawnLocations.random()
+        }
+        // 後方互換性: 単一スポーン地点または旗位置を使用
+        return blueSpawnLocation ?: blueFlagLocation
+    }
+    
+    /**
+     * すべてのスポーン地点を取得（複数スポーン地点と単一スポーン地点を統合）
+     */
+    fun getAllRedSpawnLocations(): List<Location> {
+        val locations = mutableListOf<Location>()
+        locations.addAll(redSpawnLocations)
+        redSpawnLocation?.let { if (it !in locations) locations.add(it) }
+        if (locations.isEmpty()) {
+            redFlagLocation?.let { locations.add(it) }
+        }
+        return locations
+    }
+    
+    fun getAllBlueSpawnLocations(): List<Location> {
+        val locations = mutableListOf<Location>()
+        locations.addAll(blueSpawnLocations)
+        blueSpawnLocation?.let { if (it !in locations) locations.add(it) }
+        if (locations.isEmpty()) {
+            blueFlagLocation?.let { locations.add(it) }
+        }
+        return locations
+    }
+    
+    /**
+     * 新しいスポーン地点が既存のスポーン地点と近すぎないかチェック
+     * @param newLocation 新しいスポーン地点
+     * @param isRedTeam 赤チームかどうか
+     * @return エラーメッセージ（問題ない場合はnull）
+     */
+    fun validateSpawnDistance(newLocation: Location, isRedTeam: Boolean): String? {
+        val minSpawnDistance = 4.0  // 最低4ブロック離す（3x3の範囲が重複しないため）
+        val existingSpawns = if (isRedTeam) getAllRedSpawnLocations() else getAllBlueSpawnLocations()
+        
+        existingSpawns.forEachIndexed { index, spawn ->
+            val distance = newLocation.distance(spawn)
+            if (distance < minSpawnDistance) {
+                return "スポーン地点が既存の地点${index + 1}と近すぎます（${String.format("%.1f", distance)}ブロック）。最低${minSpawnDistance}ブロック離してください"
+            }
+        }
+        
+        return null
+    }
     
     /**
      * 設定のコピーを作成（更新時に使用）
@@ -66,10 +133,14 @@ data class GameConfig(
         redSpawnLocation = redSpawnLocation?.clone(),
         blueFlagLocation = blueFlagLocation?.clone(),
         blueSpawnLocation = blueSpawnLocation?.clone(),
+        redSpawnLocations = redSpawnLocations.map { it.clone() }.toMutableList(),
+        blueSpawnLocations = blueSpawnLocations.map { it.clone() }.toMutableList(),
         autoStartEnabled = autoStartEnabled,
         minPlayers = minPlayers,
         maxPlayersPerTeam = maxPlayersPerTeam,
-        respawnDelay = respawnDelay,
+        respawnDelayBase = respawnDelayBase,
+        respawnDelayPerDeath = respawnDelayPerDeath,
+        respawnDelayMax = respawnDelayMax,
         buildDuration = buildDuration,
         buildPhaseGameMode = buildPhaseGameMode,
         combatDuration = combatDuration,

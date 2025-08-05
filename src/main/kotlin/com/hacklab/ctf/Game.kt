@@ -60,7 +60,6 @@ class Game(
     var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
-    var respawnDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
     var buildDuration = plugin.config.getInt("default-phases.build-duration", 300)
     var combatDuration = plugin.config.getInt("default-phases.combat-duration", 600)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
@@ -1211,11 +1210,15 @@ class Game(
     
     /**
      * 安全なスポーン位置を計算（プレイヤーが重ならないように分散）
+     * 複数スポーン地点がある場合はランダムに選択
      */
     private fun getSafeSpawnLocation(team: Team): Location {
+        // GameConfigを使用してランダムスポーン地点を取得
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
         val baseLocation = when (team) {
-            Team.RED -> redSpawnLocation ?: redFlagLocation
-            Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
+            Team.RED -> config?.getEffectiveRedSpawn() ?: (redSpawnLocation ?: redFlagLocation)
+            Team.BLUE -> config?.getEffectiveBlueSpawn() ?: (blueSpawnLocation ?: blueFlagLocation)
             Team.SPECTATOR -> mapCenterLocation ?: redFlagLocation
         } ?: throw IllegalStateException("No spawn location for team $team")
         
@@ -1679,15 +1682,22 @@ class Game(
     }
     
     private fun setupSpawnAreas() {
+        // GameConfigから複数スポーン地点を取得
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
+        
         // スポーンエリアの装飾（スポーン地点が設定されている場合のみ）
         Team.values().filter { it != Team.SPECTATOR }.forEach { team ->
-            val spawnLocation = when (team) {
-                Team.RED -> redSpawnLocation
-                Team.BLUE -> blueSpawnLocation
-                Team.SPECTATOR -> null // 観戦者用（到達しないはず）
-            } ?: return@forEach  // スポーン地点が設定されていない場合はスキップ
+            val spawnLocations = when (team) {
+                Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+                Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+                Team.SPECTATOR -> emptyList()
+            }
             
-            setupSpawnDecoration(spawnLocation, team)
+            // すべてのスポーン地点に対して装飾を設置
+            spawnLocations.forEach { spawnLocation ->
+                setupSpawnDecoration(spawnLocation, team)
+            }
         }
     }
     
@@ -1750,21 +1760,26 @@ class Game(
         }
         
         // スポーン装飾の削除（スポーン地点が設定されている場合のみ）
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
+        
         Team.values().filter { it != Team.SPECTATOR }.forEach { team ->
-            val spawnLocation = when (team) {
-                Team.RED -> redSpawnLocation
-                Team.BLUE -> blueSpawnLocation
-                Team.SPECTATOR -> null // 観戦者用（到達しないはず）
-            } ?: return@forEach  // スポーン地点が設定されていない場合はスキップ
+            val spawnLocations = when (team) {
+                Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+                Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+                Team.SPECTATOR -> emptyList()
+            }
             
-            // コンクリート床を削除
-            for (x in -1..1) {
-                for (z in -1..1) {
-                    val blockLocation = spawnLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
-                    blockLocation.block.type = Material.AIR
-                    
-                    // チームの配置ブロックリストからも削除
-                    teamPlacedBlocks[team]?.remove(blockLocation)
+            // すべてのスポーン地点のコンクリート床を削除
+            spawnLocations.forEach { spawnLocation ->
+                for (x in -1..1) {
+                    for (z in -1..1) {
+                        val blockLocation = spawnLocation.clone().add(x.toDouble(), -1.0, z.toDouble())
+                        blockLocation.block.type = Material.AIR
+                        
+                        // チームの配置ブロックリストからも削除
+                        teamPlacedBlocks[team]?.remove(blockLocation)
+                    }
                 }
             }
         }
@@ -3093,8 +3108,13 @@ class Game(
             }
         }
         
-        // 赤チームのスポーン地点周辺チェック
-        redSpawnLocation?.let { spawnLoc ->
+        // 複数スポーン地点に対応
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
+        
+        // 赤チームのスポーン地点周辺チェック（複数対応）
+        val redSpawnLocations = config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+        for (spawnLoc in redSpawnLocations) {
             if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
                 showActionBarError(player, plugin.languageManager.getMessage("action-bar.cannot-place-spawn"))
@@ -3102,8 +3122,9 @@ class Game(
             }
         }
         
-        // 青チームのスポーン地点周辺チェック
-        blueSpawnLocation?.let { spawnLoc ->
+        // 青チームのスポーン地点周辺チェック（複数対応）
+        val blueSpawnLocations = config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+        for (spawnLoc in blueSpawnLocations) {
             if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
                 showActionBarError(player, plugin.languageManager.getMessage("action-bar.cannot-place-spawn"))
@@ -3130,38 +3151,41 @@ class Game(
             }
             
             // スポーン地点から3ブロック以内かチェック（スポーン地点もルート）
-            val teamSpawnLocation = when (team) {
-                Team.RED -> redSpawnLocation
-                Team.BLUE -> blueSpawnLocation
-                Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+            val teamSpawnLocations = when (team) {
+                Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+                Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+                Team.SPECTATOR -> emptyList()
             }
             
-            plugin.logger.info("[CanPlaceBlock] Checking spawn location: $teamSpawnLocation")
+            plugin.logger.info("[CanPlaceBlock] Checking ${teamSpawnLocations.size} spawn locations")
             
-            if (teamSpawnLocation != null && location.distance(teamSpawnLocation) <= 3.0) {
-                plugin.logger.info("[CanPlaceBlock] Within 3 blocks of spawn")
-                
-                // スポーン地点の最も近いブロックを親として返す
-                // ツリーに登録されているスポーン地点のブロックから選ぶ
-                val trees = teamBlockTrees[team] ?: mutableMapOf()
-                plugin.logger.info("[CanPlaceBlock] Tree size for $team: ${trees.size}")
-                
-                val spawnBlocks = trees.keys
-                    .filter { 
-                        it.blockY == teamSpawnLocation.blockY - 1 && // スポーン地点の床ブロック
-                        kotlin.math.abs(it.blockX - teamSpawnLocation.blockX) <= 1 && // スポーン地点の3x3範囲内
-                        kotlin.math.abs(it.blockZ - teamSpawnLocation.blockZ) <= 1
+            // すべてのスポーン地点をチェック
+            for (teamSpawnLocation in teamSpawnLocations) {
+                if (location.distance(teamSpawnLocation) <= 3.0) {
+                    plugin.logger.info("[CanPlaceBlock] Within 3 blocks of spawn at $teamSpawnLocation")
+                    
+                    // スポーン地点の最も近いブロックを親として返す
+                    // ツリーに登録されているスポーン地点のブロックから選ぶ
+                    val trees = teamBlockTrees[team] ?: mutableMapOf()
+                    plugin.logger.info("[CanPlaceBlock] Tree size for $team: ${trees.size}")
+                    
+                    val spawnBlocks = trees.keys
+                        .filter { 
+                            it.blockY == teamSpawnLocation.blockY - 1 && // スポーン地点の床ブロック
+                            kotlin.math.abs(it.blockX - teamSpawnLocation.blockX) <= 1 && // スポーン地点の3x3範囲内
+                            kotlin.math.abs(it.blockZ - teamSpawnLocation.blockZ) <= 1
+                        }
+                    
+                    plugin.logger.info("[CanPlaceBlock] Found ${spawnBlocks.size} spawn blocks in tree")
+                    
+                    val nearestBlock = spawnBlocks.minByOrNull { it.distance(location) }
+                    
+                    if (nearestBlock != null) {
+                        plugin.logger.info("[CanPlaceBlock] Returning nearest spawn block: $nearestBlock")
+                        return nearestBlock
+                    } else {
+                        plugin.logger.info("[CanPlaceBlock] No spawn blocks found in tree for this spawn location")
                     }
-                
-                plugin.logger.info("[CanPlaceBlock] Found ${spawnBlocks.size} spawn blocks in tree")
-                
-                val nearestBlock = spawnBlocks.minByOrNull { it.distance(location) }
-                
-                if (nearestBlock != null) {
-                    plugin.logger.info("[CanPlaceBlock] Returning nearest spawn block: $nearestBlock")
-                    return nearestBlock
-                } else {
-                    plugin.logger.info("[CanPlaceBlock] No spawn blocks found in tree!")
                 }
             }
             
@@ -3553,11 +3577,13 @@ class Game(
             Team.SPECTATOR -> null // 観戦者用（到達しないはず）
         } ?: return emptySet()
         
-        // スポーン地点を取得
-        val spawnLocation = when (team) {
-            Team.RED -> redSpawnLocation
-            Team.BLUE -> blueSpawnLocation
-            Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+        // スポーン地点を取得（複数対応）
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
+        val spawnLocations = when (team) {
+            Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation ?: redFlagLocation)
+            Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation ?: blueFlagLocation)
+            Team.SPECTATOR -> emptyList()
         }
         
         // ビーコン周辺3ブロック以内のブロックを起点に追加
@@ -3569,8 +3595,8 @@ class Game(
             }
         }
         
-        // スポーン地点周辺3ブロック以内のブロックも起点に追加
-        if (spawnLocation != null) {
+        // すべてのスポーン地点周辺3ブロック以内のブロックも起点に追加
+        for (spawnLocation in spawnLocations) {
             for (block in teamBlocks) {
                 if (block.distance(spawnLocation) <= 3.0) {
                     if (block !in reachable) {
