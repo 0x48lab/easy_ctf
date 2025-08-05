@@ -121,6 +121,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     enemyFlagLocation.block.type = Material.AIR
                     enemyFlagLocation.clone().add(0.0, 1.0, 0.0).block.type = Material.AIR
                     
+                    // スポーン保護を解除（旗を取った時点で保護解除）
+                    game.removeSpawnProtection(player)
+                    
                     // プレイヤーに発光効果
                     player.isGlowing = true
                     
@@ -550,6 +553,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 event.isCancelled = true
                 attacker.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.player-has-spawn-protection"), NamedTextColor.YELLOW))
                 return
+            }
+            
+            // 攻撃者がスポーン保護中の場合、保護を解除
+            if (game.isUnderSpawnProtection(attacker)) {
+                game.removeSpawnProtection(attacker)
             }
             
             // 建築フェーズ中はPVP禁止

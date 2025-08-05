@@ -240,6 +240,7 @@ spawn:
   not-set: "&cSpawn point not set"
   protection-active: "&aSpawn protection active for 3 seconds"
   protection-ended: "&eSpawn protection ended"
+  protection-cancelled: "&eSpawn protection cancelled"
 
 # Flag Messages
 flag:

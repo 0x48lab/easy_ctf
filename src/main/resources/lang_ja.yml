@@ -240,6 +240,7 @@ spawn:
   not-set: "&cスポーン地点が設定されていません"
   protection-active: "&a3秒間スポーン保護が有効です"
   protection-ended: "&eスポーン保護が解除されました"
+  protection-cancelled: "&eスポーン保護が解除されました"
 
 # Flag Messages
 flag:

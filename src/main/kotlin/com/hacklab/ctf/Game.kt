@@ -2302,6 +2302,9 @@ class Game(
                         // アイテムを削除
                         item.remove()
                         
+                        // スポーン保護を解除（旗を持った時点で保護解除）
+                        removeSpawnProtection(player)
+                        
                         // プレイヤーに発光効果
                         player.isGlowing = true
                         
@@ -2512,6 +2515,19 @@ class Game(
     fun isUnderSpawnProtection(player: Player): Boolean {
         val protectionEnd = spawnProtection[player.uniqueId] ?: return false
         return System.currentTimeMillis() < protectionEnd
+    }
+    
+    /**
+     * スポーン保護を即座に解除
+     * 攻撃や旗取得時に呼び出される
+     */
+    fun removeSpawnProtection(player: Player) {
+        if (spawnProtection.remove(player.uniqueId) != null) {
+            player.isGlowing = false
+            spawnProtectionTasks[player.uniqueId]?.cancel()
+            spawnProtectionTasks.remove(player.uniqueId)
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("spawn.protection-cancelled"), NamedTextColor.YELLOW))
+        }
     }
     
     private fun formatTime(seconds: Int): String {
