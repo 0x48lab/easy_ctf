@@ -106,24 +106,16 @@ class MapScanner {
         blueFlags: List<Location>,
         errors: MutableList<String>
     ) {
-        // スポーン地点の検証
-        when {
-            redSpawns.isEmpty() -> {
-                errors.add("赤チームのスポーン地点（赤のコンクリートブロック）が見つかりません")
-            }
-            redSpawns.size > 1 -> {
-                errors.add("赤チームのスポーン地点が複数見つかりました（${redSpawns.size}個）")
-            }
+        // スポーン地点の検証（複数スポーン地点を許可）
+        if (redSpawns.isEmpty()) {
+            errors.add("赤チームのスポーン地点（赤のコンクリートブロック）が見つかりません")
         }
+        // 複数のスポーン地点は許可されるため、エラーとしない
         
-        when {
-            blueSpawns.isEmpty() -> {
-                errors.add("青チームのスポーン地点（青のコンクリートブロック）が見つかりません")
-            }
-            blueSpawns.size > 1 -> {
-                errors.add("青チームのスポーン地点が複数見つかりました（${blueSpawns.size}個）")
-            }
+        if (blueSpawns.isEmpty()) {
+            errors.add("青チームのスポーン地点（青のコンクリートブロック）が見つかりません")
         }
+        // 複数のスポーン地点は許可されるため、エラーとしない
         
         // 旗位置の検証
         when {
@@ -144,22 +136,57 @@ class MapScanner {
             }
         }
         
+        // スポーン地点同士の距離検証（9x9のコンクリートが重複しないようにする）
+        val minSpawnDistance = 4.0  // 最低4ブロック離す（3x3の範囲が重複しないため）
+        
+        // 赤チームのスポーン地点同士の距離をチェック
+        if (redSpawns.size > 1) {
+            for (i in 0 until redSpawns.size - 1) {
+                for (j in i + 1 until redSpawns.size) {
+                    val distance = redSpawns[i].distance(redSpawns[j])
+                    if (distance < minSpawnDistance) {
+                        errors.add("赤チームのスポーン地点が近すぎます（地点${i+1}と地点${j+1}が${String.format("%.1f", distance)}ブロック）。最低${minSpawnDistance}ブロック離してください")
+                    }
+                }
+            }
+        }
+        
+        // 青チームのスポーン地点同士の距離をチェック
+        if (blueSpawns.size > 1) {
+            for (i in 0 until blueSpawns.size - 1) {
+                for (j in i + 1 until blueSpawns.size) {
+                    val distance = blueSpawns[i].distance(blueSpawns[j])
+                    if (distance < minSpawnDistance) {
+                        errors.add("青チームのスポーン地点が近すぎます（地点${i+1}と地点${j+1}が${String.format("%.1f", distance)}ブロック）。最低${minSpawnDistance}ブロック離してください")
+                    }
+                }
+            }
+        }
+        
         // 距離の検証（エラーがない場合のみ）
-        if (errors.isEmpty()) {
-            val redSpawn = redSpawns[0]
-            val blueSpawn = blueSpawns[0]
+        if (errors.isEmpty() && redFlags.isNotEmpty() && blueFlags.isNotEmpty()) {
             val redFlag = redFlags[0]
             val blueFlag = blueFlags[0]
-            
-            // 旗とスポーンの最小距離チェック
             val minDistance = 3.0
             
-            if (redSpawn.distance(redFlag) < minDistance) {
-                errors.add("赤チームの旗とスポーン地点が近すぎます（最低${minDistance}ブロック必要）")
+            // 赤チームの各スポーン地点と旗の距離をチェック
+            if (redSpawns.isNotEmpty()) {
+                val tooCloseRedSpawns = redSpawns.filter { spawn ->
+                    spawn.distance(redFlag) < minDistance
+                }
+                if (tooCloseRedSpawns.isNotEmpty()) {
+                    errors.add("赤チームの旗とスポーン地点が近すぎます（${tooCloseRedSpawns.size}箇所が最低${minDistance}ブロック未満）")
+                }
             }
             
-            if (blueSpawn.distance(blueFlag) < minDistance) {
-                errors.add("青チームの旗とスポーン地点が近すぎます（最低${minDistance}ブロック必要）")
+            // 青チームの各スポーン地点と旗の距離をチェック
+            if (blueSpawns.isNotEmpty()) {
+                val tooCloseBlueSpawns = blueSpawns.filter { spawn ->
+                    spawn.distance(blueFlag) < minDistance
+                }
+                if (tooCloseBlueSpawns.isNotEmpty()) {
+                    errors.add("青チームの旗とスポーン地点が近すぎます（${tooCloseBlueSpawns.size}箇所が最低${minDistance}ブロック未満）")
+                }
             }
         }
     }

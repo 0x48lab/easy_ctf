@@ -373,21 +373,17 @@ class GameManager(private val plugin: Main) {
     private fun updateGameFromConfig(config: GameConfig) {
         val game = games[config.name.lowercase()] ?: return
         
-        // 位置設定更新
-        config.redFlagLocation?.let { game.setRedFlagLocation(it) }
-        config.redSpawnLocation?.let { game.setRedSpawnLocation(it) }
-        config.blueFlagLocation?.let { game.setBlueFlagLocation(it) }
-        config.blueSpawnLocation?.let { game.setBlueSpawnLocation(it) }
-        
-        // ゲーム設定更新
-        game.minPlayers = config.minPlayers
-        game.maxPlayersPerTeam = config.maxPlayersPerTeam
-        game.buildDuration = config.buildDuration
-        game.buildPhaseGameMode = config.buildPhaseGameMode
-        game.combatDuration = config.combatDuration
-        game.resultDuration = config.resultDuration
+        // updateFromConfigを使って全設定を更新
+        game.updateFromConfig(config)
         
         configManager.saveConfig(config)
+    }
+    
+    /**
+     * ゲーム設定を更新（外部から使用）
+     */
+    fun updateGameConfig(config: GameConfig) {
+        updateGameFromConfig(config)
     }
     
     /**
@@ -691,8 +687,21 @@ class GameManager(private val plugin: Main) {
             val config = GameConfig(gameName, pos1.world).apply {
                 redFlagLocation = scanResult.redFlags[0]
                 blueFlagLocation = scanResult.blueFlags[0]
-                redSpawnLocation = scanResult.redSpawns[0]
-                blueSpawnLocation = scanResult.blueSpawns[0]
+                // 複数スポーン地点の処理
+                if (scanResult.redSpawns.size == 1) {
+                    // 1箇所のみの場合は従来のレガシースポーン地点として設定
+                    redSpawnLocation = scanResult.redSpawns[0]
+                } else {
+                    // 複数の場合は複数スポーン地点として設定
+                    redSpawnLocations.addAll(scanResult.redSpawns)
+                }
+                if (scanResult.blueSpawns.size == 1) {
+                    // 1箇所のみの場合は従来のレガシースポーン地点として設定
+                    blueSpawnLocation = scanResult.blueSpawns[0]
+                } else {
+                    // 複数の場合は複数スポーン地点として設定
+                    blueSpawnLocations.addAll(scanResult.blueSpawns)
+                }
             }
             
             // 設定を保存
@@ -709,8 +718,26 @@ class GameManager(private val plugin: Main) {
             if (config != null) {
                 config.redFlagLocation = scanResult.redFlags[0]
                 config.blueFlagLocation = scanResult.blueFlags[0]
-                config.redSpawnLocation = scanResult.redSpawns[0]
-                config.blueSpawnLocation = scanResult.blueSpawns[0]
+                
+                // 複数スポーン地点の処理
+                if (scanResult.redSpawns.size == 1) {
+                    config.redSpawnLocation = scanResult.redSpawns[0]
+                    config.redSpawnLocations.clear()  // 複数スポーン地点をクリア
+                } else {
+                    config.redSpawnLocation = null  // レガシースポーン地点をクリア
+                    config.redSpawnLocations.clear()
+                    config.redSpawnLocations.addAll(scanResult.redSpawns)
+                }
+                
+                if (scanResult.blueSpawns.size == 1) {
+                    config.blueSpawnLocation = scanResult.blueSpawns[0]
+                    config.blueSpawnLocations.clear()  // 複数スポーン地点をクリア
+                } else {
+                    config.blueSpawnLocation = null  // レガシースポーン地点をクリア
+                    config.blueSpawnLocations.clear()
+                    config.blueSpawnLocations.addAll(scanResult.blueSpawns)
+                }
+                
                 configManager.saveConfig(config)
                 
                 // ゲームインスタンスも更新
@@ -727,10 +754,23 @@ class GameManager(private val plugin: Main) {
         // pos設定をクリア
         mapPositions.remove(gameName.lowercase())
         
+        // 複数スポーン地点の場合の表示を調整
+        val redSpawnInfo = if (scanResult.redSpawns.size == 1) {
+            formatLocation(scanResult.redSpawns[0])
+        } else {
+            "${scanResult.redSpawns.size}箇所（複数）"
+        }
+        
+        val blueSpawnInfo = if (scanResult.blueSpawns.size == 1) {
+            formatLocation(scanResult.blueSpawns[0])
+        } else {
+            "${scanResult.blueSpawns.size}箇所（複数）"
+        }
+        
         return MapSaveResult(
             success = true,
-            redSpawn = formatLocation(scanResult.redSpawns[0]),
-            blueSpawn = formatLocation(scanResult.blueSpawns[0]),
+            redSpawn = redSpawnInfo,
+            blueSpawn = blueSpawnInfo,
             redFlag = formatLocation(scanResult.redFlags[0]),
             blueFlag = formatLocation(scanResult.blueFlags[0])
         )

@@ -104,6 +104,26 @@ data class GameConfig(
     }
     
     /**
+     * 新しいスポーン地点が既存のスポーン地点と近すぎないかチェック
+     * @param newLocation 新しいスポーン地点
+     * @param isRedTeam 赤チームかどうか
+     * @return エラーメッセージ（問題ない場合はnull）
+     */
+    fun validateSpawnDistance(newLocation: Location, isRedTeam: Boolean): String? {
+        val minSpawnDistance = 4.0  // 最低4ブロック離す（3x3の範囲が重複しないため）
+        val existingSpawns = if (isRedTeam) getAllRedSpawnLocations() else getAllBlueSpawnLocations()
+        
+        existingSpawns.forEachIndexed { index, spawn ->
+            val distance = newLocation.distance(spawn)
+            if (distance < minSpawnDistance) {
+                return "スポーン地点が既存の地点${index + 1}と近すぎます（${String.format("%.1f", distance)}ブロック）。最低${minSpawnDistance}ブロック離してください"
+            }
+        }
+        
+        return null
+    }
+    
+    /**
      * 設定のコピーを作成（更新時に使用）
      */
     fun copy(): GameConfig = GameConfig(

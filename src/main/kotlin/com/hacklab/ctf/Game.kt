@@ -1214,7 +1214,8 @@ class Game(
      */
     private fun getSafeSpawnLocation(team: Team): Location {
         // GameConfigを使用してランダムスポーン地点を取得
-        val config = gameManager?.getGameConfig(name)
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
         val baseLocation = when (team) {
             Team.RED -> config?.getEffectiveRedSpawn() ?: (redSpawnLocation ?: redFlagLocation)
             Team.BLUE -> config?.getEffectiveBlueSpawn() ?: (blueSpawnLocation ?: blueFlagLocation)

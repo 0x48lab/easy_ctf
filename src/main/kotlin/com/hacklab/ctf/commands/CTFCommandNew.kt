@@ -702,8 +702,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("赤旗: 未設定", NamedTextColor.RED))
         }
         
+        // GameConfigを取得
+        val config = gameManager.getGameConfig(gameName)
+        
         // スポーン地点情報（複数対応）
-        val redSpawnLocations = config.getAllRedSpawnLocations()
+        val redSpawnLocations = config?.getAllRedSpawnLocations() ?: emptyList()
         if (redSpawnLocations.isEmpty()) {
             sender.sendMessage(Component.text("赤スポーン: 旗位置と同じ", NamedTextColor.RED))
         } else if (redSpawnLocations.size == 1) {
@@ -721,7 +724,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         // スポーン地点情報（複数対応）
-        val blueSpawnLocations = config.getAllBlueSpawnLocations()
+        val blueSpawnLocations = config?.getAllBlueSpawnLocations() ?: emptyList()
         if (blueSpawnLocations.isEmpty()) {
             sender.sendMessage(Component.text("青スポーン: 旗位置と同じ", NamedTextColor.BLUE))
         } else if (blueSpawnLocations.size == 1) {
@@ -926,10 +929,10 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         if (result.success) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-saved"), NamedTextColor.GREEN))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.detection-result"), NamedTextColor.AQUA))
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-detected", "location" to result.redSpawn), NamedTextColor.RED))
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-detected", "location" to result.blueSpawn), NamedTextColor.BLUE))
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-flag-detected", "location" to result.redFlag), NamedTextColor.RED))
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-flag-detected", "location" to result.blueFlag), NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-detected", "location" to (result.redSpawn ?: "unknown")), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-detected", "location" to (result.blueSpawn ?: "unknown")), NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-flag-detected", "location" to (result.redFlag ?: "unknown")), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-flag-detected", "location" to (result.blueFlag ?: "unknown")), NamedTextColor.BLUE))
         } else {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-save-failed"), NamedTextColor.RED))
             result.errors.forEach { error ->
@@ -972,6 +975,14 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val location = sender.location.clone()
         
+        // 距離の検証
+        val isRedTeam = team == "red"
+        val validationError = config.validateSpawnDistance(location, isRedTeam)
+        if (validationError != null) {
+            sender.sendMessage(Component.text("§c$validationError", NamedTextColor.RED))
+            return true
+        }
+        
         // チームに応じてスポーン地点を追加
         when (team) {
             "red" -> {
@@ -984,8 +995,8 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
         }
         
-        // 設定を保存
-        gameManager.updateGame(config)
+        // 設定を保存してゲームを更新
+        gameManager.updateGameConfig(config)
         
         return true
     }
@@ -1041,8 +1052,8 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
         }
         
-        // 設定を保存
-        gameManager.updateGame(config)
+        // 設定を保存してゲームを更新
+        gameManager.updateGameConfig(config)
         
         return true
     }
