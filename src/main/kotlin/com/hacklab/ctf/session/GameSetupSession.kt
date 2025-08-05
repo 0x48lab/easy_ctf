@@ -41,8 +41,8 @@ class GameSetupSession(private val plugin: Main) {
         
         enum class Step {
             RED_FLAG, RED_SPAWN, BLUE_FLAG, BLUE_SPAWN,
-            BUILD_MODE, BUILD_TIME, COMBAT_TIME,
-            MATCH_MODE, MATCH_TARGET, COMPLETE
+            BUILD_MODE, BUILD_TIME, COMBAT_TIME, RESULT_TIME,
+            INTERMEDIATE_TIME, MATCH_MODE, MATCH_TARGET, COMPLETE
         }
         
         override fun handleInput(input: String) {
@@ -65,7 +65,8 @@ class GameSetupSession(private val plugin: Main) {
         
         enum class Menu {
             MAIN, RED_FLAG, RED_SPAWN, BLUE_FLAG, BLUE_SPAWN,
-            BUILD_MODE, BUILD_TIME, COMBAT_TIME
+            BUILD_MODE, BUILD_TIME, COMBAT_TIME, RESULT_TIME,
+            INTERMEDIATE_TIME
         }
         
         override fun handleInput(input: String) {
@@ -175,6 +176,8 @@ class GameSetupSession(private val plugin: Main) {
                     CreateSession.Step.BUILD_MODE -> setBuildMode(session, message)
                     CreateSession.Step.BUILD_TIME -> setBuildTime(session, message)
                     CreateSession.Step.COMBAT_TIME -> setCombatTime(session, message)
+                    CreateSession.Step.RESULT_TIME -> setResultTime(session, message)
+                    CreateSession.Step.INTERMEDIATE_TIME -> setIntermediateTime(session, message)
                     CreateSession.Step.MATCH_MODE -> setMatchMode(session, message)
                     CreateSession.Step.MATCH_TARGET -> setMatchTarget(session, message)
                     CreateSession.Step.COMPLETE -> {}
@@ -194,8 +197,10 @@ class GameSetupSession(private val plugin: Main) {
                 "5" -> startUpdateValue(session, UpdateSession.Menu.BUILD_MODE)
                 "6" -> startUpdateValue(session, UpdateSession.Menu.BUILD_TIME)
                 "7" -> startUpdateValue(session, UpdateSession.Menu.COMBAT_TIME)
-                "8" -> convertToCreateSession(session)
-                "9", "exit" -> cancelSession(session.player)
+                "8" -> startUpdateValue(session, UpdateSession.Menu.RESULT_TIME)
+                "9" -> startUpdateValue(session, UpdateSession.Menu.INTERMEDIATE_TIME)
+                "10" -> convertToCreateSession(session)
+                "11", "exit" -> cancelSession(session.player)
                 else -> session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-selection"), NamedTextColor.RED))
             }
         } else {
@@ -235,6 +240,14 @@ class GameSetupSession(private val plugin: Main) {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-600"), NamedTextColor.GRAY))
             }
+            CreateSession.Step.RESULT_TIME -> {
+                player.sendMessage(Component.text("§e結果表示フェーズの時間を秒単位で入力してください (例: 60)", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("§7'skip' でデフォルト値 (60秒) を使用", NamedTextColor.GRAY))
+            }
+            CreateSession.Step.INTERMEDIATE_TIME -> {
+                player.sendMessage(Component.text("§eマッチ中間の作戦会議時間を秒単位で入力してください (例: 15)", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("§7'skip' でデフォルト値 (15秒) を使用", NamedTextColor.GRAY))
+            }
             CreateSession.Step.MATCH_MODE -> {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-mode-prompt"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.first-to-x-mode"), NamedTextColor.WHITE))
@@ -260,8 +273,10 @@ class GameSetupSession(private val plugin: Main) {
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-mode-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-menu"), NamedTextColor.WHITE))
-        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.update-all"), NamedTextColor.WHITE))
-        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.exit-menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f8. 結果表示時間を更新 (現在: ${session.config.resultDuration}秒)", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f9. マッチ中間の作戦会議時間を更新 (現在: ${session.config.intermediateDuration}秒)", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f10. すべて更新", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f11. 終了", NamedTextColor.WHITE))
     }
     
     private fun setLocationFromView(session: CreateSession) {
@@ -327,6 +342,14 @@ class GameSetupSession(private val plugin: Main) {
                 showCreateStep(session)
             }
             CreateSession.Step.COMBAT_TIME -> {
+                session.step = CreateSession.Step.RESULT_TIME
+                showCreateStep(session)
+            }
+            CreateSession.Step.RESULT_TIME -> {
+                session.step = CreateSession.Step.INTERMEDIATE_TIME
+                showCreateStep(session)
+            }
+            CreateSession.Step.INTERMEDIATE_TIME -> {
                 session.step = CreateSession.Step.MATCH_MODE
                 showCreateStep(session)
             }
@@ -379,6 +402,32 @@ class GameSetupSession(private val plugin: Main) {
         
         session.config.combatDuration = time
         session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-set", "time" to time.toString()), NamedTextColor.GREEN))
+        session.step = CreateSession.Step.RESULT_TIME
+        showCreateStep(session)
+    }
+    
+    private fun setResultTime(session: CreateSession, input: String) {
+        val time = input.toIntOrNull()
+        if (time == null || time < 5 || time > 300) {
+            session.player.sendMessage(Component.text("§c時間は5〜300秒の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.resultDuration = time
+        session.player.sendMessage(Component.text("§a結果表示時間を${time}秒に設定しました", NamedTextColor.GREEN))
+        session.step = CreateSession.Step.INTERMEDIATE_TIME
+        showCreateStep(session)
+    }
+    
+    private fun setIntermediateTime(session: CreateSession, input: String) {
+        val time = input.toIntOrNull()
+        if (time == null || time < 5 || time > 120) {
+            session.player.sendMessage(Component.text("§c時間は5〜120秒の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.intermediateDuration = time
+        session.player.sendMessage(Component.text("§aマッチ中間の作戦会議時間を${time}秒に設定しました", NamedTextColor.GREEN))
         session.step = CreateSession.Step.MATCH_MODE
         showCreateStep(session)
     }
@@ -451,6 +500,12 @@ class GameSetupSession(private val plugin: Main) {
             UpdateSession.Menu.COMBAT_TIME -> {
                 session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
             }
+            UpdateSession.Menu.RESULT_TIME -> {
+                session.player.sendMessage(Component.text("§e結果表示時間を秒単位で入力してください (現在: ${session.config.resultDuration}秒)", NamedTextColor.YELLOW))
+            }
+            UpdateSession.Menu.INTERMEDIATE_TIME -> {
+                session.player.sendMessage(Component.text("§eマッチ中間の作戦会議時間を秒単位で入力してください (現在: ${session.config.intermediateDuration}秒)", NamedTextColor.YELLOW))
+            }
             else -> {}
         }
     }
@@ -468,6 +523,8 @@ class GameSetupSession(private val plugin: Main) {
             UpdateSession.Menu.BUILD_MODE -> updateBuildMode(session, input)
             UpdateSession.Menu.BUILD_TIME -> updateBuildTime(session, input)
             UpdateSession.Menu.COMBAT_TIME -> updateCombatTime(session, input)
+            UpdateSession.Menu.RESULT_TIME -> updateResultTime(session, input)
+            UpdateSession.Menu.INTERMEDIATE_TIME -> updateIntermediateTime(session, input)
             else -> {}
         }
     }
@@ -545,6 +602,38 @@ class GameSetupSession(private val plugin: Main) {
         
         session.config.combatDuration = time
         session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.updated"), NamedTextColor.GREEN))
+        onUpdateComplete?.invoke(session.config)
+        
+        session.waitingForInput = false
+        session.menu = UpdateSession.Menu.MAIN
+        showUpdateMenu(session)
+    }
+    
+    private fun updateResultTime(session: UpdateSession, input: String) {
+        val time = input.toIntOrNull()
+        if (time == null || time < 5 || time > 300) {
+            session.player.sendMessage(Component.text("§c時間は5〜300秒の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.resultDuration = time
+        session.player.sendMessage(Component.text("§a結果表示時間を更新しました", NamedTextColor.GREEN))
+        onUpdateComplete?.invoke(session.config)
+        
+        session.waitingForInput = false
+        session.menu = UpdateSession.Menu.MAIN
+        showUpdateMenu(session)
+    }
+    
+    private fun updateIntermediateTime(session: UpdateSession, input: String) {
+        val time = input.toIntOrNull()
+        if (time == null || time < 5 || time > 120) {
+            session.player.sendMessage(Component.text("§c時間は5〜120秒の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.intermediateDuration = time
+        session.player.sendMessage(Component.text("§aマッチ中間の作戦会議時間を更新しました", NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false

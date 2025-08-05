@@ -62,6 +62,7 @@ class ConfigManager(private val plugin: Main) {
         yaml.set("settings.phases.build-phase-gamemode", config.buildPhaseGameMode)
         yaml.set("settings.phases.combat-duration", config.combatDuration)
         yaml.set("settings.phases.result-duration", config.resultDuration)
+        yaml.set("settings.phases.intermediate-duration", config.intermediateDuration)
         
         // マッチ設定
         yaml.set("settings.match.mode", config.matchMode.name)
@@ -133,6 +134,7 @@ class ConfigManager(private val plugin: Main) {
         config.buildPhaseGameMode = gameModeFromFile ?: config.buildPhaseGameMode
         config.combatDuration = yaml.getInt("settings.phases.combat-duration", config.combatDuration)
         config.resultDuration = yaml.getInt("settings.phases.result-duration", config.resultDuration)
+        config.intermediateDuration = yaml.getInt("settings.phases.intermediate-duration", config.intermediateDuration)
         
         // マッチ設定の読み込み
         config.matchMode = MatchMode.FIXED_ROUNDS

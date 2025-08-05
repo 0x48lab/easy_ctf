@@ -29,6 +29,7 @@ data class GameConfig(
     var buildPhaseGameMode: String = "SURVIVAL",
     var combatDuration: Int = 600,
     var resultDuration: Int = 60,
+    var intermediateDuration: Int = 15,  // マッチ中間の作戦会議時間
     
     // マッチ設定
     var matchMode: MatchMode = MatchMode.FIXED_ROUNDS,
@@ -69,6 +70,7 @@ data class GameConfig(
         buildPhaseGameMode = buildPhaseGameMode,
         combatDuration = combatDuration,
         resultDuration = resultDuration,
+        intermediateDuration = intermediateDuration,
         matchMode = matchMode,
         matchTarget = matchTarget,
         matchIntervalDuration = matchIntervalDuration,

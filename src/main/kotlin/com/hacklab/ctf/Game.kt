@@ -64,6 +64,7 @@ class Game(
     var buildDuration = plugin.config.getInt("default-phases.build-duration", 300)
     var combatDuration = plugin.config.getInt("default-phases.combat-duration", 600)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
+    var intermediateDuration = plugin.config.getInt("default-phases.intermediate-result-duration", 15)
     var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!
     
     // ゲーム状態
@@ -202,6 +203,8 @@ class Game(
         }
         buildDuration = config.buildDuration
         combatDuration = config.combatDuration
+        resultDuration = config.resultDuration
+        intermediateDuration = config.intermediateDuration
         buildPhaseGameMode = config.buildPhaseGameMode
         minPlayers = config.minPlayers
         maxPlayersPerTeam = config.maxPlayersPerTeam
@@ -751,7 +754,7 @@ class Game(
         
         // マッチモードで、かつ最終ゲームでない場合は短縮
         currentPhaseTime = if (matchWrapper != null && !matchWrapper!!.isMatchComplete()) {
-            plugin.config.getInt("default-phases.intermediate-result-duration", 15)  // マッチ間の作戦会議
+            intermediateDuration  // マッチ間の作戦会議
         } else {
             resultDuration  // 最終ゲーム後は通常の時間
         }
