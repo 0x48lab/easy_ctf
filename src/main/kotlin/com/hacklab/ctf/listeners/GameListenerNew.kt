@@ -1,6 +1,7 @@
 package com.hacklab.ctf.listeners
 
 import com.hacklab.ctf.Main
+import com.hacklab.ctf.Game
 import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.shop.ShopManager
 import com.hacklab.ctf.shop.ShopItem
@@ -132,6 +133,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     // 旗取得統計を記録
                     game.playerFlagPickups[player.uniqueId] = (game.playerFlagPickups[player.uniqueId] ?: 0) + 1
+                    
+                    // タイトル通知
+                    val title = Component.text("旗を奪取！", enemyTeam.color)
+                    val subtitle = Component.text("${player.name} が ${enemyTeam.displayName}の旗を取得", NamedTextColor.WHITE)
+                    game.sendEventNotification(
+                        title,
+                        subtitle,
+                        sound = org.bukkit.Sound.ENTITY_ENDER_DRAGON_HURT,
+                        soundPitch = 1.2f
+                    )
                     
                     // メッセージ
                     game.getAllPlayers().forEach {
@@ -279,6 +290,23 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     // キルストリーク通知
                     if (streak >= 2) {
+                        // タイトル通知
+                        val streakTitle = when (streak) {
+                            2 -> Component.text("ダブルキル！", NamedTextColor.YELLOW)
+                            3 -> Component.text("トリプルキル！", NamedTextColor.GOLD)
+                            4 -> Component.text("メガキル！", NamedTextColor.RED)
+                            5 -> Component.text("ウルトラキル！", NamedTextColor.DARK_RED)
+                            else -> Component.text("${streak}連続キル！", NamedTextColor.DARK_PURPLE)
+                        }
+                        val streakSubtitle = Component.text(killer.name, killerTeam.color)
+                        
+                        game.sendEventNotification(
+                            streakTitle,
+                            streakSubtitle,
+                            sound = org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER,
+                            soundPitch = 1.0f + (streak * 0.1f)
+                        )
+                        
                         game.getAllPlayers().forEach { p ->
                             p.sendMessage(Component.text(plugin.languageManager.getMessage("death.kill-streak-notification",
                                 "player" to killer.name,
@@ -788,6 +816,37 @@ class GameListenerNew(private val plugin: Main) : Listener {
         if (event.action == Action.RIGHT_CLICK_AIR || event.action == Action.RIGHT_CLICK_BLOCK) {
             val item = event.item ?: return
             
+            // 観戦者アイテムのチェック
+            val spectatorItemType = item.itemMeta?.persistentDataContainer?.get(
+                NamespacedKey(plugin, "spectator_item"),
+                PersistentDataType.STRING
+            )
+            
+            if (spectatorItemType != null) {
+                event.isCancelled = true
+                
+                when (spectatorItemType) {
+                    "stats" -> showStatsMenu(player, game)
+                    "track" -> showTrackingMenu(player, game)
+                    "flags" -> showFlagMenu(player, game)
+                    "spawn_red" -> {
+                        val spawn = game.getRandomSpawnLocation(Team.RED)
+                        if (spawn != null) {
+                            player.teleport(spawn.clone().add(0.0, 5.0, 0.0))
+                            player.sendMessage(Component.text("赤チームスポーンにテレポートしました", NamedTextColor.RED))
+                        }
+                    }
+                    "spawn_blue" -> {
+                        val spawn = game.getRandomSpawnLocation(Team.BLUE)
+                        if (spawn != null) {
+                            player.teleport(spawn.clone().add(0.0, 5.0, 0.0))
+                            player.sendMessage(Component.text("青チームスポーンにテレポートしました", NamedTextColor.BLUE))
+                        }
+                    }
+                }
+                return
+            }
+            
             // ショップアイテムのチェック
             if (item.type == Material.EMERALD && item.hasItemMeta()) {
                 val meta = item.itemMeta
@@ -820,6 +879,86 @@ class GameListenerNew(private val plugin: Main) : Listener {
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
         val game = gameManager.getPlayerGame(player) ?: return
+        
+        // 観戦者メニューの処理
+        val clickedItem = event.currentItem
+        if (clickedItem != null) {
+            // プレイヤー追跡
+            val trackPlayerId = clickedItem.itemMeta?.persistentDataContainer?.get(
+                NamespacedKey(plugin, "track_player"),
+                PersistentDataType.STRING
+            )
+            if (trackPlayerId != null) {
+                event.isCancelled = true
+                val targetUuid = java.util.UUID.fromString(trackPlayerId)
+                val target = Bukkit.getPlayer(targetUuid)
+                if (target != null) {
+                    player.teleport(target)
+                    player.closeInventory()
+                    player.sendMessage(Component.text("${target.name}にテレポートしました", NamedTextColor.GREEN))
+                }
+                return
+            }
+            
+            // 旗テレポート
+            val flagTeleport = clickedItem.itemMeta?.persistentDataContainer?.get(
+                NamespacedKey(plugin, "flag_teleport"),
+                PersistentDataType.STRING
+            )
+            if (flagTeleport != null) {
+                event.isCancelled = true
+                when (flagTeleport) {
+                    "red" -> {
+                        when {
+                            game.redFlagCarrier != null -> {
+                                val carrier = Bukkit.getPlayer(game.redFlagCarrier!!)
+                                if (carrier != null) {
+                                    player.teleport(carrier)
+                                    player.sendMessage(Component.text("赤旗の保持者にテレポートしました", NamedTextColor.RED))
+                                }
+                            }
+                            game.isRedFlagDropped -> {
+                                game.droppedFlags.entries.find { it.value.first == Team.RED }?.let {
+                                    player.teleport(it.key.clone().add(0.0, 5.0, 0.0))
+                                    player.sendMessage(Component.text("落ちている赤旗にテレポートしました", NamedTextColor.RED))
+                                }
+                            }
+                            else -> {
+                                game.getRedFlagLocation()?.let {
+                                    player.teleport(it.clone().add(0.0, 5.0, 0.0))
+                                    player.sendMessage(Component.text("赤旗の基地にテレポートしました", NamedTextColor.RED))
+                                }
+                            }
+                        }
+                    }
+                    "blue" -> {
+                        when {
+                            game.blueFlagCarrier != null -> {
+                                val carrier = Bukkit.getPlayer(game.blueFlagCarrier!!)
+                                if (carrier != null) {
+                                    player.teleport(carrier)
+                                    player.sendMessage(Component.text("青旗の保持者にテレポートしました", NamedTextColor.BLUE))
+                                }
+                            }
+                            game.isBlueFlagDropped -> {
+                                game.droppedFlags.entries.find { it.value.first == Team.BLUE }?.let {
+                                    player.teleport(it.key.clone().add(0.0, 5.0, 0.0))
+                                    player.sendMessage(Component.text("落ちている青旗にテレポートしました", NamedTextColor.BLUE))
+                                }
+                            }
+                            else -> {
+                                game.getBlueFlagLocation()?.let {
+                                    player.teleport(it.clone().add(0.0, 5.0, 0.0))
+                                    player.sendMessage(Component.text("青旗の基地にテレポートしました", NamedTextColor.BLUE))
+                                }
+                            }
+                        }
+                    }
+                }
+                player.closeInventory()
+                return
+            }
+        }
         
         // ショップアイテム（エメラルド）の移動制限
         if (game.state == GameState.RUNNING) {
@@ -1010,6 +1149,151 @@ class GameListenerNew(private val plugin: Main) : Listener {
                material == Material.LEATHER_CHESTPLATE ||
                material == Material.LEATHER_LEGGINGS ||
                material == Material.LEATHER_BOOTS
+    }
+    
+    private fun showStatsMenu(player: Player, game: Game) {
+        val inventory = Bukkit.createInventory(null, 54, Component.text("ゲーム統計", NamedTextColor.GOLD))
+        
+        // チーム別統計
+        var slot = 0
+        
+        // 赤チーム
+        val redPlayers = game.getAllPlayers().filter { p -> game.getPlayerTeam(p.uniqueId) == Team.RED }
+        redPlayers.sortedByDescending { p -> game.playerKills[p.uniqueId] ?: 0 }.forEach { p ->
+            val kills = game.playerKills[p.uniqueId] ?: 0
+            val deaths = game.playerDeaths[p.uniqueId] ?: 0
+            val captures = game.playerCaptures[p.uniqueId] ?: 0
+            
+            val skull = ItemStack(Material.PLAYER_HEAD).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text(p.name, NamedTextColor.RED))
+                    lore(listOf(
+                        Component.text("キル: $kills", NamedTextColor.WHITE),
+                        Component.text("デス: $deaths", NamedTextColor.WHITE),
+                        Component.text("キャプチャー: $captures", NamedTextColor.WHITE),
+                        Component.text("K/D: ${if (deaths == 0) kills.toDouble() else String.format("%.2f", kills.toDouble() / deaths)}", NamedTextColor.YELLOW)
+                    ))
+                    val skullMeta = this as? org.bukkit.inventory.meta.SkullMeta
+                    skullMeta?.owningPlayer = p
+                }
+            }
+            inventory.setItem(slot++, skull)
+        }
+        
+        // 区切り
+        slot = 27
+        
+        // 青チーム
+        val bluePlayers = game.getAllPlayers().filter { p -> game.getPlayerTeam(p.uniqueId) == Team.BLUE }
+        bluePlayers.sortedByDescending { p -> game.playerKills[p.uniqueId] ?: 0 }.forEach { p ->
+            val kills = game.playerKills[p.uniqueId] ?: 0
+            val deaths = game.playerDeaths[p.uniqueId] ?: 0
+            val captures = game.playerCaptures[p.uniqueId] ?: 0
+            
+            val skull = ItemStack(Material.PLAYER_HEAD).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text(p.name, NamedTextColor.BLUE))
+                    lore(listOf(
+                        Component.text("キル: $kills", NamedTextColor.WHITE),
+                        Component.text("デス: $deaths", NamedTextColor.WHITE),
+                        Component.text("キャプチャー: $captures", NamedTextColor.WHITE),
+                        Component.text("K/D: ${if (deaths == 0) kills.toDouble() else String.format("%.2f", kills.toDouble() / deaths)}", NamedTextColor.YELLOW)
+                    ))
+                    val skullMeta = this as? org.bukkit.inventory.meta.SkullMeta
+                    skullMeta?.owningPlayer = p
+                }
+            }
+            inventory.setItem(slot++, skull)
+        }
+        
+        player.openInventory(inventory)
+    }
+    
+    private fun showTrackingMenu(player: Player, game: Game) {
+        val inventory = Bukkit.createInventory(null, 27, Component.text("プレイヤー追跡", NamedTextColor.AQUA))
+        
+        var slot = 0
+        game.getAllPlayers().filter { p -> p != player && game.getPlayerTeam(p.uniqueId) != Team.SPECTATOR }.forEach { p ->
+            val team = game.getPlayerTeam(p.uniqueId) ?: return@forEach
+            val teamColor = if (team == Team.RED) NamedTextColor.RED else NamedTextColor.BLUE
+            
+            val skull = ItemStack(Material.PLAYER_HEAD).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text(p.name, teamColor))
+                    lore(listOf(
+                        Component.text("クリックでテレポート", NamedTextColor.GRAY),
+                        Component.text("チーム: ${team.displayName}", NamedTextColor.WHITE)
+                    ))
+                    val skullMeta = this as? org.bukkit.inventory.meta.SkullMeta
+                    skullMeta?.owningPlayer = p
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "track_player"),
+                        PersistentDataType.STRING,
+                        p.uniqueId.toString()
+                    )
+                }
+            }
+            inventory.setItem(slot++, skull)
+        }
+        
+        player.openInventory(inventory)
+    }
+    
+    private fun showFlagMenu(player: Player, game: Game) {
+        val inventory = Bukkit.createInventory(null, 9, Component.text("旗の位置", NamedTextColor.YELLOW))
+        
+        // 赤旗
+        val redFlagItem = ItemStack(Material.RED_BANNER).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("赤チームの旗", NamedTextColor.RED))
+                val status = when {
+                    game.redFlagCarrier != null -> {
+                        val carrier = Bukkit.getPlayer(game.redFlagCarrier!!)
+                        listOf(
+                            Component.text("状態: 保持中", NamedTextColor.YELLOW),
+                            Component.text("保持者: ${carrier?.name ?: "不明"}", NamedTextColor.WHITE)
+                        )
+                    }
+                    game.isRedFlagDropped -> listOf(Component.text("状態: 地面に落ちている", NamedTextColor.GRAY))
+                    else -> listOf(Component.text("状態: 基地に設置中", NamedTextColor.GREEN))
+                }
+                lore(status + Component.text("クリックでテレポート", NamedTextColor.GRAY))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "flag_teleport"),
+                    PersistentDataType.STRING,
+                    "red"
+                )
+            }
+        }
+        
+        // 青旗
+        val blueFlagItem = ItemStack(Material.BLUE_BANNER).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("青チームの旗", NamedTextColor.BLUE))
+                val status = when {
+                    game.blueFlagCarrier != null -> {
+                        val carrier = Bukkit.getPlayer(game.blueFlagCarrier!!)
+                        listOf(
+                            Component.text("状態: 保持中", NamedTextColor.YELLOW),
+                            Component.text("保持者: ${carrier?.name ?: "不明"}", NamedTextColor.WHITE)
+                        )
+                    }
+                    game.isBlueFlagDropped -> listOf(Component.text("状態: 地面に落ちている", NamedTextColor.GRAY))
+                    else -> listOf(Component.text("状態: 基地に設置中", NamedTextColor.GREEN))
+                }
+                lore(status + Component.text("クリックでテレポート", NamedTextColor.GRAY))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "flag_teleport"),
+                    PersistentDataType.STRING,
+                    "blue"
+                )
+            }
+        }
+        
+        inventory.setItem(2, redFlagItem)
+        inventory.setItem(6, blueFlagItem)
+        
+        player.openInventory(inventory)
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

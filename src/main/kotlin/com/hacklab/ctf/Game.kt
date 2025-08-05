@@ -81,6 +81,12 @@ class Game(
     var blueFlagCarrier: UUID? = null
     val droppedFlags = mutableMapOf<Location, Pair<Team, Long>>() // 位置 -> (チーム, ドロップ時刻)
     
+    // 旗がドロップされているかどうか
+    val isRedFlagDropped: Boolean
+        get() = droppedFlags.any { it.value.first == Team.RED }
+    val isBlueFlagDropped: Boolean
+        get() = droppedFlags.any { it.value.first == Team.BLUE }
+    
     // UI要素
     var scoreboard: Scoreboard? = null
     var objective: Objective? = null
@@ -181,6 +187,23 @@ class Game(
     fun getBlueFlagLocation(): Location? = blueFlagLocation
     fun getRedSpawnLocation(): Location? = redSpawnLocation
     fun getBlueSpawnLocation(): Location? = blueSpawnLocation
+    
+    fun getRandomSpawnLocation(team: Team): Location? {
+        val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
+        val config = gameManager?.getGameConfig(gameName)
+        
+        return when (team) {
+            Team.RED -> {
+                val locations = config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+                if (locations.isNotEmpty()) locations.random() else null
+            }
+            Team.BLUE -> {
+                val locations = config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+                if (locations.isNotEmpty()) locations.random() else null
+            }
+            Team.SPECTATOR -> null
+        }
+    }
     fun getCenterLocation(): Location? = mapCenterLocation
     
     fun setRedFlagLocation(location: Location) { redFlagLocation = location }
@@ -283,6 +306,9 @@ class Game(
         // スコアボード表示
         setupScoreboard(player)
         
+        // 観戦者用アイテムを配布
+        giveSpectatorItems(player)
+        
         player.sendMessage(Component.text(plugin.languageManager.getMessage("spectator.joined"), NamedTextColor.GRAY))
         
         // マッチに追加
@@ -316,6 +342,9 @@ class Game(
         // 観戦者として追加
         spectators.add(player.uniqueId)
         player.gameMode = GameMode.SPECTATOR
+        
+        // 観戦者用アイテムを配布
+        giveSpectatorItems(player)
         
         player.sendMessage(Component.text(plugin.languageManager.getMessage("spectator.switched"), NamedTextColor.GRAY))
         
@@ -756,6 +785,14 @@ class Game(
         
         bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.combat-time-format", "time" to formatTime(currentPhaseTime)))
         bossBar?.color = BarColor.RED
+        
+        // フェーズ変更通知
+        sendEventNotification(
+            Component.text("戦闘フェーズ開始！", NamedTextColor.RED),
+            Component.text("敵の旗を奪い、自陣へ持ち帰れ！", NamedTextColor.YELLOW),
+            sound = org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL,
+            soundPitch = 0.8f
+        )
         
         // 窒息チェックタスクを開始
         startSuffocationTask()
@@ -1953,6 +1990,31 @@ class Game(
         }
     }
     
+    // イベント通知用のヘルパーメソッド
+    fun sendEventNotification(
+        title: Component,
+        subtitle: Component? = null,
+        targetPlayers: List<Player> = getAllPlayers().toList(),
+        sound: org.bukkit.Sound? = null,
+        soundPitch: Float = 1.0f
+    ) {
+        targetPlayers.forEach { player ->
+            player.showTitle(Title.title(
+                title,
+                subtitle ?: Component.empty(),
+                Title.Times.times(
+                    Duration.ofMillis(500),   // フェードイン
+                    Duration.ofMillis(2000),  // 表示時間
+                    Duration.ofMillis(500)    // フェードアウト
+                )
+            ))
+            
+            sound?.let {
+                player.playSound(player.location, it, 1.0f, soundPitch)
+            }
+        }
+    }
+    
     private fun updatePlayerScoreboard(player: Player) {
         val playerScoreboard = player.scoreboard
         val obj = playerScoreboard.getObjective("ctf_game") ?: return
@@ -1996,30 +2058,86 @@ class Game(
         }
         
         // ゲーム中の表示
+        val playerTeam = getPlayerTeam(player.uniqueId)
+        val isSpectator = playerTeam == Team.SPECTATOR
+        
+        // フェーズと時間
+        val phaseText = when (phase) {
+            GamePhase.BUILD -> "§a建築"
+            GamePhase.COMBAT -> "§c戦闘"
+            GamePhase.INTERMISSION -> "§e作戦会議"
+        }
+        obj.getScore("$phaseText §f${formatTime(currentPhaseTime)}").score = line--
+        obj.getScore(" ").score = line-- // 空行
+        
+        // スコア表示
+        val redScore = score[Team.RED] ?: 0
+        val blueScore = score[Team.BLUE] ?: 0
+        obj.getScore("§c赤 $redScore §f- §9$blueScore 青").score = line--
+        
         // マッチモードの場合
         if (matchWrapper != null) {
-            // 第Nゲーム表示
-            obj.getScore("§e第${matchWrapper!!.currentGameNumber}ゲーム").score = line--
-            
             val redWins = matchWrapper!!.matchWins[Team.RED] ?: 0
             val blueWins = matchWrapper!!.matchWins[Team.BLUE] ?: 0
-            
-            // マッチスコア
-            obj.getScore("§c赤${redWins}§f-§9${blueWins}青").score = line--
+            obj.getScore("§7(マッチ: §c$redWins§7-§9$blueWins§7)").score = line--
         }
         
-        // 自チームの通貨を表示（観戦者以外）
-        val playerTeam = getPlayerTeam(player.uniqueId)
-        if (playerTeam != null && playerTeam != Team.SPECTATOR) {
+        // チーム人数
+        val redCount = redTeam.size
+        val blueCount = blueTeam.size
+        obj.getScore("§7人数: §c赤${redCount} §9青${blueCount}").score = line--
+        
+        // 旗の状態
+        if (phase == GamePhase.COMBAT) {
+            obj.getScore("  ").score = line-- // 空行
+            
+            // 赤旗の状態
+            val redFlagStatus = when {
+                redFlagCarrier != null -> {
+                    val carrier = Bukkit.getPlayer(redFlagCarrier!!)
+                    "§c赤旗: §e${carrier?.name ?: "不明"}"
+                }
+                isRedFlagDropped -> "§c赤旗: §7地面"
+                else -> "§c赤旗: §a設置中"
+            }
+            obj.getScore(redFlagStatus).score = line--
+            
+            // 青旗の状態
+            val blueFlagStatus = when {
+                blueFlagCarrier != null -> {
+                    val carrier = Bukkit.getPlayer(blueFlagCarrier!!)
+                    "§9青旗: §e${carrier?.name ?: "不明"}"
+                }
+                isBlueFlagDropped -> "§9青旗: §7地面"
+                else -> "§9青旗: §a設置中"
+            }
+            obj.getScore(blueFlagStatus).score = line--
+        }
+        
+        // 通貨表示
+        obj.getScore("   ").score = line-- // 空行
+        if (isSpectator) {
+            // 観戦者は両チームの通貨を表示
+            val redCurrency = if (matchWrapper != null) {
+                matchWrapper!!.getTeamCurrency(Team.RED)
+            } else {
+                getTeamCurrency(Team.RED)
+            }
+            val blueCurrency = if (matchWrapper != null) {
+                matchWrapper!!.getTeamCurrency(Team.BLUE)
+            } else {
+                getTeamCurrency(Team.BLUE)
+            }
+            obj.getScore("§e通貨: §c${redCurrency}G §9${blueCurrency}G").score = line--
+            obj.getScore("§7[観戦モード]").score = line--
+        } else if (playerTeam != null) {
+            // プレイヤーは自チームの通貨のみ表示
             val currency = if (matchWrapper != null) {
                 matchWrapper!!.getTeamCurrency(playerTeam)
             } else {
                 getTeamCurrency(playerTeam)
             }
-            obj.getScore("§e${currency}G").score = line--
-        } else if (playerTeam == Team.SPECTATOR) {
-            // 観戦者用の表示
-            obj.getScore("§7[観戦モード]").score = line--
+            obj.getScore("§e通貨: ${currency}G").score = line--
         }
     }
     
@@ -3763,5 +3881,91 @@ class Game(
                 inventory.setItem(i, null)
             }
         }
+    }
+    
+    private fun giveSpectatorItems(player: Player) {
+        player.inventory.clear()
+        
+        // 統計表示アイテム
+        val statsItem = ItemStack(Material.PAPER).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("統計情報", NamedTextColor.GOLD))
+                lore(listOf(
+                    Component.text("右クリックで表示", NamedTextColor.GRAY)
+                ))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "spectator_item"),
+                    PersistentDataType.STRING,
+                    "stats"
+                )
+            }
+        }
+        
+        // プレイヤー追跡アイテム
+        val trackItem = ItemStack(Material.COMPASS).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("プレイヤー追跡", NamedTextColor.AQUA))
+                lore(listOf(
+                    Component.text("右クリックでメニュー表示", NamedTextColor.GRAY)
+                ))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "spectator_item"),
+                    PersistentDataType.STRING,
+                    "track"
+                )
+            }
+        }
+        
+        // 赤チームスポーンへのテレポート
+        val redSpawnItem = ItemStack(Material.RED_BED).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("赤チームスポーン", NamedTextColor.RED))
+                lore(listOf(
+                    Component.text("右クリックでテレポート", NamedTextColor.GRAY)
+                ))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "spectator_item"),
+                    PersistentDataType.STRING,
+                    "spawn_red"
+                )
+            }
+        }
+        
+        // 青チームスポーンへのテレポート
+        val blueSpawnItem = ItemStack(Material.BLUE_BED).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("青チームスポーン", NamedTextColor.BLUE))
+                lore(listOf(
+                    Component.text("右クリックでテレポート", NamedTextColor.GRAY)
+                ))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "spectator_item"),
+                    PersistentDataType.STRING,
+                    "spawn_blue"
+                )
+            }
+        }
+        
+        // 旗の位置へのテレポート
+        val flagItem = ItemStack(Material.BEACON).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(Component.text("旗の位置", NamedTextColor.YELLOW))
+                lore(listOf(
+                    Component.text("右クリックでメニュー表示", NamedTextColor.GRAY)
+                ))
+                persistentDataContainer.set(
+                    NamespacedKey(plugin, "spectator_item"),
+                    PersistentDataType.STRING,
+                    "flags"
+                )
+            }
+        }
+        
+        // アイテムをインベントリに配置
+        player.inventory.setItem(0, statsItem)
+        player.inventory.setItem(2, trackItem)
+        player.inventory.setItem(4, flagItem)
+        player.inventory.setItem(6, redSpawnItem)
+        player.inventory.setItem(8, blueSpawnItem)
     }
 }
