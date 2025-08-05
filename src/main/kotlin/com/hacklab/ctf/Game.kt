@@ -66,6 +66,8 @@ class Game(
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
     var intermediateDuration = plugin.config.getInt("default-phases.intermediate-result-duration", 15)
     var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!
+    var buildPhaseBlocks = 16
+    var combatPhaseBlocks = 16
     
     // ゲーム状態
     var score = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
@@ -206,6 +208,8 @@ class Game(
         resultDuration = config.resultDuration
         intermediateDuration = config.intermediateDuration
         buildPhaseGameMode = config.buildPhaseGameMode
+        buildPhaseBlocks = config.buildPhaseBlocks
+        combatPhaseBlocks = config.combatPhaseBlocks
         minPlayers = config.minPlayers
         maxPlayersPerTeam = config.maxPlayersPerTeam
         autoStartEnabled = config.autoStartEnabled
@@ -1357,55 +1361,45 @@ class Game(
             inv.addItem(shovel)
         }
         
-        // チームカラーブロック（無限）をスロット0と1に固定
-        val infiniteConcrete = ItemStack(
+        // チームカラーブロックを配布（フェーズごとの個数制限）
+        val blocksToGive = if (phase == GamePhase.BUILD) buildPhaseBlocks else combatPhaseBlocks
+        
+        val teamConcrete = ItemStack(
             when (team) {
                 Team.RED -> Material.RED_CONCRETE
                 Team.BLUE -> Material.BLUE_CONCRETE
                 Team.SPECTATOR -> Material.WHITE_CONCRETE // 観戦者用（到達しないはず）
-            }
+            },
+            blocksToGive
         ).apply {
-            amount = 1
             itemMeta = itemMeta?.apply {
                 displayName(Component.text(plugin.languageManager.getMessage("flag.concrete-name",
                     "color" to team.getChatColor(),
                     "team" to team.displayName
                 )))
-                lore(listOf(Component.text(plugin.languageManager.getMessage("flag.infinite-desc"))))
-                // 無限フラグを設定
-                persistentDataContainer.set(
-                    NamespacedKey(plugin, "infinite_block"),
-                    PersistentDataType.BOOLEAN,
-                    true
-                )
+                lore(listOf(Component.text("§7建築用ブロック")))
             }
         }
         
-        val infiniteGlass = ItemStack(
+        val teamGlass = ItemStack(
             when (team) {
                 Team.RED -> Material.RED_STAINED_GLASS
                 Team.BLUE -> Material.BLUE_STAINED_GLASS
                 Team.SPECTATOR -> Material.WHITE_STAINED_GLASS // 観戦者用（到達しないはず）
-            }
+            },
+            blocksToGive
         ).apply {
-            amount = 1
             itemMeta = itemMeta?.apply {
                 displayName(Component.text(plugin.languageManager.getMessage("flag.glass-name",
                     "color" to team.getChatColor(),
                     "team" to team.displayName
                 )))
-                lore(listOf(Component.text(plugin.languageManager.getMessage("flag.infinite-desc"))))
-                // 無限フラグを設定
-                persistentDataContainer.set(
-                    NamespacedKey(plugin, "infinite_block"),
-                    PersistentDataType.BOOLEAN,
-                    true
-                )
+                lore(listOf(Component.text("§7建築用ブロック")))
             }
         }
         
-        player.inventory.setItem(0, infiniteConcrete)
-        player.inventory.setItem(1, infiniteGlass)
+        player.inventory.addItem(teamConcrete)
+        player.inventory.addItem(teamGlass)
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
         if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
@@ -1421,6 +1415,46 @@ class Game(
         
         // 革の防具（チームカラー）を再装備（防具をリセットして確実に着用）
         giveColoredLeatherArmor(player, team)
+        
+        // チームカラーブロックを配布（戦闘フェーズ用個数）
+        if (combatPhaseBlocks > 0) {
+            val teamConcrete = ItemStack(
+                when (team) {
+                    Team.RED -> Material.RED_CONCRETE
+                    Team.BLUE -> Material.BLUE_CONCRETE
+                    Team.SPECTATOR -> Material.WHITE_CONCRETE
+                },
+                combatPhaseBlocks
+            ).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text(plugin.languageManager.getMessage("flag.concrete-name",
+                        "color" to team.getChatColor(),
+                        "team" to team.displayName
+                    )))
+                    lore(listOf(Component.text("§7建築用ブロック")))
+                }
+            }
+            
+            val teamGlass = ItemStack(
+                when (team) {
+                    Team.RED -> Material.RED_STAINED_GLASS
+                    Team.BLUE -> Material.BLUE_STAINED_GLASS
+                    Team.SPECTATOR -> Material.WHITE_STAINED_GLASS
+                },
+                combatPhaseBlocks
+            ).apply {
+                itemMeta = itemMeta?.apply {
+                    displayName(Component.text(plugin.languageManager.getMessage("flag.glass-name",
+                        "color" to team.getChatColor(),
+                        "team" to team.displayName
+                    )))
+                    lore(listOf(Component.text("§7建築用ブロック")))
+                }
+            }
+            
+            inv.addItem(teamConcrete)
+            inv.addItem(teamGlass)
+        }
         
         // ダイヤピッケル（効率エンチャント付き）を配布（重複チェック）
         if (!hasInitialItem(player, InitialItemType.PICKAXE, Material.DIAMOND_PICKAXE)) {
@@ -2431,23 +2465,8 @@ class Game(
             GamePhase.BUILD -> {
                 // 観戦者には建築フェーズアイテムを配布しない
                 if (team != Team.SPECTATOR) {
-                    // 建築フェーズの基本アイテムを再配布
-                    // チームカラーブロック（無限）が失われていた場合のみ再配布
-                    val hasConcrete = player.inventory.any { item ->
-                        item?.type == when(team) {
-                            Team.RED -> Material.RED_CONCRETE
-                            Team.BLUE -> Material.BLUE_CONCRETE
-                            Team.SPECTATOR -> Material.WHITE_CONCRETE // 観戦者用（到達しないはず）
-                        } && item.itemMeta?.persistentDataContainer?.has(
-                            NamespacedKey(plugin, "infinite_block"),
-                            PersistentDataType.BOOLEAN
-                        ) == true
-                    }
-                
-                if (!hasConcrete) {
-                    // 無限ブロックを再配布（ショップアイテムは重複配布しない）
-                    giveBuildPhaseItems(player, team)
-                }
+                    // リスポーン時はブロックを再配布しない（消費型のため）
+                    // ピッケルやシャベルなどの初期装備のみチェック
                 
                 // ショップアイテムがない場合のみ再配布
                 val existingShopItem = player.inventory.getItem(8)
@@ -3648,18 +3667,11 @@ class Game(
             Material.BLUE_STAINED_GLASS
         ))
         
-        // インベントリから削除
+        // インベントリから削除（全てのチームカラーブロックを削除）
         for (i in 0 until inventory.size) {
             val item = inventory.getItem(i)
             if (item != null && itemsToRemove.contains(item.type)) {
-                // 無限ブロックマークがあるアイテムのみ削除
-                val meta = item.itemMeta
-                if (meta != null && meta.persistentDataContainer.has(
-                        NamespacedKey(plugin, "infinite_block"),
-                        PersistentDataType.BOOLEAN
-                    )) {
-                    inventory.setItem(i, null)
-                }
+                inventory.setItem(i, null)
             }
         }
     }
