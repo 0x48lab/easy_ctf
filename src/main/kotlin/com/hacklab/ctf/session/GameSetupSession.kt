@@ -41,8 +41,8 @@ class GameSetupSession(private val plugin: Main) {
         
         enum class Step {
             RED_FLAG, RED_SPAWN, BLUE_FLAG, BLUE_SPAWN,
-            BUILD_MODE, BUILD_TIME, COMBAT_TIME, RESULT_TIME,
-            INTERMEDIATE_TIME, MATCH_MODE, MATCH_TARGET, COMPLETE
+            BUILD_MODE, BUILD_TIME, BUILD_BLOCKS, COMBAT_TIME, COMBAT_BLOCKS,
+            RESULT_TIME, INTERMEDIATE_TIME, MATCH_MODE, MATCH_TARGET, COMPLETE
         }
         
         override fun handleInput(input: String) {
@@ -65,8 +65,8 @@ class GameSetupSession(private val plugin: Main) {
         
         enum class Menu {
             MAIN, RED_FLAG, RED_SPAWN, BLUE_FLAG, BLUE_SPAWN,
-            BUILD_MODE, BUILD_TIME, COMBAT_TIME, RESULT_TIME,
-            INTERMEDIATE_TIME
+            BUILD_MODE, BUILD_TIME, BUILD_BLOCKS, COMBAT_TIME, COMBAT_BLOCKS,
+            RESULT_TIME, INTERMEDIATE_TIME
         }
         
         override fun handleInput(input: String) {
@@ -175,7 +175,9 @@ class GameSetupSession(private val plugin: Main) {
                     }
                     CreateSession.Step.BUILD_MODE -> setBuildMode(session, message)
                     CreateSession.Step.BUILD_TIME -> setBuildTime(session, message)
+                    CreateSession.Step.BUILD_BLOCKS -> setBuildBlocks(session, message)
                     CreateSession.Step.COMBAT_TIME -> setCombatTime(session, message)
+                    CreateSession.Step.COMBAT_BLOCKS -> setCombatBlocks(session, message)
                     CreateSession.Step.RESULT_TIME -> setResultTime(session, message)
                     CreateSession.Step.INTERMEDIATE_TIME -> setIntermediateTime(session, message)
                     CreateSession.Step.MATCH_MODE -> setMatchMode(session, message)
@@ -199,8 +201,10 @@ class GameSetupSession(private val plugin: Main) {
                 "7" -> startUpdateValue(session, UpdateSession.Menu.COMBAT_TIME)
                 "8" -> startUpdateValue(session, UpdateSession.Menu.RESULT_TIME)
                 "9" -> startUpdateValue(session, UpdateSession.Menu.INTERMEDIATE_TIME)
-                "10" -> convertToCreateSession(session)
-                "11", "exit" -> cancelSession(session.player)
+                "10" -> startUpdateValue(session, UpdateSession.Menu.BUILD_BLOCKS)
+                "11" -> startUpdateValue(session, UpdateSession.Menu.COMBAT_BLOCKS)
+                "12" -> convertToCreateSession(session)
+                "13", "exit" -> cancelSession(session.player)
                 else -> session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.invalid-selection"), NamedTextColor.RED))
             }
         } else {
@@ -236,9 +240,17 @@ class GameSetupSession(private val plugin: Main) {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-prompt"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-300"), NamedTextColor.GRAY))
             }
+            CreateSession.Step.BUILD_BLOCKS -> {
+                player.sendMessage(Component.text("§e建築フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("§7'skip' でデフォルト値 (16個) を使用", NamedTextColor.GRAY))
+            }
             CreateSession.Step.COMBAT_TIME -> {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-600"), NamedTextColor.GRAY))
+            }
+            CreateSession.Step.COMBAT_BLOCKS -> {
+                player.sendMessage(Component.text("§e戦闘フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text("§7'skip' でデフォルト値 (16個) を使用", NamedTextColor.GRAY))
             }
             CreateSession.Step.RESULT_TIME -> {
                 player.sendMessage(Component.text("§e結果表示フェーズの時間を秒単位で入力してください (例: 60)", NamedTextColor.YELLOW))
@@ -275,8 +287,10 @@ class GameSetupSession(private val plugin: Main) {
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text("§f8. 結果表示時間を更新 (現在: ${session.config.resultDuration}秒)", NamedTextColor.WHITE))
         player.sendMessage(Component.text("§f9. マッチ中間の作戦会議時間を更新 (現在: ${session.config.intermediateDuration}秒)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f10. すべて更新", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f11. 終了", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f10. 建築フェーズのブロック数を更新 (現在: ${session.config.buildPhaseBlocks}個)", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f11. 戦闘フェーズのブロック数を更新 (現在: ${session.config.combatPhaseBlocks}個)", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f12. すべて更新", NamedTextColor.WHITE))
+        player.sendMessage(Component.text("§f13. 終了", NamedTextColor.WHITE))
     }
     
     private fun setLocationFromView(session: CreateSession) {
@@ -338,10 +352,18 @@ class GameSetupSession(private val plugin: Main) {
                 showCreateStep(session)
             }
             CreateSession.Step.BUILD_TIME -> {
+                session.step = CreateSession.Step.BUILD_BLOCKS
+                showCreateStep(session)
+            }
+            CreateSession.Step.BUILD_BLOCKS -> {
                 session.step = CreateSession.Step.COMBAT_TIME
                 showCreateStep(session)
             }
             CreateSession.Step.COMBAT_TIME -> {
+                session.step = CreateSession.Step.COMBAT_BLOCKS
+                showCreateStep(session)
+            }
+            CreateSession.Step.COMBAT_BLOCKS -> {
                 session.step = CreateSession.Step.RESULT_TIME
                 showCreateStep(session)
             }
@@ -389,6 +411,19 @@ class GameSetupSession(private val plugin: Main) {
         
         session.config.buildDuration = time
         session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-set", "time" to time.toString()), NamedTextColor.GREEN))
+        session.step = CreateSession.Step.BUILD_BLOCKS
+        showCreateStep(session)
+    }
+    
+    private fun setBuildBlocks(session: CreateSession, input: String) {
+        val blocks = input.toIntOrNull()
+        if (blocks == null || blocks < 0 || blocks > 64) {
+            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.buildPhaseBlocks = blocks
+        session.player.sendMessage(Component.text("§a建築フェーズのブロック数を${blocks}個に設定しました", NamedTextColor.GREEN))
         session.step = CreateSession.Step.COMBAT_TIME
         showCreateStep(session)
     }
@@ -402,6 +437,19 @@ class GameSetupSession(private val plugin: Main) {
         
         session.config.combatDuration = time
         session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-set", "time" to time.toString()), NamedTextColor.GREEN))
+        session.step = CreateSession.Step.COMBAT_BLOCKS
+        showCreateStep(session)
+    }
+    
+    private fun setCombatBlocks(session: CreateSession, input: String) {
+        val blocks = input.toIntOrNull()
+        if (blocks == null || blocks < 0 || blocks > 64) {
+            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.combatPhaseBlocks = blocks
+        session.player.sendMessage(Component.text("§a戦闘フェーズのブロック数を${blocks}個に設定しました", NamedTextColor.GREEN))
         session.step = CreateSession.Step.RESULT_TIME
         showCreateStep(session)
     }
@@ -506,6 +554,12 @@ class GameSetupSession(private val plugin: Main) {
             UpdateSession.Menu.INTERMEDIATE_TIME -> {
                 session.player.sendMessage(Component.text("§eマッチ中間の作戦会議時間を秒単位で入力してください (現在: ${session.config.intermediateDuration}秒)", NamedTextColor.YELLOW))
             }
+            UpdateSession.Menu.BUILD_BLOCKS -> {
+                session.player.sendMessage(Component.text("§e建築フェーズで配布するブロック数を入力してください (0-64, 現在: ${session.config.buildPhaseBlocks}個)", NamedTextColor.YELLOW))
+            }
+            UpdateSession.Menu.COMBAT_BLOCKS -> {
+                session.player.sendMessage(Component.text("§e戦闘フェーズで配布するブロック数を入力してください (0-64, 現在: ${session.config.combatPhaseBlocks}個)", NamedTextColor.YELLOW))
+            }
             else -> {}
         }
     }
@@ -525,6 +579,8 @@ class GameSetupSession(private val plugin: Main) {
             UpdateSession.Menu.COMBAT_TIME -> updateCombatTime(session, input)
             UpdateSession.Menu.RESULT_TIME -> updateResultTime(session, input)
             UpdateSession.Menu.INTERMEDIATE_TIME -> updateIntermediateTime(session, input)
+            UpdateSession.Menu.BUILD_BLOCKS -> updateBuildBlocks(session, input)
+            UpdateSession.Menu.COMBAT_BLOCKS -> updateCombatBlocks(session, input)
             else -> {}
         }
     }
@@ -634,6 +690,38 @@ class GameSetupSession(private val plugin: Main) {
         
         session.config.intermediateDuration = time
         session.player.sendMessage(Component.text("§aマッチ中間の作戦会議時間を更新しました", NamedTextColor.GREEN))
+        onUpdateComplete?.invoke(session.config)
+        
+        session.waitingForInput = false
+        session.menu = UpdateSession.Menu.MAIN
+        showUpdateMenu(session)
+    }
+    
+    private fun updateBuildBlocks(session: UpdateSession, input: String) {
+        val blocks = input.toIntOrNull()
+        if (blocks == null || blocks < 0 || blocks > 64) {
+            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.buildPhaseBlocks = blocks
+        session.player.sendMessage(Component.text("§a建築フェーズのブロック数を更新しました", NamedTextColor.GREEN))
+        onUpdateComplete?.invoke(session.config)
+        
+        session.waitingForInput = false
+        session.menu = UpdateSession.Menu.MAIN
+        showUpdateMenu(session)
+    }
+    
+    private fun updateCombatBlocks(session: UpdateSession, input: String) {
+        val blocks = input.toIntOrNull()
+        if (blocks == null || blocks < 0 || blocks > 64) {
+            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            return
+        }
+        
+        session.config.combatPhaseBlocks = blocks
+        session.player.sendMessage(Component.text("§a戦闘フェーズのブロック数を更新しました", NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false

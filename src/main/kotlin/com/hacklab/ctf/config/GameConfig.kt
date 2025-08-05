@@ -31,6 +31,10 @@ data class GameConfig(
     var resultDuration: Int = 60,
     var intermediateDuration: Int = 15,  // マッチ中間の作戦会議時間
     
+    // ブロック配布設定
+    var buildPhaseBlocks: Int = 16,      // 建築フェーズで配布するブロック数（コンクリートとガラスそれぞれ）
+    var combatPhaseBlocks: Int = 16,     // 戦闘フェーズで配布するブロック数
+    
     // マッチ設定
     var matchMode: MatchMode = MatchMode.FIXED_ROUNDS,
     var matchTarget: Int = 3,
@@ -71,6 +75,8 @@ data class GameConfig(
         combatDuration = combatDuration,
         resultDuration = resultDuration,
         intermediateDuration = intermediateDuration,
+        buildPhaseBlocks = buildPhaseBlocks,
+        combatPhaseBlocks = combatPhaseBlocks,
         matchMode = matchMode,
         matchTarget = matchTarget,
         matchIntervalDuration = matchIntervalDuration,

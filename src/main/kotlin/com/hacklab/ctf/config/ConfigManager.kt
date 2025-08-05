@@ -63,6 +63,8 @@ class ConfigManager(private val plugin: Main) {
         yaml.set("settings.phases.combat-duration", config.combatDuration)
         yaml.set("settings.phases.result-duration", config.resultDuration)
         yaml.set("settings.phases.intermediate-duration", config.intermediateDuration)
+        yaml.set("settings.phases.build-phase-blocks", config.buildPhaseBlocks)
+        yaml.set("settings.phases.combat-phase-blocks", config.combatPhaseBlocks)
         
         // マッチ設定
         yaml.set("settings.match.mode", config.matchMode.name)
@@ -135,6 +137,8 @@ class ConfigManager(private val plugin: Main) {
         config.combatDuration = yaml.getInt("settings.phases.combat-duration", config.combatDuration)
         config.resultDuration = yaml.getInt("settings.phases.result-duration", config.resultDuration)
         config.intermediateDuration = yaml.getInt("settings.phases.intermediate-duration", config.intermediateDuration)
+        config.buildPhaseBlocks = yaml.getInt("settings.phases.build-phase-blocks", config.buildPhaseBlocks)
+        config.combatPhaseBlocks = yaml.getInt("settings.phases.combat-phase-blocks", config.combatPhaseBlocks)
         
         // マッチ設定の読み込み
         config.matchMode = MatchMode.FIXED_ROUNDS

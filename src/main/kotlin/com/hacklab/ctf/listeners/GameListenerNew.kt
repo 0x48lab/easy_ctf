@@ -684,14 +684,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
             return
         }
         
-        // 無限ブロックかどうかを事前にチェック（設置前のアイテム情報を保存）
+        // ブロック設置前のアイテム情報を保存
         val itemInHand = event.itemInHand
-        val originalItemType = itemInHand?.type
-        val originalItemMeta = itemInHand?.itemMeta?.clone()
-        val isInfiniteBlock = itemInHand?.itemMeta?.persistentDataContainer?.get(
-            NamespacedKey(plugin, "infinite_block"),
-            PersistentDataType.BOOLEAN
-        ) ?: false
         
         // ビーコンの上にブロックを置けないようにする
         val blockLocation = event.block.location
@@ -750,44 +744,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }
         }
         
-        // 無限ブロックの処理（設置が成功した場合のみ）
-        if (!event.isCancelled && isInfiniteBlock && originalItemType != null && originalItemType != Material.AIR) {
-            plugin.logger.info("[InfiniteBlock] Processing infinite block placement - Hand: ${event.hand}, Item: ${originalItemType}")
-            
-            // 無限ブロックの場合、アイテムを補充
-            plugin.server.scheduler.runTaskLater(plugin, Runnable {
-                // 元のアイテムを復元
-                val restoredItem = ItemStack(originalItemType).apply {
-                    amount = 1
-                    if (originalItemMeta != null) {
-                        itemMeta = originalItemMeta
-                    }
-                }
-                
-                // 使用された手に応じてアイテムを補充
-                when (event.hand) {
-                    EquipmentSlot.HAND -> {
-                        val currentItem = player.inventory.itemInMainHand
-                        plugin.logger.info("[InfiniteBlock] Main hand - Current: ${currentItem.type}, Amount: ${currentItem.amount}")
-                        if (currentItem.type == Material.AIR || currentItem.amount == 0) {
-                            player.inventory.setItemInMainHand(restoredItem)
-                            plugin.logger.info("[InfiniteBlock] Replenished main hand with ${restoredItem.type}")
-                        }
-                    }
-                    EquipmentSlot.OFF_HAND -> {
-                        val currentItem = player.inventory.itemInOffHand
-                        plugin.logger.info("[InfiniteBlock] Off hand - Current: ${currentItem.type}, Amount: ${currentItem.amount}")
-                        if (currentItem.type == Material.AIR || currentItem.amount == 0) {
-                            player.inventory.setItemInOffHand(restoredItem)
-                            plugin.logger.info("[InfiniteBlock] Replenished off hand with ${restoredItem.type}")
-                        }
-                    }
-                    else -> {
-                        plugin.logger.warning("[InfiniteBlock] Unknown hand type: ${event.hand}")
-                    }
-                }
-            }, 1L)
-        }
+        // 無限ブロックシステムは削除されました
     }
 
     @EventHandler
