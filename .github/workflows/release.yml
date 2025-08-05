@@ -23,7 +23,12 @@ jobs:
       run: chmod +x gradlew
       
     - name: Build with Gradle
-      run: ./gradlew shadowJar
+      run: ./gradlew clean shadowJar
+      
+    - name: List build output
+      run: |
+        echo "Contents of build/libs:"
+        ls -la build/libs/ || echo "build/libs directory not found"
       
     - name: Extract version from tag
       id: version
@@ -32,9 +37,16 @@ jobs:
     - name: Find JAR file
       id: jar
       run: |
-        JAR_FILE=$(find build/libs -name "*-all.jar" | head -1)
+        # shadowJarで生成されるJARファイルを探す（EasyCTF-*.jar）
+        JAR_FILE=$(find build/libs -name "EasyCTF-*.jar" -type f | head -1)
+        if [ -z "$JAR_FILE" ]; then
+          echo "Error: No EasyCTF JAR file found in build/libs/"
+          ls -la build/libs/
+          exit 1
+        fi
         echo "JAR_PATH=$JAR_FILE" >> $GITHUB_OUTPUT
         echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
+        echo "Found JAR: $JAR_FILE"
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -64,7 +76,7 @@ jobs:
           1.21.5
           
         dependencies: |
-          paper-api | required
+          paper-api(required)
           
         changelog: |
           See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
