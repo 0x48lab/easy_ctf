@@ -721,9 +721,36 @@ class Game(
         currentPhaseTime = combatDuration
         
         // リスポーンタスクをクリア（建築フェーズからの移行時）
-        respawnTasks.values.forEach { task ->
+        respawnTasks.forEach { (playerUuid, task) ->
             plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-combat"))
             task.cancel()
+            
+            // リスポーン待ちのプレイヤーを即座に復活させる
+            Bukkit.getPlayer(playerUuid)?.let { player ->
+                if (player.gameMode == GameMode.SPECTATOR) {
+                    val team = getPlayerTeam(player.uniqueId) ?: return@let
+                    
+                    // スポーン地点に転送
+                    teleportToSpawn(player, team)
+                    
+                    // ゲームモードを設定
+                    player.gameMode = GameMode.SURVIVAL
+                    
+                    // 保持アイテムがあれば復元
+                    val keptItems = player.getMetadata("ctf_items_to_keep")
+                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
+                    for (item in keptItems) {
+                        player.inventory.addItem(item)
+                    }
+                    player.removeMetadata("ctf_items_to_keep", plugin)
+                    
+                    // 建築フェーズアイテムを削除
+                    removeTeamColoredBlocks(player)
+                    
+                    // 戦闘フェーズアイテムを配布
+                    giveCombatPhaseItems(player, team)
+                }
+            }
         }
         respawnTasks.clear()
         
@@ -749,9 +776,29 @@ class Game(
         phase = GamePhase.INTERMISSION
         
         // リスポーンタスクをキャンセル
-        respawnTasks.values.forEach { task ->
+        respawnTasks.forEach { (playerUuid, task) ->
             plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-phase"))
             task.cancel()
+            
+            // リスポーン待ちのプレイヤーを即座に復活させる
+            Bukkit.getPlayer(playerUuid)?.let { player ->
+                if (player.gameMode == GameMode.SPECTATOR) {
+                    handleRespawn(player)
+                    // 作戦会議フェーズではゲームモードはADVENTURE
+                    player.gameMode = GameMode.ADVENTURE
+                    
+                    // 保持アイテムがあれば復元
+                    val keptItems = player.getMetadata("ctf_items_to_keep")
+                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
+                    for (item in keptItems) {
+                        player.inventory.addItem(item)
+                    }
+                    player.removeMetadata("ctf_items_to_keep", plugin)
+                    
+                    // インベントリをクリア（作戦会議フェーズは装備なし）
+                    player.inventory.clear()
+                }
+            }
         }
         respawnTasks.clear()
         
