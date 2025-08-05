@@ -357,7 +357,6 @@ class GameManager(private val plugin: Main) {
             autoStartEnabled = config.autoStartEnabled
             minPlayers = config.minPlayers
             maxPlayersPerTeam = config.maxPlayersPerTeam
-            respawnDelay = config.respawnDelay
             buildDuration = config.buildDuration
             buildPhaseGameMode = config.buildPhaseGameMode
             combatDuration = config.combatDuration
@@ -383,7 +382,6 @@ class GameManager(private val plugin: Main) {
         // ゲーム設定更新
         game.minPlayers = config.minPlayers
         game.maxPlayersPerTeam = config.maxPlayersPerTeam
-        game.respawnDelay = config.respawnDelay
         game.buildDuration = config.buildDuration
         game.buildPhaseGameMode = config.buildPhaseGameMode
         game.combatDuration = config.combatDuration

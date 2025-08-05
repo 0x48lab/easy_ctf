@@ -57,7 +57,11 @@ class ConfigManager(private val plugin: Main) {
         yaml.set("settings.auto-start-enabled", config.autoStartEnabled)
         yaml.set("settings.min-players", config.minPlayers)
         yaml.set("settings.max-players-per-team", config.maxPlayersPerTeam)
-        yaml.set("settings.respawn-delay", config.respawnDelay)
+        
+        // リスポーン設定
+        yaml.set("settings.respawn-delay-base", config.respawnDelayBase)
+        yaml.set("settings.respawn-delay-per-death", config.respawnDelayPerDeath)
+        yaml.set("settings.respawn-delay-max", config.respawnDelayMax)
         yaml.set("settings.phases.build-duration", config.buildDuration)
         yaml.set("settings.phases.build-phase-gamemode", config.buildPhaseGameMode)
         yaml.set("settings.phases.combat-duration", config.combatDuration)
@@ -129,7 +133,11 @@ class ConfigManager(private val plugin: Main) {
         config.autoStartEnabled = yaml.getBoolean("settings.auto-start-enabled", config.autoStartEnabled)
         config.minPlayers = yaml.getInt("settings.min-players", config.minPlayers)
         config.maxPlayersPerTeam = yaml.getInt("settings.max-players-per-team", config.maxPlayersPerTeam)
-        config.respawnDelay = yaml.getInt("settings.respawn-delay", config.respawnDelay)
+        
+        // リスポーン設定の読み込み
+        config.respawnDelayBase = yaml.getInt("settings.respawn-delay-base", config.respawnDelayBase)
+        config.respawnDelayPerDeath = yaml.getInt("settings.respawn-delay-per-death", config.respawnDelayPerDeath)
+        config.respawnDelayMax = yaml.getInt("settings.respawn-delay-max", config.respawnDelayMax)
         config.buildDuration = yaml.getInt("settings.phases.build-duration", config.buildDuration)
         val gameModeFromFile = yaml.getString("settings.phases.build-phase-gamemode")
         plugin.logger.info("[ConfigManager] Loading game ${name}: build-phase-gamemode from file = $gameModeFromFile, default = ${config.buildPhaseGameMode}")
@@ -190,7 +198,9 @@ class ConfigManager(private val plugin: Main) {
             autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false),
             minPlayers = plugin.config.getInt("default-game.min-players", 2),
             maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10),
-            respawnDelay = plugin.config.getInt("default-game.respawn-delay-base", 10),
+            respawnDelayBase = plugin.config.getInt("default-game.respawn-delay-base", 10),
+            respawnDelayPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 2),
+            respawnDelayMax = plugin.config.getInt("default-game.respawn-delay-max", 20),
             buildDuration = plugin.config.getInt("default-phases.build-duration", 300),
             buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!.also {
                 plugin.logger.info("[ConfigManager] buildPhaseGameMode from config: $it")

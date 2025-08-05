@@ -22,7 +22,11 @@ data class GameConfig(
     var autoStartEnabled: Boolean = false,
     var minPlayers: Int = 2,
     var maxPlayersPerTeam: Int = 10,
-    var respawnDelay: Int = 5,
+    
+    // リスポーン設定
+    var respawnDelayBase: Int = 10,        // 基本リスポーン時間（秒）
+    var respawnDelayPerDeath: Int = 2,     // 死亡ごとの追加ペナルティ（秒）
+    var respawnDelayMax: Int = 20,         // 最大リスポーン時間（秒）
     
     // フェーズ設定
     var buildDuration: Int = 300,
@@ -69,7 +73,9 @@ data class GameConfig(
         autoStartEnabled = autoStartEnabled,
         minPlayers = minPlayers,
         maxPlayersPerTeam = maxPlayersPerTeam,
-        respawnDelay = respawnDelay,
+        respawnDelayBase = respawnDelayBase,
+        respawnDelayPerDeath = respawnDelayPerDeath,
+        respawnDelayMax = respawnDelayMax,
         buildDuration = buildDuration,
         buildPhaseGameMode = buildPhaseGameMode,
         combatDuration = combatDuration,

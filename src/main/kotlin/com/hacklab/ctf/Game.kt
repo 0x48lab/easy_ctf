@@ -60,7 +60,6 @@ class Game(
     var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
-    var respawnDelay = plugin.config.getInt("default-game.respawn-delay-base", 10)
     var buildDuration = plugin.config.getInt("default-phases.build-duration", 300)
     var combatDuration = plugin.config.getInt("default-phases.combat-duration", 600)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
