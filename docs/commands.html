@@ -93,6 +93,17 @@
                 <p>ゲームの詳細状態を確認します。ゲーム名を省略すると参加中のゲーム情報を表示します。</p>
                 <p class="example">例: <code>/ctf status arena1</code></p>
             </div>
+            
+            <h3>観戦者モード</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf spectator [ゲーム名]</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>観戦者としてゲームに参加します。ゲームに影響を与えずに観戦できます。</p>
+                <p class="example">例: <code>/ctf spectator arena1</code></p>
+            </div>
         </section>
 
         <section class="content-section">
@@ -209,6 +220,79 @@
                 </div>
                 <p class="example">例: <code>/ctf setspawn arena1 blue</code></p>
             </div>
+            
+            <h3>複数スポーン地点管理</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf addspawn &lt;ゲーム名&gt; &lt;red|blue&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>追加のスポーン地点を現在地に設定します。プレイヤーはランダムに選択されたスポーン地点で復活します。</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    他のスポーン地点から4ブロック以上離れている必要があります。
+                </div>
+                <p class="example">例: <code>/ctf addspawn arena1 red</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf removespawn &lt;ゲーム名&gt; &lt;red|blue&gt; &lt;番号&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>指定した番号のスポーン地点を削除します。</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    最初のスポーン地点（番号0）は削除できません。
+                </div>
+                <p class="example">例: <code>/ctf removespawn arena1 blue 2</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf listspawns &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>ゲームのすべてのスポーン地点を一覧表示します。座標と番号が表示されます。</p>
+                <p class="example">例: <code>/ctf listspawns arena1</code></p>
+            </div>
+            
+            <h3>マップ作成</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setpos1 &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>マップ領域の始点を現在地に設定します。</p>
+                <p class="example">例: <code>/ctf setpos1 arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setpos2 &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>マップ領域の終点を現在地に設定します。</p>
+                <p class="example">例: <code>/ctf setpos2 arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf savemap &lt;ゲーム名&gt;</code>
+                    <button class="copy-btn">コピー</button>
+                </div>
+                <p>マップを保存します。特定のブロックを自動検出してゲーム設定を行います。</p>
+                <h4>必要なブロック配置:</h4>
+                <ul>
+                    <li>赤のコンクリート: 赤チームのスポーン地点（複数可）</li>
+                    <li>青のコンクリート: 青チームのスポーン地点（複数可）</li>
+                    <li>ビーコン + 赤のガラス: 赤チームの旗</li>
+                    <li>ビーコン + 青のガラス: 青チームの旗</li>
+                </ul>
+                <p class="example">例: <code>/ctf savemap arena1</code></p>
+            </div>
         </section>
 
         <section class="content-section">
@@ -234,7 +318,7 @@
                         <td><code>ctf.admin</code></td>
                         <td>管理者コマンドの使用</td>
                         <td>OP</td>
-                        <td>create, update, delete, start, stop, setflag, setspawn</td>
+                        <td>create, update, delete, start, stop, setflag, setspawn, addspawn, removespawn, listspawns, setpos1, setpos2, savemap</td>
                     </tr>
                     <tr>
                         <td><code>ctf.*</code></td>
@@ -258,8 +342,8 @@
                 </div>
                 
                 <div class="example-card">
-                    <h3>5勝先取マッチを開催</h3>
-                    <pre><code>/ctf start arena1 first_to_x 5</code></pre>
+                    <h3>5ゲームのマッチを開催</h3>
+                    <pre><code>/ctf start arena1 match 5</code></pre>
                 </div>
                 
                 <div class="example-card">
@@ -298,9 +382,9 @@
                 <div class="footer-section">
                     <h4>リンク</h4>
                     <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/releases">ダウンロード</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/issues">Issues</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">

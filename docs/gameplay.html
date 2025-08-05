@@ -69,6 +69,19 @@
                             <button class="copy-btn">コピー</button>
                         </div>
                         <p>自動的に人数の少ないチームに配属されます。友達と同じチームになりたい場合は、事前に相談しておきましょう。</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-eye"></i>
+                            <strong>観戦者モード:</strong> <code>/ctf spectator &lt;ゲーム名&gt;</code> でゲームに影響を与えずに観戦できます
+                        </div>
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>観戦者の便利機能:</strong>
+                            <ul>
+                                <li>詳細なスコアボード（両チームの状態を一度に確認）</li>
+                                <li>ホットバーメニュー（統計・プレイヤー追跡・旗位置確認）</li>
+                                <li>重要イベントの通知（旗の奪取、キルストリークなど）</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -109,7 +122,7 @@
                         </div>
                         <div class="alert alert-info">
                             <i class="fas fa-link"></i>
-                            <strong>ブロック接続システム:</strong> ブロックは自チームのビーコンまたは既存のチームブロックに接続している必要があります。接続が切れたブロックは自動的に白色（クォーツブロック）に変化し、どちらのチームでも利用可能になります。
+                            <strong>ブロック接続システム:</strong> ブロックは自チームのビーコン、既存のチームブロック、またはいずれかのスポーン地点に接続している必要があります。接続が切れたブロックは自動的に白色（クォーツブロック）に変化し、どちらのチームでも利用可能になります。
                         </div>
                     </div>
                 </div>
@@ -125,7 +138,7 @@
                         <ul>
                             <li><strong>目的:</strong> 旗の奪取と防衛</li>
                             <li><strong>PvP:</strong> 有効（戦闘可能）</li>
-                            <li><strong>死亡:</strong> 10〜20秒後にリスポーン（死亡回数で増加）</li>
+                            <li><strong>死亡:</strong> 基本10秒後にリスポーン（死亡回数×2秒追加、最大20秒）</li>
                             <li><strong>旗の取得:</strong> 敵のビーコンに1.5ブロック以内に接近</li>
                             <li><strong>得点条件:</strong> 自陣の旗がある状態で敵の旗を持ち帰る</li>
                         </ul>
@@ -271,20 +284,10 @@
                         </ul>
                     </div>
                     <div class="feature-card">
-                        <h4>防具</h4>
-                        <ul>
-                            <li>鉄防具セット</li>
-                            <li>ダイヤ防具セット</li>
-                            <li>ネザライト防具セット</li>
-                            <li>エリトラ（高額）</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
                         <h4>消耗品</h4>
                         <ul>
                             <li>エンダーパール</li>
                             <li>金のリンゴ</li>
-                            <li>ポーション各種</li>
                             <li>矢</li>
                         </ul>
                     </div>
@@ -294,7 +297,6 @@
                             <li>石・木材・土</li>
                             <li>ガラス・黒曜石</li>
                             <li>TNT・レッドストーン</li>
-                            <li>水バケツ・溶岩バケツ</li>
                         </ul>
                     </div>
                 </div>
@@ -355,11 +357,18 @@
             <div class="subsection">
                 <h3>リスポーンシステム</h3>
                 <ul>
-                    <li>基本リスポーン時間: 10秒</li>
-                    <li>死亡回数による追加: +2秒/死亡（最大20秒）</li>
-                    <li>リスポーン後3秒間の無敵時間（発光状態）</li>
-                    <li>無敵中に攻撃すると即座に解除</li>
+                    <li><strong>複数スポーン地点:</strong> チームごとに複数のスポーン地点を設定可能</li>
+                    <li><strong>ランダム選択:</strong> 復活時にランダムに選ばれたスポーン地点でリスポーン</li>
+                    <li><strong>基本リスポーン時間:</strong> 10秒（ゲームごとに設定可能）</li>
+                    <li><strong>死亡ペナルティ:</strong> +2秒/死亡（ゲームごとに設定可能）</li>
+                    <li><strong>最大遅延:</strong> 20秒（ゲームごとに設定可能）</li>
+                    <li><strong>スポーン保護:</strong> リスポーン後3秒間の無敵時間（発光状態）</li>
+                    <li><strong>保護解除:</strong> 攻撃または旗取得で即座に解除</li>
                 </ul>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    フェーズ変更時にリスポーン待ちのプレイヤーは即座に復活します
+                </div>
             </div>
             
             <div class="subsection">
@@ -467,7 +476,7 @@
                         <li>旗の周りに迷路や高い壁を作って防御</li>
                         <li>偽の通路で敵を混乱させる</li>
                         <li>味方の脱出ルートも確保</li>
-                        <li>水や溶岩を効果的に配置</li>
+                        <li>敵を混乱させる迷路構造</li>
                     </ul>
                 </div>
                 

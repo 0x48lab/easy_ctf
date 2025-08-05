@@ -93,6 +93,17 @@
                 <p>Check detailed game status. If game name is omitted, shows current game info.</p>
                 <p class="example">Example: <code>/ctf status arena1</code></p>
             </div>
+            
+            <h3>Spectator Mode</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf spectator [game-name]</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Join a game as a spectator. Watch the game without affecting gameplay.</p>
+                <p class="example">Example: <code>/ctf spectator arena1</code></p>
+            </div>
         </section>
 
         <section class="content-section">
@@ -209,6 +220,79 @@
                 </div>
                 <p class="example">Example: <code>/ctf setspawn arena1 blue</code></p>
             </div>
+            
+            <h3>Multiple Spawn Point Management</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf addspawn &lt;game-name&gt; &lt;red|blue&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Add an additional spawn point at current location. Players will respawn at randomly selected spawn points.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Must be at least 4 blocks away from other spawn points.
+                </div>
+                <p class="example">Example: <code>/ctf addspawn arena1 red</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf removespawn &lt;game-name&gt; &lt;red|blue&gt; &lt;number&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Remove the specified spawn point by number.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    The primary spawn point (number 0) cannot be removed.
+                </div>
+                <p class="example">Example: <code>/ctf removespawn arena1 blue 2</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf listspawns &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>List all spawn points for a game. Shows coordinates and numbers.</p>
+                <p class="example">Example: <code>/ctf listspawns arena1</code></p>
+            </div>
+            
+            <h3>Map Creation</h3>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setpos1 &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Set map region start point to current location.</p>
+                <p class="example">Example: <code>/ctf setpos1 arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf setpos2 &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Set map region end point to current location.</p>
+                <p class="example">Example: <code>/ctf setpos2 arena1</code></p>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-block">
+                    <code>/ctf savemap &lt;game-name&gt;</code>
+                    <button class="copy-btn">Copy</button>
+                </div>
+                <p>Save the map. Automatically detects specific blocks for game configuration.</p>
+                <h4>Required Block Placement:</h4>
+                <ul>
+                    <li>Red Concrete: Red team spawn points (multiple allowed)</li>
+                    <li>Blue Concrete: Blue team spawn points (multiple allowed)</li>
+                    <li>Beacon + Red Glass: Red team flag</li>
+                    <li>Beacon + Blue Glass: Blue team flag</li>
+                </ul>
+                <p class="example">Example: <code>/ctf savemap arena1</code></p>
+            </div>
         </section>
 
         <section class="content-section">
@@ -234,7 +318,7 @@
                         <td><code>ctf.admin</code></td>
                         <td>Admin commands</td>
                         <td>OP</td>
-                        <td>create, update, delete, start, stop, setflag, setspawn</td>
+                        <td>create, update, delete, start, stop, setflag, setspawn, addspawn, removespawn, listspawns, setpos1, setpos2, savemap</td>
                     </tr>
                     <tr>
                         <td><code>ctf.*</code></td>
@@ -258,8 +342,8 @@
                 </div>
                 
                 <div class="example-card">
-                    <h3>Host First-to-5 Match</h3>
-                    <pre><code>/ctf start arena1 first_to_x 5</code></pre>
+                    <h3>Host 5-Game Match</h3>
+                    <pre><code>/ctf start arena1 match 5</code></pre>
                 </div>
                 
                 <div class="example-card">
@@ -298,9 +382,9 @@
                 <div class="footer-section">
                     <h4>Links</h4>
                     <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">Downloads</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf">GitHub</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/releases">Downloads</a></li>
+                        <li><a href="https://github.com/0x48lab/easy_ctf/issues">Issues</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
