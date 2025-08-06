@@ -10,6 +10,12 @@ phase:
   result-winner: "&e勝利: {color}{team} チーム!"
   result-score: "&e最終スコア - 赤: {red} | 青: {blue}"
 
+# チーム名
+teams:
+  red: "赤"
+  blue: "青"
+  spectator: "観戦"
+
 # Team Messages
 team:
   join: "&a{color}{team}&aチームに参加しました！"
@@ -19,6 +25,22 @@ team:
   set-notification: "&e管理者によって{color}{team}チーム&eに設定されました！"
   set-failed: "&c{player}のチーム設定に失敗しました。チームが満員の可能性があります。"
   
+# Action Bar Messages  
+action-bar:
+  build-phase-guide: "建築フェーズ - 防御を構築してください"
+  return-to-base: "旗を持って自陣に戻ってください！"
+  cannot-place-flag: "旗の近くにブロックを置けません"
+  cannot-place-spawn: "スポーン地点の近くにブロックを置けません"
+  place-restriction-flag: "旗またはチームのブロックに接続する必要があります"
+  place-restriction-team: "チームのブロックに接続する必要があります"
+  cannot-place-block: "このブロックは設置できません"
+
+# Armor Messages
+armor:
+  cannot-remove-combat: "戦闘フェーズ中は防具を外せません"
+  cannot-drop-combat: "戦闘フェーズ中は防具を捨てられません"
+  only-leather-allowed: "革の防具のみ着用可能です"
+
 # Spectator Messages
 spectator:
   joined: "&7観戦者として参加しました"
@@ -86,6 +108,36 @@ command:
   usage-setpos1: "/ctf setpos1 [ゲーム名] - マップ領域の始点を設定"
   usage-setpos2: "/ctf setpos2 [ゲーム名] - マップ領域の終点を設定"
   usage-savemap: "/ctf savemap <ゲーム名> - マップを保存（自動検出）"
+  not-in-game: "現在ゲームに参加していません"
+  current-team: "現在のチーム: %team%"
+  team-change-usage: "チーム変更: /ctf team <red|blue>"
+  cannot-change-team-after-start: "ゲーム開始後はチーム変更できません"
+  already-in-team: "既に%team%に所属しています"
+  team-full: "%team%は満員です（最大%max%名）"
+  team-changed: "%team%に変更しました！"
+  player-changed-team: "%player%が%team%に移動しました"
+  match-mode: "モード: %mode%"
+  # Help messages
+  help-header: "===== CTF コマンド ====="
+  help-create: "/ctf create <ゲーム名> - 新規ゲーム作成（対話形式）"
+  help-update: "/ctf update <ゲーム名> - ゲーム設定の更新（対話形式）"
+  help-delete: "/ctf delete <ゲーム名> - ゲーム削除"
+  help-start: "/ctf start <ゲーム名> [single|match] [ゲーム数] - ゲーム開始"
+  help-start-note1: "  ※設定ファイルにマッチ設定がある場合は自動でマッチモード"
+  help-start-note2: "  ※'single'を指定すると強制的に単一ゲーム"
+  help-stop: "/ctf stop <ゲーム名> - ゲーム停止"
+  help-setflag: "/ctf setflag <ゲーム名> <red|blue> - 旗位置設定"
+  help-setspawn: "/ctf setspawn <ゲーム名> <red|blue> - スポーン地点設定（レガシー）"
+  help-addspawn: "/ctf addspawn <ゲーム名> <red|blue> - スポーン地点追加（複数可）"
+  help-removespawn: "/ctf removespawn <ゲーム名> <red|blue> <番号> - スポーン地点削除"
+  help-listspawns: "/ctf listspawns <ゲーム名> - スポーン地点一覧"
+  help-list: "/ctf list - ゲーム一覧表示"
+  help-join: "/ctf join <ゲーム名> - ゲーム参加"
+  help-leave: "/ctf leave - ゲーム退出"
+  help-team: "/ctf team [red|blue] - チーム確認・変更"
+  help-spectator: "/ctf spectator [ゲーム名] - 観戦者として参加"
+  help-status: "/ctf status [ゲーム名] - ゲーム状態確認"
+  help-info: "/ctf info <ゲーム名> - ゲーム設定の詳細表示"
   invalid-mode: "&c無効なモードです"
   invalid-usage: "&c使用方法: /ctf start <ゲーム名> [single|match] [ゲーム数]"
   red-flag-set: "&a赤チームの旗位置を設定しました: {x}, {y}, {z}"
@@ -99,14 +151,118 @@ command:
   using-temp-region: "一時的なマップ範囲を使用します"
   map-saved: "マップを正常に保存しました！"
   map-save-failed: "マップの保存に失敗しました"
+  cannot-join-state: "ゲームが{state}状態のため参加できません"
+  game-full: "ゲームが満員です（最大{max}名）"
+  join-failed: "参加に失敗しました"
+  no-block-found: "視線の先にブロックが見つかりません"
+  status-header: "=== ゲーム: {name} ==="
+  status-state: "状態: {state}"
+  status-phase: "フェーズ: {phase}"
+  status-red-team: "赤チーム: {count}名"
+  status-blue-team: "青チーム: {count}名"
+  status-score: "スコア - 赤: {red} 青: {blue}"
+  match-info-header: "=== マッチ情報 ==="
+  match-progress: "進行状況: {status}"
+  match-score: "マッチスコア - 赤: {red} 青: {blue}"
+  info-header: "===== ゲーム設定: {name} ====="
+  info-basic-settings: "【基本設定】"
+  info-min-players: "最小プレイヤー数: {count}人"
+  info-max-players: "チーム最大人数: {count}人"
+  info-world: "ワールド: {world}"
+  info-phase-settings: "【フェーズ設定】"
+  info-build-phase: "建築フェーズ: {seconds}秒 ({minutes}分)"
+  info-build-mode: "建築時ゲームモード: {mode}"
+  info-combat-phase: "戦闘フェーズ: {seconds}秒 ({minutes}分)"
+  info-result-phase: "作戦会議フェーズ: {seconds}秒"
+  info-position-settings: "【位置設定】"
+  info-red-flag: "赤旗: X:{x} Y:{y} Z:{z}"
+  info-red-flag-not-set: "赤旗: 未設定"
+  info-red-spawn-same: "赤スポーン: 旗位置と同じ"
+  info-red-spawn: "赤スポーン: X:{x} Y:{y} Z:{z}"
+  info-red-spawn-multiple: "赤スポーン: {count}箇所（ランダム）"
+  info-blue-flag: "青旗: X:{x} Y:{y} Z:{z}"
+  info-blue-flag-not-set: "青旗: 未設定"
+  info-blue-spawn-same: "青スポーン: 旗位置と同じ"
+  info-blue-spawn: "青スポーン: X:{x} Y:{y} Z:{z}"
+  info-blue-spawn-multiple: "青スポーン: {count}箇所（ランダム）"
+  info-currency-settings: "【通貨設定】"
+  info-initial-currency: "初期資金: {amount}G"
+  info-kill-reward: "キル報酬: 10G (旗キャリア: 20G)"
+  info-capture-reward: "キャプチャー報酬: 30G"
+  info-other-settings: "【その他】"
+  info-respawn-time: "リスポーン時間: {base}秒 (+{perDeath}秒/死亡, 最大{max}秒)"
+  info-footer: "================================"
+  usage-addspawn: "§e使用方法: /ctf addspawn <ゲーム名> <red|blue>"
+  usage-removespawn: "§e使用方法: /ctf removespawn <ゲーム名> <red|blue> <番号>"
+  usage-listspawns: "§e使用方法: /ctf listspawns <ゲーム名>"
+  red-spawn-added: "§a赤チームのスポーン地点 #{number} を追加しました: {x}, {y}, {z}"
+  blue-spawn-added: "§a青チームのスポーン地点 #{number} を追加しました: {x}, {y}, {z}"
+  invalid-spawn-number: "§c無効な番号です"
+  spawn-not-found: "§cスポーン地点 #{index} は存在しません"
+  red-spawn-removed: "§a赤チームのスポーン地点 #{index} を削除しました: {x}, {y}, {z}"
+  blue-spawn-removed: "§a青チームのスポーン地点 #{index} を削除しました: {x}, {y}, {z}"
+  spawn-list-header: "===== スポーン地点一覧: {name} ====="
+  red-team-label: "赤チーム:"
+  blue-team-label: "青チーム:"
+  spawn-legacy: "  [レガシー] {x}, {y}, {z}"
+  spawn-not-set: "  (未設定 - 旗位置を使用)"
+  spawn-location: "  #{number}: {x}, {y}, {z}"
   detection-result: "検出結果:"
   red-spawn-detected: "- 赤チームスポーン: {location}"
   blue-spawn-detected: "- 青チームスポーン: {location}"
   red-flag-detected: "- 赤チーム旗: {location}"
   blue-flag-detected: "- 青チーム旗: {location}"
+  list-item: "{index}. {name} "
+  list-status: "[{status}]"
+
+# Countdown Messages
+countdown:
+  three: "3"
+  two: "2"
+  one: "1"
+  start: "START!"
+
+# アイテム名と説明
+items:
+  efficient-diamond-pickaxe: "§b§l効率的なダイヤピッケル"
+  efficient-diamond-shovel: "§b§l効率的なダイヤシャベル"
+  no-drop-on-death: "§7死亡時にドロップしません"
+  initial-equipment: "§7初期装備"
+  building-block: "§7建築用ブロック"
+
+# シールドシステム
+shield:
+  status: "シールド: [{bar}] {percent}%"
+
+# 観戦者メニューアイテム  
+spectator:
+  stats-item: "統計情報"
+  right-click-display: "右クリックで表示"
+  player-tracker: "プレイヤー追跡"
+  right-click-menu: "右クリックでメニュー表示"
+  right-click-teleport: "右クリックでテレポート"
+  red-spawn: "赤チームスポーン"
+  blue-spawn: "青チームスポーン"
+  flag-location: "旗の位置"
+  red-flag: "赤チームの旗"
+  blue-flag: "青チームの旗"
+
+# UI要素
+ui:
+  separator-long: "==============================="
+  separator-short: "======================="
+  separator-dash: " - "
+  separator-comma: ", "
+  error-item: "- {error}"
+
+# セットアップヘッダー
+setup:
+  create-header-formatted: "=== {name} ゲーム作成 ==="
+  update-header-formatted: "=== {name} ゲーム更新 ==="
 
 # Game Messages
 game:
+  player-list-item: "  - {name}"
   build-phase-player: "&a建築フェーズ！あなたは{color}{team}&aチームです！"
   build-phase-info: "&e防御設備を建築して戦闘に備えましょう！"
   combat-phase-player: "&a戦闘フェーズ！あなたは{color}{team}&aチームです！"
@@ -114,7 +270,7 @@ game:
 
 # Block Messages
 block:
-  cannot-place-combat: "&c戦闘フェーズ中はブロックを設置できません！"
+  cannot-place-near-spawn: "&c敵のスポーン地点付近にはブロックを設置できません！"
   cannot-place-result: "&cリザルトフェーズ中はブロックを設置できません！"
   cannot-break-combat: "&c戦闘フェーズ中はブロックを破壊できません！"
   cannot-break-result: "&cリザルトフェーズ中はブロックを破壊できません！"
@@ -162,7 +318,7 @@ ui:
   time-format: "{minutes}:{seconds}"
   
 # Team Status Messages
-teams:
+team-status:
   welcome-title: "&6=== CTFへようこそ! ==="
   welcome-status: "&7現在のチーム状況:"
   welcome-instruction: "&eチームに参加するには '/ctf join <red|blue>' を使用してください!"
@@ -271,6 +427,21 @@ flag:
 # Match Messages
 match:
   game-number: "第{number}ゲーム"
+  red-wins: "§c赤チームの勝利！"
+  blue-wins: "§9青チームの勝利！"
+  draw: "§e引き分け！"
+  game-result-header: "§6=== ゲーム {number} 結果 ==="
+  current-score: "§e現在のスコア: §c赤 {red} §f- §9青 {blue}"
+  red-wins-match: "§c§l赤チームがマッチに勝利！"
+  blue-wins-match: "§9§l青チームがマッチに勝利！"
+  draw-match: "§e§lマッチは引き分け！"
+  match-end-header: "§6§l=== マッチ終了 ==="
+  block-count: "§7色ブロック数: §c赤 {red} §f- §9青 {blue}"
+  mode:
+    fixed_rounds: "固定ラウンド"
+    first_to_x: "先取"
+  next-game-countdown: "§a{seconds}秒後に次のゲームが開始されます..."
+  starting-in-5: "5秒後に開始します..."
 
 # Currency Messages
 currency:
@@ -279,6 +450,7 @@ currency:
   balance-notification: "&e[チーム] 残高: {balance}G"
   capture-currency: "{player}が旗をキャプチャー"
   capture-assist: "{count}名がキャプチャーアシスト"
+  capture-assist-message: "キャプチャーアシスト! +{amount}G"
 
 # Action Bar Messages
 action-bar:
@@ -292,16 +464,27 @@ action-bar:
 
 # Scoreboard Messages
 scoreboard:
-  title-ctf: "&b&lCTF- {game}"
+  title-ctf: "CTF - {game}"
   waiting-players: "&f待機中プレイヤー:"
   game-settings: "&e=== ゲーム設定 ==="
   build-combat-time: "&f建築{build}分 戦闘{combat}分"
-  first-to-score: "&f先取{score}点"
+  first-to-score: "&e先行{score}勝制"
   start-countdown: "&a開始まで: &f{seconds}秒"
-  team-players: "&c赤{red} &9青{blue}"
+  team-players: "§c赤{red} §9青{blue}"
+  team-players-spectator: "§c赤{red} §9青{blue} §7観戦{spectator}"
+  min-players: "§f開始{min}人～"
   match-game: "&e第{number}ゲーム"
-  match-score: "&c赤{red}&f-&9{blue}青"
-  currency-display: "&e{amount}G"
+  match-score: "§c赤 {red} §f- §9{blue} 青"
+  match-wins: "§7(マッチ: §c{red}§7-§9{blue}§7)"
+  team-counts: "§7人数: §c赤{red} §9青{blue}"
+  red-flag-carried: "§c赤旗: §e{carrier}"
+  red-flag-dropped: "§c赤旗: §7地面"
+  red-flag-home: "§c赤旗: §a設置中"
+  blue-flag-carried: "§9青旗: §e{carrier}"
+  blue-flag-dropped: "§9青旗: §7地面"
+  blue-flag-home: "§9青旗: §a設置中"
+  currency-display: "§e通貨: {amount}G"
+  currency-both: "§e通貨: §c{red}G §9{blue}G"
 
 # Report Messages
 report:
@@ -341,6 +524,28 @@ mvp:
   flag-defends-display: "  旗防衛: {defends}"
   money-spent-display: "  使用金額: {amount}G"
   blocks-placed-display: "  ブロック設置: {blocks}"
+  announcement-title: "★★★ MVP発表 ★★★"
+  player-label: "MVP: "
+  score-display: " (スコア: {score})"
+  stats-header: "MVP統計:"
+
+# Stats Messages
+stats:
+  top-players-header: "===== 各部門トップ ====="
+  top-kills-label: "🗡 最多キル: "
+  top-kills-value: "{name} ({count}キル)"
+  top-captures-label: "🚩 最多キャプチャー: "
+  top-captures-value: "{name} ({count}回)"
+  top-defends-label: "🛡 最多防衛: "
+  top-defends-value: "{name} ({count}回)"
+  top-assists-label: "🤝 最多アシスト: "
+  top-assists-value: "{name} ({count}回)"
+  top-blocks-label: "🏗 最多建築: "
+  top-blocks-value: "{name} ({count}ブロック)"
+  top-spent-label: "💰 最多消費: "
+  top-spent-value: "{name} ({amount}G)"
+  least-deaths-label: "💀 最少デス: "
+  least-deaths-value: "{name} ({count}回)"
 
 # Death Messages
 death:
@@ -385,6 +590,23 @@ shop:
   insufficient-funds: "&c購入に必要なGが不足しています！ (必要: {price}G)"
   inventory-full: "&eインベントリが満杯のため、アイテムを足元にドロップしました"
   purchase-success: "{item} を購入しました！"
+  item:
+    emerald:
+      name: "§a§lショップ"
+      lore1: "§7右クリックでショップを開く"
+      lore2: "§c捨てることはできません"
+  category_menu:
+    title: "§6§lショップ - カテゴリー選択"
+    weapons:
+      title: "§c§l武器"
+      description: "§7剣、斧、弓など"
+    consumables:
+      title: "§e§l消耗品"
+      description: "§7エンダーパール、金リンゴなど"
+    blocks:
+      title: "§5§lブロック"
+      description: "§7建築用ブロック、TNTなど"
+    click_to_open: "§eクリックして開く"
 
 # Setup Messages
 setup:
@@ -459,6 +681,19 @@ manager:
   map-range-not-set: "マップ範囲が設定されていません"
   cannot-save-running: "ゲームが実行中は保存できません"
   map-save-failed: "マップの保存に失敗しました"
+  using-worldedit: "WorldEditの選択範囲を使用します"
+  required-blocks: "必要なブロック:"
+  required-blocks.red-concrete: "- 赤コンクリート: 赤チームスポーン"
+  required-blocks.blue-concrete: "- 青コンクリート: 青チームスポーン"
+  required-blocks.red-beacon: "- ビーコン+赤ガラス: 赤チーム旗"
+  required-blocks.blue-beacon: "- ビーコン+青ガラス: 青チーム旗"
+  set-range-methods: "以下のいずれかの方法で範囲を設定してください:"
+  method-worldedit: "1. WorldEdit: //pos1 と //pos2"
+  method-ctf-commands: "2. CTFコマンド: /ctf setpos1 と /ctf setpos2"
+  pos1-not-set: "始点（pos1）が設定されていません"
+  pos2-not-set: "終点（pos2）が設定されていません"
+  multiple-locations: "{count} 箇所"
+
 
 # Gameplay Messages
 gameplay:
@@ -468,6 +703,7 @@ gameplay:
   cannot-fight-build-phase: "&c建築フェーズ中は戦闘できません！"
   cannot-break-adventure: "&cアドベンチャーモードではブロックを破壊できません"
   cannot-break-game-blocks: "&cゲーム用のブロックは破壊できません"
+  need-adjacent-block: "&c敵のブロックを破壊するには、隣接する自チームのブロックが必要です"
   cannot-place-adventure: "&cアドベンチャーモードではブロックを設置できません"
   cannot-place-combat: "&c戦闘フェーズ中はブロックを設置できません"
   cannot-place-on-beacon: "&cビーコンの上にブロックを置くことはできません"
@@ -502,3 +738,225 @@ log:
   shop-available-items: "利用可能なアイテム:"
   shop-item-list: "  - '{item}'"
   safe-spawn-not-found: "チーム {team} の安全なスポーン位置が {attempts} 回の試行後も見つかりませんでした。フォールバック位置を使用します"
+
+# ショップアイテム
+shop:
+  title: "§6§lショップ §7- §e{currency}G §7(ページ {page})"
+  categories:
+    weapons: "§c§l武器"
+    consumables: "§e§l消耗品"
+    blocks: "§5§lブロック"
+  navigation:
+    previous_page: "§a§l← 前のページ"
+    next_page: "§a§l次のページ →"
+    main_menu: "§6§lメインメニュー"
+    category: "§7カテゴリ"
+  item_info:
+    price: "§e価格: §f{price}G"
+    personal_limit: "§b個人購入上限: §f{current}/{max}"
+    team_limit: "§d全体購入上限: §f{current}/{max}"
+    death_behavior: "§7死亡時: {behavior}"
+    death_behavior:
+      keep: "§a保持"
+      drop: "§eドロップ"
+      destroy: "§c消失"
+    purchase_limit_reached: "§c§l✗ 購入制限に達しました"
+    can_purchase: "§a§l✔ 購入可能"
+    insufficient_funds: "§c§l✗ G不足"
+  items:
+    # 武器
+    wooden_sword: "§6木の剣"
+    stone_sword: "§7石の剣"
+    iron_sword: "§f鉄の剣"
+    diamond_sword: "§bダイヤモンドの剣"
+    netherite_sword: "§5ネザライトの剣"
+    wooden_axe: "§6木の斧"
+    stone_axe: "§7石の斧"
+    iron_axe: "§f鉄の斧"
+    diamond_axe: "§bダイヤモンドの斧"
+    netherite_axe: "§5ネザライトの斧"
+    shield: "§f盾"
+    bow: "§f弓"
+    arrows: "§f矢 x8"
+    enchanted_bow: "§bエンチャント弓"
+    enchanted_sword: "§bエンチャント剣"
+    # 消耗品
+    bread: "§6パン x8"
+    cooked_beef: "§c焼き牛肉 x8"
+    golden_apple: "§6金のリンゴ"
+    ender_pearl: "§5エンダーパール"
+    shears: "§fハサミ"
+    enchanted_golden_apple: "§6§lエンチャント金リンゴ"
+    # 防具
+    iron_helmet: "§f鉄のヘルメット"
+    iron_chestplate: "§f鉄のチェストプレート"
+    iron_leggings: "§f鉄のレギンス"
+    iron_boots: "§f鉄のブーツ"
+    diamond_helmet: "§bダイヤモンドのヘルメット"
+    diamond_chestplate: "§bダイヤモンドのチェストプレート"
+    diamond_leggings: "§bダイヤモンドのレギンス"
+    diamond_boots: "§bダイヤモンドのブーツ"
+    netherite_helmet: "§5ネザライトのヘルメット"
+    netherite_chestplate: "§5ネザライトのチェストプレート"
+    netherite_leggings: "§5ネザライトのレギンス"
+    netherite_boots: "§5ネザライトのブーツ"
+    # ブロック
+    stone: "§7石 x16"
+    wood_planks: "§6木材 x16"
+    dirt: "§6土 x16"
+    sand: "§e砂 x16"
+    glass: "§fガラス x16"
+    cobblestone: "§7丸石 x16"
+    obsidian: "§8黒曜石 x4"
+    tnt: "§c§lTNT"
+    ladder: "§6はしご x16"
+    slime_block: "§aスライムブロック x4"
+    hay_block: "§e干草の俵 x8"
+    oak_fence: "§6木のフェンス x16"
+    iron_bars: "§7鉄格子 x16"
+    water_bucket: "§9水バケツ"
+    lava_bucket: "§c溶岩バケツ"
+    redstone_dust: "§cレッドストーン x16"
+    redstone_torch: "§cレッドストーントーチ x8"
+    redstone_repeater: "§cレッドストーンリピーター x4"
+    lever: "§7レバー x4"
+    cobweb: "§fクモの巣 x4"
+    enchanted_bow:
+      lore1: "§7パワー II"
+      lore2: "§7無限 I"
+    enchanted_sword:
+      lore1: "§7ダメージ増加 III"
+      lore2: "§7ノックバック I"
+    enchanted_golden_apple:
+      lore: "§7一人2個まで"
+    oak_trapdoor: "§6木のトラップドア x4"
+    iron_trapdoor: "§7鉄のトラップドア x2"
+    oak_door: "§6木のドア x2"
+    iron_door: "§7鉄のドア x1"
+    torch: "§e松明 x16"
+    stone_button: "§7石のボタン x4"
+    stone_pressure_plate: "§7石の感圧板 x4"
+    piston: "§7ピストン x2"
+    sticky_piston: "§a粘着ピストン x2"
+    redstone_block: "§cレッドストーンブロック x1"
+    hopper: "§7ホッパー x1"
+    dispenser: "§7ディスペンサー x1"
+  category_descriptions:
+    weapons: "§c武器"
+    consumables: "§e消耗品"
+    blocks: "§5ブロック"
+
+# ゲームイベント
+game_events:
+  flag_capture:
+    title: "旗を奪取！"
+    subtitle: "{player} が {team}の旗を取得"
+  kill_streaks:
+    double: "ダブルキル！"
+    triple: "トリプルキル！"
+    mega: "メガキル！"
+    ultra: "ウルトラキル！"
+    consecutive: "{count}連続キル！"
+  kill_messages:
+    with_streak: "{killer}が{victim}をキル ({streak}連続キル!)"
+    normal: "{killer}が{victim}をキル"
+    assist: "キルアシスト! +{reward}G"
+    assist_by: "{player}がキルアシスト"
+  shop:
+    available: "[ショップ使用可能]"
+  teleport:
+    red_spawn: "赤チームスポーンにテレポートしました"
+    blue_spawn: "青チームスポーンにテレポートしました"
+    to_player: "{player}にテレポートしました"
+    red_flag_home: "赤旗の位置（基地）にテレポートしました"
+    blue_flag_home: "青旗の位置（基地）にテレポートしました"
+    red_flag_carrier: "赤旗の保持者にテレポートしました"
+    blue_flag_carrier: "青旗の保持者にテレポートしました"
+    red_flag_dropped: "赤旗の落下地点にテレポートしました"
+    blue_flag_dropped: "青旗の落下地点にテレポートしました"
+    not_found: "テレポート先が見つかりません"
+    player_not_found: "プレイヤーが見つかりません"
+  spectator_menu:
+    stats_title: "ゲーム統計"
+    tracking_title: "プレイヤー追跡"
+    flag_title: "旗の位置"
+    kills: "キル: {count}"
+    deaths: "デス: {count}"
+    captures: "キャプチャー: {count}"
+    kd_ratio: "K/D: {ratio}"
+    click_teleport: "クリックでテレポート"
+    team: "チーム: {team}"
+    flag_status:
+      carried: "状態: 保持中"
+      carrier: "保持者: {player}"
+      dropped: "状態: 地面に落ちている"
+      home: "状態: 基地に設置中"
+
+# セットアップメッセージ
+setup:
+  build_blocks_prompt: "§e建築フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)"
+  build_blocks_skip: "§7'skip' でデフォルト値 (16個) を使用"
+  combat_blocks_prompt: "§e戦闘フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)"
+  combat_blocks_skip: "§7'skip' でデフォルト値 (16個) を使用"
+  result_time_prompt: "§e結果表示フェーズの時間を秒単位で入力してください (例: 60)"
+  result_time_skip: "§7'skip' でデフォルト値 (60秒) を使用"
+  intermediate_time_prompt: "§eマッチ中間の作戦会議時間を秒単位で入力してください (例: 15)"
+  intermediate_time_skip: "§7'skip' でデフォルト値 (15秒) を使用"
+  respawn_base_prompt: "§e基本リスポーン時間を秒単位で入力してください (例: 10)"
+  respawn_base_skip: "§7'skip' でデフォルト値 (10秒) を使用"
+  respawn_per_death_prompt: "§e死亡ごとの追加リスポーン時間を秒単位で入力してください (例: 2)"
+  respawn_per_death_skip: "§7'skip' でデフォルト値 (2秒) を使用"
+  respawn_max_prompt: "§e最大リスポーン時間を秒単位で入力してください (例: 20)"
+  respawn_max_skip: "§7'skip' でデフォルト値 (20秒) を使用"
+  blocks_range_error: "§cブロック数は0〜64の範囲で入力してください"
+  build_blocks_set: "§a建築フェーズのブロック数を{blocks}個に設定しました"
+  combat_blocks_set: "§a戦闘フェーズのブロック数を{blocks}個に設定しました"
+  result_time_range_error: "§c時間は5〜300秒の範囲で入力してください"
+  result_time_set: "§a結果表示時間を{time}秒に設定しました"
+  intermediate_time_range_error: "§c時間は5〜120秒の範囲で入力してください"
+  intermediate_time_set: "§aマッチ中間の作戦会議時間を{time}秒に設定しました"
+  respawn_base_range_error: "§c時間は1〜60秒の範囲で入力してください"
+  respawn_base_set: "§a基本リスポーン時間を{time}秒に設定しました"
+  respawn_per_death_range_error: "§c時間は0〜10秒の範囲で入力してください"
+  respawn_per_death_set: "§a死亡ごとの追加リスポーン時間を{time}秒に設定しました"
+  respawn_max_range_error: "§c時間は基本リスポーン時間以上〜120秒の範囲で入力してください"
+  respawn_max_set: "§a最大リスポーン時間を{time}秒に設定しました"
+  # 更新メニュー
+  result_time_menu: "§f8. 結果表示時間を更新 (現在: {time}秒)"
+  intermediate_time_menu: "§f9. マッチ中間の作戦会議時間を更新 (現在: {time}秒)"
+  build_blocks_menu: "§f10. 建築フェーズのブロック数を更新 (現在: {blocks}個)"
+  combat_blocks_menu: "§f11. 戦闘フェーズのブロック数を更新 (現在: {blocks}個)"
+  respawn_base_menu: "§f12. 基本リスポーン時間を更新 (現在: {time}秒)"
+  respawn_per_death_menu: "§f13. 死亡ごとの追加リスポーン時間を更新 (現在: {time}秒)"
+  respawn_max_menu: "§f14. 最大リスポーン時間を更新 (現在: {time}秒)"
+  all_update_menu: "§f15. すべて更新"
+  exit_menu: "§f16. 終了"
+  # 更新プロンプト
+  result_time_update_prompt: "§e結果表示時間を秒単位で入力してください (現在: {current}秒)"
+  intermediate_time_update_prompt: "§eマッチ中間の作戦会議時間を秒単位で入力してください (現在: {current}秒)"
+  build_blocks_update_prompt: "§e建築フェーズで配布するブロック数を入力してください (0-64, 現在: {current}個)"
+  combat_blocks_update_prompt: "§e戦闘フェーズで配布するブロック数を入力してください (0-64, 現在: {current}個)"
+  respawn_base_update_prompt: "§e基本リスポーン時間を秒単位で入力してください (1-60, 現在: {current}秒)"
+  respawn_per_death_update_prompt: "§e死亡ごとの追加リスポーン時間を秒単位で入力してください (0-10, 現在: {current}秒)"
+  respawn_max_update_prompt: "§e最大リスポーン時間を秒単位で入力してください (基本時間〜120, 現在: {current}秒)"
+  # 更新完了メッセージ
+  result_time_updated: "§a結果表示時間を更新しました"
+  intermediate_time_updated: "§aマッチ中間の作戦会議時間を更新しました"
+  build_blocks_updated: "§a建築フェーズのブロック数を更新しました"
+  combat_blocks_updated: "§a戦闘フェーズのブロック数を更新しました"
+  respawn_base_updated: "§a基本リスポーン時間を更新しました"
+  respawn_per_death_updated: "§a死亡ごとの追加リスポーン時間を更新しました"
+  respawn_max_updated: "§a最大リスポーン時間を更新しました"
+
+# マップスキャナー
+scanner:
+  red-spawn-not-found: "赤チームのスポーン地点（赤のコンクリートブロック）が見つかりません"
+  blue-spawn-not-found: "青チームのスポーン地点（青のコンクリートブロック）が見つかりません"
+  red-flag-not-found: "赤チームの旗（ビーコン＋赤のガラス）が見つかりません"
+  red-flag-multiple: "赤チームの旗が複数見つかりました（%count%個）"
+  blue-flag-not-found: "青チームの旗（ビーコン＋青のガラス）が見つかりません"
+  blue-flag-multiple: "青チームの旗が複数見つかりました（%count%個）"
+  red-spawns-too-close: "赤チームのスポーン地点が近すぎます（地点%point1%と地点%point2%が%distance%ブロック）。最低%min%ブロック離してください"
+  blue-spawns-too-close: "青チームのスポーン地点が近すぎます（地点%point1%と地点%point2%が%distance%ブロック）。最低%min%ブロック離してください"
+  red-flag-spawn-too-close: "赤チームの旗とスポーン地点が近すぎます（%count%箇所が最低%min%ブロック未満）"
+  blue-flag-spawn-too-close: "青チームの旗とスポーン地点が近すぎます（%count%箇所が最低%min%ブロック未満）"

@@ -1,6 +1,8 @@
 package com.hacklab.ctf.managers
 
 import com.hacklab.ctf.Main
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.ChatColor
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
@@ -45,8 +47,8 @@ class LanguageManager(private val plugin: Main) {
             message = message.replace("{$placeholder}", value)
         }
         
-        // ChatColor コードを変換
-        return ChatColor.translateAlternateColorCodes('&', message)
+        // &形式のカラーコードを§形式に変換
+        return org.bukkit.ChatColor.translateAlternateColorCodes('&', message)
     }
     
     fun reloadLanguage() {
@@ -106,5 +108,20 @@ class LanguageManager(private val plugin: Main) {
     
     fun getGameStateMessage(action: String, vararg replacements: Pair<String, String>): String {
         return getMessage("game-states.$action", *replacements)
+    }
+    
+    /**
+     * メッセージをComponentとして取得（レガシーカラーコードを自動変換）
+     */
+    fun getMessageAsComponent(key: String, vararg replacements: Pair<String, String>): Component {
+        var message = languageConfig.getString(key, "Missing message: $key") ?: "Missing message: $key"
+        
+        // プレースホルダーを置換
+        for ((placeholder, value) in replacements) {
+            message = message.replace("{$placeholder}", value)
+        }
+        
+        // &でエンコードされたレガシーカラーコードをComponentに変換
+        return LegacyComponentSerializer.legacyAmpersand().deserialize(message)
     }
 }

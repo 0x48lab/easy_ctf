@@ -1,5 +1,6 @@
 package com.hacklab.ctf.map
 
+import com.hacklab.ctf.Main
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -7,7 +8,7 @@ import org.bukkit.block.Block
 /**
  * マップ内の特定ブロックを検出するクラス
  */
-class MapScanner {
+class MapScanner(private val plugin: Main) {
     
     data class ScanResult(
         val redSpawns: List<Location>,
@@ -29,7 +30,7 @@ class MapScanner {
         val blueFlags = mutableListOf<Location>()
         val errors = mutableListOf<String>()
         
-        println("[MapScanner] スキャン開始: ${region.minX},${region.minY},${region.minZ} から ${region.maxX},${region.maxY},${region.maxZ}")
+        // スキャン開始
         
         // すべてのブロックをスキャン
         var scannedBlocks = 0
@@ -43,17 +44,17 @@ class MapScanner {
                     when (block.type) {
                         // 赤のコンクリート = 赤チームスポーン
                         Material.RED_CONCRETE -> {
-                            println("[MapScanner] 赤コンクリート発見: $x, $y, $z")
+                            // 赤コンクリート発見
                             redSpawns.add(location.clone().add(0.5, 1.0, 0.5))
                         }
                         // 青のコンクリート = 青チームスポーン
                         Material.BLUE_CONCRETE -> {
-                            println("[MapScanner] 青コンクリート発見: $x, $y, $z")
+                            // 青コンクリート発見
                             blueSpawns.add(location.clone().add(0.5, 1.0, 0.5))
                         }
                         // ビーコンをチェック
                         Material.BEACON -> {
-                            println("[MapScanner] ビーコン発見: $x, $y, $z")
+                            // ビーコン発見
                             checkBeaconFlag(block, redFlags, blueFlags)
                         }
                         else -> {}
@@ -62,8 +63,7 @@ class MapScanner {
             }
         }
         
-        println("[MapScanner] スキャン完了: ${scannedBlocks}ブロックをスキャン")
-        println("[MapScanner] 結果: 赤スポーン=${redSpawns.size}, 青スポーン=${blueSpawns.size}, 赤旗=${redFlags.size}, 青旗=${blueFlags.size}")
+        // スキャン完了
         
         // 検証
         validateScanResult(redSpawns, blueSpawns, redFlags, blueFlags, errors)
@@ -83,15 +83,15 @@ class MapScanner {
         
         when (aboveBlock.type) {
             Material.RED_STAINED_GLASS -> {
-                println("[MapScanner] ビーコンの上に赤ガラス発見")
+                // ビーコンの上に赤ガラス発見
                 redFlags.add(beaconBlock.location.clone().add(0.5, 0.0, 0.5))
             }
             Material.BLUE_STAINED_GLASS -> {
-                println("[MapScanner] ビーコンの上に青ガラス発見")
+                // ビーコンの上に青ガラス発見
                 blueFlags.add(beaconBlock.location.clone().add(0.5, 0.0, 0.5))
             }
             else -> {
-                println("[MapScanner] ビーコンの上のブロック: ${aboveBlock.type}")
+                // ビーコンの上のブロック: ${aboveBlock.type}
             }
         }
     }
@@ -108,31 +108,31 @@ class MapScanner {
     ) {
         // スポーン地点の検証（複数スポーン地点を許可）
         if (redSpawns.isEmpty()) {
-            errors.add("赤チームのスポーン地点（赤のコンクリートブロック）が見つかりません")
+            errors.add(plugin.languageManager.getMessage("scanner.red-spawn-not-found"))
         }
         // 複数のスポーン地点は許可されるため、エラーとしない
         
         if (blueSpawns.isEmpty()) {
-            errors.add("青チームのスポーン地点（青のコンクリートブロック）が見つかりません")
+            errors.add(plugin.languageManager.getMessage("scanner.blue-spawn-not-found"))
         }
         // 複数のスポーン地点は許可されるため、エラーとしない
         
         // 旗位置の検証
         when {
             redFlags.isEmpty() -> {
-                errors.add("赤チームの旗（ビーコン＋赤のガラス）が見つかりません")
+                errors.add(plugin.languageManager.getMessage("scanner.red-flag-not-found"))
             }
             redFlags.size > 1 -> {
-                errors.add("赤チームの旗が複数見つかりました（${redFlags.size}個）")
+                errors.add(plugin.languageManager.getMessage("scanner.red-flag-multiple", "count" to redFlags.size.toString()))
             }
         }
         
         when {
             blueFlags.isEmpty() -> {
-                errors.add("青チームの旗（ビーコン＋青のガラス）が見つかりません")
+                errors.add(plugin.languageManager.getMessage("scanner.blue-flag-not-found"))
             }
             blueFlags.size > 1 -> {
-                errors.add("青チームの旗が複数見つかりました（${blueFlags.size}個）")
+                errors.add(plugin.languageManager.getMessage("scanner.blue-flag-multiple", "count" to blueFlags.size.toString()))
             }
         }
         
@@ -145,7 +145,7 @@ class MapScanner {
                 for (j in i + 1 until redSpawns.size) {
                     val distance = redSpawns[i].distance(redSpawns[j])
                     if (distance < minSpawnDistance) {
-                        errors.add("赤チームのスポーン地点が近すぎます（地点${i+1}と地点${j+1}が${String.format("%.1f", distance)}ブロック）。最低${minSpawnDistance}ブロック離してください")
+                        errors.add(plugin.languageManager.getMessage("scanner.red-spawns-too-close", "point1" to (i+1).toString(), "point2" to (j+1).toString(), "distance" to String.format("%.1f", distance), "min" to minSpawnDistance.toString()))
                     }
                 }
             }
@@ -157,7 +157,7 @@ class MapScanner {
                 for (j in i + 1 until blueSpawns.size) {
                     val distance = blueSpawns[i].distance(blueSpawns[j])
                     if (distance < minSpawnDistance) {
-                        errors.add("青チームのスポーン地点が近すぎます（地点${i+1}と地点${j+1}が${String.format("%.1f", distance)}ブロック）。最低${minSpawnDistance}ブロック離してください")
+                        errors.add(plugin.languageManager.getMessage("scanner.blue-spawns-too-close", "point1" to (i+1).toString(), "point2" to (j+1).toString(), "distance" to String.format("%.1f", distance), "min" to minSpawnDistance.toString()))
                     }
                 }
             }
@@ -175,7 +175,7 @@ class MapScanner {
                     spawn.distance(redFlag) < minDistance
                 }
                 if (tooCloseRedSpawns.isNotEmpty()) {
-                    errors.add("赤チームの旗とスポーン地点が近すぎます（${tooCloseRedSpawns.size}箇所が最低${minDistance}ブロック未満）")
+                    errors.add(plugin.languageManager.getMessage("scanner.red-flag-spawn-too-close", "count" to tooCloseRedSpawns.size.toString(), "min" to minDistance.toString()))
                 }
             }
             
@@ -185,7 +185,7 @@ class MapScanner {
                     spawn.distance(blueFlag) < minDistance
                 }
                 if (tooCloseBlueSpawns.isNotEmpty()) {
-                    errors.add("青チームの旗とスポーン地点が近すぎます（${tooCloseBlueSpawns.size}箇所が最低${minDistance}ブロック未満）")
+                    errors.add(plugin.languageManager.getMessage("scanner.blue-flag-spawn-too-close", "count" to tooCloseBlueSpawns.size.toString(), "min" to minDistance.toString()))
                 }
             }
         }

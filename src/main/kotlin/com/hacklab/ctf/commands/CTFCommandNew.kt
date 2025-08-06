@@ -11,6 +11,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
 
@@ -153,11 +154,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             }
             
             sender.sendMessage(
-                Component.text("${index + 1}. $name ", NamedTextColor.WHITE)
-                    .append(Component.text("[$status]", statusColor))
-                    .append(Component.text(" - ", NamedTextColor.GRAY))
+                Component.text(plugin.languageManager.getMessage("command.list-item", "index" to (index + 1).toString(), "name" to name), NamedTextColor.WHITE)
+                    .append(Component.text(plugin.languageManager.getMessage("command.list-status", "status" to status), statusColor))
+                    .append(Component.text(plugin.languageManager.getMessage("ui.separator-dash"), NamedTextColor.GRAY))
                     .append(Component.text(plugin.languageManager.getMessage("command.list-red-count", "count" to redSize.toString()), NamedTextColor.RED))
-                    .append(Component.text(", ", NamedTextColor.GRAY))
+                    .append(Component.text(plugin.languageManager.getMessage("ui.separator-comma"), NamedTextColor.GRAY))
                     .append(Component.text(plugin.languageManager.getMessage("command.list-blue-count", "count" to blueSize.toString()), NamedTextColor.BLUE))
             )
             
@@ -338,13 +339,13 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             } else {
                 val game = gameManager.getGame(gameName)
                 if (game == null) {
-                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
+                    sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.game-not-found", "name" to gameName))
                 } else if (game.state != GameState.WAITING) {
-                    sender.sendMessage(Component.text("ゲームが${game.state}状態のため参加できません", NamedTextColor.RED))
+                    sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.cannot-join-state", "state" to game.state.toString()))
                 } else if (game.redTeam.size + game.blueTeam.size >= game.maxPlayersPerTeam * 2) {
-                    sender.sendMessage(Component.text("ゲームが満員です（最大${game.maxPlayersPerTeam * 2}名）", NamedTextColor.RED))
+                    sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.game-full", "max" to (game.maxPlayersPerTeam * 2).toString()))
                 } else {
-                    sender.sendMessage(Component.text("参加に失敗しました", NamedTextColor.RED))
+                    sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.join-failed"))
                 }
             }
         }
@@ -360,7 +361,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val game = gameManager.getPlayerGame(sender)
         if (game == null) {
-            sender.sendMessage(Component.text("現在ゲームに参加していません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.not-in-game"), NamedTextColor.RED))
             return true
         }
         
@@ -378,7 +379,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val currentGame = gameManager.getPlayerGame(sender)
         if (currentGame == null) {
-            sender.sendMessage(Component.text("現在ゲームに参加していません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.not-in-game"), NamedTextColor.RED))
             return true
         }
         
@@ -386,15 +387,15 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             // 現在のチームを表示
             val currentTeam = currentGame.getPlayerTeam(sender.uniqueId)
             if (currentTeam != null) {
-                sender.sendMessage(Component.text("現在のチーム: ${currentTeam.displayName}", currentTeam.color))
-                sender.sendMessage(Component.text("チーム変更: /ctf team <red|blue>", NamedTextColor.GRAY))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.current-team", "team" to plugin.languageManager.getMessage("teams.${currentTeam.name.lowercase()}")), currentTeam.color))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.team-change-usage"), NamedTextColor.GRAY))
             }
             return true
         }
         
         // ゲームが既に開始している場合は変更不可
         if (currentGame.state != com.hacklab.ctf.utils.GameState.WAITING) {
-            sender.sendMessage(Component.text("ゲーム開始後はチーム変更できません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.cannot-change-team-after-start"), NamedTextColor.RED))
             return true
         }
         
@@ -409,14 +410,14 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val currentTeam = currentGame.getPlayerTeam(sender.uniqueId)
         if (currentTeam == newTeam) {
-            sender.sendMessage(Component.text("既に${newTeam.displayName}に所属しています", newTeam.color))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.already-in-team", "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")), newTeam.color))
             return true
         }
         
         // チーム人数チェック
         val targetTeamSize = if (newTeam == com.hacklab.ctf.utils.Team.RED) currentGame.redTeam.size else currentGame.blueTeam.size
         if (targetTeamSize >= currentGame.maxPlayersPerTeam) {
-            sender.sendMessage(Component.text("${newTeam.displayName}は満員です（最大${currentGame.maxPlayersPerTeam}名）", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.team-full", "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}"), "max" to currentGame.maxPlayersPerTeam.toString()), NamedTextColor.RED))
             return true
         }
         
@@ -438,12 +439,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         // メッセージ送信
-        sender.sendMessage(Component.text("${newTeam.displayName}に変更しました！", newTeam.color))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.team-changed", "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")), newTeam.color))
         
         // 他のプレイヤーに通知
         currentGame.getAllPlayers().forEach { player ->
             if (player != sender) {
-                player.sendMessage(Component.text("${sender.name}が${newTeam.displayName}に移動しました", NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.player-changed-team", "player" to sender.name, "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")), NamedTextColor.YELLOW))
             }
         }
         
@@ -533,7 +534,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val targetBlock = sender.getTargetBlock(null, 100)
         if (targetBlock == null || targetBlock.type == org.bukkit.Material.AIR) {
-            sender.sendMessage(Component.text("視線の先にブロックが見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-block-found"), NamedTextColor.RED))
             return true
         }
         
@@ -587,7 +588,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val targetBlock = sender.getTargetBlock(null, 100)
         if (targetBlock == null || targetBlock.type == org.bukkit.Material.AIR) {
-            sender.sendMessage(Component.text("視線の先にブロックが見つかりません", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-block-found"), NamedTextColor.RED))
             return true
         }
         
@@ -635,25 +636,25 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
-        sender.sendMessage(Component.text("=== ゲーム: $gameName ===", NamedTextColor.GOLD))
-        sender.sendMessage(Component.text("状態: ${game.state}", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("フェーズ: ${game.phase}", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("赤チーム: ${game.redTeam.size}名", NamedTextColor.RED))
-        sender.sendMessage(Component.text("青チーム: ${game.blueTeam.size}名", NamedTextColor.BLUE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-header", "name" to gameName), NamedTextColor.GOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-state", "state" to game.state.toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-phase", "phase" to game.phase.toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-red-team", "count" to game.redTeam.size.toString()), NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-blue-team", "count" to game.blueTeam.size.toString()), NamedTextColor.BLUE))
         
         if (game.state == GameState.RUNNING) {
-            sender.sendMessage(Component.text("スコア - 赤: ${game.score[com.hacklab.ctf.utils.Team.RED]} 青: ${game.score[com.hacklab.ctf.utils.Team.BLUE]}", NamedTextColor.WHITE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-score", "red" to (game.score[com.hacklab.ctf.utils.Team.RED] ?: 0).toString(), "blue" to (game.score[com.hacklab.ctf.utils.Team.BLUE] ?: 0).toString()), NamedTextColor.WHITE))
         }
         
         // マッチ情報（ある場合）
         val matchWrapper = gameManager.getMatch(gameName)
         if (matchWrapper != null && matchWrapper.isActive) {
             sender.sendMessage(Component.text("", NamedTextColor.WHITE))
-            sender.sendMessage(Component.text("=== マッチ情報 ===", NamedTextColor.GOLD))
-            sender.sendMessage(Component.text("モード: ${matchWrapper.config.matchMode.displayName}", NamedTextColor.WHITE))
-            sender.sendMessage(Component.text("進行状況: ${matchWrapper.getMatchStatus()}", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-info-header"), NamedTextColor.GOLD))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-mode", "mode" to plugin.languageManager.getMessage("match.mode.${matchWrapper.config.matchMode.name.lowercase()}")), NamedTextColor.WHITE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-progress", "status" to matchWrapper.getMatchStatus()), NamedTextColor.YELLOW))
             val wins = matchWrapper.matchWins
-            sender.sendMessage(Component.text("マッチスコア - 赤: ${wins[com.hacklab.ctf.utils.Team.RED]} 青: ${wins[com.hacklab.ctf.utils.Team.BLUE]}", NamedTextColor.WHITE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.match-score", "red" to (wins[com.hacklab.ctf.utils.Team.RED] ?: 0).toString(), "blue" to (wins[com.hacklab.ctf.utils.Team.BLUE] ?: 0).toString()), NamedTextColor.WHITE))
         }
         
         return true
@@ -675,31 +676,31 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         // ゲーム設定情報を表示
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("===== ゲーム設定: $gameName =====").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-header", "name" to gameName)).color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
         
         // 基本設定
-        sender.sendMessage(Component.text("【基本設定】").color(NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("最小プレイヤー数: ${game.minPlayers}人", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("チーム最大人数: ${game.maxPlayersPerTeam}人", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("ワールド: ${game.world.name}", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-basic-settings")).color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-min-players", "count" to game.minPlayers.toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-max-players", "count" to game.maxPlayersPerTeam.toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-world", "world" to game.world.name), NamedTextColor.WHITE))
         
         // フェーズ設定
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("【フェーズ設定】").color(NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("建築フェーズ: ${game.buildDuration}秒 (${game.buildDuration / 60}分)", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("建築時ゲームモード: ${game.buildPhaseGameMode}", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("戦闘フェーズ: ${game.combatDuration}秒 (${game.combatDuration / 60}分)", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("作戦会議フェーズ: ${game.resultDuration}秒", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-phase-settings")).color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-build-phase", "seconds" to game.buildDuration.toString(), "minutes" to (game.buildDuration / 60).toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-build-mode", "mode" to game.buildPhaseGameMode), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-combat-phase", "seconds" to game.combatDuration.toString(), "minutes" to (game.combatDuration / 60).toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-result-phase", "seconds" to game.resultDuration.toString()), NamedTextColor.WHITE))
         
         // 位置設定
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("【位置設定】").color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-position-settings")).color(NamedTextColor.YELLOW))
         
         val redFlag = game.getRedFlagLocation()
         if (redFlag != null) {
-            sender.sendMessage(Component.text("赤旗: X:${redFlag.blockX} Y:${redFlag.blockY} Z:${redFlag.blockZ}", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag", "x" to redFlag.blockX.toString(), "y" to redFlag.blockY.toString(), "z" to redFlag.blockZ.toString()), NamedTextColor.RED))
         } else {
-            sender.sendMessage(Component.text("赤旗: 未設定", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag-not-set"), NamedTextColor.RED))
         }
         
         // GameConfigを取得
@@ -708,81 +709,81 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         // スポーン地点情報（複数対応）
         val redSpawnLocations = config?.getAllRedSpawnLocations() ?: emptyList()
         if (redSpawnLocations.isEmpty()) {
-            sender.sendMessage(Component.text("赤スポーン: 旗位置と同じ", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-same"), NamedTextColor.RED))
         } else if (redSpawnLocations.size == 1) {
             val spawn = redSpawnLocations[0]
-            sender.sendMessage(Component.text("赤スポーン: X:${spawn.blockX} Y:${spawn.blockY} Z:${spawn.blockZ}", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn", "x" to spawn.blockX.toString(), "y" to spawn.blockY.toString(), "z" to spawn.blockZ.toString()), NamedTextColor.RED))
         } else {
-            sender.sendMessage(Component.text("赤スポーン: ${redSpawnLocations.size}箇所（ランダム）", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-multiple", "count" to redSpawnLocations.size.toString()), NamedTextColor.RED))
         }
         
         val blueFlag = game.getBlueFlagLocation()
         if (blueFlag != null) {
-            sender.sendMessage(Component.text("青旗: X:${blueFlag.blockX} Y:${blueFlag.blockY} Z:${blueFlag.blockZ}", NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-blue-flag", "x" to blueFlag.blockX.toString(), "y" to blueFlag.blockY.toString(), "z" to blueFlag.blockZ.toString()), NamedTextColor.BLUE))
         } else {
-            sender.sendMessage(Component.text("青旗: 未設定", NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-blue-flag-not-set"), NamedTextColor.BLUE))
         }
         
         // スポーン地点情報（複数対応）
         val blueSpawnLocations = config?.getAllBlueSpawnLocations() ?: emptyList()
         if (blueSpawnLocations.isEmpty()) {
-            sender.sendMessage(Component.text("青スポーン: 旗位置と同じ", NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-blue-spawn-same"), NamedTextColor.BLUE))
         } else if (blueSpawnLocations.size == 1) {
             val spawn = blueSpawnLocations[0]
-            sender.sendMessage(Component.text("青スポーン: X:${spawn.blockX} Y:${spawn.blockY} Z:${spawn.blockZ}", NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-blue-spawn", "x" to spawn.blockX.toString(), "y" to spawn.blockY.toString(), "z" to spawn.blockZ.toString()), NamedTextColor.BLUE))
         } else {
-            sender.sendMessage(Component.text("青スポーン: ${blueSpawnLocations.size}箇所（ランダム）", NamedTextColor.BLUE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-blue-spawn-multiple", "count" to blueSpawnLocations.size.toString()), NamedTextColor.BLUE))
         }
         
         // 通貨設定
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("【通貨設定】").color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-currency-settings")).color(NamedTextColor.YELLOW))
         val initialCurrency = plugin.config.getInt("currency.initial", 50)
-        sender.sendMessage(Component.text("初期資金: ${initialCurrency}G", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("キル報酬: 10G (旗キャリア: 20G)", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("キャプチャー報酬: 30G", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-initial-currency", "amount" to initialCurrency.toString()), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-kill-reward"), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-capture-reward"), NamedTextColor.WHITE))
         
         // その他
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
-        sender.sendMessage(Component.text("【その他】").color(NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-other-settings")).color(NamedTextColor.YELLOW))
         val respawnBase = plugin.config.getInt("default-game.respawn-delay-base", 10)
         val respawnPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
         val respawnMax = plugin.config.getInt("default-game.respawn-delay-max", 20)
-        sender.sendMessage(Component.text("リスポーン時間: ${respawnBase}秒 (+${respawnPerDeath}秒/死亡, 最大${respawnMax}秒)", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-respawn-time", "base" to respawnBase.toString(), "perDeath" to respawnPerDeath.toString(), "max" to respawnMax.toString()), NamedTextColor.WHITE))
         
-        sender.sendMessage(Component.text("================================").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-footer")).color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
         
         return true
     }
     
     private fun sendHelpMessage(sender: CommandSender) {
-        sender.sendMessage(Component.text("===== CTF コマンド =====", NamedTextColor.GOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-header"), NamedTextColor.GOLD))
         
         if (sender.hasPermission("ctf.admin")) {
-            sender.sendMessage(Component.text("/ctf create <ゲーム名> - 新規ゲーム作成（対話形式）", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf update <ゲーム名> - ゲーム設定の更新（対話形式）", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf delete <ゲーム名> - ゲーム削除", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf start <ゲーム名> [single|match] [ゲーム数] - ゲーム開始", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("  ※設定ファイルにマッチ設定がある場合は自動でマッチモード", NamedTextColor.GRAY))
-            sender.sendMessage(Component.text("  ※'single'を指定すると強制的に単一ゲーム", NamedTextColor.GRAY))
-            sender.sendMessage(Component.text("/ctf stop <ゲーム名> - ゲーム停止", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf setflag <ゲーム名> <red|blue> - 旗位置設定", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf setspawn <ゲーム名> <red|blue> - スポーン地点設定（レガシー）", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf addspawn <ゲーム名> <red|blue> - スポーン地点追加（複数可）", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf removespawn <ゲーム名> <red|blue> <番号> - スポーン地点削除", NamedTextColor.YELLOW))
-            sender.sendMessage(Component.text("/ctf listspawns <ゲーム名> - スポーン地点一覧", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-create"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-update"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-delete"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-start"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-start-note1"), NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-start-note2"), NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-stop"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-setflag"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-setspawn"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-addspawn"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-removespawn"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-listspawns"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-setpos1"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-setpos2"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-savemap"), NamedTextColor.YELLOW))
         }
         
-        sender.sendMessage(Component.text("/ctf list - ゲーム一覧表示", NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("/ctf join <ゲーム名> - ゲーム参加", NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("/ctf leave - ゲーム退出", NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("/ctf team [red|blue] - チーム確認・変更", NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("/ctf spectator [ゲーム名] - 観戦者として参加", NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("/ctf status [ゲーム名] - ゲーム状態確認", NamedTextColor.YELLOW))
-        sender.sendMessage(Component.text("/ctf info <ゲーム名> - ゲーム設定の詳細表示", NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-list"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-join"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-leave"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-team"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-spectator"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-status"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-info"), NamedTextColor.YELLOW))
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<String>): List<String> {
@@ -841,16 +842,32 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
+        // プレイヤーの位置を取得し、Y座標を拡張
+        val playerLoc = sender.location
+        val extendedLoc = Location(
+            playerLoc.world,
+            playerLoc.x,
+            playerLoc.world.minHeight.toDouble(), // ワールドの最小高さ（通常-64）
+            playerLoc.z
+        )
+        
         // ゲーム名なしで一時的な範囲として設定
         if (args.size < 2) {
-            gameManager.setTempMapPos1(sender, sender.location)
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-start-set", "x" to sender.location.blockX.toString(), "y" to sender.location.blockY.toString(), "z" to sender.location.blockZ.toString()), NamedTextColor.GREEN))
+            gameManager.setTempMapPos1(sender, extendedLoc)
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-start-set", 
+                "x" to playerLoc.blockX.toString(), 
+                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-temp-hint"), NamedTextColor.GRAY))
         } else {
             // ゲーム名ありの場合は既存のゲームに対して設定
             val gameName = args[1]
-            gameManager.setMapPos1(gameName, sender.location)
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-start-set-game", "name" to gameName, "x" to sender.location.blockX.toString(), "y" to sender.location.blockY.toString(), "z" to sender.location.blockZ.toString()), NamedTextColor.GREEN))
+            gameManager.setMapPos1(gameName, extendedLoc)
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-start-set-game", 
+                "name" to gameName, 
+                "x" to playerLoc.blockX.toString(), 
+                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
         }
         
         return true
@@ -867,16 +884,32 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
+        // プレイヤーの位置を取得し、Y座標を拡張
+        val playerLoc = sender.location
+        val extendedLoc = Location(
+            playerLoc.world,
+            playerLoc.x,
+            playerLoc.world.maxHeight.toDouble(), // ワールドの最大高さ（通常319）
+            playerLoc.z
+        )
+        
         // ゲーム名なしで一時的な範囲として設定
         if (args.size < 2) {
-            gameManager.setTempMapPos2(sender, sender.location)
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-end-set", "x" to sender.location.blockX.toString(), "y" to sender.location.blockY.toString(), "z" to sender.location.blockZ.toString()), NamedTextColor.GREEN))
+            gameManager.setTempMapPos2(sender, extendedLoc)
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-end-set", 
+                "x" to playerLoc.blockX.toString(), 
+                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-temp-hint"), NamedTextColor.GRAY))
         } else {
             // ゲーム名ありの場合は既存のゲームに対して設定
             val gameName = args[1]
-            gameManager.setMapPos2(gameName, sender.location)
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-end-set-game", "name" to gameName, "x" to sender.location.blockX.toString(), "y" to sender.location.blockY.toString(), "z" to sender.location.blockZ.toString()), NamedTextColor.GREEN))
+            gameManager.setMapPos2(gameName, extendedLoc)
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-end-set-game", 
+                "name" to gameName, 
+                "x" to playerLoc.blockX.toString(), 
+                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
         }
         
         return true
@@ -936,7 +969,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         } else {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-save-failed"), NamedTextColor.RED))
             result.errors.forEach { error ->
-                sender.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("ui.error-item", "error" to error), NamedTextColor.YELLOW))
             }
         }
         
@@ -955,7 +988,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         if (args.size < 3) {
-            sender.sendMessage(Component.text("§e使用方法: /ctf addspawn <ゲーム名> <red|blue>", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-addspawn"), NamedTextColor.YELLOW))
             return true
         }
         
@@ -979,7 +1012,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val isRedTeam = team == "red"
         val validationError = config.validateSpawnDistance(location, isRedTeam)
         if (validationError != null) {
-            sender.sendMessage(Component.text("§c$validationError", NamedTextColor.RED))
+            sender.sendMessage(Component.text(validationError, NamedTextColor.RED))
             return true
         }
         
@@ -987,11 +1020,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         when (team) {
             "red" -> {
                 config.redSpawnLocations.add(location)
-                sender.sendMessage(Component.text("§a赤チームのスポーン地点 #${config.redSpawnLocations.size} を追加しました: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-added", "number" to config.redSpawnLocations.size.toString(), "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
             }
             "blue" -> {
                 config.blueSpawnLocations.add(location)
-                sender.sendMessage(Component.text("§a青チームのスポーン地点 #${config.blueSpawnLocations.size} を追加しました: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-added", "number" to config.blueSpawnLocations.size.toString(), "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
             }
         }
         
@@ -1008,7 +1041,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         if (args.size < 4) {
-            sender.sendMessage(Component.text("§e使用方法: /ctf removespawn <ゲーム名> <red|blue> <番号>", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-removespawn"), NamedTextColor.YELLOW))
             return true
         }
         
@@ -1022,7 +1055,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         
         if (index == null || index < 1) {
-            sender.sendMessage(Component.text("§c無効な番号です", NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.invalid-spawn-number"), NamedTextColor.RED))
             return true
         }
         
@@ -1036,19 +1069,19 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         when (team) {
             "red" -> {
                 if (index > config.redSpawnLocations.size) {
-                    sender.sendMessage(Component.text("§cスポーン地点 #$index は存在しません", NamedTextColor.RED))
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-not-found", "index" to index.toString()), NamedTextColor.RED))
                     return true
                 }
                 val removed = config.redSpawnLocations.removeAt(index - 1)
-                sender.sendMessage(Component.text("§a赤チームのスポーン地点 #$index を削除しました: ${removed.blockX}, ${removed.blockY}, ${removed.blockZ}", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-removed", "index" to index.toString(), "x" to removed.blockX.toString(), "y" to removed.blockY.toString(), "z" to removed.blockZ.toString()), NamedTextColor.GREEN))
             }
             "blue" -> {
                 if (index > config.blueSpawnLocations.size) {
-                    sender.sendMessage(Component.text("§cスポーン地点 #$index は存在しません", NamedTextColor.RED))
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-not-found", "index" to index.toString()), NamedTextColor.RED))
                     return true
                 }
                 val removed = config.blueSpawnLocations.removeAt(index - 1)
-                sender.sendMessage(Component.text("§a青チームのスポーン地点 #$index を削除しました: ${removed.blockX}, ${removed.blockY}, ${removed.blockZ}", NamedTextColor.GREEN))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-removed", "index" to index.toString(), "x" to removed.blockX.toString(), "y" to removed.blockY.toString(), "z" to removed.blockZ.toString()), NamedTextColor.GREEN))
             }
         }
         
@@ -1060,7 +1093,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
     private fun handleListSpawnsCommand(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size < 2) {
-            sender.sendMessage(Component.text("§e使用方法: /ctf listspawns <ゲーム名>", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-listspawns"), NamedTextColor.YELLOW))
             return true
         }
         
@@ -1072,32 +1105,32 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
-        sender.sendMessage(Component.text("===== スポーン地点一覧: $gameName =====", NamedTextColor.GOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-list-header", "name" to gameName), NamedTextColor.GOLD))
         
         // 赤チームのスポーン地点
-        sender.sendMessage(Component.text("赤チーム:", NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-team-label"), NamedTextColor.RED))
         if (config.redSpawnLocation != null) {
             val loc = config.redSpawnLocation!!
-            sender.sendMessage(Component.text("  [レガシー] ${loc.blockX}, ${loc.blockY}, ${loc.blockZ}", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-legacy", "x" to loc.blockX.toString(), "y" to loc.blockY.toString(), "z" to loc.blockZ.toString()), NamedTextColor.GRAY))
         }
         config.redSpawnLocations.forEachIndexed { index, location ->
-            sender.sendMessage(Component.text("  #${index + 1}: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.WHITE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-location", "number" to (index + 1).toString(), "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.WHITE))
         }
         if (config.redSpawnLocations.isEmpty() && config.redSpawnLocation == null) {
-            sender.sendMessage(Component.text("  (未設定 - 旗位置を使用)", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-not-set"), NamedTextColor.GRAY))
         }
         
         // 青チームのスポーン地点
-        sender.sendMessage(Component.text("青チーム:", NamedTextColor.BLUE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-team-label"), NamedTextColor.BLUE))
         if (config.blueSpawnLocation != null) {
             val loc = config.blueSpawnLocation!!
-            sender.sendMessage(Component.text("  [レガシー] ${loc.blockX}, ${loc.blockY}, ${loc.blockZ}", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-legacy", "x" to loc.blockX.toString(), "y" to loc.blockY.toString(), "z" to loc.blockZ.toString()), NamedTextColor.GRAY))
         }
         config.blueSpawnLocations.forEachIndexed { index, location ->
-            sender.sendMessage(Component.text("  #${index + 1}: ${location.blockX}, ${location.blockY}, ${location.blockZ}", NamedTextColor.WHITE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-location", "number" to (index + 1).toString(), "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.WHITE))
         }
         if (config.blueSpawnLocations.isEmpty() && config.blueSpawnLocation == null) {
-            sender.sendMessage(Component.text("  (未設定 - 旗位置を使用)", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-not-set"), NamedTextColor.GRAY))
         }
         
         return true

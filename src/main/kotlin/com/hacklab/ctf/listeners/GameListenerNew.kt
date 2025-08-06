@@ -102,7 +102,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             } ?: return
             
             // 敵の旗に近づいたら取得（1.5ブロック以内）
-            if (playerLoc.distance(enemyFlagLocation) < 1.5) {
+            if (playerLoc.world == enemyFlagLocation.world && playerLoc.distance(enemyFlagLocation) < 1.5) {
                 // 旗がまだ誰も持っていない場合
                 val enemyCarrier = when (enemyTeam) {
                     Team.RED -> game.redFlagCarrier
@@ -135,8 +135,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     game.playerFlagPickups[player.uniqueId] = (game.playerFlagPickups[player.uniqueId] ?: 0) + 1
                     
                     // タイトル通知
-                    val title = Component.text("旗を奪取！", enemyTeam.color)
-                    val subtitle = Component.text("${player.name} が ${enemyTeam.displayName}の旗を取得", NamedTextColor.WHITE)
+                    val lang = plugin.languageManager
+                    val title = Component.text(lang.getMessage("game_events.flag_capture.title"), enemyTeam.color)
+                    val subtitle = Component.text(lang.getMessage("game_events.flag_capture.subtitle")
+                        .replace("{player}", player.name)
+                        .replace("{team}", lang.getMessage("teams.${enemyTeam.name.lowercase()}")), NamedTextColor.WHITE)
                     game.sendEventNotification(
                         title,
                         subtitle,
@@ -149,7 +152,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.picked-up",
                             "player" to player.name,
                             "color" to enemyTeam.colorCode,
-                            "team" to enemyTeam.displayName), NamedTextColor.YELLOW))
+                            "team" to plugin.languageManager.getMessage("teams.${enemyTeam.name.lowercase()}")), NamedTextColor.YELLOW))
                     }
                     
                     // 効果音
@@ -165,7 +168,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
             Team.SPECTATOR -> return  // Spectators cannot capture flags
         } ?: return
         
-        if (playerLoc.distance(ownFlagLocation) < 3.0) {
+        // 同じワールドでない場合は距離計算をスキップ
+        if (playerLoc.world == ownFlagLocation.world && playerLoc.distance(ownFlagLocation) < 3.0) {
             game.captureFlag(player)
         }
         
@@ -178,14 +182,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
             } ?: return
             
             val useRange = plugin.config.getDouble("shop.use-range", 15.0)
-            val distance = player.location.distance(spawnLocation)
+            val distance = if (player.location.world == spawnLocation.world) {
+                player.location.distance(spawnLocation)
+            } else {
+                Double.MAX_VALUE  // 異なるワールドの場合は非常に大きな距離とする
+            }
             
             val wasInRange = player.hasMetadata("shop_in_range")
             val isInRange = distance <= useRange
             
             if (isInRange && !wasInRange) {
                 player.setMetadata("shop_in_range", org.bukkit.metadata.FixedMetadataValue(plugin, true))
-                player.sendActionBar(Component.text("[ショップ使用可能]").color(NamedTextColor.GREEN).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+                player.sendActionBar(Component.text(plugin.languageManager.getMessage("game_events.shop.available")).color(NamedTextColor.GREEN).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
             } else if (!isInRange && wasInRange) {
                 player.removeMetadata("shop_in_range", plugin)
             }
@@ -201,6 +209,55 @@ class GameListenerNew(private val plugin: Main) : Listener {
         if (game.getPlayerTeam(player.uniqueId) == Team.SPECTATOR) {
             event.isCancelled = true
             return
+        }
+        
+        // 白いブロックを拾ったときに自分のチーム色に変換（建築フェーズのみ）
+        if (game.state == GameState.RUNNING && game.phase == GamePhase.BUILD) {
+            val item = event.item.itemStack
+            val team = game.getPlayerTeam(player.uniqueId) ?: return
+            
+            // 白いブロックをチームカラーに変換
+            val convertedMaterial = when (item.type) {
+                Material.WHITE_CONCRETE -> {
+                    when (team) {
+                        Team.RED -> Material.RED_CONCRETE
+                        Team.BLUE -> Material.BLUE_CONCRETE
+                        Team.SPECTATOR -> return
+                    }
+                }
+                Material.WHITE_STAINED_GLASS -> {
+                    when (team) {
+                        Team.RED -> Material.RED_STAINED_GLASS
+                        Team.BLUE -> Material.BLUE_STAINED_GLASS
+                        Team.SPECTATOR -> return
+                    }
+                }
+                else -> null
+            }
+            
+            // 変換が必要な場合
+            if (convertedMaterial != null) {
+                // 元のアイテムをキャンセルして、変換されたアイテムを追加
+                event.isCancelled = true
+                event.item.remove()
+                
+                // 変換されたアイテムをインベントリに追加
+                val convertedItem = ItemStack(convertedMaterial, item.amount)
+                val remaining = player.inventory.addItem(convertedItem)
+                
+                // インベントリに入らなかった分はドロップ
+                if (remaining.isNotEmpty()) {
+                    remaining.values.forEach { leftover ->
+                        player.world.dropItem(player.location, leftover)
+                    }
+                }
+                
+                // 拾い上げの音を再生
+                player.playSound(player.location, org.bukkit.Sound.ENTITY_ITEM_PICKUP, 0.3f, 1.0f)
+                
+                plugin.logger.info("[ItemPickup] Converted white block to team color: $convertedMaterial")
+                return
+            }
         }
         
         if (game.state != GameState.RUNNING || game.phase != GamePhase.COMBAT) return
@@ -281,10 +338,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val totalReward = baseReward + streakBonus
                     
                     // マッチがある場合もない場合も通貨を追加
+                    val lang = plugin.languageManager
                     val message = if (streakBonus > 0) {
-                        "${killer.name}が${player.name}をキル (${streak}連続キル!)"
+                        lang.getMessage("game_events.kill_messages.with_streak")
+                            .replace("{killer}", killer.name)
+                            .replace("{victim}", player.name)
+                            .replace("{streak}", streak.toString())
                     } else {
-                        "${killer.name}が${player.name}をキル"
+                        lang.getMessage("game_events.kill_messages.normal")
+                            .replace("{killer}", killer.name)
+                            .replace("{victim}", player.name)
                     }
                     game.addTeamCurrency(killerTeam, totalReward, message)
                     
@@ -292,11 +355,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     if (streak >= 2) {
                         // タイトル通知
                         val streakTitle = when (streak) {
-                            2 -> Component.text("ダブルキル！", NamedTextColor.YELLOW)
-                            3 -> Component.text("トリプルキル！", NamedTextColor.GOLD)
-                            4 -> Component.text("メガキル！", NamedTextColor.RED)
-                            5 -> Component.text("ウルトラキル！", NamedTextColor.DARK_RED)
-                            else -> Component.text("${streak}連続キル！", NamedTextColor.DARK_PURPLE)
+                            2 -> Component.text(lang.getMessage("game_events.kill_streaks.double"), NamedTextColor.YELLOW)
+                            3 -> Component.text(lang.getMessage("game_events.kill_streaks.triple"), NamedTextColor.GOLD)
+                            4 -> Component.text(lang.getMessage("game_events.kill_streaks.mega"), NamedTextColor.RED)
+                            5 -> Component.text(lang.getMessage("game_events.kill_streaks.ultra"), NamedTextColor.DARK_RED)
+                            else -> Component.text(lang.getMessage("game_events.kill_streaks.consecutive")
+                                .replace("{count}", streak.toString()), NamedTextColor.DARK_PURPLE)
                         }
                         val streakSubtitle = Component.text(killer.name, killerTeam.color)
                         
@@ -336,8 +400,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                     plugin.config.getInt("currency.kill-assist-reward", 5)
                                 }
                                 
-                                game.addTeamCurrency(assisterTeam, assistReward, "${assister.name}がキルアシスト")
-                                assister.sendMessage(Component.text("キルアシスト! +${assistReward}G", NamedTextColor.GREEN))
+                                val lang = plugin.languageManager
+                                game.addTeamCurrency(assisterTeam, assistReward, lang.getMessage("game_events.kill_messages.assist_by")
+                                    .replace("{player}", assister.name))
+                                assister.sendMessage(Component.text(lang.getMessage("game_events.kill_messages.assist")
+                                    .replace("{reward}", assistReward.toString()), NamedTextColor.GREEN))
                                 
                                 // アシスト統計を記録
                                 game.playerAssists[assisterId] = (game.playerAssists[assisterId] ?: 0) + 1
@@ -459,7 +526,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     
                     game.getAllPlayers().forEach {
                         it.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-void",
-                            "team" to flagTeam.displayName), flagTeam.color))
+                            "team" to plugin.languageManager.getMessage("teams.${flagTeam.name.lowercase()}")), flagTeam.color))
                     }
                 } else {
                     // 通常の死亡の場合はドロップ処理
@@ -655,17 +722,54 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             plugin.logger.info("[BlockBreak] Protected block at ${event.block.location}")
                         } else {
                             val blockType = event.block.type
+                            val playerTeam = game.getPlayerTeam(player.uniqueId)
                             
-                            // チームカラーブロック（コンクリート、ガラス）と白いブロックはドロップしない
+                            // チームカラーブロック（コンクリート、ガラス）と白いブロックの処理
                             val isTeamColorBlock = blockType in listOf(
                                 Material.RED_CONCRETE, Material.BLUE_CONCRETE,
                                 Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS,
                                 Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS
                             )
                             
+                            // 敵チームのブロック破壊には自陣ブロックの隣接が必要
                             if (isTeamColorBlock) {
-                                event.isDropItems = false
-                                plugin.logger.info("[BlockBreak] Team color or white block - no drops")
+                                val isEnemyBlock = when (blockType) {
+                                    Material.RED_CONCRETE, Material.RED_STAINED_GLASS -> playerTeam != Team.RED
+                                    Material.BLUE_CONCRETE, Material.BLUE_STAINED_GLASS -> playerTeam != Team.BLUE
+                                    Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS -> false // 白は中立なので破壊可能
+                                    else -> false
+                                }
+                                
+                                if (isEnemyBlock) {
+                                    // 隣接する自陣ブロックがあるかチェック
+                                    if (!game.hasAdjacentTeamBlock(event.block.location, playerTeam!!)) {
+                                        event.isCancelled = true
+                                        player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.need-adjacent-block"), NamedTextColor.RED))
+                                        plugin.logger.info("[BlockBreak] No adjacent team block for breaking enemy block")
+                                        return
+                                    }
+                                }
+                                
+                                // SURVIVALモードなら白いブロックとしてドロップ、CREATIVEモードならドロップしない
+                                if (gameMode == GameMode.CREATIVE) {
+                                    event.isDropItems = false
+                                    plugin.logger.info("[BlockBreak] Creative mode - no drops")
+                                } else {
+                                    // 通常のドロップをキャンセルして白いブロックをドロップ
+                                    event.isDropItems = false
+                                    
+                                    // 白いブロックとしてドロップ
+                                    val world = event.block.world
+                                    val location = event.block.location.add(0.5, 0.5, 0.5)
+                                    val whiteBlock = when (blockType) {
+                                        Material.RED_CONCRETE, Material.BLUE_CONCRETE -> Material.WHITE_CONCRETE
+                                        Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> Material.WHITE_STAINED_GLASS
+                                        else -> blockType // 既に白い場合はそのまま
+                                    }
+                                    
+                                    world.dropItemNaturally(location, ItemStack(whiteBlock))
+                                    plugin.logger.info("[BlockBreak] Dropping white block: $whiteBlock")
+                                }
                             }
                             
                             // 明示的に許可
@@ -687,8 +791,52 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     event.isCancelled = true
                     player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-break-game-blocks"), NamedTextColor.RED))
                 } else {
-                    // 戦闘フェーズではアイテムをドロップしない
-                    event.isDropItems = false
+                    val blockType = event.block.type
+                    val playerTeam = game.getPlayerTeam(player.uniqueId)
+                    
+                    // チームカラーブロック（コンクリート、ガラス）と白いブロックの処理
+                    val isTeamColorBlock = blockType in listOf(
+                        Material.RED_CONCRETE, Material.BLUE_CONCRETE,
+                        Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS,
+                        Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS
+                    )
+                    
+                    // 戦闘フェーズでも敵チームのブロック破壊には自陣ブロックの隣接が必要
+                    if (isTeamColorBlock) {
+                        val isEnemyBlock = when (blockType) {
+                            Material.RED_CONCRETE, Material.RED_STAINED_GLASS -> playerTeam != Team.RED
+                            Material.BLUE_CONCRETE, Material.BLUE_STAINED_GLASS -> playerTeam != Team.BLUE
+                            Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS -> false // 白は中立なので破壊可能
+                            else -> false
+                        }
+                        
+                        if (isEnemyBlock) {
+                            // 隣接する自陣ブロックがあるかチェック
+                            if (!game.hasAdjacentTeamBlock(event.block.location, playerTeam!!)) {
+                                event.isCancelled = true
+                                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.need-adjacent-block"), NamedTextColor.RED))
+                                plugin.logger.info("[BlockBreak] No adjacent team block for breaking enemy block in combat phase")
+                                return
+                            }
+                        }
+                        // 通常のドロップをキャンセルして白いブロックをドロップ
+                        event.isDropItems = false
+                        
+                        // 白いブロックとしてドロップ
+                        val world = event.block.world
+                        val location = event.block.location.add(0.5, 0.5, 0.5)
+                        val whiteBlock = when (blockType) {
+                            Material.RED_CONCRETE, Material.BLUE_CONCRETE -> Material.WHITE_CONCRETE
+                            Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> Material.WHITE_STAINED_GLASS
+                            else -> blockType // 既に白い場合はそのまま
+                        }
+                        
+                        world.dropItemNaturally(location, ItemStack(whiteBlock))
+                        plugin.logger.info("[BlockBreak] Combat phase - dropping white block: $whiteBlock")
+                    } else {
+                        // その他のブロックは通常通りドロップ
+                        event.isDropItems = true
+                    }
                     
                     // ブロック破壊を記録し、切断されたブロックを白く変換
                     game.recordBlockBreak(event.block.location)
@@ -772,9 +920,38 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
             GamePhase.COMBAT -> {
-                // 戦闘フェーズ：ブロック設置禁止
-                event.isCancelled = true
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-place-combat"), NamedTextColor.RED))
+                // 戦闘フェーズ：ブロック設置可能（ただし制限あり）
+                val block = event.block
+                val parent = game.canPlaceBlock(player, block)
+                if (parent == null) {
+                    event.isCancelled = true
+                    return
+                }
+                
+                // スポーン地点付近（ショップエリア）への設置を制限
+                val team = game.getPlayerTeam(player.uniqueId) ?: return
+                val enemyTeam = if (team == Team.RED) Team.BLUE else Team.RED
+                val enemySpawn = when (enemyTeam) {
+                    Team.RED -> game.getRedSpawnLocation() ?: game.getRedFlagLocation()
+                    Team.BLUE -> game.getBlueSpawnLocation() ?: game.getBlueFlagLocation()
+                    Team.SPECTATOR -> null
+                }
+                
+                if (enemySpawn != null && block.location.world == enemySpawn.world && block.location.distance(enemySpawn) < 10.0) {
+                    event.isCancelled = true
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-place-near-spawn"), NamedTextColor.RED))
+                    return
+                }
+                
+                // 明示的に許可
+                event.isCancelled = false
+                plugin.logger.info("[BlockPlace] Allowing block placement in combat phase at ${block.location}")
+                
+                // ブロック設置を記録
+                game.recordBlockPlacement(team, block.location, parent)
+                
+                // ブロック設置統計を記録
+                game.playerBlocksPlaced[player.uniqueId] = (game.playerBlocksPlaced[player.uniqueId] ?: 0) + 1
             }
             GamePhase.INTERMISSION -> {
                 // 作戦会議フェーズ：全面的に設置禁止
@@ -800,13 +977,17 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val blockLoc = clickedBlock.location
                     
                     // 旗の位置かチェック
-                    val isRedFlag = game.getRedFlagLocation()?.let { it.distance(blockLoc) < 1.0 } ?: false
-                    val isBlueFlag = game.getBlueFlagLocation()?.let { it.distance(blockLoc) < 1.0 } ?: false
+                    val isRedFlag = game.getRedFlagLocation()?.let { 
+                        it.world == blockLoc.world && it.distance(blockLoc) < 1.0 
+                    } ?: false
+                    val isBlueFlag = game.getBlueFlagLocation()?.let { 
+                        it.world == blockLoc.world && it.distance(blockLoc) < 1.0 
+                    } ?: false
                     
                     if (isRedFlag || isBlueFlag) {
                         val flagTeam = if (isRedFlag) Team.RED else Team.BLUE
                         player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.flag-info",
-                            "team" to flagTeam.displayName), flagTeam.color))
+                            "team" to plugin.languageManager.getMessage("teams.${flagTeam.name.lowercase()}")), flagTeam.color))
                     }
                 }
             }
@@ -833,14 +1014,14 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         val spawn = game.getRandomSpawnLocation(Team.RED)
                         if (spawn != null) {
                             player.teleport(spawn.clone().add(0.0, 5.0, 0.0))
-                            player.sendMessage(Component.text("赤チームスポーンにテレポートしました", NamedTextColor.RED))
+                            player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_spawn"), NamedTextColor.RED))
                         }
                     }
                     "spawn_blue" -> {
                         val spawn = game.getRandomSpawnLocation(Team.BLUE)
                         if (spawn != null) {
                             player.teleport(spawn.clone().add(0.0, 5.0, 0.0))
-                            player.sendMessage(Component.text("青チームスポーンにテレポートしました", NamedTextColor.BLUE))
+                            player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_spawn"), NamedTextColor.BLUE))
                         }
                     }
                 }
@@ -850,8 +1031,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // ショップアイテムのチェック
             if (item.type == Material.EMERALD && item.hasItemMeta()) {
                 val meta = item.itemMeta
-                val displayName = meta.displayName()
-                if (displayName != null && displayName.toString().contains("ショップ")) {
+                // Check for shop item using persistent data or item type
+                val container = meta.persistentDataContainer
+                val isShopItem = container.has(org.bukkit.NamespacedKey(plugin, "shop_item"), org.bukkit.persistence.PersistentDataType.BYTE)
+                if (isShopItem) {
                     event.isCancelled = true
                     
                     val team = game.getPlayerTeam(player.uniqueId)
@@ -895,7 +1078,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 if (target != null) {
                     player.teleport(target)
                     player.closeInventory()
-                    player.sendMessage(Component.text("${target.name}にテレポートしました", NamedTextColor.GREEN))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.to_player")
+                        .replace("{player}", target.name), NamedTextColor.GREEN))
                 }
                 return
             }
@@ -914,19 +1098,19 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 val carrier = Bukkit.getPlayer(game.redFlagCarrier!!)
                                 if (carrier != null) {
                                     player.teleport(carrier)
-                                    player.sendMessage(Component.text("赤旗の保持者にテレポートしました", NamedTextColor.RED))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_carrier"), NamedTextColor.RED))
                                 }
                             }
                             game.isRedFlagDropped -> {
                                 game.droppedFlags.entries.find { it.value.first == Team.RED }?.let {
                                     player.teleport(it.key.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text("落ちている赤旗にテレポートしました", NamedTextColor.RED))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_dropped"), NamedTextColor.RED))
                                 }
                             }
                             else -> {
                                 game.getRedFlagLocation()?.let {
                                     player.teleport(it.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text("赤旗の基地にテレポートしました", NamedTextColor.RED))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_home"), NamedTextColor.RED))
                                 }
                             }
                         }
@@ -937,19 +1121,19 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 val carrier = Bukkit.getPlayer(game.blueFlagCarrier!!)
                                 if (carrier != null) {
                                     player.teleport(carrier)
-                                    player.sendMessage(Component.text("青旗の保持者にテレポートしました", NamedTextColor.BLUE))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_carrier"), NamedTextColor.BLUE))
                                 }
                             }
                             game.isBlueFlagDropped -> {
                                 game.droppedFlags.entries.find { it.value.first == Team.BLUE }?.let {
                                     player.teleport(it.key.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text("落ちている青旗にテレポートしました", NamedTextColor.BLUE))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_dropped"), NamedTextColor.BLUE))
                                 }
                             }
                             else -> {
                                 game.getBlueFlagLocation()?.let {
                                     player.teleport(it.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text("青旗の基地にテレポートしました", NamedTextColor.BLUE))
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_home"), NamedTextColor.BLUE))
                                 }
                             }
                         }
@@ -1032,7 +1216,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val title = event.view.title()
         val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
         
-        if (inventory.holder == null && titleText.contains("ショップ")) {
+        if (inventory.holder == null && (titleText.contains(plugin.languageManager.getMessage("shop.title")) || titleText.contains("Shop"))) {
             // すべてのクリックをキャンセル
             event.isCancelled = true
             
@@ -1131,7 +1315,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         val title = event.view.title()
         val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
         
-        if (event.inventory.holder == null && titleText.contains("ショップ")) {
+        if (event.inventory.holder == null && (titleText.contains(plugin.languageManager.getMessage("shop.title")) || titleText.contains("Shop"))) {
             event.isCancelled = true
         }
     }
@@ -1152,7 +1336,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
     }
     
     private fun showStatsMenu(player: Player, game: Game) {
-        val inventory = Bukkit.createInventory(null, 54, Component.text("ゲーム統計", NamedTextColor.GOLD))
+        val lang = plugin.languageManager
+        val inventory = Bukkit.createInventory(null, 54, Component.text(lang.getMessage("game_events.spectator_menu.stats_title"), NamedTextColor.GOLD))
         
         // チーム別統計
         var slot = 0
@@ -1168,10 +1353,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 itemMeta = itemMeta?.apply {
                     displayName(Component.text(p.name, NamedTextColor.RED))
                     lore(listOf(
-                        Component.text("キル: $kills", NamedTextColor.WHITE),
-                        Component.text("デス: $deaths", NamedTextColor.WHITE),
-                        Component.text("キャプチャー: $captures", NamedTextColor.WHITE),
-                        Component.text("K/D: ${if (deaths == 0) kills.toDouble() else String.format("%.2f", kills.toDouble() / deaths)}", NamedTextColor.YELLOW)
+                        Component.text(lang.getMessage("game_events.spectator_menu.kills").replace("{count}", kills.toString()), NamedTextColor.WHITE),
+                        Component.text(lang.getMessage("game_events.spectator_menu.deaths").replace("{count}", deaths.toString()), NamedTextColor.WHITE),
+                        Component.text(lang.getMessage("game_events.spectator_menu.captures").replace("{count}", captures.toString()), NamedTextColor.WHITE),
+                        Component.text(lang.getMessage("game_events.spectator_menu.kd_ratio").replace("{ratio}", if (deaths == 0) kills.toDouble().toString() else String.format("%.2f", kills.toDouble() / deaths)), NamedTextColor.YELLOW)
                     ))
                     val skullMeta = this as? org.bukkit.inventory.meta.SkullMeta
                     skullMeta?.owningPlayer = p
@@ -1194,10 +1379,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 itemMeta = itemMeta?.apply {
                     displayName(Component.text(p.name, NamedTextColor.BLUE))
                     lore(listOf(
-                        Component.text("キル: $kills", NamedTextColor.WHITE),
-                        Component.text("デス: $deaths", NamedTextColor.WHITE),
-                        Component.text("キャプチャー: $captures", NamedTextColor.WHITE),
-                        Component.text("K/D: ${if (deaths == 0) kills.toDouble() else String.format("%.2f", kills.toDouble() / deaths)}", NamedTextColor.YELLOW)
+                        Component.text(lang.getMessage("game_events.spectator_menu.kills").replace("{count}", kills.toString()), NamedTextColor.WHITE),
+                        Component.text(lang.getMessage("game_events.spectator_menu.deaths").replace("{count}", deaths.toString()), NamedTextColor.WHITE),
+                        Component.text(lang.getMessage("game_events.spectator_menu.captures").replace("{count}", captures.toString()), NamedTextColor.WHITE),
+                        Component.text(lang.getMessage("game_events.spectator_menu.kd_ratio").replace("{ratio}", if (deaths == 0) kills.toDouble().toString() else String.format("%.2f", kills.toDouble() / deaths)), NamedTextColor.YELLOW)
                     ))
                     val skullMeta = this as? org.bukkit.inventory.meta.SkullMeta
                     skullMeta?.owningPlayer = p
@@ -1210,7 +1395,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
     }
     
     private fun showTrackingMenu(player: Player, game: Game) {
-        val inventory = Bukkit.createInventory(null, 27, Component.text("プレイヤー追跡", NamedTextColor.AQUA))
+        val lang = plugin.languageManager
+        val inventory = Bukkit.createInventory(null, 27, Component.text(lang.getMessage("game_events.spectator_menu.tracking_title"), NamedTextColor.AQUA))
         
         var slot = 0
         game.getAllPlayers().filter { p -> p != player && game.getPlayerTeam(p.uniqueId) != Team.SPECTATOR }.forEach { p ->
@@ -1221,8 +1407,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 itemMeta = itemMeta?.apply {
                     displayName(Component.text(p.name, teamColor))
                     lore(listOf(
-                        Component.text("クリックでテレポート", NamedTextColor.GRAY),
-                        Component.text("チーム: ${team.displayName}", NamedTextColor.WHITE)
+                        Component.text(lang.getMessage("game_events.spectator_menu.click_teleport"), NamedTextColor.GRAY),
+                        Component.text(lang.getMessage("game_events.spectator_menu.team").replace("{team}", lang.getMessage("teams.${team.name.lowercase()}")), NamedTextColor.WHITE)
                     ))
                     val skullMeta = this as? org.bukkit.inventory.meta.SkullMeta
                     skullMeta?.owningPlayer = p
@@ -1240,24 +1426,26 @@ class GameListenerNew(private val plugin: Main) : Listener {
     }
     
     private fun showFlagMenu(player: Player, game: Game) {
-        val inventory = Bukkit.createInventory(null, 9, Component.text("旗の位置", NamedTextColor.YELLOW))
+        val lang = plugin.languageManager
+        val inventory = Bukkit.createInventory(null, 9, Component.text(lang.getMessage("game_events.spectator_menu.flag_title"), NamedTextColor.YELLOW))
         
         // 赤旗
         val redFlagItem = ItemStack(Material.RED_BANNER).apply {
             itemMeta = itemMeta?.apply {
-                displayName(Component.text("赤チームの旗", NamedTextColor.RED))
+                displayName(Component.text(lang.getMessage("spectator.red-flag"), NamedTextColor.RED))
                 val status = when {
                     game.redFlagCarrier != null -> {
                         val carrier = Bukkit.getPlayer(game.redFlagCarrier!!)
                         listOf(
-                            Component.text("状態: 保持中", NamedTextColor.YELLOW),
-                            Component.text("保持者: ${carrier?.name ?: "不明"}", NamedTextColor.WHITE)
+                            Component.text(lang.getMessage("game_events.spectator_menu.flag_status.carried"), NamedTextColor.YELLOW),
+                            Component.text(lang.getMessage("game_events.spectator_menu.flag_status.carrier")
+                                .replace("{player}", carrier?.name ?: "不明"), NamedTextColor.WHITE)
                         )
                     }
-                    game.isRedFlagDropped -> listOf(Component.text("状態: 地面に落ちている", NamedTextColor.GRAY))
-                    else -> listOf(Component.text("状態: 基地に設置中", NamedTextColor.GREEN))
+                    game.isRedFlagDropped -> listOf(Component.text(lang.getMessage("game_events.spectator_menu.flag_status.dropped"), NamedTextColor.GRAY))
+                    else -> listOf(Component.text(lang.getMessage("game_events.spectator_menu.flag_status.home"), NamedTextColor.GREEN))
                 }
-                lore(status + Component.text("クリックでテレポート", NamedTextColor.GRAY))
+                lore(status + Component.text(lang.getMessage("game_events.spectator_menu.click_teleport"), NamedTextColor.GRAY))
                 persistentDataContainer.set(
                     NamespacedKey(plugin, "flag_teleport"),
                     PersistentDataType.STRING,
@@ -1269,19 +1457,20 @@ class GameListenerNew(private val plugin: Main) : Listener {
         // 青旗
         val blueFlagItem = ItemStack(Material.BLUE_BANNER).apply {
             itemMeta = itemMeta?.apply {
-                displayName(Component.text("青チームの旗", NamedTextColor.BLUE))
+                displayName(Component.text(lang.getMessage("spectator.blue-flag"), NamedTextColor.BLUE))
                 val status = when {
                     game.blueFlagCarrier != null -> {
                         val carrier = Bukkit.getPlayer(game.blueFlagCarrier!!)
                         listOf(
-                            Component.text("状態: 保持中", NamedTextColor.YELLOW),
-                            Component.text("保持者: ${carrier?.name ?: "不明"}", NamedTextColor.WHITE)
+                            Component.text(lang.getMessage("game_events.spectator_menu.flag_status.carried"), NamedTextColor.YELLOW),
+                            Component.text(lang.getMessage("game_events.spectator_menu.flag_status.carrier")
+                                .replace("{player}", carrier?.name ?: "不明"), NamedTextColor.WHITE)
                         )
                     }
-                    game.isBlueFlagDropped -> listOf(Component.text("状態: 地面に落ちている", NamedTextColor.GRAY))
-                    else -> listOf(Component.text("状態: 基地に設置中", NamedTextColor.GREEN))
+                    game.isBlueFlagDropped -> listOf(Component.text(lang.getMessage("game_events.spectator_menu.flag_status.dropped"), NamedTextColor.GRAY))
+                    else -> listOf(Component.text(lang.getMessage("game_events.spectator_menu.flag_status.home"), NamedTextColor.GREEN))
                 }
-                lore(status + Component.text("クリックでテレポート", NamedTextColor.GRAY))
+                lore(status + Component.text(lang.getMessage("game_events.spectator_menu.click_teleport"), NamedTextColor.GRAY))
                 persistentDataContainer.set(
                     NamespacedKey(plugin, "flag_teleport"),
                     PersistentDataType.STRING,
@@ -1405,18 +1594,25 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     entity.remove()
                     
                     // どちらのチームの旗か判定
-                    val isRedFlag = nameText.contains("赤チーム")
-                    val team = if (isRedFlag) Team.RED else Team.BLUE
+                    // Check persistent data for team information
+                    val itemMeta = (entity as? org.bukkit.entity.Item)?.itemStack?.itemMeta
+                    val container = itemMeta?.persistentDataContainer
+                    val teamName = container?.get(org.bukkit.NamespacedKey(plugin, "flag_team"), org.bukkit.persistence.PersistentDataType.STRING)
+                    val team = when (teamName) {
+                        "red" -> Team.RED
+                        "blue" -> Team.BLUE
+                        else -> if (nameText.contains(plugin.languageManager.getMessage("teams.red"))) Team.RED else Team.BLUE
+                    }
                     
                     // 該当するゲームを探す
                     gameManager.getAllGames().values.forEach { game ->
                         if (game.state == GameState.RUNNING) {
-                            val flagLocation = if (isRedFlag) game.getRedFlagLocation() else game.getBlueFlagLocation()
+                            val flagLocation = if (team == Team.RED) game.getRedFlagLocation() else game.getBlueFlagLocation()
                             if (flagLocation != null) {
                                 game.setupFlagBeacon(flagLocation, team)
                                 game.getAllPlayers().forEach { player ->
                                     player.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-damage",
-                                        "team" to team.displayName,
+                                        "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}"),
                                         "cause" to getDamageCauseMessage(event.cause)), team.color))
                                 }
                                 plugin.logger.info("[Flag] Flag returned due to ${event.cause}")
@@ -1460,18 +1656,25 @@ class GameListenerNew(private val plugin: Main) : Listener {
             entity.remove()
             
             // どちらのチームの旗か判定
-            val isRedFlag = nameText.contains("赤チーム")
-            val team = if (isRedFlag) Team.RED else Team.BLUE
+            // Check persistent data for team information
+            val itemMeta = item.itemMeta
+            val container = itemMeta?.persistentDataContainer
+            val teamName = container?.get(org.bukkit.NamespacedKey(plugin, "flag_team"), org.bukkit.persistence.PersistentDataType.STRING)
+            val team = when (teamName) {
+                "red" -> Team.RED
+                "blue" -> Team.BLUE
+                else -> if (nameText.contains(plugin.languageManager.getMessage("teams.red"))) Team.RED else Team.BLUE
+            }
             
             // 該当するゲームを探す
             gameManager.getAllGames().values.forEach { game ->
                 if (game.state == GameState.RUNNING) {
-                    val flagLocation = if (isRedFlag) game.getRedFlagLocation() else game.getBlueFlagLocation()
+                    val flagLocation = if (team == Team.RED) game.getRedFlagLocation() else game.getBlueFlagLocation()
                     if (flagLocation != null) {
                         game.setupFlagBeacon(flagLocation, team)
                         game.getAllPlayers().forEach { player ->
                             player.sendMessage(Component.text(plugin.languageManager.getMessage("flag.returned-fire",
-                                "team" to team.displayName), team.color))
+                                "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}")), team.color))
                         }
                         plugin.logger.info("[Flag] Flag returned due to combustion")
                     }

@@ -1,7 +1,7 @@
 # EasyCTF Configuration File
 
 # Language Settings
-language: "ja"  # Available: "en" (English), "ja" (Japanese)
+language: "en"  # Available: "en" (English), "ja" (Japanese)
 
 # Default Game Settings (used when creating new games)
 default-game:

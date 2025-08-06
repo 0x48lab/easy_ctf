@@ -33,21 +33,21 @@ class CompressedMapManager(private val plugin: Main) {
             val file = File(mapsFolder, "$gameName.yml")
             val config = YamlConfiguration()
             
-            // リージョン情報を保存
+            // リージョン情報を保存（常にmin/maxを保存）
             config.set("world", region.world.name)
-            config.set("pos1.x", region.pos1.blockX)
-            config.set("pos1.y", region.pos1.blockY)
-            config.set("pos1.z", region.pos1.blockZ)
-            config.set("pos2.x", region.pos2.blockX)
-            config.set("pos2.y", region.pos2.blockY)
-            config.set("pos2.z", region.pos2.blockZ)
+            config.set("pos1.x", region.minX)
+            config.set("pos1.y", region.minY)
+            config.set("pos1.z", region.minZ)
+            config.set("pos2.x", region.maxX)
+            config.set("pos2.y", region.maxY)
+            config.set("pos2.z", region.maxZ)
             
             // ブロックデータを収集
             val blockDataList = mutableListOf<String>()
             var totalBlocks = 0
             var airBlocks = 0
             
-            println("[CompressedMapManager] 保存範囲: ${region.minX},${region.minY},${region.minZ} から ${region.maxX},${region.maxY},${region.maxZ}")
+            plugin.logger.info("[CompressedMapManager] 保存範囲: ${region.minX},${region.minY},${region.minZ} から ${region.maxX},${region.maxY},${region.maxZ}")
             
             for (x in region.minX..region.maxX) {
                 for (y in region.minY..region.maxY) {
@@ -66,15 +66,15 @@ class CompressedMapManager(private val plugin: Main) {
                 }
             }
             
-            println("[CompressedMapManager] スキャン完了: 総ブロック数=$totalBlocks, AIR=$airBlocks, 保存ブロック数=${blockDataList.size}")
+            plugin.logger.info("[CompressedMapManager] スキャン完了: 総ブロック数=$totalBlocks, AIR=$airBlocks, 保存ブロック数=${blockDataList.size}")
             
             // データを圧縮してBase64エンコード
             val rawData = blockDataList.joinToString("\n")
-            println("[CompressedMapManager] 保存前のデータ例（最初の3行）:")
-            blockDataList.take(3).forEach { println("  $it") }
+            plugin.logger.fine("[CompressedMapManager] 保存前のデータ例（最初の3行）:")
+            blockDataList.take(3).forEach { plugin.logger.fine("  $it") }
             
             val compressedData = compressData(rawData)
-            println("[CompressedMapManager] 圧縮後のデータサイズ: ${compressedData.length} 文字")
+            plugin.logger.info("[CompressedMapManager] 圧縮後のデータサイズ: ${compressedData.length} 文字")
             
             config.set("blocks_compressed", compressedData)
             config.set("block_count", blockDataList.size)
@@ -117,8 +117,8 @@ class CompressedMapManager(private val plugin: Main) {
             val maxY = config.getInt("pos2.y")
             val maxZ = config.getInt("pos2.z")
             
-            println("[CompressedMapManager] 復元範囲: $minX,$minY,$minZ から $maxX,$maxY,$maxZ")
-            println("[CompressedMapManager] 復元先ワールド: ${world.name}")
+            plugin.logger.info("[CompressedMapManager] 復元範囲: $minX,$minY,$minZ から $maxX,$maxY,$maxZ")
+            plugin.logger.info("[CompressedMapManager] 復元先ワールド: ${world.name}")
             
             // まず範囲内をすべてAIRにする
             var clearedBlocks = 0
@@ -130,27 +130,27 @@ class CompressedMapManager(private val plugin: Main) {
                     }
                 }
             }
-            println("[CompressedMapManager] $clearedBlocks ブロックをクリア")
+            plugin.logger.info("[CompressedMapManager] $clearedBlocks ブロックをクリア")
             
             // 圧縮データを解凍
             val compressedData = config.getString("blocks_compressed")
             if (compressedData == null) {
-                println("[CompressedMapManager] 圧縮データが見つかりません")
+                plugin.logger.warning("[CompressedMapManager] 圧縮データが見つかりません")
                 return false
             }
             
-            println("[CompressedMapManager] 圧縮データサイズ: ${compressedData.length} 文字")
+            plugin.logger.info("[CompressedMapManager] 圧縮データサイズ: ${compressedData.length} 文字")
             
             val blockDataString = decompressData(compressedData)
             val lines = blockDataString.split("\n")
-            println("[CompressedMapManager] 解凍後のライン数: ${lines.size}")
+            plugin.logger.info("[CompressedMapManager] 解凍後のライン数: ${lines.size}")
             
             // ブロックを復元
             var restoredBlocks = 0
             lines.forEach { line ->
                 if (line.isNotEmpty()) {
                     if (restoredBlocks < 3) {
-                        println("[CompressedMapManager] 復元データ例: $line")
+                        plugin.logger.fine("[CompressedMapManager] 復元データ例: $line")
                     }
                     val parts = line.split(":", limit = 2)
                     if (parts.size == 2) {
@@ -167,15 +167,15 @@ class CompressedMapManager(private val plugin: Main) {
                                 plugin.logger.warning(plugin.languageManager.getMessage("log.block-restore-failed", "x" to x.toString(), "y" to y.toString(), "z" to z.toString(), "error" to (e.message ?: "Unknown error")))
                             }
                         } else {
-                            println("[CompressedMapManager] 無効な座標形式: ${parts[0]}")
+                            plugin.logger.warning("[CompressedMapManager] 無効な座標形式: ${parts[0]}")
                         }
                     } else {
-                        println("[CompressedMapManager] 無効なデータ形式: $line")
+                        plugin.logger.warning("[CompressedMapManager] 無効なデータ形式: $line")
                     }
                 }
             }
             
-            println("[CompressedMapManager] 復元完了: $restoredBlocks ブロックを復元")
+            plugin.logger.info("[CompressedMapManager] 復元完了: $restoredBlocks ブロックを復元")
             plugin.logger.info(plugin.languageManager.getMessage("log.map-restored-blocks", "game" to gameName, "blocks" to restoredBlocks.toString()))
             return true
             

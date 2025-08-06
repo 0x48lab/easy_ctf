@@ -23,7 +23,22 @@
       "Bash(git config:*)",
       "Bash(cat:*)",
       "Bash(pkill:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(for:*)",
+      "Bash(do grep -q \"$key:\" lang_en.yml)",
+      "Bash(echo \"  $key\")",
+      "mcp__serena__find_symbol",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__replace_regex",
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__find_file",
+      "Bash(timeout 30 java:*)",
+      "Bash(true)",
+      "mcp__serena__insert_before_symbol",
+      "mcp__serena__insert_after_symbol",
+      "Bash(do echo -n \"$key: \")",
+      "Bash(do grep -q \"^  $key##*.:\" src/main/resources/lang_en.yml)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

@@ -227,7 +227,7 @@ class GameSetupSession(private val plugin: Main) {
         
         when (session.step) {
             CreateSession.Step.RED_FLAG -> {
-                player.sendMessage(Component.text("=== ${plugin.languageManager.getMessage("setup.create-header", "name" to session.config.name)} ===", NamedTextColor.GOLD))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.create-header-formatted", "name" to session.config.name), NamedTextColor.GOLD))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-flag-prompt"), NamedTextColor.YELLOW))
             }
             CreateSession.Step.RED_SPAWN -> {
@@ -250,36 +250,36 @@ class GameSetupSession(private val plugin: Main) {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-300"), NamedTextColor.GRAY))
             }
             CreateSession.Step.BUILD_BLOCKS -> {
-                player.sendMessage(Component.text("§e建築フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (16個) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build_blocks_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build_blocks_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.COMBAT_TIME -> {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.skip-600"), NamedTextColor.GRAY))
             }
             CreateSession.Step.COMBAT_BLOCKS -> {
-                player.sendMessage(Component.text("§e戦闘フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (16個) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat_blocks_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat_blocks_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.RESULT_TIME -> {
-                player.sendMessage(Component.text("§e結果表示フェーズの時間を秒単位で入力してください (例: 60)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (60秒) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.INTERMEDIATE_TIME -> {
-                player.sendMessage(Component.text("§eマッチ中間の作戦会議時間を秒単位で入力してください (例: 15)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (15秒) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.RESPAWN_BASE -> {
-                player.sendMessage(Component.text("§e基本リスポーン時間を秒単位で入力してください (例: 10)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (10秒) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.RESPAWN_PER_DEATH -> {
-                player.sendMessage(Component.text("§e死亡ごとの追加リスポーン時間を秒単位で入力してください (例: 2)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (2秒) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.RESPAWN_MAX -> {
-                player.sendMessage(Component.text("§e最大リスポーン時間を秒単位で入力してください (例: 20)", NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("§7'skip' でデフォルト値 (20秒) を使用", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_prompt"), NamedTextColor.YELLOW))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_skip"), NamedTextColor.GRAY))
             }
             CreateSession.Step.MATCH_MODE -> {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-mode-prompt"), NamedTextColor.YELLOW))
@@ -298,7 +298,7 @@ class GameSetupSession(private val plugin: Main) {
     private fun showUpdateMenu(session: UpdateSession) {
         val player = session.player
         
-        player.sendMessage(Component.text("=== ${plugin.languageManager.getMessage("setup.update-header", "name" to session.config.name)} ===", NamedTextColor.GOLD))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.update-header-formatted", "name" to session.config.name), NamedTextColor.GOLD))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-flag-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.red-spawn-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blue-flag-menu"), NamedTextColor.WHITE))
@@ -306,15 +306,16 @@ class GameSetupSession(private val plugin: Main) {
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-mode-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build-time-menu"), NamedTextColor.WHITE))
         player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-menu"), NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f8. 結果表示時間を更新 (現在: ${session.config.resultDuration}秒)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f9. マッチ中間の作戦会議時間を更新 (現在: ${session.config.intermediateDuration}秒)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f10. 建築フェーズのブロック数を更新 (現在: ${session.config.buildPhaseBlocks}個)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f11. 戦闘フェーズのブロック数を更新 (現在: ${session.config.combatPhaseBlocks}個)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f12. 基本リスポーン時間を更新 (現在: ${session.config.respawnDelayBase}秒)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f13. 死亡ごとの追加リスポーン時間を更新 (現在: ${session.config.respawnDelayPerDeath}秒)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f14. 最大リスポーン時間を更新 (現在: ${session.config.respawnDelayMax}秒)", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f15. すべて更新", NamedTextColor.WHITE))
-        player.sendMessage(Component.text("§f16. 終了", NamedTextColor.WHITE))
+        val lang = plugin.languageManager
+        player.sendMessage(Component.text(lang.getMessage("setup.result_time_menu").replace("{time}", session.config.resultDuration.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.intermediate_time_menu").replace("{time}", session.config.intermediateDuration.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.build_blocks_menu").replace("{blocks}", session.config.buildPhaseBlocks.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.combat_blocks_menu").replace("{blocks}", session.config.combatPhaseBlocks.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.respawn_base_menu").replace("{time}", session.config.respawnDelayBase.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.respawn_per_death_menu").replace("{time}", session.config.respawnDelayPerDeath.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.respawn_max_menu").replace("{time}", session.config.respawnDelayMax.toString()), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.all_update_menu"), NamedTextColor.WHITE))
+        player.sendMessage(Component.text(lang.getMessage("setup.exit_menu"), NamedTextColor.WHITE))
     }
     
     private fun setLocationFromView(session: CreateSession) {
@@ -454,12 +455,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setBuildBlocks(session: CreateSession, input: String) {
         val blocks = input.toIntOrNull()
         if (blocks == null || blocks < 0 || blocks > 64) {
-            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blocks_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.buildPhaseBlocks = blocks
-        session.player.sendMessage(Component.text("§a建築フェーズのブロック数を${blocks}個に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build_blocks_set").replace("{blocks}", blocks.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.COMBAT_TIME
         showCreateStep(session)
     }
@@ -480,12 +481,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setCombatBlocks(session: CreateSession, input: String) {
         val blocks = input.toIntOrNull()
         if (blocks == null || blocks < 0 || blocks > 64) {
-            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blocks_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.combatPhaseBlocks = blocks
-        session.player.sendMessage(Component.text("§a戦闘フェーズのブロック数を${blocks}個に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat_blocks_set").replace("{blocks}", blocks.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.RESULT_TIME
         showCreateStep(session)
     }
@@ -493,12 +494,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setResultTime(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 5 || time > 300) {
-            session.player.sendMessage(Component.text("§c時間は5〜300秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.resultDuration = time
-        session.player.sendMessage(Component.text("§a結果表示時間を${time}秒に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_set").replace("{time}", time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.INTERMEDIATE_TIME
         showCreateStep(session)
     }
@@ -506,12 +507,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setIntermediateTime(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 5 || time > 120) {
-            session.player.sendMessage(Component.text("§c時間は5〜120秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.intermediateDuration = time
-        session.player.sendMessage(Component.text("§aマッチ中間の作戦会議時間を${time}秒に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_set").replace("{time}", time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.RESPAWN_BASE
         showCreateStep(session)
     }
@@ -519,12 +520,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setRespawnBase(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 1 || time > 60) {
-            session.player.sendMessage(Component.text("§c時間は1〜60秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.respawnDelayBase = time
-        session.player.sendMessage(Component.text("§a基本リスポーン時間を${time}秒に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_set").replace("{time}", time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.RESPAWN_PER_DEATH
         showCreateStep(session)
     }
@@ -532,12 +533,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setRespawnPerDeath(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 0 || time > 10) {
-            session.player.sendMessage(Component.text("§c時間は0〜10秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.respawnDelayPerDeath = time
-        session.player.sendMessage(Component.text("§a死亡ごとの追加リスポーン時間を${time}秒に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_set").replace("{time}", time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.RESPAWN_MAX
         showCreateStep(session)
     }
@@ -545,12 +546,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun setRespawnMax(session: CreateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < session.config.respawnDelayBase || time > 120) {
-            session.player.sendMessage(Component.text("§c時間は基本リスポーン時間以上〜120秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.respawnDelayMax = time
-        session.player.sendMessage(Component.text("§a最大リスポーン時間を${time}秒に設定しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_set").replace("{time}", time.toString()), NamedTextColor.GREEN))
         session.step = CreateSession.Step.MATCH_MODE
         showCreateStep(session)
     }
@@ -563,7 +564,7 @@ class GameSetupSession(private val plugin: Main) {
         }
         
         session.config.matchMode = mode
-        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-mode-set", "mode" to mode.displayName), NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.match-mode-set", "mode" to plugin.languageManager.getMessage("match.mode.${mode.name.lowercase()}")), NamedTextColor.GREEN))
         session.step = CreateSession.Step.MATCH_TARGET
         showCreateStep(session)
     }
@@ -624,25 +625,25 @@ class GameSetupSession(private val plugin: Main) {
                 session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat-time-prompt"), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.RESULT_TIME -> {
-                session.player.sendMessage(Component.text("§e結果表示時間を秒単位で入力してください (現在: ${session.config.resultDuration}秒)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_update_prompt", "current" to session.config.resultDuration.toString()), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.INTERMEDIATE_TIME -> {
-                session.player.sendMessage(Component.text("§eマッチ中間の作戦会議時間を秒単位で入力してください (現在: ${session.config.intermediateDuration}秒)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_update_prompt", "current" to session.config.intermediateDuration.toString()), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.BUILD_BLOCKS -> {
-                session.player.sendMessage(Component.text("§e建築フェーズで配布するブロック数を入力してください (0-64, 現在: ${session.config.buildPhaseBlocks}個)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build_blocks_update_prompt", "current" to session.config.buildPhaseBlocks.toString()), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.COMBAT_BLOCKS -> {
-                session.player.sendMessage(Component.text("§e戦闘フェーズで配布するブロック数を入力してください (0-64, 現在: ${session.config.combatPhaseBlocks}個)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat_blocks_update_prompt", "current" to session.config.combatPhaseBlocks.toString()), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.RESPAWN_BASE -> {
-                session.player.sendMessage(Component.text("§e基本リスポーン時間を秒単位で入力してください (1-60, 現在: ${session.config.respawnDelayBase}秒)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_update_prompt", "current" to session.config.respawnDelayBase.toString()), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.RESPAWN_PER_DEATH -> {
-                session.player.sendMessage(Component.text("§e死亡ごとの追加リスポーン時間を秒単位で入力してください (0-10, 現在: ${session.config.respawnDelayPerDeath}秒)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_update_prompt", "current" to session.config.respawnDelayPerDeath.toString()), NamedTextColor.YELLOW))
             }
             UpdateSession.Menu.RESPAWN_MAX -> {
-                session.player.sendMessage(Component.text("§e最大リスポーン時間を秒単位で入力してください (基本時間〜120, 現在: ${session.config.respawnDelayMax}秒)", NamedTextColor.YELLOW))
+                session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_update_prompt", "current" to session.config.respawnDelayMax.toString()), NamedTextColor.YELLOW))
             }
             else -> {}
         }
@@ -755,12 +756,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateResultTime(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 5 || time > 300) {
-            session.player.sendMessage(Component.text("§c時間は5〜300秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.resultDuration = time
-        session.player.sendMessage(Component.text("§a結果表示時間を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.result_time_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -771,12 +772,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateIntermediateTime(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 5 || time > 120) {
-            session.player.sendMessage(Component.text("§c時間は5〜120秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.intermediateDuration = time
-        session.player.sendMessage(Component.text("§aマッチ中間の作戦会議時間を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.intermediate_time_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -787,12 +788,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateBuildBlocks(session: UpdateSession, input: String) {
         val blocks = input.toIntOrNull()
         if (blocks == null || blocks < 0 || blocks > 64) {
-            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blocks_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.buildPhaseBlocks = blocks
-        session.player.sendMessage(Component.text("§a建築フェーズのブロック数を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.build_blocks_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -803,12 +804,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateCombatBlocks(session: UpdateSession, input: String) {
         val blocks = input.toIntOrNull()
         if (blocks == null || blocks < 0 || blocks > 64) {
-            session.player.sendMessage(Component.text("§cブロック数は0〜64の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.blocks_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.combatPhaseBlocks = blocks
-        session.player.sendMessage(Component.text("§a戦闘フェーズのブロック数を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.combat_blocks_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -819,12 +820,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateRespawnBase(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 1 || time > 60) {
-            session.player.sendMessage(Component.text("§c時間は1〜60秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.respawnDelayBase = time
-        session.player.sendMessage(Component.text("§a基本リスポーン時間を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_base_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -835,12 +836,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateRespawnPerDeath(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < 0 || time > 10) {
-            session.player.sendMessage(Component.text("§c時間は0〜10秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.respawnDelayPerDeath = time
-        session.player.sendMessage(Component.text("§a死亡ごとの追加リスポーン時間を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_per_death_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false
@@ -851,12 +852,12 @@ class GameSetupSession(private val plugin: Main) {
     private fun updateRespawnMax(session: UpdateSession, input: String) {
         val time = input.toIntOrNull()
         if (time == null || time < session.config.respawnDelayBase || time > 120) {
-            session.player.sendMessage(Component.text("§c時間は基本リスポーン時間以上〜120秒の範囲で入力してください", NamedTextColor.RED))
+            session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_range_error"), NamedTextColor.RED))
             return
         }
         
         session.config.respawnDelayMax = time
-        session.player.sendMessage(Component.text("§a最大リスポーン時間を更新しました", NamedTextColor.GREEN))
+        session.player.sendMessage(Component.text(plugin.languageManager.getMessage("setup.respawn_max_updated"), NamedTextColor.GREEN))
         onUpdateComplete?.invoke(session.config)
         
         session.waitingForInput = false

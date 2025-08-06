@@ -36,7 +36,7 @@ class GameManager(private val plugin: Main) {
     
     // マップ管理
     private val mapManager = CompressedMapManager(plugin)
-    private val mapScanner = MapScanner()
+    private val mapScanner = MapScanner(plugin)
     private val mapPositions = ConcurrentHashMap<String, MapPositions>()
     private val tempMapPositions = ConcurrentHashMap<Player, MapPositions>() // プレイヤーごとの一時的なマップ範囲
     
@@ -98,7 +98,7 @@ class GameManager(private val plugin: Main) {
                     worldEditSelection.first.clone(),
                     worldEditSelection.second.clone()
                 )
-                player.sendMessage(Component.text("WorldEditの選択範囲を使用します", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.using-worldedit"), NamedTextColor.GRAY))
             }
             // 一時的なマップ範囲がある場合は、ゲームのマップ範囲に移動
             else if (hasTempMapRegion && tempPositions != null) {
@@ -113,34 +113,34 @@ class GameManager(private val plugin: Main) {
             // 自動検出でゲーム作成
             val result = saveMap(gameName)
             if (result.success) {
-                player.sendMessage(Component.text("ゲーム '$gameName' を作成しました！", NamedTextColor.GREEN))
-                player.sendMessage(Component.text("検出結果:", NamedTextColor.AQUA))
-                player.sendMessage(Component.text("- 赤チームスポーン: ${result.redSpawn}", NamedTextColor.RED))
-                player.sendMessage(Component.text("- 青チームスポーン: ${result.blueSpawn}", NamedTextColor.BLUE))
-                player.sendMessage(Component.text("- 赤チーム旗: ${result.redFlag}", NamedTextColor.RED))
-                player.sendMessage(Component.text("- 青チーム旗: ${result.blueFlag}", NamedTextColor.BLUE))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-created", "name" to gameName), NamedTextColor.GREEN))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.detection-result"), NamedTextColor.AQUA))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-detected", "location" to (result.redSpawn ?: "")), NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-detected", "location" to (result.blueSpawn ?: "")), NamedTextColor.BLUE))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-flag-detected", "location" to (result.redFlag ?: "")), NamedTextColor.RED))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-flag-detected", "location" to (result.blueFlag ?: "")), NamedTextColor.BLUE))
             } else {
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.auto-detect-failed"), NamedTextColor.RED))
                 result.errors.forEach { error ->
-                    player.sendMessage(Component.text("- $error", NamedTextColor.YELLOW))
+                    player.sendMessage(Component.text(plugin.languageManager.getMessage("ui.error-item", "error" to error), NamedTextColor.YELLOW))
                 }
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.place-required-blocks"), NamedTextColor.YELLOW))
-                player.sendMessage(Component.text("必要なブロック:", NamedTextColor.GRAY))
-                player.sendMessage(Component.text("- 赤コンクリート: 赤チームスポーン", NamedTextColor.GRAY))
-                player.sendMessage(Component.text("- 青コンクリート: 青チームスポーン", NamedTextColor.GRAY))
-                player.sendMessage(Component.text("- ビーコン+赤ガラス: 赤チーム旗", NamedTextColor.GRAY))
-                player.sendMessage(Component.text("- ビーコン+青ガラス: 青チーム旗", NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.red-concrete"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.blue-concrete"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.red-beacon"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.blue-beacon"), NamedTextColor.GRAY))
             }
             return true
         }
         
         // マップ領域が設定されていない場合
         player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.map-area-not-set"), NamedTextColor.RED))
-        player.sendMessage(Component.text("以下のいずれかの方法で範囲を設定してください:", NamedTextColor.YELLOW))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.set-range-methods"), NamedTextColor.YELLOW))
         if (WorldEditHelper.isWorldEditAvailable()) {
-            player.sendMessage(Component.text("1. WorldEdit: //pos1 と //pos2", NamedTextColor.GRAY))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.method-worldedit"), NamedTextColor.GRAY))
         }
-        player.sendMessage(Component.text("2. CTFコマンド: /ctf setpos1 と /ctf setpos2", NamedTextColor.GRAY))
+        player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.method-ctf-commands"), NamedTextColor.GRAY))
         return false
     }
     
@@ -412,40 +412,40 @@ class GameManager(private val plugin: Main) {
         
         // 勝敗表示
         val winnerText = when (winner) {
-            Team.RED -> "§c赤チームの勝利！"
-            Team.BLUE -> "§9青チームの勝利！"
-            Team.SPECTATOR -> "§e引き分け！"  // Spectators cannot win, treat as draw
-            null -> "§e引き分け！"
+            Team.RED -> plugin.languageManager.getMessage("match.red-wins")
+            Team.BLUE -> plugin.languageManager.getMessage("match.blue-wins")
+            Team.SPECTATOR -> plugin.languageManager.getMessage("match.draw")  // Spectators cannot win, treat as draw
+            null -> plugin.languageManager.getMessage("match.draw")
         }
         
         game.getAllPlayers().forEach { player ->
-            player.sendMessage("§6=== ゲーム ${match.currentGameNumber} 結果 ===")
+            player.sendMessage(plugin.languageManager.getMessage("match.game-result-header", "number" to match.currentGameNumber.toString()))
             player.sendMessage(winnerText)
-            player.sendMessage("§e現在のスコア: §c赤 ${match.matchWins[Team.RED]} §f- §9青 ${match.matchWins[Team.BLUE]}")
+            player.sendMessage(plugin.languageManager.getMessage("match.current-score", "red" to (match.matchWins[Team.RED] ?: 0).toString(), "blue" to (match.matchWins[Team.BLUE] ?: 0).toString()))
             
             
             if (match.isMatchComplete()) {
                 val matchWinner = match.getMatchWinner(game)
                 val matchWinnerText = when (matchWinner) {
-                    Team.RED -> "§c§l赤チームがマッチに勝利！"
-                    Team.BLUE -> "§9§l青チームがマッチに勝利！"
-                    Team.SPECTATOR -> "§e§lマッチは引き分け！"  // Spectators cannot win, treat as draw
-                    null -> "§e§lマッチは引き分け！"
+                    Team.RED -> plugin.languageManager.getMessage("match.red-wins-match")
+                    Team.BLUE -> plugin.languageManager.getMessage("match.blue-wins-match")
+                    Team.SPECTATOR -> plugin.languageManager.getMessage("match.draw-match")  // Spectators cannot win, treat as draw
+                    null -> plugin.languageManager.getMessage("match.draw-match")
                 }
                 player.sendMessage("")
-                player.sendMessage("§6§l=== マッチ終了 ===")
+                player.sendMessage(plugin.languageManager.getMessage("match.match-end-header"))
                 player.sendMessage(matchWinnerText)
                 
                 // 5ゲーム終了時で同点の場合、色ブロック数も表示
                 if (match.currentGameNumber >= 5 && match.matchWins[Team.RED] == match.matchWins[Team.BLUE]) {
                     val redBlocks = game.teamPlacedBlocks[Team.RED]?.size ?: 0
                     val blueBlocks = game.teamPlacedBlocks[Team.BLUE]?.size ?: 0
-                    player.sendMessage("§7色ブロック数: §c赤 $redBlocks §f- §9青 $blueBlocks")
+                    player.sendMessage(plugin.languageManager.getMessage("match.block-count", "red" to redBlocks.toString(), "blue" to blueBlocks.toString()))
                 }
             } else {
                 val intervalSeconds = match.config.matchIntervalDuration
                 player.sendMessage("")
-                player.sendMessage("§a${intervalSeconds}秒後に次のゲームが開始されます...")
+                player.sendMessage(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to intervalSeconds.toString()))
             }
         }
         
@@ -469,7 +469,7 @@ class GameManager(private val plugin: Main) {
         // プレイヤーに次のゲームまでの時間を通知
         game.getAllPlayers().forEach { player ->
             player.sendMessage(Component.text(""))
-            player.sendMessage(Component.text("${remainingSeconds}秒後に次のゲームが開始されます...", NamedTextColor.GREEN))
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to remainingSeconds.toString()), NamedTextColor.GREEN))
         }
         
         object : BukkitRunnable() {
@@ -485,14 +485,14 @@ class GameManager(private val plugin: Main) {
                 when (remainingSeconds) {
                     4 -> {
                         game.getAllPlayers().forEach { player ->
-                            player.sendMessage(Component.text("5秒後に開始します...", NamedTextColor.YELLOW))
+                            player.sendMessage(Component.text(plugin.languageManager.getMessage("match.starting-in-5"), NamedTextColor.YELLOW))
                         }
                     }
                     3 -> {
                         game.getAllPlayers().forEach { player ->
                             player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text("3", NamedTextColor.YELLOW),
+                                Component.text(plugin.languageManager.getMessage("countdown.three"), NamedTextColor.YELLOW),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
                                     java.time.Duration.ofMillis(100),
@@ -507,7 +507,7 @@ class GameManager(private val plugin: Main) {
                         game.getAllPlayers().forEach { player ->
                             player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text("2", NamedTextColor.GOLD),
+                                Component.text(plugin.languageManager.getMessage("countdown.two"), NamedTextColor.GOLD),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
                                     java.time.Duration.ofMillis(100),
@@ -522,7 +522,7 @@ class GameManager(private val plugin: Main) {
                         game.getAllPlayers().forEach { player ->
                             player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text("1", NamedTextColor.RED),
+                                Component.text(plugin.languageManager.getMessage("countdown.one"), NamedTextColor.RED),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
                                     java.time.Duration.ofMillis(100),
@@ -537,7 +537,7 @@ class GameManager(private val plugin: Main) {
                         game.getAllPlayers().forEach { player ->
                             player.clearTitle() // 既存のタイトルをクリア
                             player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text("START!", NamedTextColor.GREEN),
+                                Component.text(plugin.languageManager.getMessage("countdown.start"), NamedTextColor.GREEN),
                                 Component.empty(),
                                 net.kyori.adventure.title.Title.Times.times(
                                     java.time.Duration.ofMillis(200),
@@ -658,9 +658,9 @@ class GameManager(private val plugin: Main) {
             ?: return MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.map-range-not-set")))
         
         val pos1 = positions.pos1 
-            ?: return MapSaveResult(false, listOf("始点（pos1）が設定されていません"))
+            ?: return MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.pos1-not-set")))
         val pos2 = positions.pos2 
-            ?: return MapSaveResult(false, listOf("終点（pos2）が設定されていません"))
+            ?: return MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.pos2-not-set")))
         
         // ゲームが存在しない場合は新規作成モードとして処理（既存ゲームがある場合のみチェック）
         val isNewGame = !games.containsKey(gameName.lowercase())
@@ -758,13 +758,13 @@ class GameManager(private val plugin: Main) {
         val redSpawnInfo = if (scanResult.redSpawns.size == 1) {
             formatLocation(scanResult.redSpawns[0])
         } else {
-            "${scanResult.redSpawns.size}箇所（複数）"
+            plugin.languageManager.getMessage("manager.multiple-locations", "count" to scanResult.redSpawns.size.toString())
         }
         
         val blueSpawnInfo = if (scanResult.blueSpawns.size == 1) {
             formatLocation(scanResult.blueSpawns[0])
         } else {
-            "${scanResult.blueSpawns.size}箇所（複数）"
+            plugin.languageManager.getMessage("manager.multiple-locations", "count" to scanResult.blueSpawns.size.toString())
         }
         
         return MapSaveResult(

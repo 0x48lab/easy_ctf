@@ -30,58 +30,76 @@ class ShopManager(private val plugin: Main) {
     }
     
     private fun loadShopItems() {
-        // 武器
-        shopItems.add(ShopItem("wooden_sword", "§6木の剣", Material.WOODEN_SWORD, 1, 10, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("stone_sword", "§7石の剣", Material.STONE_SWORD, 1, 15, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("iron_sword", "§f鉄の剣", Material.IRON_SWORD, 1, 25, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("diamond_sword", "§bダイヤモンドの剣", Material.DIAMOND_SWORD, 1, 60, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("netherite_sword", "§5ネザライトの剣", Material.NETHERITE_SWORD, 1, 100, ShopCategory.WEAPONS))
+        val lang = plugin.languageManager
         
-        shopItems.add(ShopItem("wooden_axe", "§6木の斧", Material.WOODEN_AXE, 1, 15, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("stone_axe", "§7石の斧", Material.STONE_AXE, 1, 20, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("iron_axe", "§f鉄の斧", Material.IRON_AXE, 1, 45, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("diamond_axe", "§bダイヤモンドの斧", Material.DIAMOND_AXE, 1, 80, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("netherite_axe", "§5ネザライトの斧", Material.NETHERITE_AXE, 1, 120, ShopCategory.WEAPONS))
+        // 武器
+        shopItems.add(ShopItem("wooden_sword", lang.getMessage("shop.items.wooden_sword"), Material.WOODEN_SWORD, 1, 10, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("stone_sword", lang.getMessage("shop.items.stone_sword"), Material.STONE_SWORD, 1, 15, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("iron_sword", lang.getMessage("shop.items.iron_sword"), Material.IRON_SWORD, 1, 25, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("diamond_sword", lang.getMessage("shop.items.diamond_sword"), Material.DIAMOND_SWORD, 1, 60, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("netherite_sword", lang.getMessage("shop.items.netherite_sword"), Material.NETHERITE_SWORD, 1, 100, ShopCategory.WEAPONS))
+        
+        shopItems.add(ShopItem("wooden_axe", lang.getMessage("shop.items.wooden_axe"), Material.WOODEN_AXE, 1, 15, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("stone_axe", lang.getMessage("shop.items.stone_axe"), Material.STONE_AXE, 1, 20, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("iron_axe", lang.getMessage("shop.items.iron_axe"), Material.IRON_AXE, 1, 45, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("diamond_axe", lang.getMessage("shop.items.diamond_axe"), Material.DIAMOND_AXE, 1, 80, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("netherite_axe", lang.getMessage("shop.items.netherite_axe"), Material.NETHERITE_AXE, 1, 120, ShopCategory.WEAPONS))
         
         // その他装備
-        shopItems.add(ShopItem("shield", "§f盾", Material.SHIELD, 1, 20, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("bow", "§f弓", Material.BOW, 1, 20, ShopCategory.WEAPONS))
-        shopItems.add(ShopItem("arrows", "§f矢 x8", Material.ARROW, 8, 10, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
+        shopItems.add(ShopItem("shield", lang.getMessage("shop.items.shield"), Material.SHIELD, 1, 20, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("bow", lang.getMessage("shop.items.bow"), Material.BOW, 1, 20, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("arrows", lang.getMessage("shop.items.arrows"), Material.ARROW, 8, 10, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
         
         // エンチャント付きアイテム
-        shopItems.add(ShopItem("enchanted_bow", "§bエンチャント弓", Material.BOW, 1, 50, ShopCategory.WEAPONS,
+        shopItems.add(ShopItem("enchanted_bow", lang.getMessage("shop.items.enchanted_bow"), Material.BOW, 1, 50, ShopCategory.WEAPONS,
             enchantments = mapOf(
                 Enchantment.POWER to 2,
                 Enchantment.INFINITY to 1
             ),
-            lore = listOf("§7パワー II", "§7無限 I")
+            lore = listOf(lang.getMessage("shop.items.enchanted_bow.lore1"), lang.getMessage("shop.items.enchanted_bow.lore2"))
         ))
         
-        shopItems.add(ShopItem("enchanted_sword", "§bエンチャント剣", Material.DIAMOND_SWORD, 1, 100, ShopCategory.WEAPONS,
+        shopItems.add(ShopItem("enchanted_sword", lang.getMessage("shop.items.enchanted_sword"), Material.DIAMOND_SWORD, 1, 100, ShopCategory.WEAPONS,
             enchantments = mapOf(
                 Enchantment.SHARPNESS to 3,
                 Enchantment.KNOCKBACK to 1
             ),
-            lore = listOf("§7ダメージ増加 III", "§7ノックバック I")
+            lore = listOf(lang.getMessage("shop.items.enchanted_sword.lore1"), lang.getMessage("shop.items.enchanted_sword.lore2"))
         ))
         
         
         // 消耗品
-        shopItems.add(ShopItem("bread", "§6パン x8", Material.BREAD, 8, 5, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
-        shopItems.add(ShopItem("cooked_beef", "§c焼き牛肉 x8", Material.COOKED_BEEF, 8, 10, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
-        shopItems.add(ShopItem("golden_apple", "§6金のリンゴ", Material.GOLDEN_APPLE, 1, 30, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
-        shopItems.add(ShopItem("ender_pearl", "§5エンダーパール", Material.ENDER_PEARL, 1, 50, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
+        shopItems.add(ShopItem("bread", lang.getMessage("shop.items.bread"), Material.BREAD, 8, 5, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
+        shopItems.add(ShopItem("cooked_beef", lang.getMessage("shop.items.cooked_beef"), Material.COOKED_BEEF, 8, 10, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
+        shopItems.add(ShopItem("golden_apple", lang.getMessage("shop.items.golden_apple"), Material.GOLDEN_APPLE, 1, 30, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
+        shopItems.add(ShopItem("ender_pearl", lang.getMessage("shop.items.ender_pearl"), Material.ENDER_PEARL, 1, 50, ShopCategory.CONSUMABLES, DeathBehavior.DROP))
         
         // 建築ブロック - チームカラーブロックは動的に追加されるため、ここでは追加しない
         
+        // 防具
+        shopItems.add(ShopItem("iron_helmet", lang.getMessage("shop.items.iron_helmet"), Material.IRON_HELMET, 1, 15, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("iron_chestplate", lang.getMessage("shop.items.iron_chestplate"), Material.IRON_CHESTPLATE, 1, 30, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("iron_leggings", lang.getMessage("shop.items.iron_leggings"), Material.IRON_LEGGINGS, 1, 25, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("iron_boots", lang.getMessage("shop.items.iron_boots"), Material.IRON_BOOTS, 1, 15, ShopCategory.WEAPONS))
+        
+        shopItems.add(ShopItem("diamond_helmet", lang.getMessage("shop.items.diamond_helmet"), Material.DIAMOND_HELMET, 1, 40, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("diamond_chestplate", lang.getMessage("shop.items.diamond_chestplate"), Material.DIAMOND_CHESTPLATE, 1, 80, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("diamond_leggings", lang.getMessage("shop.items.diamond_leggings"), Material.DIAMOND_LEGGINGS, 1, 70, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("diamond_boots", lang.getMessage("shop.items.diamond_boots"), Material.DIAMOND_BOOTS, 1, 40, ShopCategory.WEAPONS))
+        
+        shopItems.add(ShopItem("netherite_helmet", lang.getMessage("shop.items.netherite_helmet"), Material.NETHERITE_HELMET, 1, 60, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("netherite_chestplate", lang.getMessage("shop.items.netherite_chestplate"), Material.NETHERITE_CHESTPLATE, 1, 120, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("netherite_leggings", lang.getMessage("shop.items.netherite_leggings"), Material.NETHERITE_LEGGINGS, 1, 100, ShopCategory.WEAPONS))
+        shopItems.add(ShopItem("netherite_boots", lang.getMessage("shop.items.netherite_boots"), Material.NETHERITE_BOOTS, 1, 60, ShopCategory.WEAPONS))
+        
         // 特殊ブロック（どちらのチームでも使える）
-        shopItems.add(ShopItem("tnt", "§cTNT x1", Material.TNT, 1, 100, ShopCategory.BLOCKS))
+        shopItems.add(ShopItem("tnt", lang.getMessage("shop.items.tnt"), Material.TNT, 1, 100, ShopCategory.BLOCKS))
         
         
         // 特殊アイテム
         
         // 建築用ツール（建築フェーズのみ）
-        shopItems.add(ShopItem("shears", "§fハサミ", Material.SHEARS, 1, 15, ShopCategory.WEAPONS,
+        shopItems.add(ShopItem("shears", lang.getMessage("shop.items.shears"), Material.SHEARS, 1, 15, ShopCategory.WEAPONS,
             availablePhases = setOf(GamePhase.BUILD)))
         
         // 戦闘用ツール削除 - ブロック破壊制限が撤廃されたため不要
@@ -89,10 +107,10 @@ class ShopManager(private val plugin: Main) {
         // 購入制限付きアイテムの例
         // エンダーチェスト削除（チームカラーブロックのみ販売）
         
-        shopItems.add(ShopItem("enchanted_golden_apple", "§6§lエンチャント金リンゴ", Material.ENCHANTED_GOLDEN_APPLE, 1, 100, ShopCategory.CONSUMABLES,
+        shopItems.add(ShopItem("enchanted_golden_apple", lang.getMessage("shop.items.enchanted_golden_apple"), Material.ENCHANTED_GOLDEN_APPLE, 1, 100, ShopCategory.CONSUMABLES,
             maxPurchasePerPlayer = 2,
             deathBehavior = DeathBehavior.DROP,
-            lore = listOf("§7一人2個まで")
+            lore = listOf(lang.getMessage("shop.items.enchanted_golden_apple.lore"))
         ))
     }
     
@@ -107,39 +125,45 @@ class ShopManager(private val plugin: Main) {
         
         // チームカラーブロックは無限に提供されるため、ショップでは販売しない
         
+        val lang = plugin.languageManager
+        
         // フェンスや装置などの追加アイテム（どちらのチームでも使用可能）
-        items.add(ShopItem("fence", "§f木のフェンス x16", Material.OAK_FENCE, 16, 8, ShopCategory.BLOCKS))
-        items.add(ShopItem("iron_fence", "§7鉄格子 x16", Material.IRON_BARS, 16, 12, ShopCategory.BLOCKS))
-        items.add(ShopItem("glass_pane", "§fガラス板 x16", Material.GLASS_PANE, 16, 6, ShopCategory.BLOCKS))
-        items.add(ShopItem("ladder", "§6はしご x16", Material.LADDER, 16, 10, ShopCategory.BLOCKS))
-        items.add(ShopItem("trapdoor", "§6木のトラップドア x4", Material.OAK_TRAPDOOR, 4, 8, ShopCategory.BLOCKS))
-        items.add(ShopItem("iron_trapdoor", "§7鉄のトラップドア x2", Material.IRON_TRAPDOOR, 2, 15, ShopCategory.BLOCKS))
-        items.add(ShopItem("door", "§6木のドア x2", Material.OAK_DOOR, 2, 10, ShopCategory.BLOCKS))
-        items.add(ShopItem("iron_door", "§7鉄のドア x1", Material.IRON_DOOR, 1, 20, ShopCategory.BLOCKS))
-        items.add(ShopItem("torch", "§e松明 x16", Material.TORCH, 16, 5, ShopCategory.BLOCKS))
-        items.add(ShopItem("redstone_torch", "§cレッドストーントーチ x8", Material.REDSTONE_TORCH, 8, 8, ShopCategory.BLOCKS))
-        items.add(ShopItem("stone_button", "§7石のボタン x4", Material.STONE_BUTTON, 4, 5, ShopCategory.BLOCKS))
-        items.add(ShopItem("lever", "§7レバー x4", Material.LEVER, 4, 5, ShopCategory.BLOCKS))
-        items.add(ShopItem("pressure_plate", "§7石の感圧板 x4", Material.STONE_PRESSURE_PLATE, 4, 8, ShopCategory.BLOCKS))
-        items.add(ShopItem("piston", "§7ピストン x2", Material.PISTON, 2, 20, ShopCategory.BLOCKS))
-        items.add(ShopItem("sticky_piston", "§a粘着ピストン x2", Material.STICKY_PISTON, 2, 30, ShopCategory.BLOCKS))
-        items.add(ShopItem("redstone", "§cレッドストーンダスト x16", Material.REDSTONE, 16, 10, ShopCategory.BLOCKS))
-        items.add(ShopItem("redstone_block", "§cレッドストーンブロック x1", Material.REDSTONE_BLOCK, 1, 15, ShopCategory.BLOCKS))
-        items.add(ShopItem("hopper", "§7ホッパー x1", Material.HOPPER, 1, 25, ShopCategory.BLOCKS))
-        items.add(ShopItem("dispenser", "§7ディスペンサー x1", Material.DISPENSER, 1, 20, ShopCategory.BLOCKS))
-        items.add(ShopItem("slime_block", "§aスライムブロック x4", Material.SLIME_BLOCK, 4, 25, ShopCategory.BLOCKS))
+        items.add(ShopItem("fence", lang.getMessage("shop.items.oak_fence"), Material.OAK_FENCE, 16, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("iron_fence", lang.getMessage("shop.items.iron_bars"), Material.IRON_BARS, 16, 12, ShopCategory.BLOCKS))
+        items.add(ShopItem("glass_pane", lang.getMessage("shop.items.glass"), Material.GLASS_PANE, 16, 6, ShopCategory.BLOCKS))
+        items.add(ShopItem("ladder", lang.getMessage("shop.items.ladder"), Material.LADDER, 16, 10, ShopCategory.BLOCKS))
+        items.add(ShopItem("trapdoor", lang.getMessage("shop.items.oak_trapdoor"), Material.OAK_TRAPDOOR, 4, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("iron_trapdoor", lang.getMessage("shop.items.iron_trapdoor"), Material.IRON_TRAPDOOR, 2, 15, ShopCategory.BLOCKS))
+        items.add(ShopItem("door", lang.getMessage("shop.items.oak_door"), Material.OAK_DOOR, 2, 10, ShopCategory.BLOCKS))
+        items.add(ShopItem("iron_door", lang.getMessage("shop.items.iron_door"), Material.IRON_DOOR, 1, 20, ShopCategory.BLOCKS))
+        items.add(ShopItem("torch", lang.getMessage("shop.items.torch"), Material.TORCH, 16, 5, ShopCategory.BLOCKS))
+        items.add(ShopItem("redstone_torch", lang.getMessage("shop.items.redstone_torch"), Material.REDSTONE_TORCH, 8, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("stone_button", lang.getMessage("shop.items.stone_button"), Material.STONE_BUTTON, 4, 5, ShopCategory.BLOCKS))
+        items.add(ShopItem("lever", lang.getMessage("shop.items.lever"), Material.LEVER, 4, 5, ShopCategory.BLOCKS))
+        items.add(ShopItem("pressure_plate", lang.getMessage("shop.items.stone_pressure_plate"), Material.STONE_PRESSURE_PLATE, 4, 8, ShopCategory.BLOCKS))
+        items.add(ShopItem("piston", lang.getMessage("shop.items.piston"), Material.PISTON, 2, 20, ShopCategory.BLOCKS))
+        items.add(ShopItem("sticky_piston", lang.getMessage("shop.items.sticky_piston"), Material.STICKY_PISTON, 2, 30, ShopCategory.BLOCKS))
+        items.add(ShopItem("redstone", lang.getMessage("shop.items.redstone_dust"), Material.REDSTONE, 16, 10, ShopCategory.BLOCKS))
+        items.add(ShopItem("redstone_block", lang.getMessage("shop.items.redstone_block"), Material.REDSTONE_BLOCK, 1, 15, ShopCategory.BLOCKS))
+        items.add(ShopItem("hopper", lang.getMessage("shop.items.hopper"), Material.HOPPER, 1, 25, ShopCategory.BLOCKS))
+        items.add(ShopItem("dispenser", lang.getMessage("shop.items.dispenser"), Material.DISPENSER, 1, 20, ShopCategory.BLOCKS))
+        items.add(ShopItem("slime_block", lang.getMessage("shop.items.slime_block"), Material.SLIME_BLOCK, 4, 25, ShopCategory.BLOCKS))
         
         return items
     }
     
     private fun createShopInventory(player: Player, game: Game, team: Team, page: Int): Inventory {
-        val inventory = Bukkit.createInventory(null, 54, LegacyComponentSerializer.legacySection().deserialize("§6§lショップ §7- §e${game.getTeamCurrency(team)}G §7(ページ ${page + 1})"))
+        val lang = plugin.languageManager
+        val title = lang.getMessage("shop.title")
+            .replace("{currency}", game.getTeamCurrency(team).toString())
+            .replace("{page}", (page + 1).toString())
+        val inventory = Bukkit.createInventory(null, 54, LegacyComponentSerializer.legacySection().deserialize(title))
         
         // カテゴリーのページング
         val categories = listOf(
-            ShopCategory.WEAPONS to "§c§l武器",
-            ShopCategory.CONSUMABLES to "§e§l消耗品",
-            ShopCategory.BLOCKS to "§5§lブロック"
+            ShopCategory.WEAPONS to lang.getMessage("shop.categories.weapons"),
+            ShopCategory.CONSUMABLES to lang.getMessage("shop.categories.consumables"),
+            ShopCategory.BLOCKS to lang.getMessage("shop.categories.blocks")
         )
         
         if (page < categories.size) {
@@ -178,7 +202,7 @@ class ShopManager(private val plugin: Main) {
         if (page > 0) {
             val prevPage = ItemStack(Material.ARROW).apply {
                 itemMeta = itemMeta?.apply {
-                    displayName(LegacyComponentSerializer.legacySection().deserialize("§a§l← 前のページ"))
+                    displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.navigation.previous_page")))
                 }
             }
             inventory.setItem(45, prevPage)
@@ -187,12 +211,12 @@ class ShopManager(private val plugin: Main) {
         // メインメニュー
         val mainMenu = ItemStack(Material.COMPASS).apply {
             itemMeta = itemMeta?.apply {
-                displayName(LegacyComponentSerializer.legacySection().deserialize("§6§lメインメニュー"))
+                displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.navigation.main_menu")))
                 lore(listOf(
                     LegacyComponentSerializer.legacySection().deserialize("§7カテゴリー一覧："),
-                    LegacyComponentSerializer.legacySection().deserialize("§c武器"),
-                    LegacyComponentSerializer.legacySection().deserialize("§e消耗品"),
-                    LegacyComponentSerializer.legacySection().deserialize("§5ブロック")
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_descriptions.weapons")),
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_descriptions.consumables")),
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_descriptions.blocks"))
                 ))
             }
         }
@@ -202,7 +226,7 @@ class ShopManager(private val plugin: Main) {
         if (page < categories.size - 1) {
             val nextPage = ItemStack(Material.ARROW).apply {
                 itemMeta = itemMeta?.apply {
-                    displayName(LegacyComponentSerializer.legacySection().deserialize("§a§l次のページ →"))
+                    displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.navigation.next_page")))
                 }
             }
             inventory.setItem(53, nextPage)
@@ -215,7 +239,7 @@ class ShopManager(private val plugin: Main) {
         val header = ItemStack(material).apply {
             itemMeta = itemMeta?.apply {
                 displayName(LegacyComponentSerializer.legacySection().deserialize(name))
-                lore(listOf(LegacyComponentSerializer.legacySection().deserialize("§7カテゴリ")))
+                lore(listOf(LegacyComponentSerializer.legacySection().deserialize(plugin.languageManager.getMessage("shop.navigation.category"))))
             }
         }
         inventory.setItem(slot, header)
@@ -235,16 +259,20 @@ class ShopManager(private val plugin: Main) {
             item.lore.forEach { loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(it)) }
             loreComponents.add(Component.empty())
             
+            val lang = plugin.languageManager
+            
             // 価格表示
             if (discountedPrice < item.basePrice) {
                 val discountPercent = ((1 - discountedPrice.toDouble() / item.basePrice) * 100).roundToInt()
                 loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§m§7${item.basePrice}G§r §a${discountedPrice}G §7(${discountPercent}%OFF)"))
             } else {
-                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§e価格: §f${item.basePrice}G"))
+                val priceText = lang.getMessage("shop.item_info.price").replace("{price}", item.basePrice.toString())
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(priceText))
             }
             
             // 死亡時の挙動
-            loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§7死亡時: ${getDeathBehaviorText(item.deathBehavior)}"))
+            val deathBehaviorText = lang.getMessage("shop.item_info.death_behavior").replace("{behavior}", getDeathBehaviorText(item.deathBehavior))
+            loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(deathBehaviorText))
             
             // 購入制限情報
             val gameId = game.name
@@ -252,10 +280,16 @@ class ShopManager(private val plugin: Main) {
             val teamPurchases = getPurchaseCount(gameId, "team_$team", item.id)
             
             if (item.maxPurchasePerPlayer > 0) {
-                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§7個人購入制限: §e$playerPurchases§7/§e${item.maxPurchasePerPlayer}"))
+                val personalLimitText = lang.getMessage("shop.item_info.personal_limit")
+                    .replace("{current}", playerPurchases.toString())
+                    .replace("{max}", item.maxPurchasePerPlayer.toString())
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(personalLimitText))
             }
             if (item.maxPurchasePerTeam > 0) {
-                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§7チーム購入制限: §e$teamPurchases§7/§e${item.maxPurchasePerTeam}"))
+                val teamLimitText = lang.getMessage("shop.item_info.team_limit")
+                    .replace("{current}", teamPurchases.toString())
+                    .replace("{max}", item.maxPurchasePerTeam.toString())
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(teamLimitText))
             }
             
             // 購入可能かどうか
@@ -263,11 +297,11 @@ class ShopManager(private val plugin: Main) {
             val canPurchase = checkPurchaseLimit(gameId, player, team, item)
             
             if (!canPurchase) {
-                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§c§l✗ 購入制限に達しました"))
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.item_info.purchase_limit_reached")))
             } else if (currency >= discountedPrice) {
-                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§a§l✔ 購入可能"))
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.item_info.can_purchase")))
             } else {
-                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize("§c§l✗ G不足"))
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.item_info.insufficient_funds")))
             }
             
             lore(loreComponents)
@@ -307,10 +341,11 @@ class ShopManager(private val plugin: Main) {
     }
     
     private fun getDeathBehaviorText(behavior: DeathBehavior): String {
+        val lang = plugin.languageManager
         return when (behavior) {
-            DeathBehavior.KEEP -> "§a保持"
-            DeathBehavior.DROP -> "§eドロップ"
-            DeathBehavior.DESTROY -> "§c消失"
+            DeathBehavior.KEEP -> lang.getMessage("shop.item_info.death_behavior.keep")
+            DeathBehavior.DROP -> lang.getMessage("shop.item_info.death_behavior.drop")
+            DeathBehavior.DESTROY -> lang.getMessage("shop.item_info.death_behavior.destroy")
         }
     }
     
@@ -449,12 +484,13 @@ class ShopManager(private val plugin: Main) {
     }
     
     fun createShopItem(): ItemStack {
+        val lang = plugin.languageManager
         return ItemStack(Material.EMERALD).apply {
             itemMeta = itemMeta?.apply {
-                displayName(LegacyComponentSerializer.legacySection().deserialize("§a§lショップ"))
+                displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.item.emerald.name")))
                 lore(listOf(
-                    LegacyComponentSerializer.legacySection().deserialize("§7右クリックでショップを開く"),
-                    LegacyComponentSerializer.legacySection().deserialize("§c捨てることはできません")
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.item.emerald.lore1")),
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.item.emerald.lore2"))
                 ))
                 // ショップアイテムであることを識別するタグを追加
                 persistentDataContainer.set(shopItemKey, PersistentDataType.STRING, "shop_opener")
@@ -467,16 +503,17 @@ class ShopManager(private val plugin: Main) {
     }
     
     fun openCategoryMenu(player: Player, game: Game, team: Team) {
-        val inventory = Bukkit.createInventory(null, 27, LegacyComponentSerializer.legacySection().deserialize("§6§lショップ - カテゴリー選択"))
+        val lang = plugin.languageManager
+        val inventory = Bukkit.createInventory(null, 27, LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.title")))
         
         // 武器カテゴリー
         val weapons = ItemStack(Material.DIAMOND_SWORD).apply {
             itemMeta = itemMeta?.apply {
-                displayName(LegacyComponentSerializer.legacySection().deserialize("§c§l武器"))
+                displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.weapons.title")))
                 lore(listOf(
-                    LegacyComponentSerializer.legacySection().deserialize("§7剣、斧、弓など"),
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.weapons.description")),
                     Component.empty(),
-                    LegacyComponentSerializer.legacySection().deserialize("§eクリックして開く")
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.click_to_open"))
                 ))
             }
         }
@@ -485,11 +522,11 @@ class ShopManager(private val plugin: Main) {
         // 消耗品カテゴリー
         val consumables = ItemStack(Material.GOLDEN_APPLE).apply {
             itemMeta = itemMeta?.apply {
-                displayName(LegacyComponentSerializer.legacySection().deserialize("§e§l消耗品"))
+                displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.consumables.title")))
                 lore(listOf(
-                    LegacyComponentSerializer.legacySection().deserialize("§7エンダーパール、金リンゴなど"),
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.consumables.description")),
                     Component.empty(),
-                    LegacyComponentSerializer.legacySection().deserialize("§eクリックして開く")
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.click_to_open"))
                 ))
             }
         }
@@ -498,11 +535,11 @@ class ShopManager(private val plugin: Main) {
         // ブロックカテゴリー
         val blocks = ItemStack(Material.STONE).apply {
             itemMeta = itemMeta?.apply {
-                displayName(LegacyComponentSerializer.legacySection().deserialize("§5§lブロック"))
+                displayName(LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.blocks.title")))
                 lore(listOf(
-                    LegacyComponentSerializer.legacySection().deserialize("§7建築用ブロック、TNTなど"),
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.blocks.description")),
                     Component.empty(),
-                    LegacyComponentSerializer.legacySection().deserialize("§eクリックして開く")
+                    LegacyComponentSerializer.legacySection().deserialize(lang.getMessage("shop.category_menu.click_to_open"))
                 ))
             }
         }

@@ -17,7 +17,9 @@ A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and r
 - **Multiple Concurrent Games**: Manage multiple CTF games in parallel on one server
 - **3-Phase System**: Progressive gameplay through Build → Combat → Strategy Meeting phases
 - **Temporary Worlds**: Automatically generate and delete dedicated worlds for each game
-- **Map Save/Restore**: Save created maps with compression, auto-restore at game start
+- **Map Save/Restore**: Save created maps with compression (GZIP + Base64), auto-restore at game start
+- **Multiple Spawn Points**: Set multiple respawn points per team (randomly selected)
+- **Spectator Mode**: Watch games without participating
 
 ### 💰 Economy & Shop System
 - **Team-Shared Currency**: All team members share currency (G)
@@ -33,14 +35,17 @@ A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and r
 
 ### 🏗️ Building System
 - **Block Connection Management**: Team blocks must connect to beacon or existing blocks
-- **Disconnected Block Neutralization**: Disconnected blocks turn white
+- **Disconnected Block Neutralization**: Disconnected blocks turn white (Quartz blocks)
 - **Team-Exclusive Blocks**: Infinite colored concrete and glass
-- **Enemy Territory Shield System**: Take continuous damage on enemy team blocks
+- **Enemy Territory Damage System**: Take continuous damage on enemy team blocks
+- **Build from Multiple Points**: Build from all spawn points (multiple allowed)
+- **Spawn Decoration Protection**: 3x3 platform at spawn points cannot be destroyed
 
 ### 🌍 Multi-Language Support
 - **Japanese & English Support**: All messages managed in language files
 - **Easy Switching**: Change language in config.yml
 - **Customizable**: Edit lang_ja.yml, lang_en.yml
+- **Color Code Support**: Automatic conversion of &c, &9, etc. color codes
 
 ## Installation
 
@@ -72,15 +77,24 @@ A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and r
 
 1. **Set Map Area**
    ```
-   /ctf setpos1 <game-name>  # Set start point at current location
-   /ctf setpos2 <game-name>  # Set end point at current location
+   /ctf setpos1  # Set start point at current location (temporary)
+   /ctf setpos2  # Set end point at current location (temporary)
+   ```
+   Or for existing game:
+   ```
+   /ctf setpos1 <game-name>  # Set start point for specific game
+   /ctf setpos2 <game-name>  # Set end point for specific game
    ```
 
 2. **Place Required Blocks**
-   - Red Concrete: Red team spawn point (1 only)
-   - Blue Concrete: Blue team spawn point (1 only)
-   - Beacon + Red Glass: Red team flag location
-   - Beacon + Blue Glass: Blue team flag location
+   - Red Concrete: Red team spawn point (1 or more, multiple allowed)
+   - Blue Concrete: Blue team spawn point (1 or more, multiple allowed)
+   - Beacon + Red Glass: Red team flag location (only 1)
+   - Beacon + Blue Glass: Blue team flag location (only 1)
+   
+   **Note**: 
+   - Spawn points must be at least 4 blocks apart from each other
+   - Flags and spawn points must be at least 3 blocks apart
 
 3. **Save the Map**
    ```
@@ -110,15 +124,22 @@ Example: `/ctf start arena1 match 5` (runs 5 games)
 - `/ctf leave` - Leave current game
 - `/ctf team [red|blue]` - Check/change team (before start only)
 - `/ctf status [game-name]` - Check game status
+- `/ctf spectator [game-name]` - Join as spectator
 
 ### For Admins
-- `/ctf create <game-name>` - Create new game
-- `/ctf update <game-name>` - Update game settings
+- `/ctf create <game-name>` - Create new game (interactive)
+- `/ctf update <game-name>` - Update game settings (interactive)
 - `/ctf delete <game-name>` - Delete game
 - `/ctf start <game-name> [match] [number]` - Start game/match
 - `/ctf stop <game-name>` - Force stop game
-- `/ctf setpos1/setpos2 <game-name>` - Set map area
-- `/ctf savemap <game-name>` - Save map
+- `/ctf setflag <game-name> <red|blue>` - Manually set flag location
+- `/ctf setspawn <game-name> <red|blue>` - Manually set spawn location
+- `/ctf addspawn <game-name> <red|blue>` - Add spawn point
+- `/ctf removespawn <game-name> <red|blue> <number>` - Remove spawn point
+- `/ctf listspawns <game-name>` - List spawn points
+- `/ctf setpos1 [game-name]` - Set map start point (temporary if name omitted)
+- `/ctf setpos2 [game-name]` - Set map end point (temporary if name omitted)
+- `/ctf savemap <game-name>` - Save map (auto-detection)
 
 ## Gameplay
 
@@ -126,27 +147,38 @@ Example: `/ctf start arena1 match 5` (runs 5 games)
 
 1. **Build Phase** 🏗️
    - Default 2 minutes (configurable)
-   - Construct defensive structures
+   - Construct defensive structures (Game mode: ADVENTURE/SURVIVAL/CREATIVE selectable)
    - PvP disabled
    - Shop available
+   - Block connection system active
 
 2. **Combat Phase** ⚔️
    - Default 2 minutes (configurable)
    - Capture enemy flag and bring it back
-   - PvP force enabled
-   - Block placement disabled, some breaking allowed
+   - PvP force enabled (configurable)
+   - Shop available (near spawn points only)
+   - Block breaking: Only with specific tools (pickaxe, shovel, bucket)
 
 3. **Strategy Meeting Phase** 💭
    - Default 15 seconds (configurable)
    - View match results and MVP announcements
    - Prepare for next game (in match mode)
+   - Different time settings available for final game vs intermediate games
 
 ### Flag System
 
+- **Implementation**: Beacon (with 3x3 iron block base)
 - **Capture**: Get within 1.5 blocks of enemy flag (beacon)
-- **Carrier Effects**: Glowing, cannot use ender pearls/elytra
+- **Carrier Effects**: Glowing, movement restriction (cannot use ender pearls/elytra)
 - **Scoring Condition**: Can only capture when your team's flag is at base
-- **Drop**: Drops on death (auto-returns after 15 seconds)
+- **Drop**: Drops on death (auto-returns after 30 seconds)
+
+### Respawn System
+
+- **Multiple Spawn Points**: Respawn at randomly selected spawn location
+- **Respawn Delay**: Base delay + penalty per death (up to maximum)
+- **Spawn Protection**: 3 seconds of invincibility and glowing after respawn
+- **Protection Removal**: Removed immediately on attack or flag pickup
 
 ### Shop System
 
@@ -167,24 +199,42 @@ language: "en"  # "en" or "ja"
 default-game:
   min-players: 2
   max-players-per-team: 10
-  respawn-delay-base: 10
-  respawn-delay-per-death: 2
-  respawn-delay-max: 20
+  respawn-delay-base: 10        # Base respawn delay (seconds)
+  respawn-delay-per-death: 2    # Additional penalty per death (seconds)
+  respawn-delay-max: 20         # Maximum respawn delay (seconds)
+  force-pvp: true               # Force enable PvP in combat phase
 
 # Phase settings
 default-phases:
-  build-duration: 120        # Build phase (seconds)
+  build-duration: 120           # Build phase (seconds)
   build-phase-gamemode: "SURVIVAL"
-  combat-duration: 120       # Combat phase (seconds)
-  result-duration: 15        # Strategy meeting phase (seconds)
+  combat-duration: 120          # Combat phase (seconds)
+  result-duration: 15           # Strategy meeting phase (seconds)
   intermediate-result-duration: 15  # Time between match games
+
+# Match settings
+match:
+  default-target: 3             # Default number of games
+  interval-duration: 15         # Interval between games (seconds)
 
 # Currency settings
 currency:
-  initial: 50
-  kill-reward: 10
-  carrier-kill-reward: 20
-  capture-reward: 30
+  name: "G"
+  initial: 50                   # Initial currency
+  phase-end-bonus: 50           # Phase end bonus
+  kill-reward: 10               # Kill reward
+  carrier-kill-reward: 20       # Flag carrier kill reward
+  capture-reward: 30            # Capture reward
+
+# Shop settings
+shop:
+  enabled: true
+  use-range: 15                 # Usable distance from spawn
+  discount:
+    1-point: 0.1               # 10% discount for 1 point difference
+    2-point: 0.2               # 20% discount for 2 point difference
+    3-point: 0.3               # 30% discount for 3 point difference
+    4-point-plus: 0.4          # 40% discount for 4+ point difference
 ```
 
 ## Troubleshooting
