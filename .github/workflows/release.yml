@@ -38,15 +38,20 @@ jobs:
       id: jar
       run: |
         # shadowJarで生成されるJARファイルを探す（EasyCTF-*.jar）
-        JAR_FILE=$(find build/libs -name "EasyCTF-*.jar" -type f | head -1)
+        # -all.jarを除外して、メインのJARファイルのみを取得
+        JAR_FILE=$(find build/libs -name "EasyCTF-*.jar" -not -name "*-all.jar" -type f | head -1)
         if [ -z "$JAR_FILE" ]; then
           echo "Error: No EasyCTF JAR file found in build/libs/"
           ls -la build/libs/
           exit 1
         fi
+        # 絶対パスを取得
+        JAR_FILE=$(realpath "$JAR_FILE")
         echo "JAR_PATH=$JAR_FILE" >> $GITHUB_OUTPUT
         echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
         echo "Found JAR: $JAR_FILE"
+        echo "File exists: $(test -f "$JAR_FILE" && echo "Yes" || echo "No")"
+        echo "File size: $(stat -c%s "$JAR_FILE" 2>/dev/null || stat -f%z "$JAR_FILE" 2>/dev/null || echo "Unknown") bytes"
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -57,6 +62,22 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Verify JAR file before upload
+      run: |
+        echo "Checking JAR file before Modrinth upload:"
+        echo "JAR_PATH: ${{ steps.jar.outputs.JAR_PATH }}"
+        echo "JAR_NAME: ${{ steps.jar.outputs.JAR_NAME }}"
+        if [ -f "${{ steps.jar.outputs.JAR_PATH }}" ]; then
+          echo "✓ File exists"
+          ls -la "${{ steps.jar.outputs.JAR_PATH }}"
+        else
+          echo "✗ File not found!"
+          echo "Current directory: $(pwd)"
+          echo "build/libs contents:"
+          ls -la build/libs/ || echo "build/libs not found"
+          exit 1
+        fi
         
     - name: Upload to Modrinth
       uses: Kir-Antipov/mc-publish@v3.3

@@ -49,6 +49,8 @@ tasks.shadowJar {
     archiveBaseName.set("EasyCTF")
     archiveClassifier.set("")
     archiveVersion.set(project.version.toString())
+    // 出力ファイル名を明示的に設定
+    archiveFileName.set("EasyCTF-${project.version}.jar")
     
     // Relocate Kotlin stdlib to avoid conflicts
     relocate("kotlin", "com.hacklab.ctf.libs.kotlin")
