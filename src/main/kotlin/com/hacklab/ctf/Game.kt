@@ -132,6 +132,7 @@ class Game(
     private var suffocationTask: BukkitRunnable? = null
     private var scoreboardUpdateTask: BukkitRunnable? = null
     private var actionBarTask: BukkitRunnable? = null
+    private var autoStartTask: BukkitRunnable? = null  // 自動開始タスクの参照を追加
     private val spawnProtectionTasks = mutableMapOf<UUID, BukkitRunnable>()
     val respawnTasks = mutableMapOf<UUID, BukkitRunnable>()
     
@@ -399,6 +400,18 @@ class Game(
         
         // スコアボードを更新（人数表示のため）
         updateScoreboard()
+        
+        // 自動開始のチェック（プレイヤー数が減った場合、カウントダウンをキャンセル）
+        if (state == GameState.WAITING && autoStartEnabled) {
+            if (redTeam.size + blueTeam.size < minPlayers && autoStartCountdown > 0) {
+                autoStartCountdown = -1
+                autoStartTask?.cancel()
+                autoStartTask = null
+                getAllPlayers().forEach {
+                    it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
+                }
+            }
+        }
     }
     
     fun handleDisconnect(player: Player) {
@@ -420,6 +433,18 @@ class Game(
         
         // スコアボードを更新
         updateScoreboard()
+        
+        // 自動開始のチェック（プレイヤー数が減った場合、カウントダウンをキャンセル）
+        if (state == GameState.WAITING && autoStartEnabled) {
+            if (redTeam.size + blueTeam.size < minPlayers && autoStartCountdown > 0) {
+                autoStartCountdown = -1
+                autoStartTask?.cancel()
+                autoStartTask = null
+                getAllPlayers().forEach {
+                    it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
+                }
+            }
+        }
     }
     
     fun handleReconnect(player: Player) {
@@ -487,6 +512,9 @@ class Game(
         if (redTeam.size + blueTeam.size < minPlayers) {
             if (autoStartCountdown > 0) {
                 autoStartCountdown = -1
+                // 既存の自動開始タスクをキャンセル
+                autoStartTask?.cancel()
+                autoStartTask = null
                 getAllPlayers().forEach {
                     it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
                 }
@@ -494,13 +522,15 @@ class Game(
             return
         }
         
-        if (autoStartCountdown < 0) {
+        if (autoStartCountdown < 0 && autoStartTask == null) {
             autoStartCountdown = 30
-            object : BukkitRunnable() {
+            autoStartTask = object : BukkitRunnable() {
                 override fun run() {
                     if (autoStartCountdown <= 0 || state != GameState.WAITING) {
                         cancel()
-                        if (autoStartCountdown == 0) {
+                        autoStartTask = null
+                        // プレイヤー数を再チェックしてから開始
+                        if (autoStartCountdown == 0 && redTeam.size + blueTeam.size >= minPlayers) {
                             start()
                         }
                         return
@@ -509,6 +539,7 @@ class Game(
                     if (redTeam.size + blueTeam.size < minPlayers) {
                         autoStartCountdown = -1
                         cancel()
+                        autoStartTask = null
                         getAllPlayers().forEach {
                             it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
                         }
@@ -526,12 +557,18 @@ class Game(
                     // スコアボード更新（カウントダウン表示のため）
                     updateScoreboard()
                 }
-            }.runTaskTimer(plugin, 0L, 20L)
+            }
+            autoStartTask?.runTaskTimer(plugin, 0L, 20L)
         }
     }
     
     fun start(): Boolean {
         plugin.logger.info(plugin.languageManager.getMessage("log.game-starting", "game" to name, "state" to state.toString(), "phase" to phase.toString()))
+        
+        // 自動開始タスクをキャンセル（手動開始の場合も含む）
+        autoStartTask?.cancel()
+        autoStartTask = null
+        autoStartCountdown = -1
         
         if (state != GameState.WAITING) {
             plugin.logger.warning(plugin.languageManager.getMessage("log.game-cannot-start", "game" to name, "state" to state.toString()))
@@ -1089,6 +1126,7 @@ class Game(
         scoreboardUpdateTask?.cancel()
         spawnProtectionTasks.values.forEach { it.cancel() }
         actionBarTask?.cancel()
+        autoStartTask?.cancel()  // 自動開始タスクもキャンセル
         
         // リスポーンタスクをキャンセル
         respawnTasks.values.forEach { task ->
@@ -1102,6 +1140,7 @@ class Game(
         scoreboardUpdateTask = null
         spawnProtectionTasks.clear()
         actionBarTask = null
+        autoStartTask = null  // 自動開始タスクの参照もクリア
         respawnTasks.clear()
         
         // マッチモードかどうかチェック（強制終了の場合はマッチモードを無視）
