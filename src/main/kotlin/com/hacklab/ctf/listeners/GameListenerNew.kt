@@ -741,12 +741,43 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 }
                                 
                                 if (isEnemyBlock) {
-                                    // 隣接する自陣ブロックがあるかチェック
-                                    if (!game.hasAdjacentTeamBlock(event.block.location, playerTeam!!)) {
-                                        event.isCancelled = true
-                                        player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.need-adjacent-block"), NamedTextColor.RED))
-                                        plugin.logger.info("[BlockBreak] No adjacent team block for breaking enemy block")
-                                        return
+                                    // 自チームのリスポーン地点またはビーコン周辺7ブロック以内なら制限なしで破壊可能
+                                    val blockLocation = event.block.location
+                                    var canBreakWithoutRestriction = false
+                                    
+                                    // 自チームの旗（ビーコン）からの距離をチェック
+                                    val teamFlagLocation = when (playerTeam) {
+                                        Team.RED -> game.getRedFlagLocation()
+                                        Team.BLUE -> game.getBlueFlagLocation()
+                                        else -> null
+                                    }
+                                    if (teamFlagLocation != null && blockLocation.distance(teamFlagLocation) <= 7.0) {
+                                        canBreakWithoutRestriction = true
+                                        plugin.logger.info("[BlockBreak] Within 7 blocks of team flag - unrestricted break allowed")
+                                    }
+                                    
+                                    // 自チームのスポーン地点からの距離をチェック
+                                    if (!canBreakWithoutRestriction) {
+                                        val teamSpawnLocation = when (playerTeam) {
+                                            Team.RED -> game.getRedSpawnLocation()
+                                            Team.BLUE -> game.getBlueSpawnLocation()
+                                            else -> null
+                                        }
+                                        if (teamSpawnLocation != null && blockLocation.distance(teamSpawnLocation) <= 7.0) {
+                                            canBreakWithoutRestriction = true
+                                            plugin.logger.info("[BlockBreak] Within 7 blocks of team spawn - unrestricted break allowed")
+                                        }
+                                    }
+                                    
+                                    // 制限なしで破壊できない場合は、隣接チェック
+                                    if (!canBreakWithoutRestriction) {
+                                        // 隣接する自陣ブロックがあるかチェック
+                                        if (!game.hasAdjacentTeamBlock(event.block.location, playerTeam!!)) {
+                                            event.isCancelled = true
+                                            player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.need-adjacent-block"), NamedTextColor.RED))
+                                            plugin.logger.info("[BlockBreak] No adjacent team block for breaking enemy block")
+                                            return
+                                        }
                                     }
                                 }
                                 
@@ -811,12 +842,43 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         }
                         
                         if (isEnemyBlock) {
-                            // 隣接する自陣ブロックがあるかチェック
-                            if (!game.hasAdjacentTeamBlock(event.block.location, playerTeam!!)) {
-                                event.isCancelled = true
-                                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.need-adjacent-block"), NamedTextColor.RED))
-                                plugin.logger.info("[BlockBreak] No adjacent team block for breaking enemy block in combat phase")
-                                return
+                            // 自チームのリスポーン地点またはビーコン周辺7ブロック以内なら制限なしで破壊可能
+                            val blockLocation = event.block.location
+                            var canBreakWithoutRestriction = false
+                            
+                            // 自チームの旗（ビーコン）からの距離をチェック
+                            val teamFlagLocation = when (playerTeam) {
+                                Team.RED -> game.getRedFlagLocation()
+                                Team.BLUE -> game.getBlueFlagLocation()
+                                else -> null
+                            }
+                            if (teamFlagLocation != null && blockLocation.distance(teamFlagLocation) <= 7.0) {
+                                canBreakWithoutRestriction = true
+                                plugin.logger.info("[BlockBreak] Within 7 blocks of team flag - unrestricted break allowed")
+                            }
+                            
+                            // 自チームのスポーン地点からの距離をチェック
+                            if (!canBreakWithoutRestriction) {
+                                val teamSpawnLocation = when (playerTeam) {
+                                    Team.RED -> game.getRedSpawnLocation()
+                                    Team.BLUE -> game.getBlueSpawnLocation()
+                                    else -> null
+                                }
+                                if (teamSpawnLocation != null && blockLocation.distance(teamSpawnLocation) <= 7.0) {
+                                    canBreakWithoutRestriction = true
+                                    plugin.logger.info("[BlockBreak] Within 7 blocks of team spawn - unrestricted break allowed")
+                                }
+                            }
+                            
+                            // 制限なしで破壊できない場合は、隣接チェック
+                            if (!canBreakWithoutRestriction) {
+                                // 隣接する自陣ブロックがあるかチェック
+                                if (!game.hasAdjacentTeamBlock(event.block.location, playerTeam!!)) {
+                                    event.isCancelled = true
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.need-adjacent-block"), NamedTextColor.RED))
+                                    plugin.logger.info("[BlockBreak] No adjacent team block for breaking enemy block in combat phase")
+                                    return
+                                }
                             }
                         }
                         // 通常のドロップをキャンセルして白いブロックをドロップ
@@ -937,7 +999,17 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     Team.SPECTATOR -> null
                 }
                 
-                if (enemySpawn != null && block.location.world == enemySpawn.world && block.location.distance(enemySpawn) < 10.0) {
+                // チームカラーブロック（戦略的建築）は敵スポーン近くでも許可
+                val isTeamColorBlock = when (team) {
+                    Team.RED -> itemInHand.type == Material.RED_CONCRETE || itemInHand.type == Material.RED_STAINED_GLASS
+                    Team.BLUE -> itemInHand.type == Material.BLUE_CONCRETE || itemInHand.type == Material.BLUE_STAINED_GLASS
+                    Team.SPECTATOR -> false
+                }
+                
+                // 設定ファイルから敵スポーン保護半径を取得（デフォルト: 5ブロック）
+                val protectionRadius = plugin.config.getDouble("mechanics.enemy-spawn-protection-radius", 5.0)
+                
+                if (!isTeamColorBlock && enemySpawn != null && block.location.world == enemySpawn.world && block.location.distance(enemySpawn) < protectionRadius) {
                     event.isCancelled = true
                     player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.cannot-place-near-spawn"), NamedTextColor.RED))
                     return
@@ -1029,11 +1101,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }
             
             // ショップアイテムのチェック
+            plugin.logger.info("[DEBUG] Right-click with item: ${item.type}, has meta: ${item.hasItemMeta()}")
             if (item.type == Material.EMERALD && item.hasItemMeta()) {
                 val meta = item.itemMeta
                 // Check for shop item using persistent data or item type
                 val container = meta.persistentDataContainer
-                val isShopItem = container.has(org.bukkit.NamespacedKey(plugin, "shop_item"), org.bukkit.persistence.PersistentDataType.BYTE)
+                val isShopItem = container.has(org.bukkit.NamespacedKey(plugin, "shop_item_id"), org.bukkit.persistence.PersistentDataType.STRING)
+                plugin.logger.info("[DEBUG] Is shop item: $isShopItem")
                 if (isShopItem) {
                     event.isCancelled = true
                     

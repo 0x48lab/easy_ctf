@@ -24,7 +24,7 @@ default-game:
 
 # Default Phase Settings
 default-phases:
-  # Phase 1: Build phase duration in seconds (default: 5 minutes)
+  # Phase 1: Build phase duration in seconds (default: 2 minutes)
   build-duration: 120
   
   # Build phase game mode for players
@@ -34,10 +34,10 @@ default-phases:
   # CREATIVE: Unlimited building, flying, instant break
   build-phase-gamemode: "SURVIVAL"
   
-  # Phase 2: Combat phase duration in seconds (default: 10 minutes)
+  # Phase 2: Combat phase duration in seconds (default: 2 minutes)
   combat-duration: 120
   
-  # Phase 3: Result phase duration in seconds (default: 1 minute for final, 15 seconds for intermediate)
+  # Phase 3: Result phase duration in seconds (default: 15 seconds)
   result-duration: 15
   
   # Intermediate result duration for matches (seconds)
@@ -45,156 +45,18 @@ default-phases:
 
 # Game Mechanics
 mechanics:
-  # Flag drop timeout in seconds
-  flag-drop-timeout: 15
-  
   # Spawn protection duration in seconds
   spawn-protection-duration: 3
   
-  # Allow ender pearls
-  allow-ender-pearls: false
+  # Enemy spawn area protection radius in blocks
+  # Prevents placing non-team blocks near enemy spawn
+  enemy-spawn-protection-radius: 5
   
-  # Allow elytra
-  allow-elytra: false
-  
-  # Allow vehicles (minecarts, boats)
-  allow-vehicles: false
-  
-  # Tools allowed to break blocks during combat phase - REMOVED
-  # Players can now break blocks with any tool or by hand
-  
-  # Block placement restriction
-  # Blocks must be adjacent to existing blocks (except within 3 blocks of flag)
-  # Adjacent = horizontally, vertically, or diagonally touching
-
-# Equipment Settings (DEPRECATED - Now using shop system only)
-# equipment:
-#   # Build phase equipment
-#   build-phase:
-#     tools:
-#       - "WOODEN_PICKAXE"
-#       - "WOODEN_AXE"
-#       - "WOODEN_SHOVEL"
-#     blocks:
-#       - "COBBLESTONE:64"
-#       - "OAK_PLANKS:64"
-#       - "DIRT:32"
-#   
-#   # Combat phase equipment
-#   combat-phase:
-#     weapons:
-#       - "IRON_SWORD"
-#       - "BOW"
-#     ammunition:
-#       - "ARROW:64"
-#     food:
-#       - "COOKED_BEEF:16"
-#     armor:
-#       enable: true
-#       type: "LEATHER"  # LEATHER, CHAINMAIL, IRON, DIAMOND, NETHERITE
-#       unbreakable: true
-
-# Team Settings
-teams:
-  red:
-    # Display name for red team
-    display-name: "&cRed Team"
-    
-  blue:
-    # Display name for blue team
-    display-name: "&9Blue Team"
-
-# Messages
-messages:
-  # Prefix for all plugin messages
-  prefix: "&6[CTF] &r"
-  
-  # Game messages
-  game-start: "&aThe game has started!"
-  game-end: "&cThe game has ended!"
-  
-  # Team messages
-  team-join: "&aYou joined the {team} team!"
-  team-leave: "&cYou left your team!"
-  team-full: "&cThat team is full!"
-  
-  # Flag messages
-  flag-pickup: "&e{player} picked up the {team} flag!"
-  flag-capture: "&6{player} captured the {team} flag!"
-  flag-drop: "&cThe {team} flag has been dropped!"
-  flag-return: "&aThe {team} flag has been returned!"
-  
-  # Error messages
-  no-permission: "&cYou don't have permission to do that!"
-  game-running: "&cCannot do that while game is running!"
-  not-in-team: "&cYou are not in a team!"
-  already-in-team: "&cYou are already in a team!"
-
-# Scoreboard Settings
-scoreboard:
-  # Title of the scoreboard
-  title: "&6&l✦ Capture The Flag ✦"
-  
-  # Update interval in ticks (20 ticks = 1 second)
-  update-interval: 20
-
-# Boss Bar Settings
-bossbar:
-  # Enable boss bar
-  enabled: true
-  
-  # Boss bar color when game starts
-  color: "YELLOW"
-  
-  # Boss bar style
-  style: "SOLID"
-
-# Effects Settings
-effects:
-  # Flag beacon effects
-  flag-beacon:
-    # Enable beacon effects for flags
-    enabled: true
-    
-    # Particle effects for flags
-    particles:
-      enabled: true
-      type: "DUST"
-      count: 5
-      
-  # Flag carrier effects
-  flag-carrier:
-    # Make flag carriers glow
-    glow: true
-    
-    # Particle trail for flag carriers
-    particles:
-      enabled: true
-      type: "DUST"
-      count: 5
-
-# World Settings
-world:
-  # NOTE: These settings are deprecated. 
-  # Block breaking/placing is now controlled by phase and gamemode
-  disable-block-break: false
-  disable-block-place: false
-  disable-item-drop: false
-  
-  # Spawn area protection (deprecated - using 3-second invincibility instead)
-  spawn-protection:
-    enabled: false
-    radius: 5
-    height: 3
-    min-flag-spawn-distance: 3
-
-# Debug Settings
-debug:
-  # Enable debug messages
-  enabled: false
-  
-  # Log level (INFO, WARNING, SEVERE)
-  log-level: "INFO"
+  # NOT IMPLEMENTED YET:
+  # flag-drop-timeout: 30  # Flag auto-return timeout in seconds
+  # allow-ender-pearls: false
+  # allow-elytra: false
+  # allow-vehicles: false
 
 # Match Settings
 match:
@@ -223,10 +85,10 @@ currency:
   
   # Kill streak bonuses (additional currency per consecutive kill)
   kill-streak-bonus:
-    2-kills: 5    # 2連続キルで+5G
-    3-kills: 10   # 3連続キルで+10G
-    4-kills: 15   # 4連続キルで+15G
-    5-plus-kills: 20  # 5連続キル以上で+20G
+    2-kills: 5    # +5G for 2 consecutive kills
+    3-kills: 10   # +10G for 3 consecutive kills
+    4-kills: 15   # +15G for 4 consecutive kills
+    5-plus-kills: 20  # +20G for 5+ consecutive kills
   
   # Capture rewards
   capture-reward: 30
@@ -240,12 +102,6 @@ shop:
   # Shop usage range from spawn point (blocks)
   use-range: 15
   
-  # Death item behavior
-  death-item-behavior:
-    weapons: "keep"      # keep/drop/destroy
-    armor: "keep"        # keep/drop/destroy
-    consumables: "drop"  # keep/drop/destroy
-  
   # Discount rates based on score difference
   discount:
     1-point: 0.1    # 10% off
@@ -253,17 +109,10 @@ shop:
     3-point: 0.3    # 30% off
     4-point-plus: 0.4  # 40% off
 
-# Initial Equipment Settings - DISABLED (No initial equipment)
-# Players must purchase all items from the shop
-# initial-equipment:
-#   # Build phase equipment
-#   build-phase:
-#     tools: []
-#     blocks: []
-#     food: []
-#   
-#   # Combat phase equipment
-#   combat-phase:
-#     weapons: []
-#     armor: []
-#     food: []
+# Debug Settings
+debug:
+  # Enable debug messages
+  enabled: false
+  
+  # Log level (INFO, WARNING, SEVERE)
+  log-level: "INFO"

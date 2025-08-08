@@ -1,964 +1,777 @@
-# English Language File for EasyCTF
-
-# Game Phase Messages
-phase:
-  build-start: "&a=== BUILD PHASE STARTED ==="
-  build-info: "&eBuild your defenses! Combat will start in {time} minutes!"
-  combat-start: "&c=== COMBAT PHASE STARTED ==="
-  combat-info: "&eCapture the enemy flag! Phase ends in {time} minutes!"
-  result-start: "&6=== GAME RESULTS ==="
-  result-winner: "&eWinner: {color}{team} TEAM!"
-  result-score: "&eFinal Score - Red: {red} | Blue: {blue}"
-
-# Team Names
-teams:
-  red: "Red"
-  blue: "Blue"
-  spectator: "Spectator"
-
-# Team Messages
-team:
-  join: "&aYou joined the {color}{team}&a team!"
-  leave: "&cYou left your team!"
-  full: "&cThat team is full!"
-  set-success: "&aSuccessfully set {player} to {color}{team} Team&a!"
-  set-notification: "&eAn administrator has set you to the {color}{team} Team&e!"
-  set-failed: "&cFailed to set team for {player}. The team might be full."
-  
-# Action Bar Messages
 action-bar:
-  build-phase-guide: "Build Phase - Construct your defenses"
-  return-to-base: "Return to your base with the flag!"
-  cannot-place-flag: "Cannot place blocks near the flag"
-  cannot-place-spawn: "Cannot place blocks near spawn point"
-  place-restriction-flag: "Must connect to flag or team blocks"
-  place-restriction-team: "Must connect to team blocks"
-  cannot-place-block: "Cannot place this block"
-
-# Armor Messages
+  build-phase-guide: Build Phase - Place blocks to build defenses
+  return-to-base: Return the flag to base!
+  cannot-place-block: Cannot place block
+  cannot-place-flag: Cannot place flag
+  cannot-place-spawn: Cannot place spawn
+  place-restriction-flag: Place restriction flag
+  place-restriction-team: Place restriction team
 armor:
-  cannot-remove-combat: "Cannot remove armor during combat phase"
-  cannot-drop-combat: "Cannot drop armor during combat phase"
-  only-leather-allowed: "Only leather armor is allowed"
-
-# Spectator Messages
-spectator:
-  joined: "&7Joined as spectator"
-  switched: "&7Switched to spectator mode"
-  mode-label: "&7[Spectator Mode]"
-  usage: "&eUsage: /ctf spectator [game_name]"
-  hint: "&7Please specify game name if not currently in a game"
-  join-failed: "&cFailed to join as spectator"
-
-# Command Messages
+  $action: '[armor.$action]'
+  cannot-drop-combat: Cannot drop combat
+  cannot-remove-combat: Cannot remove combat
+  only-leather-allowed: Only leather allowed
+block:
+  $action: '[block.$action]'
 command:
-  no-permission: "&cYou don't have permission to do that!"
-  game-already-running: "&cGame is already running or ending!"
-  player-not-found: "&cPlayer '{player}' not found!"
-  invalid-team: "&cInvalid team! Use 'red' or 'blue'"
-  usage-setteam: "&cUsage: /ctf setteam <player> <red|blue>"
-  flag-too-close-spawn: "&cFlag location is too close to spawn point! Distance: {distance}, minimum required: {minimum}"
-  spawn-too-close-flag: "&cSpawn location is too close to flag! Distance: {distance}, minimum required: {minimum}"
-  location-too-close: "&cLocation is too close to other important points! Please maintain proper distance."
-  phase-skipped: "&eAdministrator skipped {phase} phase!"
-  skip-no-permission: "&cYou don't have permission to skip phases!"
-  skip-no-game: "&cNo game is currently running!"
-  skip-cannot: "&cCannot skip phase at this time!"
-  player-only: "This command can only be executed by players"
-  game-created: "&aGame '{name}' created successfully!"
-  game-deleted: "&aGame '{name}' deleted"
-  game-not-found: "&cGame '{name}' not found"
-  no-games: "&cNo games currently exist"
-  flags-not-set-warning: "   ⚠ Flags not set"
-  auto-param-hint: "&7Auto-detect from config when parameters not specified"
-  match-stopped: "&aMatch '{name}' stopped"
-  game-stopped: "&aGame '{name}' stopped"
-  game-not-running: "&cGame '{name}' is not running"
-  game-joined: "&aJoined game '{name}'"
-  join-failed: "&cFailed to join game"
-  already-in-game: "&eAlready in game '{name}'."
-  join-confirm: "&eLeave and join '{name}'?"
-  join-confirm-time: "&7To join, execute the same command again within 30 seconds."
-  game-list-header: "===== CTF Game List ====="
-  status-configuring: "Configuring"
-  status-waiting: "Waiting"
-  status-running: "Running"
-  status-ending: "Ending"
-  list-red-count: "Red: {count}"
-  list-blue-count: "Blue: {count}"
-  usage-start: "&eUsage: /ctf start <game> [single|match] [games]"
-  start-mode-hint: "&7single: Single game, match: Multiple games"
-  red-spawn-set: "&aRed team spawn point set: {x}, {y}, {z}"
-  blue-spawn-set: "&aBlue team spawn point set: {x}, {y}, {z}"
-  single-game-start: "&eStarting in single game mode"
-  game-count-min: "&cGame count must be at least 1"
-  invalid-game-count: "&cInvalid game count"
-  match-start-config: "&eStarting match mode ({count} games) based on config"
-  match-started: "&aMatch started! ({count} games)"
-  game-started: "&aGame started!"
-  game-start-failed: "&cFailed to start game"
-  usage-create: "&eUsage: /ctf create <game name>"
-  usage-update: "&eUsage: /ctf update <game name>"
-  usage-delete: "&eUsage: /ctf delete <game name>"
-  usage-stop: "&eUsage: /ctf stop <game name>"
-  usage-join: "&eUsage: /ctf join <game name>"
-  usage-setflag: "&eUsage: /ctf setflag <game name> <red|blue>"
-  usage-setspawn: "&eUsage: /ctf setspawn <game name> <red|blue>"
-  usage-status: "&eUsage: /ctf status [game name]"
-  usage-info: "&eUsage: /ctf info <game name>"
-  usage-setpos1: "/ctf setpos1 [game name] - Set map region start point"
-  usage-setpos2: "/ctf setpos2 [game name] - Set map region end point"
-  usage-savemap: "/ctf savemap <game name> - Save map (auto-detection)"
-  # Help messages
-  help-header: "===== CTF Commands ====="
-  help-create: "/ctf create <game name> - Create new game (interactive)"
-  help-update: "/ctf update <game name> - Update game settings (interactive)"
-  help-delete: "/ctf delete <game name> - Delete game"
-  help-start: "/ctf start <game name> [single|match] [game count] - Start game"
-  help-start-note1: "  ※ Auto match mode if match settings exist in config"
-  help-start-note2: "  ※ Force single game with 'single' parameter"
-  help-stop: "/ctf stop <game name> - Stop game"
-  help-setflag: "/ctf setflag <game name> <red|blue> - Set flag location"
-  help-setspawn: "/ctf setspawn <game name> <red|blue> - Set spawn point (legacy)"
-  help-addspawn: "/ctf addspawn <game name> <red|blue> - Add spawn point (multiple)"
-  help-removespawn: "/ctf removespawn <game name> <red|blue> <number> - Remove spawn point"
-  help-listspawns: "/ctf listspawns <game name> - List spawn points"
-  help-list: "/ctf list - Show game list"
-  help-join: "/ctf join <game name> - Join game"
-  help-leave: "/ctf leave - Leave game"
-  help-team: "/ctf team [red|blue] - Check/change team"
-  help-spectator: "/ctf spectator [game name] - Join as spectator"
-  help-status: "/ctf status [game name] - Check game status"
-  help-info: "/ctf info <game name> - Show game details"
-  invalid-mode: "&cInvalid mode"
-  invalid-usage: "&cUsage: /ctf start <game name> [single|match] [game count]"
-  red-flag-set: "&aRed team flag location set: {x}, {y}, {z}"
-  blue-flag-set: "&aBlue team flag location set: {x}, {y}, {z}"
-  map-start-set: "Map start point set: {x}, {y}, {z}"
-  map-end-set: "Map end point set: {x}, {y}, {z}"
-  map-start-set-game: "Start point set for game {name}: {x}, {y}, {z}"
-  map-end-set-game: "End point set for game {name}: {x}, {y}, {z}"
-  map-temp-hint: "This region will be used for the next /ctf create"
-  using-worldedit: "Using WorldEdit selection"
-  using-temp-region: "Using temporary map region"
-  map-saved: "Map saved successfully!"
-  map-save-failed: "Failed to save map"
-  detection-result: "Detection result:"
-  red-spawn-detected: "- Red team spawn: {location}"
-  blue-spawn-detected: "- Blue team spawn: {location}"
-  red-flag-detected: "- Red team flag: {location}"
-  blue-flag-detected: "- Blue team flag: {location}"
-  list-item: "{index}. {name} "
-  list-status: "[{status}]"
-  not-in-game: "You are not currently in a game"
-  current-team: "Current team: %team%"
-  team-change-usage: "Team change: /ctf team <red|blue>"
-  cannot-change-team-after-start: "Cannot change teams after game starts"
-  already-in-team: "You are already on %team%"
-  team-full: "%team% is full (max %max% players)"
-  team-changed: "Changed to %team%!"
-  player-changed-team: "%player% moved to %team%"
-  match-mode: "Mode: %mode%"
-  cannot-join-state: "Cannot join game in {state} state"
-  game-full: "Game is full (max {max} players)"
-  join-failed: "Failed to join"
-  no-block-found: "No block found in sight"
-  status-header: "=== Game: {name} ==="
-  status-state: "State: {state}"
-  status-phase: "Phase: {phase}"
-  status-red-team: "Red Team: {count} players"
-  status-blue-team: "Blue Team: {count} players"
-  status-score: "Score - Red: {red} Blue: {blue}"
-  match-info-header: "=== Match Info ==="
-  match-progress: "Progress: {status}"
-  match-score: "Match Score - Red: {red} Blue: {blue}"
-  info-header: "===== Game Settings: {name} ====="
-  info-basic-settings: "【Basic Settings】"
-  info-min-players: "Min Players: {count}"
-  info-max-players: "Max Players per Team: {count}"
-  info-world: "World: {world}"
-  info-phase-settings: "【Phase Settings】"
-  info-build-phase: "Build Phase: {seconds}s ({minutes}min)"
-  info-build-mode: "Build Game Mode: {mode}"
-  info-combat-phase: "Combat Phase: {seconds}s ({minutes}min)"
-  info-result-phase: "Result Phase: {seconds}s"
-  info-position-settings: "【Position Settings】"
-  info-red-flag: "Red Flag: X:{x} Y:{y} Z:{z}"
-  info-red-flag-not-set: "Red Flag: Not Set"
-  info-red-spawn-same: "Red Spawn: Same as flag"
-  info-red-spawn: "Red Spawn: X:{x} Y:{y} Z:{z}"
-  info-red-spawn-multiple: "Red Spawn: {count} locations (random)"
-  info-blue-flag: "Blue Flag: X:{x} Y:{y} Z:{z}"
-  info-blue-flag-not-set: "Blue Flag: Not Set"
-  info-blue-spawn-same: "Blue Spawn: Same as flag"
-  info-blue-spawn: "Blue Spawn: X:{x} Y:{y} Z:{z}"
-  info-blue-spawn-multiple: "Blue Spawn: {count} locations (random)"
-  info-currency-settings: "【Currency Settings】"
-  info-initial-currency: "Initial Funds: {amount}G"
-  info-kill-reward: "Kill Reward: 10G (Flag Carrier: 20G)"
-  info-capture-reward: "Capture Reward: 30G"
-  info-other-settings: "【Other Settings】"
-  info-respawn-time: "Respawn Time: {base}s (+{perDeath}s/death, max {max}s)"
-  info-footer: "================================"
-  usage-addspawn: "§eUsage: /ctf addspawn <game> <red|blue>"
-  usage-removespawn: "§eUsage: /ctf removespawn <game> <red|blue> <number>"
-  usage-listspawns: "§eUsage: /ctf listspawns <game>"
-  red-spawn-added: "§aAdded red team spawn point #{number}: {x}, {y}, {z}"
-  blue-spawn-added: "§aAdded blue team spawn point #{number}: {x}, {y}, {z}"
-  invalid-spawn-number: "§cInvalid number"
-  spawn-not-found: "§cSpawn point #{index} does not exist"
-  red-spawn-removed: "§aRemoved red team spawn point #{index}: {x}, {y}, {z}"
-  blue-spawn-removed: "§aRemoved blue team spawn point #{index}: {x}, {y}, {z}"
-  spawn-list-header: "===== Spawn Points: {name} ====="
-  red-team-label: "Red Team:"
-  blue-team-label: "Blue Team:"
-  spawn-legacy: "  [Legacy] {x}, {y}, {z}"
-  spawn-not-set: "  (Not set - using flag position)"
-  spawn-location: "  #{number}: {x}, {y}, {z}"
-
-# Countdown Messages
-countdown:
-  three: "3"
-  two: "2"
-  one: "1"
-  start: "START!"
-
-# Item Names and Descriptions
-items:
-  efficient-diamond-pickaxe: "§b§lEfficient Diamond Pickaxe"
-  efficient-diamond-shovel: "§b§lEfficient Diamond Shovel"
-  no-drop-on-death: "§7Will not drop on death"
-  initial-equipment: "§7Initial equipment"
-  building-block: "§7Building block"
-
-# Shield System
-shield:
-  status: "Shield: [{bar}] {percent}%"
-
-# Spectator Menu Items
-spectator:
-  stats-item: "Statistics"
-  right-click-display: "Right-click to display"
-  player-tracker: "Player Tracker"
-  right-click-menu: "Right-click to show menu"
-  right-click-teleport: "Right-click to teleport"
-  red-spawn: "Red Team Spawn"
-  blue-spawn: "Blue Team Spawn"
-  flag-location: "Flag Location"
-  red-flag: "Red Team Flag"
-  blue-flag: "Blue Team Flag"
-
-# UI Elements
-ui:
-  separator-long: "==============================="
-  separator-short: "======================="
-  separator-dash: " - "
-  separator-comma: ", "
-  error-item: "- {error}"
-
-# Setup Headers
-setup:
-  create-header-formatted: "=== Creating {name} Game ==="
-  update-header-formatted: "=== Updating {name} Game ==="
-
-# Multiple Spawn Points
-# Game Messages
-game:
-  player-list-item: "  - {name}"
-  build-phase-player: "&aBuild Phase! You are on {color}{team}&a team!"
-  build-phase-info: "&eBuild your defenses and prepare for combat!"
-  combat-phase-player: "&aCombat Phase! You are on {color}{team}&a team!"
-  combat-phase-info: "&cCapture the enemy flag!"
-  
-# Block Messages
-block:
-  cannot-place-near-spawn: "&cCannot place blocks near enemy spawn point!"
-  cannot-place-result: "&cYou cannot place blocks during result phase!"
-  cannot-break-combat: "&cYou cannot break blocks during combat phase!"
-  cannot-break-result: "&cYou cannot break blocks during result phase!"
-  only-break-placed: "&cYou can only break blocks you placed!"
-
-# Armor Messages
-armor:
-  cannot-remove: "&cYou cannot remove your armor during the game!"
-  cannot-drop: "&cYou cannot drop armor during the game!"
-  cannot-drop-combat: "&cCannot drop armor during combat!"
-  only-leather-allowed: "&cOnly leather armor allowed!"
-  cannot-remove-combat: "&cCannot remove armor during combat!"
-
-# Time Warnings
-time:
-  warning: "&e⚠ {phase} ends in {time} seconds!"
-
-# General
-general:
-  enabled: "EasyCTF has been enabled!"
-  disabled: "EasyCTF has been disabled!"
-  spawn-not-set: "&cWarning: Your team spawn location is not set! Please contact an administrator."
-
-# Result Phase - MVP and Rankings
-result:
-  mvp-title: "&6=== 🏆 MVP 🏆 ==="
-  mvp-kills: "&e⚔ Kill MVP: {color}{player} &7({kills}K/{deaths}D, K/D: {kd})"
-  mvp-captures: "&e⚑ Capture MVP: {color}{player} &7({captures} captures)"
-  ranking-title: "&6=== 📊 RANKINGS ==="
-  ranking-kills-header: "&c⚔ Kill Rankings:"
-  ranking-kills-entry: "&f{rank}. {color}{player} &7- {kills}K/{deaths}D (K/D: {kd})"
-  ranking-captures-header: "&9⚑ Capture Rankings:"
-  ranking-captures-entry: "&f{rank}. {color}{player} &7- {captures} captures"
-
-# UI Messages - Scoreboard, BossBar, etc.
-ui:
-  scoreboard-title: "&6✦ Capture The Flag ✦"
-  bossbar-waiting: "&eCTF - Waiting for players"
-  bossbar-build: "&eBUILD PHASE"
-  bossbar-combat: "&cCOMBAT PHASE"
-  bossbar-result: "&dRESULT PHASE"
-  phase-build: "BUILD"
-  phase-combat: "COMBAT"
-  phase-result: "RESULT"
-  time-format: "{minutes}:{seconds}"
-  
-# Team Status Messages
-team-status:
-  welcome-title: "&6=== Welcome to CTF! ==="
-  welcome-status: "&7Current team status:"
-  welcome-instruction: "&eUse '/ctf join <red|blue>' to join a team!"
-  team-status-title: "&e=== Team Status ==="
-  team-size-format: "&7Current teams: &cRed: {red}/{max} &7| &9Blue: {blue}/{max}"
-  red-team-size: "&cRed Team: {size}/{max} players"
-  blue-team-size: "&9Blue Team: {size}/{max} players"
-  player-joined: "&e{player} joined the {color}{team}&e team!"
-  player-left: "&e{player} left their team!"
-
-# Command Messages Extended
+  $action: '[command.$action]'
+  already-in-game: Already in game
+  already-in-team: Already in team
+  auto-param-hint: Auto param hint
+  blue-flag-detected: Blue flag detected
+  blue-flag-set: blue flag has been set
+  blue-spawn-added: Blue spawn added
+  blue-spawn-detected: Blue spawn detected
+  blue-spawn-removed: Blue spawn removed
+  blue-spawn-set: blue spawn has been set
+  blue-team-label: Blue team label
+  cannot-change-team-after-start: Cannot change team after start
+  current-team: Current team
+  detection-result: Detection result
+  flags-not-set-warning: flags not warning has been set
+  game-count-min: Game count min
+  game-created: Game created
+  game-deleted: Game deleted
+  game-joined: Game joined
+  game-list-header: === Game List ===
+  game-not-found: Game Not Found not found
+  game-not-running: Game not running
+  game-start-failed: Game Start Failed failed
+  game-started: Game started
+  game-stopped: Game stopped
+  help-addspawn: Help addspawn
+  help-create: Help create
+  help-delete: Help delete
+  help-header: === Help ===
+  help-info: Help info
+  help-join: Help join
+  help-leave: Help leave
+  help-list: Help list
+  help-listspawns: Help listspawns
+  help-removespawn: Help removespawn
+  help-setflag: helpflag has been set
+  help-setspawn: helpspawn has been set
+  help-spectator: Help spectator
+  help-start: Help start
+  help-start-note1: Help start note1
+  help-start-note2: Help start note2
+  help-status: Help status
+  help-stop: Help stop
+  help-team: Help team
+  help-update: Help update
+  info-basic-settings: info basictings has been set
+  info-blue-flag: Info blue flag
+  info-blue-flag-not-set: info blue flag not has been set
+  info-blue-spawn: Info blue spawn
+  info-blue-spawn-multiple: Info blue spawn multiple
+  info-blue-spawn-same: Info blue spawn same
+  info-build-mode: Info build mode
+  info-build-phase: Info build phase
+  info-capture-reward: Info capture reward
+  info-combat-phase: Info combat phase
+  info-currency-settings: info currencytings has been set
+  info-footer: Info footer
+  info-header: === Info ===
+  info-initial-currency: Info initial currency
+  info-kill-reward: Info kill reward
+  info-max-players: Info max players
+  info-min-players: Info min players
+  info-other-settings: info othertings has been set
+  info-phase-settings: info phasetings has been set
+  info-position-settings: info positiontings has been set
+  info-red-flag: Info red flag
+  info-red-flag-not-set: info red flag not has been set
+  info-red-spawn: Info red spawn
+  info-red-spawn-multiple: Info red spawn multiple
+  info-red-spawn-same: Info red spawn same
+  info-respawn-time: Info respawn time
+  info-result-phase: Info result phase
+  info-world: Info world
+  invalid-game-count: Invalid game count
+  invalid-spawn-number: Invalid spawn number
+  invalid-team: Invalid team
+  invalid-usage: Invalid usage
+  join-confirm: Join confirm
+  join-confirm-time: Join confirm time
+  join-failed: Join Failed failed
+  list-blue-count: List blue count
+  list-item: List item
+  list-red-count: List red count
+  list-status: List status
+  map-end-set: map end has been set
+  map-end-set-game: map end game has been set
+  map-save-failed: Map Save Failed failed
+  map-saved: Map saved
+  map-start-set: map start has been set
+  map-start-set-game: map start game has been set
+  map-temp-hint: Map temp hint
+  match-info-header: === Match Info ===
+  match-mode: Match mode
+  match-progress: Match progress
+  match-score: Match score
+  match-start-config: Match start config
+  match-started: Match started
+  match-stopped: Match stopped
+  no-block-found: No block found
+  no-games: No games
+  no-permission: No permission
+  not-in-game: Not in game
+  player-changed-team: Player changed team
+  player-only: Player only
+  red-flag-detected: Red flag detected
+  red-flag-set: red flag has been set
+  red-spawn-added: Red spawn added
+  red-spawn-detected: Red spawn detected
+  red-spawn-removed: Red spawn removed
+  red-spawn-set: red spawn has been set
+  red-team-label: Red team label
+  single-game-start: Single game start
+  spawn-legacy: Spawn legacy
+  spawn-list-header: === Spawn List ===
+  spawn-location: Spawn location
+  spawn-not-found: Spawn Not Found not found
+  spawn-not-set: spawn not has been set
+  start-mode-hint: Start mode hint
+  status-blue-team: Status blue team
+  status-configuring: Status configuring
+  status-ending: Status ending
+  status-header: === Status ===
+  status-phase: Status phase
+  status-red-team: Status red team
+  status-running: Status running
+  status-score: Status score
+  status-state: Status state
+  status-waiting: Status waiting
+  team-change-usage: Team change usage
+  team-changed: Team changed
+  team-full: Team full
+  usage-addspawn: Usage addspawn
+  usage-create: Usage create
+  usage-delete: Usage delete
+  usage-info: Usage info
+  usage-join: Usage join
+  usage-listspawns: Usage listspawns
+  usage-removespawn: Usage removespawn
+  usage-savemap: Usage savemap
+  usage-setflag: usageflag has been set
+  usage-setpos1: usagepos1 has been set
+  usage-setpos2: usagepos2 has been set
+  usage-setspawn: usagespawn has been set
+  usage-start: Usage start
+  usage-status: Usage status
+  usage-stop: Usage stop
+  usage-update: Usage update
+  using-temp-region: Using temp region
+  using-worldedit: Using worldedit
+  cannot-join-state: Cannot join game in current state
+  game-full: This game is full
 command-extended:
-  status-title: "&6═════ CTF Status ═════"
-  status-game-state: "&fGame State: {color}{state}"
-  status-current-phase: "&fCurrent Phase: &e{phase}"
-  status-team-sizes: "&fTeam Sizes:"
-  status-your-team: "&fYour Team: {team}"
-  status-footer: "&6═══════════════════"
-  
-  help-title: "&6═════ CTF Commands ═════"
-  help-join-show: "&e/ctf join&f - Show team sizes"
-  help-join-team: "&e/ctf join <red|blue>&f - Join a team"
-  help-leave: "&e/ctf leave&f - Leave your current team"
-  help-status: "&e/ctf status&f - Check game status and team info"
-  help-admin-title: "&6Admin Commands:"
-  help-start: "&e/ctf start&f - Start the game"
-  help-stop: "&e/ctf stop&f - Stop the game"
-  help-skipphase: "&e/ctf skipphase&f - Skip current phase"
-  help-setflag: "&e/ctf setflag <team>&f - Set flag location"
-  help-setspawn: "&e/ctf setspawn <team>&f - Set team spawn"
-  help-setteam: "&e/ctf setteam <player> <team>&f - Set player's team"
-  help-footer: "&6═══════════════════════"
-
-# Game State Names
-game-states:
-  waiting: "WAITING"
-  starting: "STARTING"
-  running: "RUNNING"
-  ending: "ENDING"
-  already-started: "&cThis game has already started"
-  already-ending: "&cThis game is ending"
-  already-state: "&cGame is already in {state} state"
-
-# Join/Leave Messages
-join-leave:
-  game-joined: "&aJoined game '{game}' on {color}{team}&a team"
-  game-left: "&eLeft game '{game}'"
-  team-full-red: "&cRed team is full"
-  team-full-blue: "&cBlue team is full"
-  auto-start-cancelled: "&eAuto-start cancelled due to insufficient players"
-  countdown-message: "&aGame starting in: {seconds} seconds"
-  min-players-required: "&cNeed at least {min} players to start"
-  flags-not-set: "&cBoth team flag locations must be set"
-  temp-world-failed: "&cFailed to create temporary world"
-
-# Phase Messages Extended
-phase-extended:
-  build-time-format: "Build Phase - Time: {time}"
-  combat-time-format: "Combat Phase - Time: {time}"
-  combat-score-format: "Combat Phase - Red {red} : {blue} Blue - {time}"
-  intermission-time-format: "Strategy Meeting - {time}"
-  game-start-title: "&aGame Started!"
-  game-start-subtitle: "&eBuild Phase - Construct your defenses"
-  combat-start-title: "&cCombat Phase Started!"
-  combat-start-subtitle: "&eCapture the enemy flag!"
-  phase-end-bonus: "Combat phase end bonus"
-  winner-title: "{color}{team}&f Wins!"
-  draw-title: "&eDraw!"
-  score-display: "&fScore: Red {red} - {blue} Blue"
-  game-ended: "&eGame has ended"
-  wait-next-game: "&ePlease wait for the next game..."
-
-# Spawn Messages  
-spawn:
-  not-set: "&cSpawn point not set"
-  protection-active: "&aSpawn protection active for 3 seconds"
-  protection-ended: "&eSpawn protection ended"
-  protection-cancelled: "&eSpawn protection cancelled"
-
-# Flag Messages
-flag:
-  concrete-name: "{color}{team}&f Concrete (Infinite)"
-  glass-name: "{color}{team}&f Glass (Infinite)"
-  infinite-desc: "&7Can be placed infinitely"
-  flag-name: "{team} Flag"
-  already-carrying: "&cYou are already carrying a flag"
-  returned-home: "{color}{team}&f flag returned to base"
-  returned-uncollectable: "{color}{team}&f flag returned to base (uncollectable location)"
-  returned-timeout: "{color}{team}&f flag returned to base"
-  flag-dropped: "{team} flag has been dropped!"
-  cannot-capture-no-flag: "Cannot capture - your team's flag is not at base"
-  captured-by: "{color}{team}&f scored! ({player})"
-  current-score: "&fCurrent Score - Red: {red} Blue: {blue}"
-  picked-up: "&e{player} picked up the {color}{team}&e flag!"
-  enemy-has-flag: "&cEnemy has your flag! Get it back! ({carrier})"
-  team-flag-dropped: "&eRecover your team's flag!"
-  retrieve-enemy-flag: "Capture the {color}{team}&f flag!"
-  flag-carrier-unknown: "Unknown"
-  flag-recovered: "{player} recovered the {flagTeam} flag!"
-  scored-title: "{team} Scored!"
-  score-subtitle: "Red: {red} - {blue} :Blue"
-  returned-void: "{team} flag returned to base (void death)"
-  returned-damage: "{team} flag returned to base ({cause})"
-  returned-fire: "{team} flag returned to base (burned)"
-
-# Match Messages
-match:
-  game-number: "Game {number}"
-  red-wins: "§cRed team wins!"
-  blue-wins: "§9Blue team wins!"
-  draw: "§eDraw!"
-  game-result-header: "§6=== Game {number} Result ==="
-  current-score: "§eCurrent Score: §cRed {red} §f- §9Blue {blue}"
-  red-wins-match: "§c§lRed Team Wins the Match!"
-  blue-wins-match: "§9§lBlue Team Wins the Match!"
-  draw-match: "§e§lMatch is a Draw!"
-  match-end-header: "§6§l=== Match End ==="
-  block-count: "§7Block count: §cRed {red} §f- §9Blue {blue}"
-  next-game-countdown: "Next game in {seconds} seconds"
-  starting-in-5: "Starting in 5 seconds..."
-  mode:
-    fixed_rounds: "Fixed Rounds"
-    first_to_x: "First to X"
-
-# Currency Messages
+  $action: '[command-extended.$action]'
+countdown:
+  one: '1'
+  start: START!
+  three: '3'
+  two: '2'
 currency:
-  team-notification: "&a[Team] {reason} (+{amount}G)"
-  purchase-notification: "&e[Team] {player} purchased {item} (-{amount}G)"
-  balance-notification: "&e[Team] Balance: {balance}G"
-  capture-currency: "{player} captured the flag"
-  capture-assist: "{count} capture assists"
-  capture-assist-message: "Capture Assist! +{amount}G"
-
-# Action Bar Messages
-action-bar:
-  build-phase-guide: "&aBuild and fortify your defenses!"
-  return-to-base: "&6Return to base!"
-  cannot-place-flag: "&cCannot place blocks near flags"
-  cannot-place-spawn: "&cCannot place blocks near spawn points"
-  cannot-place-block: "&cCannot place this block"
-  place-restriction-flag: "Can only place blocks within 3 blocks of flag or adjacent to placed blocks"
-  place-restriction-team: "Can only place blocks within 3 blocks of team blocks"
-
-# Scoreboard Messages
-scoreboard:
-  title-ctf: "CTF - {game}"
-  waiting-players: "&fWaiting Players:"
-  game-settings: "&e=== Game Settings ==="
-  build-combat-time: "&fBuild {build}m Combat {combat}m"
-  first-to-score: "&eFirst to {score} wins"
-  start-countdown: "&aStarting in: &f{seconds}s"
-  team-players: "§cRed{red} §9Blue{blue}"
-  team-players-spectator: "§cRed{red} §9Blue{blue} §7Spec{spectator}"
-  min-players: "§fMin {min} players"
-  match-game: "&eGame {number}"
-  match-score: "§cRed {red} §f- §9{blue} Blue"
-  match-wins: "§7(Match: §c{red}§7-§9{blue}§7)"
-  team-counts: "§7Players: §cRed{red} §9Blue{blue}"
-  red-flag-carried: "§cRed Flag: §e{carrier}"
-  red-flag-dropped: "§cRed Flag: §7Ground"
-  red-flag-home: "§cRed Flag: §aHome"
-  blue-flag-carried: "§9Blue Flag: §e{carrier}"
-  blue-flag-dropped: "§9Blue Flag: §7Ground"
-  blue-flag-home: "§9Blue Flag: §aHome"
-  currency-display: "§eCurrency: {amount}G"
-  currency-both: "§eCurrency: §c{red}G §9{blue}G"
-
-# Report Messages
-report:
-  header: "&6&l========== GAME REPORT =========="
-  match-score-header: "&fCurrent Match Score:"
-  match-score-format: "&cRed {red} &f- &9{blue} Blue"
-  game-header: "&eThis Game:"
-  winner-format: "&fWinner: {color}{team}"
-  draw-result: "&eDraw"
-  score-header: "&fScore:"
-  team-stats-header: "&eTeam Statistics:"
-  red-team-header: "&cRed Team:"
-  blue-team-header: "&9Blue Team:"
-  player-stats: "&f  {player}: &7{kills}K/{deaths}D (K/D: {kd})"
-  team-funds-header: "&eTeam Funds:"
-  team-funds-format: "{color}{team}: &e{amount}G"
-
-# MVP Messages
-mvp:
-  header: "&6&l========== MVP ANNOUNCEMENT =========="
-  most-kills: "&4🗡 Most Kills: &f{name} &7- {kills} kills"
-  most-captures: "&6🚩 Most Captures: &f{name} &7- {captures} captures"
-  most-defends: "&b🛡 Most Defends: &f{name} &7- {defends} defends"
-  most-assists: "&a🤝 Most Assists: &f{name} &7- {assists} assists"
-  most-builds: "&e🏗 Most Builds: &f{name} &7- {blocks} blocks"
-  most-spending: "&d💰 Most Spending: &f{name} &7- {amount}G"
-  least-deaths: "&2💀 Least Deaths: &f{name} &7- {deaths} deaths"
-  unknown-player: "Unknown"
-  deaths-display: "  Deaths: {deaths}"
-  star-decoration: "★★★★★★★★★★★★★★★"
-  mvp-title: "MVP!"
-  mvp-subtitle: "Congratulations!"
-  kills-display: "  Kills: {kills}"
-  assists-display: "  Assists: {assists}"
-  captures-display: "  Flag Captures: {captures}"
-  flag-pickups-display: "  Flag Pickups: {pickups}"
-  flag-defends-display: "  Flag Defends: {defends}"
-  money-spent-display: "  Money Spent: {amount}G"
-  blocks-placed-display: "  Blocks Placed: {blocks}"
-  announcement-title: "★★★ MVP Announcement ★★★"
-  player-label: "MVP: "
-  score-display: " (Score: {score})"
-  stats-header: "MVP Stats:"
-
-# Stats Messages
-stats:
-  top-players-header: "===== Top Players ====="
-  top-kills-label: "🗡 Most Kills: "
-  top-kills-value: "{name} ({count} kills)"
-  top-captures-label: "🚩 Most Captures: "
-  top-captures-value: "{name} ({count} times)"
-  top-defends-label: "🛡 Most Defends: "
-  top-defends-value: "{name} ({count} times)"
-  top-assists-label: "🤝 Most Assists: "
-  top-assists-value: "{name} ({count} times)"
-  top-blocks-label: "🏗 Most Building: "
-  top-blocks-value: "{name} ({count} blocks)"
-  top-spent-label: "💰 Most Spending: "
-  top-spent-value: "{name} ({amount}G)"
-  least-deaths-label: "💀 Least Deaths: "
-  least-deaths-value: "{name} ({count} times)"
-
-# Death Messages
+  capture-assist: Capture assist
+  capture-currency: Capture currency
+  balance-notification: 'Team balance: {amount}G'
+  capture-assist-message: Capture assist +{amount}G
+  purchase-notification: '{player} purchased {item}'
+  team-notification: Team earned {amount}G
 death:
-  kills-notification: "&e{killer} killed {victim}{streak}"
-  streak-format: " ({count} kill streak!)"
-  kill-streak-notification: "&6{player} is on a {count} kill streak!"
-  assist-notification: "&aKill assist! +{amount}G"
-  cause-lava: "fell into lava"
-  cause-fire: "burned"
-  cause-void: "fell into the void"
-  cause-damage: "took damage"
-
-# Block Placement
-block:
-  cannot-break-decoration: "&cCannot break flag and spawn decorations"
-  protected-area: "&cProtected area"
-
-# Item Names
-items:
-  shop-item-name: "&a&lSHOP"
-  shop-item-lore: "&7Right-click to open shop"
-
-# Game Phases
+  cause-damage: Cause damage
+  cause-fire: Cause fire
+  cause-lava: Cause lava
+  cause-void: Cause void
+  kill-streak-notification: Kill streak notification
+flag:
+  scored-title: SCORED!
+  score-subtitle: '{team} scored a point'
+  cannot-capture-no-flag: Cannot capture - your flag is not at base
+  flag-carrier-unknown: Unknown
+  picked-up: '{player} picked up the {team} flag'
+  returned-damage: '{team} flag was returned due to damage'
+  returned-fire: '{team} flag was returned due to fire'
+  returned-void: '{team} flag was returned due to void'
+  already-carrying: Already carrying a flag
+  captured-by: '{player} captured the flag'
+  concrete-name: '{team} concrete'
+  current-score: 'Current score: Red {red} - Blue {blue}'
+  enemy-has-flag: Enemy has the flag
+  flag-dropped: Flag dropped
+  flag-name: '{team} flag'
+  flag-recovered: Flag recovered
+  glass-name: '{team} glass'
+  retrieve-enemy-flag: Retrieve the enemy flag!
+  returned-home: '{team} flag returned to base'
+  returned-uncollectable: Flag cannot be collected
+  team-flag-dropped: '{team} flag dropped'
+game:
+  $action: '[game.$action]'
+  starting: Starting game...
+  started: Game started!
+  stopping: Stopping game...
+  stopped: Game stopped
+  ending: Game ended
+  cannot-start: Cannot start game
+  already-running: Game is already running
+  not-running: Game is not running
+  player-list-item: '{player} - {team}'
 game-phases:
-  build: "BUILD"
-  combat: "COMBAT" 
-  intermission: "STRATEGY"
-
-# Shield Messages
-shield:
-  decreasing: "Shield decreasing on enemy blocks!"
-  weakening: "Shield weakening!"
-  critical: "Shield at critical level!"
-
-# Shop Messages
-shop:
-  cannot-drop-item: "&cCannot drop shop items!"
-  shop-only-during-game: "&cShop only available during build/combat phases"
-  team-not-found: "&cTeam not found"
-  phase-restricted: "&cThis item cannot be purchased in the current phase"
-  purchase-limit: "&cPurchase limit reached"
-  insufficient-funds: "&cInsufficient funds! (Required: {price}G)"
-  inventory-full: "&eInventory full, item dropped at your feet"
-  purchase-success: "Purchased {item}!"
-  item:
-    emerald:
-      name: "§a§lShop"
-      lore1: "§7Right-click to open shop"
-      lore2: "§cCannot be dropped"
-  category_menu:
-    title: "§6§lShop - Category Selection"
-    weapons:
-      title: "§c§lWeapons"
-      description: "§7Swords, axes, bows, etc."
-    consumables:
-      title: "§e§lConsumables"
-      description: "§7Ender pearls, golden apples, etc."
-    blocks:
-      title: "§5§lBlocks"
-      description: "§7Building blocks, TNT, etc."
-    click_to_open: "§eClick to open"
-
-# Setup Messages
-setup:
-  invalid-answer: "&ePlease answer with Y or n"
-  map-auto-detect-prompt: "&eMap region is set. Create game with auto-detection?"
-  map-auto-detect-hint: "&7[Y/n] Y for auto-create, n for interactive"
-  invalid-game-name: "&cInvalid game name. Only alphanumeric and underscore allowed."
-  invalid-selection: "&cInvalid selection."
-  red-flag-prompt: "&eLook at red team flag location and type 'set'"
-  red-spawn-prompt: "&eLook at red team spawn point and type 'set'"
-  blue-flag-prompt: "&eLook at blue team flag location and type 'set'"
-  blue-spawn-prompt: "&eLook at blue team spawn point and type 'set'"
-  skip-to-flag: "&7'skip' to spawn at flag location"
-  build-mode-prompt: "&eBuild phase game mode (ADVENTURE/SURVIVAL/CREATIVE)"
-  skip-adventure: "&7'skip' for ADVENTURE"
-  build-time-prompt: "&eBuild phase time (seconds)"
-  skip-300: "&7'skip' for 300 seconds"
-  combat-time-prompt: "&eCombat phase time (seconds)"
-  skip-600: "&7'skip' for 600 seconds"
-  skip-first-to-x: "&7'skip' for first_to_x"
-  game-count-prompt: "&eEnter game count"
-  skip-3: "&7'skip' for 3"
-  update-all: "&f8. Update all"
-  block-not-found: "&cBlock not found"
-  flag-required: "&cFlag position is required"
-  invalid-mode: "&cInvalid mode"
-  time-range-error: "&cEnter between 10-3600"
-  match-range-error: "&cEnter between 1-10"
-  flag-position-required: "&cFlag position required"
-  game-created: "&aGame '{name}' created!"
-  update-menu-header: "&6=== Update Menu ==="
-  red-flag-menu: "&c1. Red team flag position"
-  red-spawn-menu: "&c2. Red team spawn point"
-  blue-flag-menu: "&93. Blue team flag position"
-  blue-spawn-menu: "&94. Blue team spawn point"
-  build-mode-menu: "&e5. Build phase game mode"
-  build-time-menu: "&e6. Build phase time"
-  combat-time-menu: "&e7. Combat phase time"
-  exit-menu: "&79. Exit"
-  setting-prompt: "Look at {text} and type 'set'"
-  updated: "&aUpdated"
-  cancelled: "&eCancelled"
-  timeout: "&cTimeout"
-  create-header: "Game Creation: {name}"
-  update-header: "Game Update: {name}"
-  match-mode-prompt: "Match Mode"
-  first-to-x-mode: "first_to_x: First to X Mode"
-  fixed-rounds-mode: "fixed_rounds: Fixed Rounds Mode"
-  red-flag-set: "Red Flag: {x}, {y}, {z}"
-  red-spawn-set: "Red Spawn: {x}, {y}, {z}"
-  blue-flag-set: "Blue Flag: {x}, {y}, {z}"
-  blue-spawn-set: "Blue Spawn: {x}, {y}, {z}"
-  build-mode-set: "Build Mode: {mode}"
-  build-time-set: "Build Time: {time}s"
-  combat-time-set: "Combat Time: {time}s"
-  match-mode-set: "Match Mode: {mode}"
-  match-target-set: "Target: {target}"
-  red-flag-location: "Red team flag location"
-  red-spawn-location: "Red team spawn point"
-  blue-flag-location: "Blue team flag location"
-  blue-spawn-location: "Blue team spawn point"
-
-# Manager Messages
-manager:
-  game-name-exists: "&cGame name already exists"
-  using-existing-map: "&7Using existing map area"
-  auto-detect-failed: "&cAuto-detection failed"
-  place-required-blocks: "&ePlease place required blocks in the map and try again"
-  map-area-not-set: "&cMap area not set"
-  cannot-update-running: "&cCannot update running game"
-  config-not-found: "&cConfiguration file not found"
-  map-range-not-set: "Map range not set"
-  cannot-save-running: "Cannot save while game is running"
-  map-save-failed: "Failed to save map"
-  using-worldedit: "Using WorldEdit selection"
-
-  set-range-methods: "Please set the range using one of these methods:"
-  method-worldedit: "1. WorldEdit: //pos1 and //pos2"
-  method-ctf-commands: "2. CTF Commands: /ctf setpos1 and /ctf setpos2"
-  pos1-not-set: "Start point (pos1) not set"
-  pos2-not-set: "End point (pos2) not set"
-  multiple-locations: "{count} locations"
-  required-blocks: "Required blocks:"
-  required-blocks.red-concrete: "  - Red concrete: Red team spawn"
-  required-blocks.blue-concrete: "  - Blue concrete: Blue team spawn"
-  required-blocks.red-beacon: "  - Beacon + Red glass: Red team flag"
-  required-blocks.blue-beacon: "  - Beacon + Blue glass: Blue team flag"
-
-# Gameplay Messages
-gameplay:
-  respawn-countdown: "&eRespawning in {seconds} seconds..."
-  cannot-attack-teammate: "&cCannot attack teammates!"
-  player-has-spawn-protection: "&cThis player has spawn protection!"
-  cannot-fight-build-phase: "&cCannot fight during build phase!"
-  cannot-break-adventure: "&cCannot break blocks in adventure mode"
-  cannot-break-game-blocks: "&cCannot break game blocks"
-  need-adjacent-block: "&cYou need an adjacent team block to break enemy blocks"
-  cannot-place-adventure: "&cCannot place blocks in adventure mode"
-  cannot-place-combat: "&cCannot place blocks during combat phase"
-  cannot-place-on-beacon: "&cCannot place blocks on beacons"
-  flag-info: "&fThis is {team}'s flag. Get close to pick it up"
-  spectator-mode: "&7Watching in spectator mode..."
-  clear-command-disabled: "&cCannot use /clear command during game!"
-  shop-item-redistributed: "&eShop item cannot be removed. Redistributed."
-  item-name-error: "&cCould not get item name"
-
-# Log messages
-log:
-  player-cannot-join: "Player {player} cannot join game {game}: state is {state}"
-  game-starting: "[Game] Starting game {game}, current state: {state}, phase: {phase}"
-  game-cannot-start: "Game {game} cannot start: current state is {state}"
-  temp-world-failed: "[Game] Failed to create temporary world"
-  map-restore-failed: "[Game] Failed to restore map"
-  map-restored: "[Game] Map restored"
-  no-saved-map: "[Game] No saved map available"
-  skip-map-restore: "[Game] Skipping map restore during match continuation"
-  game-loop-started: "[Game] Starting game loop for {game}"
-  respawn-task-cancel-combat: "[Respawn] Cancelling respawn task during combat phase transition"
-  respawn-task-cancel-phase: "[Respawn] Cancelling respawn task during phase transition"
-  respawn-task-cancel-match: "[Respawn] Cancelling respawn task during match reset"
-  respawn-task-cancel-stop: "[Respawn] Cancelling respawn task during game stop"
-  map-saved: "Saved map for game {game} ({blocks} blocks)"
-  map-save-failed: "Failed to save map for {game}: {error}"
-  block-restore-failed: "Failed to restore block at {x},{y},{z}: {error}"
-  map-restored-blocks: "Restored map for {game} ({blocks} blocks)"
-  map-restore-error: "Failed to restore map for {game}: {error}"
-  shop-purchase-called: "handlePurchase called with item name: '{item}'"
-  shop-item-not-found: "Item not found: '{item}'"
-  shop-available-items: "Available items:"
-  shop-item-list: "  - '{item}'"
-  safe-spawn-not-found: "Could not find safe spawn location for team {team} after {attempts} attempts, using fallback"
-
-# Shop items
-shop:
-  title: "§6§lShop §7- §e{currency}G §7(Page {page})"
-  categories:
-    weapons: "§c§lWeapons"
-    consumables: "§e§lConsumables"
-    blocks: "§5§lBlocks"
-  navigation:
-    previous_page: "§a§l← Previous Page"
-    next_page: "§a§lNext Page →"
-    main_menu: "§6§lMain Menu"
-    category: "§7Category"
-  item_info:
-    price: "§ePrice: §f{price}G"
-    personal_limit: "§bPersonal Limit: §f{current}/{max}"
-    team_limit: "§dTeam Limit: §f{current}/{max}"
-    death_behavior: "§7On death: {behavior}"
-    death_behavior:
-      keep: "§aKeep"
-      drop: "§eDrop"
-      destroy: "§cDestroy"
-    purchase_limit_reached: "§c§l✗ Purchase limit reached"
-    can_purchase: "§a§l✔ Can purchase"
-    insufficient_funds: "§c§l✗ Insufficient G"
-  items:
-    # Weapons
-    wooden_sword: "§6Wooden Sword"
-    stone_sword: "§7Stone Sword"
-    iron_sword: "§fIron Sword"
-    diamond_sword: "§bDiamond Sword"
-    netherite_sword: "§5Netherite Sword"
-    wooden_axe: "§6Wooden Axe"
-    stone_axe: "§7Stone Axe"
-    iron_axe: "§fIron Axe"
-    diamond_axe: "§bDiamond Axe"
-    netherite_axe: "§5Netherite Axe"
-    shield: "§fShield"
-    bow: "§fBow"
-    arrows: "§fArrows x8"
-    enchanted_bow: "§bEnchanted Bow"
-    enchanted_sword: "§bEnchanted Sword"
-    # Consumables
-    bread: "§6Bread x8"
-    cooked_beef: "§cCooked Beef x8"
-    golden_apple: "§6Golden Apple"
-    ender_pearl: "§5Ender Pearl"
-    shears: "§fShears"
-    enchanted_golden_apple: "§6§lEnchanted Golden Apple"
-    # Armor
-    iron_helmet: "§fIron Helmet"
-    iron_chestplate: "§fIron Chestplate"
-    iron_leggings: "§fIron Leggings"
-    iron_boots: "§fIron Boots"
-    diamond_helmet: "§bDiamond Helmet"
-    diamond_chestplate: "§bDiamond Chestplate"
-    diamond_leggings: "§bDiamond Leggings"
-    diamond_boots: "§bDiamond Boots"
-    netherite_helmet: "§5Netherite Helmet"
-    netherite_chestplate: "§5Netherite Chestplate"
-    netherite_leggings: "§5Netherite Leggings"
-    netherite_boots: "§5Netherite Boots"
-    # Blocks
-    stone: "§7Stone x16"
-    wood_planks: "§6Wood Planks x16"
-    dirt: "§6Dirt x16"
-    sand: "§eSand x16"
-    glass: "§fGlass x16"
-    cobblestone: "§7Cobblestone x16"
-    obsidian: "§8Obsidian x4"
-    tnt: "§c§lTNT"
-    ladder: "§6Ladder x16"
-    slime_block: "§aSlime Block x4"
-    hay_block: "§eHay Bale x8"
-    oak_fence: "§6Oak Fence x16"
-    iron_bars: "§7Iron Bars x16"
-    water_bucket: "§9Water Bucket"
-    lava_bucket: "§cLava Bucket"
-    redstone_dust: "§cRedstone x16"
-    redstone_torch: "§cRedstone Torch x8"
-    redstone_repeater: "§cRedstone Repeater x4"
-    lever: "§7Lever x4"
-    cobweb: "§fCobweb x4"
-    enchanted_bow:
-      lore1: "§7Power II"
-      lore2: "§7Infinity I"
-    enchanted_sword:
-      lore1: "§7Sharpness III"
-      lore2: "§7Knockback I"
-    enchanted_golden_apple:
-      lore: "§7Max 2 per player"
-    oak_trapdoor: "§6Oak Trapdoor x4"
-    iron_trapdoor: "§7Iron Trapdoor x2"
-    oak_door: "§6Oak Door x2"
-    iron_door: "§7Iron Door x1"
-    torch: "§eTorch x16"
-    stone_button: "§7Stone Button x4"
-    stone_pressure_plate: "§7Stone Pressure Plate x4"
-    piston: "§7Piston x2"
-    sticky_piston: "§aSticky Piston x2"
-    redstone_block: "§cRedstone Block x1"
-    hopper: "§7Hopper x1"
-    dispenser: "§7Dispenser x1"
-  category_descriptions:
-    weapons: "§cWeapons"
-    consumables: "§eConsumables"
-    blocks: "§5Blocks"
-
-# Game events
+  build: 'Build'
+  combat: 'Combat'
+  intermission: 'Result'
+game-states:
+  already-state: 'Game is already in {state} state'
+  waiting: 'Waiting'
+  starting: 'Starting'
+  running: 'Running'
+  ending: 'Ending'
 game_events:
   flag_capture:
-    title: "Flag Captured!"
-    subtitle: "{player} obtained {team} flag"
-  kill_streaks:
-    double: "Double Kill!"
-    triple: "Triple Kill!"
-    mega: "Mega Kill!"
-    ultra: "Ultra Kill!"
-    consecutive: "{count} Kill Streak!"
+    subtitle: '{player} obtained {team} flag'
+    title: Flag Captured!
   kill_messages:
-    with_streak: "{killer} killed {victim} ({streak} kill streak!)"
-    normal: "{killer} killed {victim}"
-    assist: "Kill Assist! +{reward}G"
-    assist_by: "{player} got a kill assist"
+    assist: Kill Assist! +{reward}G
+    assist_by: '{player} got a kill assist'
+    normal: '{killer} killed {victim}'
+    with_streak: '{killer} killed {victim} ({streak} kill streak!)'
+  kill_streaks:
+    consecutive: '{count} Kill Streak!'
+    double: Double Kill!
+    mega: Mega Kill!
+    triple: Triple Kill!
+    ultra: Ultra Kill!
   shop:
-    available: "[Shop Available]"
-  teleport:
-    red_spawn: "Teleported to Red team spawn"
-    blue_spawn: "Teleported to Blue team spawn"
-    to_player: "Teleported to {player}"
-    red_flag_home: "Teleported to Red flag location (base)"
-    blue_flag_home: "Teleported to Blue flag location (base)"
-    red_flag_carrier: "Teleported to Red flag carrier"
-    blue_flag_carrier: "Teleported to Blue flag carrier"
-    red_flag_dropped: "Teleported to dropped Red flag"
-    blue_flag_dropped: "Teleported to dropped Blue flag"
-    not_found: "Teleport destination not found"
-    player_not_found: "Player not found"
+    available: '[Shop Available]'
   spectator_menu:
-    stats_title: "Game Statistics"
-    tracking_title: "Player Tracking"
-    flag_title: "Flag Locations"
-    kills: "Kills: {count}"
-    deaths: "Deaths: {count}"
-    captures: "Captures: {count}"
-    kd_ratio: "K/D: {ratio}"
-    click_teleport: "Click to teleport"
-    team: "Team: {team}"
+    captures: 'Captures: {count}'
+    click_teleport: Click to teleport
+    deaths: 'Deaths: {count}'
+    flag_title: Flag Locations
+    kd_ratio: 'K/D: {ratio}'
+    kills: 'Kills: {count}'
+    stats_title: Game Statistics
+    team: 'Team: {team}'
+    tracking_title: Player Tracking
     flag_status:
-      carried: "Status: Carried"
-      carrier: "Carrier: {player}"
-      dropped: "Status: Dropped"
-      home: "Status: At base"
-
-# Setup messages
-setup:
-  build_blocks_prompt: "§eEnter the number of blocks to distribute in build phase (concrete and glass each)"
-  build_blocks_skip: "§7Type 'skip' to use default (16 blocks)"
-  combat_blocks_prompt: "§eEnter the number of blocks to distribute in combat phase (concrete and glass each)"
-  combat_blocks_skip: "§7Type 'skip' to use default (16 blocks)"
-  result_time_prompt: "§eEnter the result display phase duration in seconds (e.g. 60)"
-  result_time_skip: "§7Type 'skip' to use default (60 seconds)"
-  intermediate_time_prompt: "§eEnter the intermediate intermission duration in seconds (e.g. 15)"
-  intermediate_time_skip: "§7Type 'skip' to use default (15 seconds)"
-  respawn_base_prompt: "§eEnter the base respawn time in seconds (e.g. 10)"
-  respawn_base_skip: "§7Type 'skip' to use default (10 seconds)"
-  respawn_per_death_prompt: "§eEnter the additional respawn time per death in seconds (e.g. 2)"
-  respawn_per_death_skip: "§7Type 'skip' to use default (2 seconds)"
-  respawn_max_prompt: "§eEnter the maximum respawn time in seconds (e.g. 20)"
-  respawn_max_skip: "§7Type 'skip' to use default (20 seconds)"
-  blocks_range_error: "§cNumber of blocks must be between 0-64"
-  build_blocks_set: "§aBuild phase blocks set to {blocks}"
-  combat_blocks_set: "§aCombat phase blocks set to {blocks}"
-  result_time_range_error: "§cDuration must be between 5-300 seconds"
-  result_time_set: "§aResult display time set to {time} seconds"
-  intermediate_time_range_error: "§cDuration must be between 5-120 seconds"
-  intermediate_time_set: "§aIntermediate intermission time set to {time} seconds"
-  respawn_base_range_error: "§cTime must be between 1-60 seconds"
-  respawn_base_set: "§aBase respawn time set to {time} seconds"
-  respawn_per_death_range_error: "§cTime must be between 0-10 seconds"
-  respawn_per_death_set: "§aAdditional respawn time per death set to {time} seconds"
-  respawn_max_range_error: "§cTime must be between base time and 120 seconds"
-  respawn_max_set: "§aMaximum respawn time set to {time} seconds"
-  # Update menu
-  result_time_menu: "§f8. Update result display time (current: {time} seconds)"
-  intermediate_time_menu: "§f9. Update intermediate intermission time (current: {time} seconds)"
-  build_blocks_menu: "§f10. Update build phase blocks (current: {blocks})"
-  combat_blocks_menu: "§f11. Update combat phase blocks (current: {blocks})"
-  respawn_base_menu: "§f12. Update base respawn time (current: {time} seconds)"
-  respawn_per_death_menu: "§f13. Update additional respawn time per death (current: {time} seconds)"
-  respawn_max_menu: "§f14. Update maximum respawn time (current: {time} seconds)"
-  all_update_menu: "§f15. Update all"
-  exit_menu: "§f16. Exit"
-  # Update prompts
-  result_time_update_prompt: "§eEnter result display time in seconds (current: {current} seconds)"
-  intermediate_time_update_prompt: "§eEnter intermediate intermission time in seconds (current: {current} seconds)"
-  build_blocks_update_prompt: "§eEnter build phase block count (0-64, current: {current})"
-  combat_blocks_update_prompt: "§eEnter combat phase block count (0-64, current: {current})"
-  respawn_base_update_prompt: "§eEnter base respawn time in seconds (1-60, current: {current} seconds)"
-  respawn_per_death_update_prompt: "§eEnter additional respawn time per death in seconds (0-10, current: {current} seconds)"
-  respawn_max_update_prompt: "§eEnter maximum respawn time in seconds (base time～120, current: {current} seconds)"
-  # Update complete messages
-  result_time_updated: "§aResult display time updated"
-  intermediate_time_updated: "§aIntermediate intermission time updated"
-  build_blocks_updated: "§aBuild phase blocks updated"
-  combat_blocks_updated: "§aCombat phase blocks updated"
-  respawn_base_updated: "§aBase respawn time updated"
-  respawn_per_death_updated: "§aAdditional respawn time per death updated"
-  respawn_max_updated: "§aMaximum respawn time updated"
-
-# Map Scanner
+      carried: 'Status: Carried'
+      carrier: 'Carrier: {player}'
+      dropped: 'Status: Dropped'
+      home: 'Status: At base'
+  teleport:
+    blue_flag_carrier: Teleported to Blue flag carrier
+    blue_flag_dropped: Teleported to dropped Blue flag
+    blue_flag_home: Teleported to Blue flag location (base)
+    blue_spawn: Teleported to Blue team spawn
+    not_found: Teleport destination not found
+    player_not_found: Player not found
+    red_flag_carrier: Teleported to Red flag carrier
+    red_flag_dropped: Teleported to dropped Red flag
+    red_flag_home: Teleported to Red flag location (base)
+    red_spawn: Teleported to Red team spawn
+    to_player: Teleported to {player}
+gameplay:
+  cannot-attack-teammate: Cannot attack teammate
+  cannot-break-adventure: Cannot break adventure
+  cannot-break-game-blocks: Cannot break game blocks
+  cannot-fight-build-phase: Cannot fight build phase
+  cannot-place-adventure: Cannot place adventure
+  cannot-place-near-spawn: Cannot place near spawn
+  cannot-place-on-beacon: Cannot place on beacon
+  clear-command-disabled: Clear command disabled
+  flag-info: Flag info
+  item-name-error: Item Name Error failed
+  need-adjacent-block: Need adjacent block
+  player-has-spawn-protection: Player has spawn protection
+  respawn-countdown: Respawn countdown
+  shop-item-redistributed: Shop item redistributed
+  spectator-mode: Spectator mode
+general:
+  $action: '[general.$action]'
+  disabled: EasyCTF has been disabled!
+  enabled: EasyCTF has been enabled!
+items:
+  build: BUILD
+  combat: COMBAT
+  intermission: STRATEGY
+  building-block: Building block
+  efficient-diamond-pickaxe: Efficient diamond pickaxe
+  efficient-diamond-shovel: Efficient diamond shovel
+  initial-equipment: Initial equipment
+  no-drop-on-death: No drop on death
+log:
+  block-restore-failed: Block Restore Failed failed
+  game-cannot-start: Cannot game start
+  game-loop-started: Game loop started
+  game-starting: Game starting
+  map-restore-error: Map Restore Error failed
+  map-restore-failed: Map Restore Failed failed
+  map-restored: Map restored
+  map-restored-blocks: Map restored blocks
+  map-save-failed: Map Save Failed failed
+  map-saved: Map saved
+  no-saved-map: No saved map
+  player-cannot-join: Cannot player join
+  respawn-task-cancel-combat: Respawn task cancel combat
+  respawn-task-cancel-match: Respawn task cancel match
+  respawn-task-cancel-phase: Respawn task cancel phase
+  respawn-task-cancel-stop: Respawn task cancel stop
+  shop-available-items: Shop available items
+  shop-item-list: Shop item list
+  shop-item-not-found: Shop Item Not Found not found
+  shop-purchase-called: Shop purchase called
+  skip-map-restore: Skip map restore
+  temp-world-failed: Temp World Failed failed
+manager:
+  auto-detect-failed: Auto Detect Failed failed
+  cannot-save-running: Cannot save running
+  cannot-update-running: Cannot update running
+  config-not-found: Config Not Found not found
+  game-name-exists: Game name exists
+  map-area-not-set: map area not has been set
+  map-range-not-set: map range not has been set
+  map-save-failed: Map Save Failed failed
+  method-ctf-commands: Method ctf commands
+  method-worldedit: Method worldedit
+  multiple-locations: Multiple locations
+  place-required-blocks: Place required blocks
+  pos1-not-set: pos1 not has been set
+  pos2-not-set: pos2 not has been set
+  set-range-methods: set range methods has been set
+  using-existing-map: Using existing map
+  using-worldedit: Using worldedit
+  required-blocks: Required blocks
+  required-blocks-detail:
+    blue-beacon: Blue beacon (blue flag position)
+    blue-concrete: Blue concrete (blue spawn points, multiple allowed)
+    red-beacon: Red beacon (red flag position)
+    red-concrete: Red concrete (red spawn points, multiple allowed)
+match:
+  block-count: Block count
+  blue-wins: Blue wins
+  blue-wins-match: Blue wins match
+  current-score: Current score
+  draw: Draw!
+  draw-match: Draw match
+  game-number: Game number
+  game-result-header: === Game Result ===
+  match-end-header: === Match End ===
+  next-game-countdown: Next game countdown
+  red-wins: Red wins
+  red-wins-match: Red wins match
+  starting-in-5: Starting in 5
+  mode:
+    first_to_x: First to X
+    fixed_rounds: Fixed Rounds
+    ${matchWrapper:
+      config.matchMode.name.lowercase()}: '[match.mode.${matchWrapper.config.matchMode.name.lowercase()}]'
+    ${mode:
+      name.lowercase()}: '[match.mode.${mode.name.lowercase()}]'
+mvp:
+  header: ========== MVP ANNOUNCEMENT ==========
+  mvp-title: MVP
+  mvp-subtitle: '{player}'
+  announcement-title: ========== MVP ANNOUNCEMENT ==========
+  assists-display: 'Assists: {count}'
+  blocks-placed-display: 'Blocks placed: {count}'
+  captures-display: 'Captures: {count}'
+  deaths-display: 'Deaths: {count}'
+  flag-defends-display: 'Flag defends: {count}'
+  flag-pickups-display: 'Flag pickups: {count}'
+  kills-display: 'Kills: {count}'
+  money-spent-display: 'Money spent: {amount}G'
+  player-label: Player
+  score-display: 'Score: {score}'
+  star-decoration: ★
+  stats-header: ===== Statistics =====
+phase:
+  $phase-$action: '[phase.$phase-$action]'
+phase-extended:
+  game-start-title: GAME START
+  game-start-subtitle: Good luck!
+  combat-start-title: COMBAT START
+  combat-start-subtitle: Capture the enemy flag!
+  winner-title: '{team} WINS!'
+  draw-title: DRAW
+  build-time-format: 'Build Phase - Time Left: {time}'
+  combat-score-format: 'Combat Phase - Red {red} : {blue} Blue - Time Left: {time}'
+  combat-time-format: 'Combat Phase - Time Left: {time}'
+  intermission-time-format: 'Strategy Meeting - Time Left: {time}'
+  phase-end-bonus: 'Phase End Bonus'
+  score-display: 'Score: Red {red} - Blue {blue}'
+  game-ended: 'Game Ended'
+  wait-next-game: 'Please wait for the next game'
+report:
+  header: ========== GAME REPORT ==========
+  winner: 'Winner: {team}'
+  draw: Draw
+  final-score: 'Final Score: Red {red} - Blue {blue}'
+  match-score: 'Match Score: Red {red} - Blue {blue}'
+  game-duration: 'Game Duration: {time}'
+  mvp: 'MVP: {player}'
+  top-kills: 'Most Kills: {player} ({count} kills)'
+  top-captures: 'Most Captures: {player} ({count} captures)'
+  top-assists: 'Most Assists: {player} ({count} assists)'
+  blue-team-header: ===== Blue Team =====
+  draw-result: Draw
+  game-header: ===== Game {number} =====
+  match-score-format: Red {red} - Blue {blue}
+  match-score-header: Match Score
+  red-team-header: ===== Red Team =====
+  score-header: Score
+  team-funds-format: '{team}: {amount}G'
+  team-funds-header: Team Funds
+  team-stats-header: Team Stats
+  winner-format: 'Winner: {team}'
+result:
+  $action: '[result.$action]'
 scanner:
-  red-spawn-not-found: "Red team spawn point (red concrete block) not found"
-  blue-spawn-not-found: "Blue team spawn point (blue concrete block) not found"
-  red-flag-not-found: "Red team flag (beacon + red glass) not found"
-  red-flag-multiple: "Multiple red team flags found (%count%)"
-  blue-flag-not-found: "Blue team flag (beacon + blue glass) not found"
-  blue-flag-multiple: "Multiple blue team flags found (%count%)"
-  red-spawns-too-close: "Red team spawn points too close (point %point1% and point %point2% are %distance% blocks). Minimum %min% blocks required"
-  blue-spawns-too-close: "Blue team spawn points too close (point %point1% and point %point2% are %distance% blocks). Minimum %min% blocks required"
-  red-flag-spawn-too-close: "Red team flag and spawn points too close (%count% locations under %min% blocks)"
-  blue-flag-spawn-too-close: "Blue team flag and spawn points too close (%count% locations under %min% blocks)"
+  blue-flag-multiple: Blue flag multiple
+  blue-flag-not-found: Blue Flag Not Found not found
+  blue-flag-spawn-too-close: Blue flag spawn too close
+  blue-spawn-not-found: Blue Spawn Not Found not found
+  blue-spawns-too-close: Blue spawns too close
+  red-flag-multiple: Red flag multiple
+  red-flag-not-found: Red Flag Not Found not found
+  red-flag-spawn-too-close: Red flag spawn too close
+  red-spawn-not-found: Red Spawn Not Found not found
+  red-spawns-too-close: Red spawns too close
+scoreboard:
+  title-ctf: 'CTF - {game}'
+  blue-flag-carried: 'Blue Flag: {carrier}'
+  blue-flag-dropped: 'Blue Flag: Dropped'
+  blue-flag-home: 'Blue Flag: Home'
+  build-combat-time: 'Build:{build}m Combat:{combat}m'
+  currency-both: 'Red:{red}G Blue:{blue}G'
+  currency-display: 'Money: {amount}G'
+  first-to-score: 'First to {score}'
+  match-score: 'Red:{red} Blue:{blue}'
+  match-wins: 'Wins Red:{red} Blue:{blue}'
+  min-players: 'Min Players: {min}'
+  red-flag-carried: 'Red Flag: {carrier}'
+  red-flag-dropped: 'Red Flag: Dropped'
+  red-flag-home: 'Red Flag: Home'
+  start-countdown: 'Starting in {seconds}s'
+  team-counts: 'Red:{red} Blue:{blue}'
+  team-players: 'Red:{red} Blue:{blue}'
+  team-players-spectator: 'Red:{red} Blue:{blue} Spec:{spectator}'
+setup:
+  all_update_menu: 15. Update all
+  block-not-found: Block Not Found not found
+  blocks_range_error: Number of blocks must be between 0-64
+  blue-flag-location: Blue flag location
+  blue-flag-menu: Blue flag menu
+  blue-flag-prompt: Please blue flag
+  blue-flag-set: blue flag has been set
+  blue-spawn-location: Blue spawn location
+  blue-spawn-menu: Blue spawn menu
+  blue-spawn-prompt: Please blue spawn
+  blue-spawn-set: blue spawn has been set
+  build-mode-menu: Build mode menu
+  build-mode-prompt: Please build mode
+  build-mode-set: build mode has been set
+  build-time-menu: Build time menu
+  build-time-prompt: Please build time
+  build-time-set: build time has been set
+  build_blocks_menu: '10. Update build phase blocks (current: {blocks})'
+  build_blocks_prompt: Enter the number of blocks to distribute in build phase (concrete
+    and glass each)
+  build_blocks_set: Build phase blocks set to {blocks}
+  build_blocks_skip: Type 'skip' to use default (16 blocks)
+  build_blocks_update_prompt: 'Enter build phase block count (0-64, current: {current})'
+  build_blocks_updated: Build phase blocks updated
+  cancelled: Cancelled
+  combat-time-menu: Combat time menu
+  combat-time-prompt: Please combat time
+  combat-time-set: combat time has been set
+  combat_blocks_menu: '11. Update combat phase blocks (current: {blocks})'
+  combat_blocks_prompt: Enter the number of blocks to distribute in combat phase (concrete
+    and glass each)
+  combat_blocks_set: Combat phase blocks set to {blocks}
+  combat_blocks_skip: Type 'skip' to use default (16 blocks)
+  combat_blocks_update_prompt: 'Enter combat phase block count (0-64, current: {current})'
+  combat_blocks_updated: Combat phase blocks updated
+  create-header-formatted: === Create  Formatted ===
+  exit_menu: 16. Exit
+  first-to-x-mode: First to x mode
+  fixed-rounds-mode: Fixed rounds mode
+  flag-position-required: Flag position required
+  flag-required: Flag required
+  game-count-prompt: Please game count
+  game-created: Game created
+  intermediate_time_menu: '9. Update intermediate intermission time (current: {time}
+    seconds)'
+  intermediate_time_prompt: Enter the intermediate intermission duration in seconds
+    (e.g. 15)
+  intermediate_time_range_error: Duration must be between 5-120 seconds
+  intermediate_time_set: Intermediate intermission time set to {time} seconds
+  intermediate_time_skip: Type 'skip' to use default (15 seconds)
+  intermediate_time_update_prompt: 'Enter intermediate intermission time in seconds
+    (current: {current} seconds)'
+  intermediate_time_updated: Intermediate intermission time updated
+  invalid-answer: Invalid answer
+  invalid-game-name: Invalid game name
+  invalid-mode: Invalid mode
+  invalid-selection: Invalid selection
+  map-auto-detect-hint: Map auto detect hint
+  map-auto-detect-prompt: Please map auto detect
+  match-mode-prompt: Please match mode
+  match-mode-set: match mode has been set
+  match-range-error: Match Range Error failed
+  match-target-set: match target has been set
+  red-flag-location: Red flag location
+  red-flag-menu: Red flag menu
+  red-flag-prompt: Please red flag
+  red-flag-set: red flag has been set
+  red-spawn-location: Red spawn location
+  red-spawn-menu: Red spawn menu
+  red-spawn-prompt: Please red spawn
+  red-spawn-set: red spawn has been set
+  respawn_base_menu: '12. Update base respawn time (current: {time} seconds)'
+  respawn_base_prompt: Enter the base respawn time in seconds (e.g. 10)
+  respawn_base_range_error: Time must be between 1-60 seconds
+  respawn_base_set: Base respawn time set to {time} seconds
+  respawn_base_skip: Type 'skip' to use default (10 seconds)
+  respawn_base_update_prompt: 'Enter base respawn time in seconds (1-60, current:
+    {current} seconds)'
+  respawn_base_updated: Base respawn time updated
+  respawn_max_menu: '14. Update maximum respawn time (current: {time} seconds)'
+  respawn_max_prompt: Enter the maximum respawn time in seconds (e.g. 20)
+  respawn_max_range_error: Time must be between base time and 120 seconds
+  respawn_max_set: Maximum respawn time set to {time} seconds
+  respawn_max_skip: Type 'skip' to use default (20 seconds)
+  respawn_max_update_prompt: 'Enter maximum respawn time in seconds (base time～120,
+    current: {current} seconds)'
+  respawn_max_updated: Maximum respawn time updated
+  respawn_per_death_menu: '13. Update additional respawn time per death (current:
+    {time} seconds)'
+  respawn_per_death_prompt: Enter the additional respawn time per death in seconds
+    (e.g. 2)
+  respawn_per_death_range_error: Time must be between 0-10 seconds
+  respawn_per_death_set: Additional respawn time per death set to {time} seconds
+  respawn_per_death_skip: Type 'skip' to use default (2 seconds)
+  respawn_per_death_update_prompt: 'Enter additional respawn time per death in seconds
+    (0-10, current: {current} seconds)'
+  respawn_per_death_updated: Additional respawn time per death updated
+  result_time_menu: '8. Update result display time (current: {time} seconds)'
+  result_time_prompt: Enter the result display phase duration in seconds (e.g. 60)
+  result_time_range_error: Duration must be between 5-300 seconds
+  result_time_set: Result display time set to {time} seconds
+  result_time_skip: Type 'skip' to use default (60 seconds)
+  result_time_update_prompt: 'Enter result display time in seconds (current: {current}
+    seconds)'
+  result_time_updated: Result display time updated
+  setting-prompt: Please setting
+  skip-3: Skip 3
+  skip-300: Skip 300
+  skip-600: Skip 600
+  skip-adventure: Skip adventure
+  skip-first-to-x: Skip first to x
+  skip-to-flag: Skip to flag
+  time-range-error: Time Range Error failed
+  timeout: Timeout
+  update-header-formatted: === Update  Formatted ===
+  updated: Updated
+shield:
+  critical: Shield at critical level!
+  decreasing: Shield decreasing on enemy blocks!
+  status: 'Shield: [{bar}] {percent}%'
+  weakening: Shield weakening!
+shop:
+  cannot-drop-item: Cannot drop item
+  insufficient-funds: Insufficient funds
+  inventory-full: Inventory full
+  phase-restricted: Phase restricted
+  purchase-limit: Purchase limit
+  purchase-success: Purchase Success successful
+  shop-only-during-game: Shop only during game
+  team-not-found: Team Not Found not found
+  title: Shop - {currency}G (Page {page})
+  categories:
+    blocks: Blocks
+    consumables: Consumables
+    weapons: Weapons
+  category_descriptions:
+    blocks: Blocks
+    consumables: Consumables
+    weapons: Weapons
+  category_menu:
+    click_to_open: Click to open
+    title: Shop - Category Selection
+    blocks:
+      description: Building blocks, TNT, etc.
+      title: Blocks
+    consumables:
+      description: Ender pearls, golden apples, etc.
+      title: Consumables
+    weapons:
+      description: Swords, axes, bows, etc.
+      title: Weapons
+  item:
+    emerald:
+      lore1: Right-click to open shop
+      lore2: Cannot be dropped
+      name: Shop
+  item_info:
+    can_purchase: ✔ Can purchase
+    insufficient_funds: ✗ Insufficient G
+    personal_limit: 'Personal Limit: {current}/{max}'
+    price: 'Price: {price}G'
+    purchase_limit_reached: ✗ Purchase limit reached
+    team_limit: 'Team Limit: {current}/{max}'
+    death_behavior:
+      destroy: Destroy
+      drop: Drop
+      keep: Keep
+  items:
+    arrows: Arrows x8
+    bow: Bow
+    bread: Bread x8
+    cobblestone: Cobblestone x16
+    cobweb: Cobweb x4
+    cooked_beef: Cooked Beef x8
+    diamond_axe: Diamond Axe
+    diamond_boots: Diamond Boots
+    diamond_chestplate: Diamond Chestplate
+    diamond_helmet: Diamond Helmet
+    diamond_leggings: Diamond Leggings
+    diamond_sword: Diamond Sword
+    dirt: Dirt x16
+    dispenser: Dispenser x1
+    ender_pearl: Ender Pearl
+    glass: Glass x16
+    golden_apple: Golden Apple
+    hay_block: Hay Bale x8
+    hopper: Hopper x1
+    iron_axe: Iron Axe
+    iron_bars: Iron Bars x16
+    iron_boots: Iron Boots
+    iron_chestplate: Iron Chestplate
+    iron_door: Iron Door x1
+    iron_helmet: Iron Helmet
+    iron_leggings: Iron Leggings
+    iron_sword: Iron Sword
+    iron_trapdoor: Iron Trapdoor x2
+    ladder: Ladder x16
+    lava_bucket: Lava Bucket
+    lever: Lever x4
+    netherite_axe: Netherite Axe
+    netherite_boots: Netherite Boots
+    netherite_chestplate: Netherite Chestplate
+    netherite_helmet: Netherite Helmet
+    netherite_leggings: Netherite Leggings
+    netherite_sword: Netherite Sword
+    oak_door: Oak Door x2
+    oak_fence: Oak Fence x16
+    oak_trapdoor: Oak Trapdoor x4
+    obsidian: Obsidian x4
+    piston: Piston x2
+    redstone_block: Redstone Block x1
+    redstone_dust: Redstone x16
+    redstone_repeater: Redstone Repeater x4
+    redstone_torch: Redstone Torch x8
+    sand: Sand x16
+    shears: Shears
+    shield: Shield
+    slime_block: Slime Block x4
+    sticky_piston: Sticky Piston x2
+    stone: Stone x16
+    stone_axe: Stone Axe
+    stone_button: Stone Button x4
+    stone_pressure_plate: Stone Pressure Plate x4
+    stone_sword: Stone Sword
+    tnt: TNT
+    torch: Torch x16
+    water_bucket: Water Bucket
+    wood_planks: Wood Planks x16
+    wooden_axe: Wooden Axe
+    wooden_sword: Wooden Sword
+    enchanted_bow:
+      lore1: Power II
+      lore2: Infinity I
+    enchanted_golden_apple:
+      lore: Max 2 per player
+    enchanted_sword:
+      lore1: Sharpness III
+      lore2: Knockback I
+  navigation:
+    category: Category
+    main_menu: Main Menu
+    next_page: Next Page →
+    previous_page: ← Previous Page
+spectator:
+  blue-flag: Blue flag
+  hint: Please specify game name if not currently in a game
+  join-failed: Join Failed failed
+  joined: Joined as spectator
+  mode-label: Mode label
+  red-flag: Red flag
+  switched: Switched to spectator mode
+  usage: 'Usage: /ctf spectator [game_name]'
+  player-tracker: Player tracker
+  right-click-display: Right-click to display
+  right-click-menu: Right-click to open menu
+  stats-item: Stats item
+team:
+  $action: '[team.$action]'
+  full: That team is full!
+  join: You joined the {color}{team} team!
+  leave: You left your team!
+teams:
+  blue: 'Blue'
+  red: 'Red'
+  spectator: 'Spectator'
+time:
+  $action: '[time.$action]'
+  warning: ⚠ {phase} ends in {time} seconds!
+ui:
+  $action: '[ui.$action]'
+  ending: ENDING
+  error-item: 'Error: {error}'
+  running: RUNNING
+  separator-comma: ', '
+  separator-dash: ' - '
+  starting: STARTING
+  waiting: WAITING
+  loading: Loading...
+  saving: Saving...
+  cancelled: Cancelled
+  success: Success
+  failed: Failed
+  enabled: Enabled
+  disabled: Disabled
+  separator-long: ========================================
+  separator-short: ==================
+join-leave:
+  game-joined: Joined the game
+  game-left: Left the game
+  team-full-red: Red team is full
+  team-full-blue: Blue team is full
+  auto-start-cancelled: Start cancelled due to insufficient players
+  countdown-message: Starting in {seconds} seconds
+  flags-not-set: Flag positions not set
+  min-players-required: Minimum {min} players required
+  temp-world-failed: Failed to create temporary world
+spawn:
+  not-set: Spawn point not set
+  protection-active: Spawn protection active
+  protection-cancelled: Spawn protection cancelled
+  protection-ended: Spawn protection ended
+stats:
+  least-deaths-label: Least deaths
+  least-deaths-value: '{player}: {count}'
+  top-assists-label: Top assists
+  top-assists-value: '{player}: {count}'
+  top-blocks-label: Top blocks placed
+  top-blocks-value: '{player}: {count}'
+  top-captures-label: Top captures
+  top-captures-value: '{player}: {count}'
+  top-defends-label: Top defends
+  top-defends-value: '{player}: {count}'
+  top-kills-label: Top kills
+  top-kills-value: '{player}: {count} kills'
+  top-players-header: ===== Top Players =====
+  top-spent-label: Top money spent
+  top-spent-value: '{player}: {amount}G'

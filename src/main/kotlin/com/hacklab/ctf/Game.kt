@@ -60,9 +60,9 @@ class Game(
     var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
-    var buildDuration = plugin.config.getInt("default-phases.build-duration", 300)
-    var combatDuration = plugin.config.getInt("default-phases.combat-duration", 600)
-    var resultDuration = plugin.config.getInt("default-phases.result-duration", 60)
+    var buildDuration = plugin.config.getInt("default-phases.build-duration", 120)
+    var combatDuration = plugin.config.getInt("default-phases.combat-duration", 120)
+    var resultDuration = plugin.config.getInt("default-phases.result-duration", 15)
     var intermediateDuration = plugin.config.getInt("default-phases.intermediate-result-duration", 15)
     var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!
     var buildPhaseBlocks = 16
@@ -1466,15 +1466,25 @@ class Game(
             plugin.logger.info("[Game] Created blue spawn platform #${index + 1} at: ${spawn.blockX}, ${spawn.blockY - 1}, ${spawn.blockZ}")
         }
         
-        // 観戦者用の中央地点
+        // 観戦者用の中央地点（無効化）
+        // 白いコンクリートのプラットフォームは生成しない
+        /*
         val centerSpawn = mapCenterLocation
         if (centerSpawn != null) {
             createPlatformAt(world, centerSpawn.blockX, centerSpawn.blockY - 1, centerSpawn.blockZ, Material.WHITE_CONCRETE)
             plugin.logger.info("[Game] Created center platform at: ${centerSpawn.blockX}, ${centerSpawn.blockY - 1}, ${centerSpawn.blockZ}")
         }
+        */
     }
     
     private fun createPlatformAt(world: World, centerX: Int, y: Int, centerZ: Int, material: Material) {
+        // チームを判定
+        val team = when (material) {
+            Material.RED_CONCRETE -> Team.RED
+            Material.BLUE_CONCRETE -> Team.BLUE
+            else -> null
+        }
+        
         // 3x3のプラットフォームを作成
         for (x in -1..1) {
             for (z in -1..1) {
@@ -1482,6 +1492,21 @@ class Game(
                 // 既存のブロックがない場合のみ配置
                 if (block.type == Material.AIR || !block.type.isSolid) {
                     block.type = material
+                    
+                    // チームブロックの場合、teamPlacedBlocksとteamBlockTreesに登録
+                    if (team != null) {
+                        val location = block.location
+                        
+                        // teamPlacedBlocksに追加
+                        val placedBlocks = teamPlacedBlocks.getOrPut(team) { mutableSetOf() }
+                        placedBlocks.add(location)
+                        
+                        // teamBlockTreesに追加（ルートノードとして）
+                        val trees = teamBlockTrees.getOrPut(team) { mutableMapOf() }
+                        trees[location] = BlockNode(location, null) // ルートノードなので親はnull
+                        
+                        plugin.logger.info("[Game] Registered spawn platform block for $team at $location")
+                    }
                 }
             }
         }
@@ -1543,8 +1568,29 @@ class Game(
                     !space2.type.isSolid && space2.type != Material.WATER && space2.type != Material.LAVA) {
                     
                     val location = Location(world, checkX + 0.5, checkY + 1.0, checkZ + 0.5)
-                    location.yaw = if (team == Team.RED) 90f else -90f  // チームに応じて向きを設定
-                    location.pitch = 0f
+                    
+                    // 敵陣のビーコンを向くように設定
+                    val enemyFlagLocation = when (team) {
+                        Team.RED -> blueFlagLocation
+                        Team.BLUE -> redFlagLocation
+                        Team.SPECTATOR -> null
+                    }
+                    
+                    if (enemyFlagLocation != null) {
+                        // 敵陣ビーコンへの方向を計算
+                        val dx = enemyFlagLocation.x - location.x
+                        val dy = enemyFlagLocation.y - location.y
+                        val dz = enemyFlagLocation.z - location.z
+                        
+                        // YawとPitchを計算
+                        val horizontalDistance = Math.sqrt(dx * dx + dz * dz)
+                        location.yaw = Math.toDegrees(Math.atan2(-dx, dz)).toFloat()
+                        location.pitch = Math.toDegrees(Math.atan2(-dy, horizontalDistance)).toFloat()
+                    } else {
+                        // 観戦者の場合はマップ中央を向く
+                        location.yaw = 0f
+                        location.pitch = 0f
+                    }
                     
                     plugin.logger.info("[SafeSpawn] Found safe location for $team at: $location")
                     return location
@@ -1554,8 +1600,29 @@ class Game(
         
         // 安全な場所が見つからない場合は、確実にプラットフォームがある中央位置を返す
         val fallbackLocation = Location(world, baseX + 0.5, baseY.toDouble(), baseZ + 0.5)
-        fallbackLocation.yaw = if (team == Team.RED) 90f else -90f
-        fallbackLocation.pitch = 0f
+        
+        // 敵陣のビーコンを向くように設定
+        val enemyFlagLocation = when (team) {
+            Team.RED -> blueFlagLocation
+            Team.BLUE -> redFlagLocation
+            Team.SPECTATOR -> null
+        }
+        
+        if (enemyFlagLocation != null) {
+            // 敵陣ビーコンへの方向を計算
+            val dx = enemyFlagLocation.x - fallbackLocation.x
+            val dy = enemyFlagLocation.y - fallbackLocation.y
+            val dz = enemyFlagLocation.z - fallbackLocation.z
+            
+            // YawとPitchを計算
+            val horizontalDistance = Math.sqrt(dx * dx + dz * dz)
+            fallbackLocation.yaw = Math.toDegrees(Math.atan2(-dx, dz)).toFloat()
+            fallbackLocation.pitch = Math.toDegrees(Math.atan2(-dy, horizontalDistance)).toFloat()
+        } else {
+            // 観戦者の場合はマップ中央を向く
+            fallbackLocation.yaw = 0f
+            fallbackLocation.pitch = 0f
+        }
         
         plugin.logger.info("[SafeSpawn] Using fallback location for $team at: $fallbackLocation")
         return fallbackLocation
@@ -1745,8 +1812,8 @@ class Game(
         }
         
         // チーム識別用にプレイヤー名を色付け
-        player.setDisplayName("${team.getChatColor()}${player.name}")
-        player.setPlayerListName("${team.getChatColor()}${player.name}")
+        // チーム色はスコアボードチームの設定で表示（displayNameは変更しない）
+        // displayNameを変更するとチャット署名エラーが発生するため削除
         
         // 戦闘フェーズではチームカラーブロックは配布しない
         
@@ -1909,7 +1976,7 @@ class Game(
         // ビーコンを設置
         location.block.type = Material.BEACON
         
-        // 3x3の鉄ブロックベースを設置し、teamPlacedBlocksに追加
+        // 3x3の鉄ブロックベースを設置し、teamPlacedBlocksとteamBlockTreesに追加
         for (x in -1..1) {
             for (z in -1..1) {
                 val blockLoc = location.clone().add(x.toDouble(), -1.0, z.toDouble())
@@ -1917,6 +1984,10 @@ class Game(
                 // 旗の基礎ブロックをteamPlacedBlocksに追加（接続チェックの起点として）
                 val blocks = teamPlacedBlocks.getOrPut(team) { mutableSetOf() }
                 blocks.add(blockLoc)
+                
+                // teamBlockTreesにも追加（ルートノードとして）
+                val trees = teamBlockTrees.getOrPut(team) { mutableMapOf() }
+                trees[blockLoc] = BlockNode(blockLoc, null) // ルートノードなので親はnull
             }
         }
         
@@ -2226,8 +2297,9 @@ class Game(
             }
             
             // マッチモードの場合、先行勝利数を表示
-            if (matchWrapper != null) {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.first-to-score", "score" to "3")).score = line--
+            val match = matchWrapper
+            if (match != null) {
+                obj.getScore(plugin.languageManager.getMessage("match-types.first-to-score", "score" to match.config.matchTarget.toString())).score = line--
             }
             
             // ゲーム設定
@@ -2249,11 +2321,11 @@ class Game(
         
         // フェーズと時間
         val phaseText = when (phase) {
-            GamePhase.BUILD -> "§a${plugin.languageManager.getMessage("game-phases.build")}"
-            GamePhase.COMBAT -> "§c${plugin.languageManager.getMessage("game-phases.combat")}"
-            GamePhase.INTERMISSION -> "§e${plugin.languageManager.getMessage("game-phases.intermission")}"
+            GamePhase.BUILD -> plugin.languageManager.getMessage("game-phases.build")
+            GamePhase.COMBAT -> plugin.languageManager.getMessage("game-phases.combat")
+            GamePhase.INTERMISSION -> plugin.languageManager.getMessage("game-phases.intermission")
         }
-        obj.getScore("$phaseText §f${formatTime(currentPhaseTime)}").score = line--
+        obj.getScore("$phaseText ${formatTime(currentPhaseTime)}").score = line--
         obj.getScore(" ").score = line-- // 空行
         
         // スコア表示
@@ -2803,8 +2875,9 @@ class Game(
     fun handleRespawn(player: Player) {
         val team = getPlayerTeam(player.uniqueId) ?: return
         
-        // 3秒間のスポーン保護を付与
-        spawnProtection[player.uniqueId] = System.currentTimeMillis() + 3000
+        // スポーン保護を付与
+        val protectionMillis = plugin.config.getInt("mechanics.spawn-protection-duration", 3) * 1000
+        spawnProtection[player.uniqueId] = System.currentTimeMillis() + protectionMillis
         
         // 保護中は光る
         player.isGlowing = true
@@ -2822,7 +2895,8 @@ class Game(
                 spawnProtectionTasks.remove(player.uniqueId)
             }
         }
-        task.runTaskLater(plugin, 60L) // 3秒後
+        val protectionDuration = plugin.config.getInt("mechanics.spawn-protection-duration", 3) * 20L
+        task.runTaskLater(plugin, protectionDuration)
         spawnProtectionTasks[player.uniqueId] = task
         
         // スポーン地点に転送
@@ -2943,7 +3017,8 @@ class Game(
                         // 自チームの旗がドロップしている
                         (team == Team.RED && droppedFlags.any { it.value.first == Team.RED }) ||
                         (team == Team.BLUE && droppedFlags.any { it.value.first == Team.BLUE }) -> {
-                            plugin.languageManager.getMessageAsComponent("flag.team-flag-dropped")
+                            plugin.languageManager.getMessageAsComponent("flag.team-flag-dropped", 
+                                "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}"))
                         }
                         
                         // 通常状態（敵の旗を取りに行く）
@@ -3042,7 +3117,8 @@ class Game(
             }
             
             // 今回のゲーム
-            player.sendMessage(plugin.languageManager.getMessageAsComponent("report.game-header"))
+            val gameNumber = matchWrapper?.currentGameNumber ?: 1
+            player.sendMessage(plugin.languageManager.getMessageAsComponent("report.game-header", "number" to gameNumber.toString()))
             if (winner != null) {
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("report.winner-format",
                     "color" to winner.getChatColor(),
@@ -3065,14 +3141,18 @@ class Game(
             player.sendMessage(plugin.languageManager.getMessageAsComponent("report.red-team-header"))
             val redPlayers = getTeamPlayers(Team.RED)
             redPlayers.forEach { p ->
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("game.player-list-item", "name" to p.name))
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("game.player-list-item", 
+                    "player" to p.name,
+                    "team" to plugin.languageManager.getMessage("teams.red")))
             }
             
             // 青チーム
             player.sendMessage(plugin.languageManager.getMessageAsComponent("report.blue-team-header"))
             val bluePlayers = getTeamPlayers(Team.BLUE)
             bluePlayers.forEach { p ->
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("game.player-list-item", "name" to p.name))
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("game.player-list-item", 
+                    "player" to p.name,
+                    "team" to plugin.languageManager.getMessage("teams.blue")))
             }
             
             // 通貨情報
@@ -3179,7 +3259,7 @@ class Game(
                     if (player == mvpPlayer) {
                         player.showTitle(Title.title(
                             plugin.languageManager.getMessageAsComponent("mvp.mvp-title").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD),
-                            plugin.languageManager.getMessageAsComponent("mvp.mvp-subtitle").color(NamedTextColor.YELLOW),
+                            plugin.languageManager.getMessageAsComponent("mvp.mvp-subtitle", "player" to mvpPlayer.name).color(NamedTextColor.YELLOW),
                             Title.Times.times(
                                 Duration.ofMillis(500),
                                 Duration.ofSeconds(3),
@@ -3213,7 +3293,7 @@ class Game(
             if (topKiller != null && topKiller.value > 0) {
                 val killerName = Bukkit.getPlayer(topKiller.key)?.name ?: "不明"
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.top-kills-label").color(NamedTextColor.RED)
-                    .append(plugin.languageManager.getMessageAsComponent("stats.top-kills-value", "name" to killerName, "count" to topKiller.value.toString()).color(NamedTextColor.WHITE)))
+                    .append(plugin.languageManager.getMessageAsComponent("stats.top-kills-value", "player" to killerName, "count" to topKiller.value.toString()).color(NamedTextColor.WHITE)))
             }
             
             // 旗キャプチャートップ
@@ -3221,7 +3301,7 @@ class Game(
             if (topCapturer != null && topCapturer.value > 0) {
                 val capturerName = Bukkit.getPlayer(topCapturer.key)?.name ?: "不明"
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.top-captures-label").color(NamedTextColor.GOLD)
-                    .append(plugin.languageManager.getMessageAsComponent("stats.top-captures-value", "name" to capturerName, "count" to topCapturer.value.toString()).color(NamedTextColor.WHITE)))
+                    .append(plugin.languageManager.getMessageAsComponent("stats.top-captures-value", "player" to capturerName, "count" to topCapturer.value.toString()).color(NamedTextColor.WHITE)))
             }
             
             // 旗防衛トップ
@@ -3229,7 +3309,7 @@ class Game(
             if (topDefender != null && topDefender.value > 0) {
                 val defenderName = Bukkit.getPlayer(topDefender.key)?.name ?: "不明"
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.top-defends-label").color(NamedTextColor.AQUA)
-                    .append(plugin.languageManager.getMessageAsComponent("stats.top-defends-value", "name" to defenderName, "count" to topDefender.value.toString()).color(NamedTextColor.WHITE)))
+                    .append(plugin.languageManager.getMessageAsComponent("stats.top-defends-value", "player" to defenderName, "count" to topDefender.value.toString()).color(NamedTextColor.WHITE)))
             }
             
             // アシストトップ
@@ -3237,7 +3317,7 @@ class Game(
             if (topAssister != null && topAssister.value > 0) {
                 val assisterName = Bukkit.getPlayer(topAssister.key)?.name ?: "不明"
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.top-assists-label").color(NamedTextColor.GREEN)
-                    .append(plugin.languageManager.getMessageAsComponent("stats.top-assists-value", "name" to assisterName, "count" to topAssister.value.toString()).color(NamedTextColor.WHITE)))
+                    .append(plugin.languageManager.getMessageAsComponent("stats.top-assists-value", "player" to assisterName, "count" to topAssister.value.toString()).color(NamedTextColor.WHITE)))
             }
             
             // 建築トップ
@@ -3245,7 +3325,7 @@ class Game(
             if (topBuilder != null && topBuilder.value > 0) {
                 val builderName = Bukkit.getPlayer(topBuilder.key)?.name ?: "不明"
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.top-blocks-label").color(NamedTextColor.YELLOW)
-                    .append(plugin.languageManager.getMessageAsComponent("stats.top-blocks-value", "name" to builderName, "count" to topBuilder.value.toString()).color(NamedTextColor.WHITE)))
+                    .append(plugin.languageManager.getMessageAsComponent("stats.top-blocks-value", "player" to builderName, "count" to topBuilder.value.toString()).color(NamedTextColor.WHITE)))
             }
             
             // 最多消費
@@ -3253,7 +3333,7 @@ class Game(
             if (topSpender != null && topSpender.value > 0) {
                 val spenderName = Bukkit.getPlayer(topSpender.key)?.name ?: "不明"
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.top-spent-label").color(NamedTextColor.LIGHT_PURPLE)
-                    .append(plugin.languageManager.getMessageAsComponent("stats.top-spent-value", "name" to spenderName, "amount" to topSpender.value.toString()).color(NamedTextColor.WHITE)))
+                    .append(plugin.languageManager.getMessageAsComponent("stats.top-spent-value", "player" to spenderName, "amount" to topSpender.value.toString()).color(NamedTextColor.WHITE)))
             }
             
             // 最少デス（1人以上いる場合のみ）
@@ -3266,7 +3346,7 @@ class Game(
                 if (leastDeaths != null) {
                     val survivorName = Bukkit.getPlayer(leastDeaths.key)?.name ?: "不明"
                     player.sendMessage(plugin.languageManager.getMessageAsComponent("stats.least-deaths-label").color(NamedTextColor.DARK_GREEN)
-                        .append(plugin.languageManager.getMessageAsComponent("stats.least-deaths-value", "name" to survivorName, "count" to leastDeaths.value.toString()).color(NamedTextColor.WHITE)))
+                        .append(plugin.languageManager.getMessageAsComponent("stats.least-deaths-value", "player" to survivorName, "count" to leastDeaths.value.toString()).color(NamedTextColor.WHITE)))
                 }
             }
             
@@ -3452,8 +3532,6 @@ class Game(
         
         val location = block.location
         
-        plugin.logger.info("[CanPlaceBlock] Player: ${player.name}, Team: $team, Location: $location, BlockType: ${block.type}")
-        
         // スポーン地点と旗周辺の建築制限チェック（3x3、Y座標全て）
         // 赤チームの旗周辺チェック
         redFlagLocation?.let { flagLoc ->
@@ -3499,134 +3577,96 @@ class Game(
         
         // チームカラーのブロックかチェック
         val teamBlocks = TEAM_BLOCKS[team] ?: return null
+        val isTeamBlock = block.type in teamBlocks
+        val isDevice = isDeviceOrFence(block.type)
         
-        if (block.type in teamBlocks) {
-            // チームカラーブロックの場合
-            
-            // 自チームの旗位置を取得
-            val teamFlagLocation = when (team) {
-                Team.RED -> redFlagLocation
-                Team.BLUE -> blueFlagLocation
-                Team.SPECTATOR -> null // 観戦者用（到達しないはず）
-            } ?: return null
-            
-            // 旗から3ブロック以内かチェック（旗がルート）
-            if (location.world == teamFlagLocation.world && location.distance(teamFlagLocation) <= 3.0) {
-                plugin.logger.info("[CanPlaceBlock] Within 3 blocks of flag at $teamFlagLocation")
-                // 旗の基礎ブロック（鉄ブロック）の中で最も近いものを親として返す
+        plugin.logger.info("[canPlaceBlock] isTeamBlock: $isTeamBlock, isDevice: $isDevice")
+        
+        // 自チームの旗位置を取得
+        val teamFlagLocation = when (team) {
+            Team.RED -> redFlagLocation
+            Team.BLUE -> blueFlagLocation
+            Team.SPECTATOR -> null
+        } ?: return null
+        
+        // 自チームのスポーン地点を取得（複数対応）
+        val teamSpawnLocations = when (team) {
+            Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+            Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+            Team.SPECTATOR -> emptyList()
+        }
+        
+        // 既に設置したブロックを取得
+        val placedBlocks = teamPlacedBlocks[team] ?: mutableSetOf()
+        
+        // デバッグログ追加
+        plugin.logger.info("[canPlaceBlock] Team: $team, PlacedBlocks count: ${placedBlocks.size}, Phase: $phase")
+        plugin.logger.info("[canPlaceBlock] Block type: ${block.type}, Location: ${location}")
+        
+        // チームカラーブロック、装置、その他のブロック全て同じロジック：
+        // 1. 旗から3ブロック以内なら旗位置を返す
+        // 2. スポーン地点から3ブロック以内ならスポーン地点を返す
+        // 3. 既存のチームブロックに隣接していれば、その位置を返す
+        // 4. それ以外は設置不可
+        
+        // 旗から3ブロック以内かチェック
+        if (location.world == teamFlagLocation.world && location.distance(teamFlagLocation) <= 3.0) {
+            plugin.logger.info("[canPlaceBlock] Block is within 3 blocks of team flag")
+            // チームカラーブロックの場合は旗の基礎ブロックの位置を返す
+            if (isTeamBlock) {
+                plugin.logger.info("[canPlaceBlock] This is a team color block, finding nearest flag base block")
                 val flagBaseBlocks = mutableListOf<Location>()
                 for (x in -1..1) {
                     for (z in -1..1) {
                         flagBaseBlocks.add(teamFlagLocation.clone().add(x.toDouble(), -1.0, z.toDouble()))
                     }
                 }
-                return flagBaseBlocks.minByOrNull { it.distance(location) } ?: teamFlagLocation
+                val result = flagBaseBlocks.minByOrNull { it.distance(location) } ?: teamFlagLocation
+                plugin.logger.info("[canPlaceBlock] Returning flag base location: $result")
+                return result
             }
-            
-            // スポーン地点から3ブロック以内かチェック（スポーン地点もルート）
-            val teamSpawnLocations = when (team) {
-                Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
-                Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
-                Team.SPECTATOR -> emptyList()
+            plugin.logger.info("[canPlaceBlock] Not a team block, returning flag location: $teamFlagLocation")
+            return teamFlagLocation
+        }
+        
+        // スポーン地点から3ブロック以内かチェック
+        for (teamSpawnLocation in teamSpawnLocations) {
+            if (location.world == teamSpawnLocation.world && location.distance(teamSpawnLocation) <= 3.0) {
+                plugin.logger.info("[canPlaceBlock] Block is within 3 blocks of spawn location")
+                return teamSpawnLocation
             }
-            
-            plugin.logger.info("[CanPlaceBlock] Checking ${teamSpawnLocations.size} spawn locations")
-            
-            // すべてのスポーン地点をチェック
-            for (teamSpawnLocation in teamSpawnLocations) {
-                if (location.world == teamSpawnLocation.world && location.distance(teamSpawnLocation) <= 3.0) {
-                    plugin.logger.info("[CanPlaceBlock] Within 3 blocks of spawn at $teamSpawnLocation")
-                    
-                    // スポーン地点の最も近いブロックを親として返す
-                    // ツリーに登録されているスポーン地点のブロックから選ぶ
-                    val trees = teamBlockTrees[team] ?: mutableMapOf()
-                    plugin.logger.info("[CanPlaceBlock] Tree size for $team: ${trees.size}")
-                    
-                    val spawnBlocks = trees.keys
-                        .filter { 
-                            it.blockY == teamSpawnLocation.blockY - 1 && // スポーン地点の床ブロック
-                            kotlin.math.abs(it.blockX - teamSpawnLocation.blockX) <= 1 && // スポーン地点の3x3範囲内
-                            kotlin.math.abs(it.blockZ - teamSpawnLocation.blockZ) <= 1
-                        }
-                    
-                    plugin.logger.info("[CanPlaceBlock] Found ${spawnBlocks.size} spawn blocks in tree")
-                    
-                    val nearestBlock = spawnBlocks.minByOrNull { it.distance(location) }
-                    
-                    if (nearestBlock != null) {
-                        plugin.logger.info("[CanPlaceBlock] Returning nearest spawn block: $nearestBlock")
-                        return nearestBlock
-                    } else {
-                        plugin.logger.info("[CanPlaceBlock] No spawn blocks found in tree for this spawn location")
-                    }
-                }
-            }
-            
-            // 既に設置したブロックから隣接（縦横斜め）しているかチェック
-            val placedBlocks = teamPlacedBlocks[team] ?: mutableSetOf()
-            
-            // 隣接ブロックを探す
-            for (placedBlock in placedBlocks) {
-                if (isAdjacent(location, placedBlock)) {
-                    return placedBlock
-                }
-            }
-            
-            // どちらの条件も満たさない場合は設置不可
-            showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-flag"))
-            return null
-            
-        } else if (isDeviceOrFence(block.type)) {
-            // フェンスや装置の場合
-            
+        }
+        
+        // 装置やフェンスの場合は3ブロック以内、それ以外は隣接チェック
+        if (isDevice) {
+            plugin.logger.info("[canPlaceBlock] Checking device placement, need team block within 3 blocks")
             // 周囲3ブロック以内に自チームのカラーブロックがあるかチェック
-            val placedBlocks = teamPlacedBlocks[team] ?: mutableSetOf()
-            
             for (placedBlock in placedBlocks) {
                 if (location.world == placedBlock.world && location.distance(placedBlock) <= 3.0) {
-                    // 最も近いブロックを親として返す
+                    plugin.logger.info("[canPlaceBlock] Found team block within 3 blocks for device")
                     return placedBlock
                 }
             }
-            
-            // 自チームの旗から3ブロック以内かもチェック
-            val teamFlagLocation = when (team) {
-                Team.RED -> redFlagLocation
-                Team.BLUE -> blueFlagLocation
-                Team.SPECTATOR -> null // 観戦者用（到達しないはず）
-            } ?: return null
-            
-            if (location.world == teamFlagLocation.world && location.distance(teamFlagLocation) <= 3.0) {
-                return teamFlagLocation
-            }
-            
-            // スポーン地点から3ブロック以内かもチェック
-            val teamSpawnLocation = when (team) {
-                Team.RED -> redSpawnLocation
-                Team.BLUE -> blueSpawnLocation
-                Team.SPECTATOR -> null // 観戦者用（到達しないはず）
-            }
-            if (teamSpawnLocation != null && location.world == teamSpawnLocation.world && location.distance(teamSpawnLocation) <= 3.0) {
-                // スポーン地点の最も近いブロックを親として返す
-                // ツリーに登録されているスポーン地点のブロックから選ぶ
-                val trees = teamBlockTrees[team] ?: mutableMapOf()
-                return trees.keys
-                    .filter { 
-                        it.blockY == teamSpawnLocation.blockY - 1 && // スポーン地点の床ブロック
-                        kotlin.math.abs(it.blockX - teamSpawnLocation.blockX) <= 1 && // スポーン地点の3x3範囲内
-                        kotlin.math.abs(it.blockZ - teamSpawnLocation.blockZ) <= 1
-                    }
-                    .minByOrNull { it.distance(location) }
-            }
-            
-            showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-team"))
-            return null
-            
         } else {
-            // その他のブロックは設置不可
-            showActionBarError(player, plugin.languageManager.getMessage("action-bar.cannot-place-block"))
-            return null
+            plugin.logger.info("[canPlaceBlock] Checking normal block placement, need adjacent team block")
+            // 隣接ブロックをチェック
+            for (placedBlock in placedBlocks) {
+                if (isAdjacent(location, placedBlock)) {
+                    plugin.logger.info("[canPlaceBlock] Found adjacent team block")
+                    return placedBlock
+                }
+            }
         }
+        
+        // どの条件も満たさない場合は設置不可
+        if (isTeamBlock) {
+            showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-flag"))
+        } else if (isDevice) {
+            showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-team"))
+        } else {
+            showActionBarError(player, plugin.languageManager.getMessage("gameplay.need-adjacent-block"))
+        }
+        return null
     }
 
     fun hasAdjacentTeamBlock(location: Location, team: Team): Boolean {

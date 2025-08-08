@@ -126,10 +126,10 @@ class GameManager(private val plugin: Main) {
                 }
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.place-required-blocks"), NamedTextColor.YELLOW))
                 player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks"), NamedTextColor.GRAY))
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.red-concrete"), NamedTextColor.GRAY))
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.blue-concrete"), NamedTextColor.GRAY))
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.red-beacon"), NamedTextColor.GRAY))
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks.blue-beacon"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks-detail.red-concrete"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks-detail.blue-concrete"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks-detail.red-beacon"), NamedTextColor.GRAY))
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("manager.required-blocks-detail.blue-beacon"), NamedTextColor.GRAY))
             }
             return true
         }

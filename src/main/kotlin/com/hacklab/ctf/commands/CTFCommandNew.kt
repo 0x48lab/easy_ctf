@@ -842,31 +842,25 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
-        // プレイヤーの位置を取得し、Y座標を拡張
+        // プレイヤーの実際の位置を使用（Y座標も含む）
         val playerLoc = sender.location
-        val extendedLoc = Location(
-            playerLoc.world,
-            playerLoc.x,
-            playerLoc.world.minHeight.toDouble(), // ワールドの最小高さ（通常-64）
-            playerLoc.z
-        )
         
         // ゲーム名なしで一時的な範囲として設定
         if (args.size < 2) {
-            gameManager.setTempMapPos1(sender, extendedLoc)
+            gameManager.setTempMapPos1(sender, playerLoc)
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-start-set", 
                 "x" to playerLoc.blockX.toString(), 
-                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "y" to playerLoc.blockY.toString(), 
                 "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-temp-hint"), NamedTextColor.GRAY))
         } else {
             // ゲーム名ありの場合は既存のゲームに対して設定
             val gameName = args[1]
-            gameManager.setMapPos1(gameName, extendedLoc)
+            gameManager.setMapPos1(gameName, playerLoc)
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-start-set-game", 
                 "name" to gameName, 
                 "x" to playerLoc.blockX.toString(), 
-                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "y" to playerLoc.blockY.toString(), 
                 "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
         }
         
@@ -884,31 +878,25 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             return true
         }
         
-        // プレイヤーの位置を取得し、Y座標を拡張
+        // プレイヤーの実際の位置を使用（Y座標も含む）
         val playerLoc = sender.location
-        val extendedLoc = Location(
-            playerLoc.world,
-            playerLoc.x,
-            playerLoc.world.maxHeight.toDouble(), // ワールドの最大高さ（通常319）
-            playerLoc.z
-        )
         
         // ゲーム名なしで一時的な範囲として設定
         if (args.size < 2) {
-            gameManager.setTempMapPos2(sender, extendedLoc)
+            gameManager.setTempMapPos2(sender, playerLoc)
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-end-set", 
                 "x" to playerLoc.blockX.toString(), 
-                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "y" to playerLoc.blockY.toString(), 
                 "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-temp-hint"), NamedTextColor.GRAY))
         } else {
             // ゲーム名ありの場合は既存のゲームに対して設定
             val gameName = args[1]
-            gameManager.setMapPos2(gameName, extendedLoc)
+            gameManager.setMapPos2(gameName, playerLoc)
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-end-set-game", 
                 "name" to gameName, 
                 "x" to playerLoc.blockX.toString(), 
-                "y" to "${playerLoc.world.minHeight} ~ ${playerLoc.world.maxHeight}", 
+                "y" to playerLoc.blockY.toString(), 
                 "z" to playerLoc.blockZ.toString()), NamedTextColor.GREEN))
         }
         

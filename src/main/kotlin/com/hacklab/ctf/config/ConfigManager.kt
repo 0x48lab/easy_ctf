@@ -243,12 +243,12 @@ class ConfigManager(private val plugin: Main) {
             respawnDelayBase = plugin.config.getInt("default-game.respawn-delay-base", 10),
             respawnDelayPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 2),
             respawnDelayMax = plugin.config.getInt("default-game.respawn-delay-max", 20),
-            buildDuration = plugin.config.getInt("default-phases.build-duration", 300),
+            buildDuration = plugin.config.getInt("default-phases.build-duration", 120),
             buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!.also {
                 plugin.logger.info("[ConfigManager] buildPhaseGameMode from config: $it")
             },
-            combatDuration = plugin.config.getInt("default-phases.combat-duration", 600),
-            resultDuration = plugin.config.getInt("default-phases.result-duration", 60),
+            combatDuration = plugin.config.getInt("default-phases.combat-duration", 120),
+            resultDuration = plugin.config.getInt("default-phases.result-duration", 15),
             matchMode = MatchMode.FIXED_ROUNDS,
             matchTarget = plugin.config.getInt("match.default-target", 3),
             matchIntervalDuration = plugin.config.getInt("match.interval-duration", 30)
