@@ -1,79 +1,79 @@
 action-bar:
   build-phase-guide: 建築フェーズ - ブロックを配置して防御を構築
   return-to-base: 旗を持ち帰ってください！
-  cannot-place-block: Cannot place ブロック
-  cannot-place-flag: Cannot place 旗
-  cannot-place-spawn: Cannot place スポーン
-  place-restriction-flag: Place restriction 旗
-  place-restriction-team: Place restriction チーム
+  cannot-place-block: 'ブロックを設置できません'
+  cannot-place-flag: '旗を設置できません'
+  cannot-place-spawn: 'スポーン地点を設置できません'
+  place-restriction-flag: '旗の近くには設置できません'
+  place-restriction-team: '敵チームのエリアには設置できません'
 armor:
   $action: '[$action]'
-  cannot-drop-combat: Cannot drop 戦闘
-  cannot-remove-combat: Cannot remove 戦闘
-  only-leather-allowed: '[only leather allowed]'
+  cannot-drop-combat: '戦闘中はドロップできません'
+  cannot-remove-combat: '戦闘中は装備を外せません'
+  only-leather-allowed: '革装備のみ装着可能です'
 block:
   $action: '[ブロック.$action]'
 command:
   $action: '[$action]'
-  already-in-game: Already in ゲーム
-  already-in-team: Already in チーム
-  auto-param-hint: '[auto param hint]'
+  already-in-game: 'すでにゲームに参加しています'
+  already-in-team: 'すでにチームに所属しています'
+  auto-param-hint: '引数は自動で設定されます'
   blue-flag-detected: Blue 旗 detected
   blue-flag-set: 青 旗 設定されました
-  blue-spawn-added: Blue スポーン added
-  blue-spawn-detected: Blue スポーン detected
-  blue-spawn-removed: Blue スポーン removed
+  blue-spawn-added: '青チームのスポーン地点を追加しました'
+  blue-spawn-detected: '青チームのスポーン地点を検出しました'
+  blue-spawn-removed: '青チームのスポーン地点を削除しました'
   blue-spawn-set: 青 スポーン 設定されました
-  blue-team-label: Blue チーム label
-  cannot-change-team-after-start: Cannot change チーム after start
-  current-team: Current チーム
-  detection-result: '[detection result]'
+  blue-team-label: '青チーム'
+  cannot-change-team-after-start: 'ゲーム開始後はチームを変更できません'
+  current-team: '現在のチーム'
+  detection-result: '検出結果: {result}'
   flags-not-set-warning: 旗s not warning 設定されました
-  game-count-min: Game count min
-  game-created: Game created
-  game-deleted: Game deleted
-  game-joined: Game joined
+  game-count-min: '最小ゲーム数'
+  game-created: 'ゲームを作成しました'
+  game-deleted: 'ゲームを削除しました'
+  game-joined: 'ゲームに参加しました'
   game-list-header: === Game List ===
-  game-not-found: Game Not Found 見つかりません
-  game-not-running: Game not running
-  game-start-failed: Game Start Failed 失敗しました
-  game-started: Game started
-  game-stopped: Game stopped
-  help-addspawn: Help addスポーン
-  help-create: '[help create]'
-  help-delete: '[help delete]'
-  help-header: '[help header]'
-  help-info: '[help info]'
-  help-join: '[help join]'
-  help-leave: '[help leave]'
-  help-list: '[help list]'
-  help-listspawns: Help listスポーンs
-  help-removespawn: Help removeスポーン
+  game-not-found: 'ゲームが見つかりません'
+  game-not-running: 'ゲームは実行されていません'
+  game-start-failed: 'ゲームの開始に失敗しました'
+  game-started: 'ゲームを開始しました'
+  game-stopped: 'ゲームを停止しました'
+  help-addspawn: 'スポーン地点を追加します'
+  help-create: '新しいCTFゲームを作成します'
+  help-delete: 'CTFゲームを削除します'
+  help-header: '===== CTFコマンドヘルプ ====='
+  help-info: 'ゲームの詳細情報を表示します'
+  help-join: 'CTFゲームに参加します'
+  help-leave: '現在のゲームから離脱します'
+  help-list: '全ゲームの一覧を表示します'
+  help-listspawns: 'スポーン地点の一覧を表示します'
+  help-removespawn: 'スポーン地点を削除します'
   help-setflag: help旗 設定されました
   help-setspawn: helpスポーン 設定されました
-  help-spectator: '[help spectator]'
-  help-start: '[help start]'
-  help-start-note1: '[help start note1]'
-  help-start-note2: '[help start note2]'
-  help-status: '[help status]'
-  help-stop: '[help stop]'
-  help-team: Help チーム
-  help-update: '[help update]'
+  help-spectator: '観戦者として参加します'
+  help-start: 'ゲームまたはマッチを開始します'
+  help-start-note1: '単一ゲーム: /ctf start <ゲーム名>'
+  help-start-note2: 'マッチモード: /ctf start <ゲーム名> match <ゲーム数>'
+  help-status: 'ゲームの状態を確認します'
+  help-stop: 'ゲームまたはマッチを停止します'
+  help-team: 'チームを変更します'
+  help-update: 'ゲーム設定を更新します'
   info-basic-settings: info basictings 設定されました
   info-blue-flag: Info 青 旗
   info-blue-flag-not-set: info 青 旗 not 設定されました
-  info-blue-spawn: Info 青 スポーン
-  info-blue-spawn-multiple: Info 青 スポーン multiple
-  info-blue-spawn-same: Info 青 スポーン same
+  info-blue-spawn: '青チームスポーン: {location}'
+  info-blue-spawn-multiple: '青チームスポーン（複数）: {count}箇所'
+  info-blue-spawn-same: '青チームスポーン（旗と同じ位置）'
   info-build-mode: Info 建築 mode
-  info-build-phase: Info 建築 フェーズ
-  info-capture-reward: '[info capture reward]'
+  info-build-phase: '建築フェーズ: {duration}秒'
+  info-capture-reward: 'キャプチャ報酬: {amount}G'
   info-combat-phase: Info 戦闘 フェーズ
   info-currency-settings: info 通貨tings 設定されました
-  info-footer: '[info footer]'
-  info-header: '[info header]'
+  info-footer: '========================'
+  info-header: '===== ゲーム情報: {game} ====='
   info-initial-currency: Info initial 通貨
-  info-kill-reward: '[info kill reward]'
+  info-kill-reward: 'キル報酬: {amount}G'
   info-max-players: Info max プレイヤーs
   info-min-players: Info min プレイヤーs
   info-other-settings: info othertings 設定されました
@@ -81,43 +81,43 @@ command:
   info-position-settings: info positiontings 設定されました
   info-red-flag: Info 赤 旗
   info-red-flag-not-set: info 赤 旗 not 設定されました
-  info-red-spawn: Info 赤 スポーン
-  info-red-spawn-multiple: Info 赤 スポーン multiple
-  info-red-spawn-same: Info 赤 スポーン same
+  info-red-spawn: '赤チームスポーン: {location}'
+  info-red-spawn-multiple: '赤チームスポーン（複数）: {count}箇所'
+  info-red-spawn-same: '赤チームスポーン（旗と同じ位置）'
   info-respawn-time: Info reスポーン time
   info-result-phase: Info result フェーズ
-  info-world: '[info world]'
+  info-world: 'ワールド: {world}'
   invalid-game-count: Invalid ゲーム count
   invalid-spawn-number: Invalid スポーン number
   invalid-team: Invalid チーム
-  invalid-usage: Invalid usage
-  join-confirm: '[join confirm]'
-  join-confirm-time: '[join confirm time]'
+  invalid-usage: '使用方法が間違っています'
+  join-confirm: 'ゲーム{game}に参加しました'
+  join-confirm-time: 'ゲーム{game}に参加しました（{seconds}秒後に開始）'
   join-failed: Join Failed 失敗しました
   list-blue-count: List 青 count
   list-item: List アイテム
   list-red-count: List 赤 count
-  list-status: '[list status]'
+  list-status: '状態: {status}'
   map-end-set: map end 設定されました
   map-end-set-game: map end ゲーム 設定されました
   map-save-failed: Map Save Failed 失敗しました
-  map-saved: '[map saved]'
+  map-saved: 'マップを保存しました: {map}'
   map-start-set: map start 設定されました
   map-start-set-game: map start ゲーム 設定されました
-  map-temp-hint: '[map temp hint]'
+  map-temp-hint: '一時ワールドを使用します'
   match-info-header: === Match Info ===
-  match-mode: Match mode
-  match-progress: Match progress
-  match-score: Match score
-  match-start-config: Match start config
-  match-started: Match started
-  match-stopped: Match stopped
+  match-mode: 'マッチモード'
+  match-progress: 'マッチ進行状況'
+  match-score: 'マッチスコア'
+  match-start-config: 'マッチ設定: {count}ゲーム'
+  match-started: 'マッチを開始しました（{count}ゲーム）'
+  match-stopped: 'マッチを停止しました'
   no-block-found: No ブロック found
   no-games: No ゲームs
-  no-permission: '[no permission]'
-  not-in-game: Not in ゲーム
-  player-changed-team: Player changed チーム
-  player-only: Player only
+  no-permission: 'このコマンドを実行する権限がありません'
+  not-in-game: 'ゲームに参加していません'
+  player-changed-team: '{player}がチームを変更しました'
+  player-only: 'プレイヤーのみ実行可能です'
   red-flag-detected: Red 旗 detected
   red-flag-set: 赤 旗 設定されました
   red-spawn-added: Red スポーン added
@@ -126,27 +126,27 @@ command:
   red-spawn-set: 赤 スポーン 設定されました
   red-team-label: Red チーム label
   single-game-start: Single ゲーム start
-  spawn-legacy: Spawn legacy
+  spawn-legacy: 'レガシースポーン地点'
   spawn-list-header: === Spawn List ===
-  spawn-location: Spawn location
+  spawn-location: 'スポーン地点'
   spawn-not-found: Spawn Not Found 見つかりません
   spawn-not-set: スポーン not 設定されました
-  start-mode-hint: '[start mode hint]'
+  start-mode-hint: 'マッチモードで開始するには: /ctf start <ゲーム名> match <ゲーム数>'
   status-blue-team: Status 青 チーム
-  status-configuring: '[status configuring]'
-  status-ending: '[status ending]'
-  status-header: '[status header]'
+  status-configuring: '設定中'
+  status-ending: '終了処理中'
+  status-header: '===== ゲーム状態: {game} ====='
   status-phase: Status フェーズ
   status-red-team: Status 赤 チーム
-  status-running: '[status running]'
-  status-score: '[status score]'
-  status-state: '[status state]'
-  status-waiting: '[status waiting]'
+  status-running: '実行中'
+  status-score: 'スコア: 赤 {red} - 青 {blue}'
+  status-state: '状態: {state}'
+  status-waiting: '待機中'
   team-change-usage: Team change usage
-  team-changed: Team changed
-  team-full: Team full
+  team-changed: 'チームを変更しました'
+  team-full: 'チームが満員です'
   usage-addspawn: Usage addスポーン
-  usage-create: '[usage create]'
+  usage-create: '使用法: /ctf create <ゲーム名>'
   usage-delete: '[usage delete]'
   usage-info: '[usage info]'
   usage-join: '[usage join]'
@@ -172,6 +172,7 @@ countdown:
   start: START!
   three: '3'
   two: '2'
+  seconds: '{seconds}'
 currency:
   capture-assist: '[capture assist]'
   capture-currency: Capture 通貨
@@ -187,7 +188,7 @@ death:
   kill-streak-notification: '[kill streak notification]'
 flag:
   scored-title: 得点！
-  score-subtitle: '{team}が得点しました'
+  score-subtitle: '{team}が得点しました (赤 {red} - {blue} 青)'
   cannot-capture-no-flag: 自陣の旗がないため得点できません
   flag-carrier-unknown: 不明
   picked-up: '{player}が{team}の旗を取得しました'
@@ -273,20 +274,20 @@ game_events:
     red_spawn: 赤チームスポーンにテレポートしました
     to_player: '{player}にテレポートしました'
 gameplay:
-  cannot-attack-teammate: Cannot attack チームmate
-  cannot-break-adventure: Cannot break adventure
-  cannot-break-game-blocks: Cannot break ゲーム ブロックs
-  cannot-fight-build-phase: Cannot fight 建築 フェーズ
-  cannot-place-adventure: Cannot place adventure
-  cannot-place-near-spawn: Cannot place near スポーン
-  cannot-place-on-beacon: Cannot place on beacon
+  cannot-attack-teammate: 'チームメイトを攻撃できません'
+  cannot-break-adventure: 'アドベンチャーモードではブロックを破壊できません'
+  cannot-break-game-blocks: 'ゲーム用ブロックは破壊できません'
+  cannot-fight-build-phase: '建築フェーズ中は戦闘できません'
+  cannot-place-adventure: 'アドベンチャーモードではブロックを設置できません'
+  cannot-place-near-spawn: '敵のスポーン地点の近くには設置できません'
+  cannot-place-on-beacon: 'ビーコンの上には設置できません'
   clear-command-disabled: '[clear command disabled]'
-  flag-info: Flag info
-  item-name-error: Item Name Error 失敗しました
-  need-adjacent-block: Need adjacent ブロック
-  player-has-spawn-protection: Player has スポーン protection
-  respawn-countdown: Reスポーン countdown
-  shop-item-redistributed: Shop アイテム 赤istributed
+  flag-info: '旗情報'
+  item-name-error: 'アイテム名エラー'
+  need-adjacent-block: '隣接する自チームのブロックが必要です'
+  player-has-spawn-protection: 'プレイヤーはスポーン保護中です'
+  respawn-countdown: 'リスポーンまで: {seconds}秒'
+  shop-item-redistributed: 'ショップアイテムが再配布されました'
   spectator-mode: '[spectator mode]'
 general:
   $action: '[$action]'
@@ -304,14 +305,14 @@ items:
 log:
   block-restore-failed: Block Restore Failed 失敗しました
   game-cannot-start: Cannot ゲーム start
-  game-loop-started: Game loop started
-  game-starting: Game starting
+  game-loop-started: 'ゲームループを開始しました'
+  game-starting: 'ゲーム開始中'
   map-restore-error: Map Restore Error 失敗しました
   map-restore-failed: Map Restore Failed 失敗しました
   map-restored: Map resto赤
   map-restored-blocks: Map resto赤 ブロックs
   map-save-failed: Map Save Failed 失敗しました
-  map-saved: '[map saved]'
+  map-saved: 'マップを保存しました: {map}'
   no-saved-map: '[no saved map]'
   player-cannot-join: Cannot プレイヤー join
   respawn-task-cancel-combat: Reスポーン task cancel 戦闘
@@ -326,10 +327,10 @@ log:
   temp-world-failed: Temp World Failed 失敗しました
 manager:
   auto-detect-failed: Auto Detect Failed 失敗しました
-  cannot-save-running: Cannot save running
-  cannot-update-running: Cannot update running
+  cannot-save-running: '実行中のゲームは保存できません'
+  cannot-update-running: '実行中のゲームは更新できません'
   config-not-found: Config Not Found 見つかりません
-  game-name-exists: Game name exists
+  game-name-exists: 'そのゲーム名はすでに存在します'
   map-area-not-set: map area not 設定されました
   map-range-not-set: map range not 設定されました
   map-save-failed: Map Save Failed 失敗しました
@@ -349,19 +350,19 @@ manager:
     red-beacon: 赤のビーコン (赤の旗位置)
     red-concrete: 赤のコンクリート (赤のスポーン地点、複数可)
 match:
-  block-count: Block count
-  blue-wins: Blue wins
-  blue-wins-match: Blue wins マッチ
-  current-score: '[current score]'
+  block-count: 'ブロック数'
+  blue-wins: '青チームの勝利'
+  blue-wins-match: 青チームがマッチに勝利！
+  current-score: '現在のスコア: 赤{red} - 青{blue}'
   draw: 引き分け！
   draw-match: Draw マッチ
-  game-number: Game number
-  game-result-header: === Game Result ===
-  match-end-header: === Match End ===
-  next-game-countdown: Next ゲーム countdown
-  red-wins: Red wins
-  red-wins-match: Red wins マッチ
-  starting-in-5: '[starting in 5]'
+  game-number: 'ゲーム番号'
+  game-result-header: === ゲーム結果 ===
+  match-end-header: === マッチ終了 ===
+  next-game-countdown: '次のゲームまで: {seconds}秒'
+  red-wins: '赤チームの勝利'
+  red-wins-match: '赤チームがマッチに勝利！'
+  starting-in-5: '5秒後に開始'
   mode:
     first_to_x: 先取
     fixed_rounds: 固定ラウンド
@@ -397,12 +398,18 @@ phase-extended:
   draw-title: 引き分け
   build-time-format: '建築フェーズ - 残り時間: {time}'
   combat-score-format: '戦闘フェーズ - 赤 {red} : {blue} 青 - 残り時間: {time}'
+  combat-score-format-match: 'マッチ {current}/{total} - 赤 {red} : {blue} 青 - 残り時間: {time}'
   combat-time-format: '戦闘フェーズ - 残り時間: {time}'
   intermission-time-format: '作戦会議 - 残り時間: {time}'
   phase-end-bonus: 'フェーズ終了ボーナス'
   score-display: 'スコア: 赤 {red} - 青 {blue}'
   game-ended: 'ゲーム終了'
   wait-next-game: '次のゲームをお待ちください'
+  next-round-countdown: '次のラウンドまで: {seconds}秒'
+  round-start: '新ラウンド開始！'
+  build-phase-start: '建築フェーズ'
+  round-result-winner: '{team}の勝利！ スコア: 赤{red} - 青{blue}'
+  round-result-draw: '引き分け！ スコア: 赤{red} - 青{blue}'
 report:
   header: ========== ゲームレポート ==========
   winner: '勝者: {team}'
@@ -457,6 +464,13 @@ scoreboard:
   team-counts: '赤:{red}人 青:{blue}人'
   team-players: '赤:{red}人 青:{blue}人'
   team-players-spectator: '赤:{red} 青:{blue} 観戦:{spectator}'
+  match-game-number: '§e§lゲーム {current}/{total}'
+  match-wins-compact: '§c赤: §f{red}勝 §7: §9青: §f{blue}勝'
+  game-score: '§c赤: §f{red}点 §7: §9青: §f{blue}点'
+  players-count: '§c赤: §f{red}人 §7vs §9青: §f{blue}人'
+  players-count-spectator: '§c赤: §f{red}人 §7| §9青: §f{blue}人 §7| §7観戦: §f{spectator}人'
+  team-currency: '§6チーム所持金: {color}{amount}G'
+  both-currency: '§6所持金: §c赤 {red}G §7| §9青 {blue}G'
 setup:
   all_update_menu: 15. すべて更新
   block-not-found: Block Not Found 見つかりません
@@ -469,10 +483,10 @@ setup:
   blue-spawn-menu: Blue スポーン menu
   blue-spawn-prompt: Please 青 スポーン
   blue-spawn-set: 青 スポーン 設定されました
-  build-mode-menu: Build mode menu
+  build-mode-menu: '建築モードメニュー'
   build-mode-prompt: Please 建築 mode
   build-mode-set: 建築 mode 設定されました
-  build-time-menu: Build time menu
+  build-time-menu: '建築時間メニュー'
   build-time-prompt: Please 建築 time
   build-time-set: 建築 time 設定されました
   build_blocks_menu: '10. 建築フェーズのブロック数を更新 (現在: {blocks}個)'
@@ -482,7 +496,7 @@ setup:
   build_blocks_update_prompt: '建築フェーズで配布するブロック数を入力してください (0-64, 現在: {current}個)'
   build_blocks_updated: 建築フェーズのブロック数を更新しました
   cancelled: キャンセルしました
-  combat-time-menu: Combat time menu
+  combat-time-menu: '戦闘時間メニュー'
   combat-time-prompt: Please 戦闘 time
   combat-time-set: 戦闘 time 設定されました
   combat_blocks_menu: '11. 戦闘フェーズのブロック数を更新 (現在: {blocks}個)'
@@ -495,10 +509,10 @@ setup:
   exit_menu: 16. 終了
   first-to-x-mode: '[first to x mode]'
   fixed-rounds-mode: '[fixed rounds mode]'
-  flag-position-required: Flag position requi赤
-  flag-required: Flag requi赤
+  flag-position-required: '旗の位置設定が必要です'
+  flag-required: '旗の設定が必要です'
   game-count-prompt: Please ゲーム count
-  game-created: Game created
+  game-created: 'ゲームを作成しました'
   intermediate_time_menu: '9. マッチ中間の作戦会議時間を更新 (現在: {time}秒)'
   intermediate_time_prompt: 'マッチ中間の作戦会議時間を秒単位で入力してください (例: 15)'
   intermediate_time_range_error: 時間は5〜120秒の範囲で入力してください
@@ -506,10 +520,10 @@ setup:
   intermediate_time_skip: '''skip'' でデフォルト値 (15秒) を使用'
   intermediate_time_update_prompt: 'マッチ中間の作戦会議時間を秒単位で入力してください (現在: {current}秒)'
   intermediate_time_updated: マッチ中間の作戦会議時間を更新しました
-  invalid-answer: Invalid answer
+  invalid-answer: '無効な回答です'
   invalid-game-name: Invalid ゲーム name
-  invalid-mode: Invalid mode
-  invalid-selection: Invalid selection
+  invalid-mode: '無効なモードです'
+  invalid-selection: '無効な選択です'
   map-auto-detect-hint: '[map auto detect hint]'
   map-auto-detect-prompt: Please map auto detect
   match-mode-prompt: Please マッチ mode
@@ -558,7 +572,7 @@ setup:
   skip-600: '[skip 600]'
   skip-adventure: '[skip adventure]'
   skip-first-to-x: '[skip first to x]'
-  skip-to-flag: Skip to 旗
+  skip-to-flag: '旗設定にスキップ'
   time-range-error: Time Range Error 失敗しました
   timeout: タイムアウトしました
   update-header-formatted: '[update header formatted]'
@@ -569,13 +583,13 @@ shield:
   status: 'シールド: [{bar}] {percent}%'
   weakening: シールドが弱まっています！
 shop:
-  cannot-drop-item: Cannot drop アイテム
+  cannot-drop-item: 'アイテムをドロップできません'
   insufficient-funds: '[insufficient funds]'
   inventory-full: '[inventory full]'
-  phase-restricted: Phase restricted
+  phase-restricted: 'フェーズ制限中です'
   purchase-limit: '[purchase limit]'
   purchase-success: Purchase Success 成功しました
-  shop-only-during-game: Shop only during ゲーム
+  shop-only-during-game: 'ショップはゲーム中のみ使用可能です'
   team-not-found: Team Not Found 見つかりません
   title: ショップ - {currency}G (ページ {page})
   categories:
@@ -605,7 +619,13 @@ shop:
       name: ショップ
   item_info:
     can_purchase: ✔ 購入可能
-    death_behavior:
+    insufficient_funds: ✗ 資金不足
+    personal_limit: '個人制限: {current}/{max}'
+    price: '価格: {price}G'
+    purchase_limit_reached: ✗ 購入制限に達しました
+    team_limit: 'チーム制限: {current}/{max}'
+    death_behavior: '死亡時: {behavior}'
+    death_behavior_types:
       destroy: 消失
       drop: ドロップ
       keep: 保持
@@ -672,12 +692,15 @@ shop:
     wood_planks: 木材 x16
     wooden_axe: 木の斧
     wooden_sword: 木の剣
-    enchanted_bow:
+    enchanted_bow: エンチャント弓
+    enchanted_bow_lore:
       lore1: パワー II
       lore2: 無限 I
-    enchanted_golden_apple:
+    enchanted_golden_apple: エンチャント金リンゴ
+    enchanted_golden_apple_lore:
       lore: 一人2個まで
-    enchanted_sword:
+    enchanted_sword: エンチャント剣
+    enchanted_sword_lore:
       lore1: ダメージ増加 III
       lore2: ノックバック I
   navigation:
@@ -759,3 +782,4 @@ stats:
   top-players-header: ===== トッププレイヤー =====
   top-spent-label: 最多使用金額
   top-spent-value: '{player}: {amount}G'
+

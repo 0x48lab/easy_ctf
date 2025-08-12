@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.*
+import org.bukkit.Sound
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.block.BlockFace
 import org.bukkit.boss.BarColor
@@ -40,7 +41,7 @@ class Game(
     var phase = GamePhase.BUILD
     
     // マッチシステム参照
-    private var matchWrapper: MatchWrapper? = null
+    var matchWrapper: MatchWrapper? = null
     private var gameEndCallback: ((Team?) -> Unit)? = null
     
     // チーム管理
@@ -471,7 +472,7 @@ class Game(
                 // 戦闘フェーズ中の途中参加の場合は初期装備を配布
                 giveCombatPhaseItems(player, team)
             }
-            GamePhase.INTERMISSION -> {}
+
         }
         
         // スポーン地点に転送
@@ -827,7 +828,7 @@ class Game(
         setupSpawnAreas()
         
         // ショップの購入履歴をリセット
-        plugin.shopManager.resetGamePurchases(name)
+        plugin.shopManager.clearPurchaseHistory(gameName)
         
         state = GameState.RUNNING
         
@@ -866,8 +867,7 @@ class Game(
                 if (currentPhaseTime <= 0) {
                     when (phase) {
                         GamePhase.BUILD -> transitionToCombatPhase()
-                        GamePhase.COMBAT -> transitionToResultPhase()
-                        GamePhase.INTERMISSION -> endGame()
+                        GamePhase.COMBAT -> handleCombatPhaseEnd()  // 戦闘フェーズ終了処理
                     }
                 }
                 
@@ -957,8 +957,13 @@ class Game(
         processCombatTeleportBatch(spectatorPlayers, Team.SPECTATOR, 4L)
     }
     
-    private fun transitionToResultPhase() {
-        phase = GamePhase.INTERMISSION
+    /**
+     * 戦闘フェーズ終了処理
+     */
+    private fun handleCombatPhaseEnd() {
+        // ゲームタスクを一時停止
+        gameTask?.cancel()
+        gameTask = null
         
         // リスポーンタスクをキャンセル
         respawnTasks.forEach { (playerUuid, task) ->
@@ -969,7 +974,6 @@ class Game(
             Bukkit.getPlayer(playerUuid)?.let { player ->
                 if (player.gameMode == GameMode.SPECTATOR) {
                     handleRespawn(player)
-                    // 作戦会議フェーズではゲームモードはADVENTURE
                     player.gameMode = GameMode.ADVENTURE
                     
                     // 保持アイテムがあれば復元
@@ -979,20 +983,10 @@ class Game(
                         player.inventory.addItem(item)
                     }
                     player.removeMetadata("ctf_items_to_keep", plugin)
-                    
-                    // インベントリをクリア（作戦会議フェーズは装備なし）
-                    player.inventory.clear()
                 }
             }
         }
         respawnTasks.clear()
-        
-        // マッチモードで、かつ最終ゲームでない場合は短縮
-        currentPhaseTime = if (matchWrapper != null && !matchWrapper!!.isMatchComplete()) {
-            intermediateDuration  // マッチ間の作戦会議
-        } else {
-            resultDuration  // 最終ゲーム後は通常の時間
-        }
         
         // 戦闘フェーズ終了ボーナス
         val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 50)
@@ -1006,55 +1000,177 @@ class Game(
             else -> null
         }
         
-        bossBar?.setTitle("試合終了！")
-        bossBar?.color = BarColor.YELLOW
-        
-        // ゲームレポートを作成
+        // ゲームレポートを表示（テキストログのみ）
         displayGameReport(winner)
         
-        getAllPlayers().forEach { player ->
-            // マッチモードでない場合のみインベントリクリア
-            if (matchWrapper == null || matchWrapper!!.isMatchComplete()) {
-                player.inventory.clear()
-            }
-            
-            // ゲームモード変更
-            player.gameMode = GameMode.SPECTATOR
-            
-            // 勝負表示
-            if (winner != null) {
-                player.clearTitle() // 既存のタイトルをクリア
-                player.showTitle(Title.title(
-                    plugin.languageManager.getMessageAsComponent("phase-extended.winner-title", 
-                        "color" to winner.getChatColor(),
-                        "team" to plugin.languageManager.getMessage("teams.${winner.name.lowercase()}")
-                    ),
-                    plugin.languageManager.getMessageAsComponent("phase-extended.score-display",
-                        "red" to score[Team.RED].toString(),
-                        "blue" to score[Team.BLUE].toString()
-                    ),
-                    Title.Times.times(
-                        Duration.ofMillis(500),
-                        Duration.ofSeconds(5),
-                        Duration.ofMillis(500)
-                    )
-                ))
-            } else {
-                player.clearTitle() // 既存のタイトルをクリア
-                player.showTitle(Title.title(
-                    plugin.languageManager.getMessageAsComponent("phase-extended.draw-title"),
-                    plugin.languageManager.getMessageAsComponent("phase-extended.score-display",
-                        "red" to score[Team.RED].toString(),
-                        "blue" to score[Team.BLUE].toString()
-                    ),
-                    Title.Times.times(
-                        Duration.ofMillis(500),
-                        Duration.ofSeconds(5),
-                        Duration.ofMillis(500)
-                    )
-                ))
-            }
+        // 結果をチャットメッセージで簡潔に表示
+        val resultMessage = if (winner != null) {
+            plugin.languageManager.getMessage("phase-extended.round-result-winner",
+                "team" to plugin.languageManager.getMessage("teams.${winner.name.lowercase()}"),
+                "red" to score[Team.RED].toString(),
+                "blue" to score[Team.BLUE].toString()
+            )
+        } else {
+            plugin.languageManager.getMessage("phase-extended.round-result-draw",
+                "red" to score[Team.RED].toString(),
+                "blue" to score[Team.BLUE].toString()
+            )
         }
+        
+        getAllPlayers().forEach { player ->
+            player.sendMessage(Component.text(resultMessage))
+        }
+        
+        // マッチモードの場合はゲーム終了処理を呼ぶ
+        if (matchWrapper != null) {
+            // マッチモードではendGameを呼んでコールバックを実行
+            endGame()
+        } else {
+            // 通常モードでは次ラウンドへのカウントダウン開始（設定から時間を取得）
+            val countdownSeconds = plugin.config.getInt("default-phases.combat-end-countdown", 15)
+            startNextRoundCountdown(countdownSeconds)
+        }
+    }
+    
+    /**
+     * 次のラウンドへのカウントダウン
+     */
+    private fun startNextRoundCountdown(seconds: Int) {
+        var remainingSeconds = seconds
+        
+        object : BukkitRunnable() {
+            override fun run() {
+                if (state != GameState.RUNNING) {
+                    cancel()
+                    return
+                }
+                
+                remainingSeconds--
+                
+                // BossBarを更新
+                bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.next-round-countdown", "seconds" to remainingSeconds.toString()))
+                bossBar?.color = BarColor.YELLOW
+                bossBar?.progress = remainingSeconds.toDouble() / seconds.toDouble()
+                
+                // カウントダウン表示
+                when (remainingSeconds) {
+                    5, 4, 3, 2, 1 -> {
+                        getAllPlayers().forEach { player ->
+                            player.sendMessage(plugin.languageManager.getMessageAsComponent("countdown.seconds", "seconds" to remainingSeconds.toString()))
+                            player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f + (5 - remainingSeconds) * 0.2f)
+                        }
+                    }
+                    0 -> {
+                        cancel()
+                        // 次のラウンドを開始
+                        startNextRound()
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 20L, 20L)  // 1秒ごと
+    }
+    
+    /**
+     * 次のラウンドを開始
+     */
+    private fun startNextRound() {
+        // ゲームをリセットして再開始
+        resetForNextRound()
+    }
+    
+    /**
+     * 次のラウンドのためのリセット処理
+     */
+    private fun resetForNextRound() {
+        // スコアをリセット
+        score[Team.RED] = 0
+        score[Team.BLUE] = 0
+        
+        // 旗の状態をリセット
+        redFlagCarrier = null
+        blueFlagCarrier = null
+        droppedFlags.clear()
+        
+        // チームブロックをクリア
+        teamPlacedBlocks.clear()
+        
+        // 通貨をリセット
+        teamCurrency.clear()
+        teamCurrency[Team.RED] = 0
+        teamCurrency[Team.BLUE] = 0
+        
+        // 建築フェーズを開始
+        phase = GamePhase.BUILD
+        currentPhaseTime = buildDuration
+        
+        // プレイヤーをリセット
+        getAllPlayers().forEach { player ->
+            // インベントリはクリアしない（購入したアイテムを保持）
+            
+            // 建築フェーズのゲームモードを設定
+            val team = getPlayerTeam(player.uniqueId)
+            if (team != null && team != Team.SPECTATOR) {
+                // 建築フェーズのゲームモードを設定
+                player.gameMode = when(buildPhaseGameMode) {
+                    "CREATIVE" -> GameMode.CREATIVE
+                    "ADVENTURE" -> GameMode.ADVENTURE
+                    else -> GameMode.SURVIVAL  // デフォルトはSURVIVAL
+                }
+                
+                // 建築フェーズアイテムを付与（既存のアイテムは保持）
+                giveBuildPhaseItems(player, team)
+                
+                // 通貨を初期化
+                val initialCurrency = plugin.config.getInt("currency.initial", 50)
+                addTeamCurrency(team, initialCurrency, plugin.languageManager.getMessage("currency.initial-currency"))
+            } else if (team == Team.SPECTATOR) {
+                player.gameMode = GameMode.SPECTATOR
+            }
+            
+            // スポーン地点にテレポート
+            handleRespawn(player)
+        }
+        
+        // 旗を復元
+        redFlagLocation?.let { loc ->
+            loc.block.type = Material.BEACON
+            loc.clone().add(0.0, 1.0, 0.0).block.type = Material.RED_STAINED_GLASS
+        }
+        blueFlagLocation?.let { loc ->
+            loc.block.type = Material.BEACON
+            loc.clone().add(0.0, 1.0, 0.0).block.type = Material.BLUE_STAINED_GLASS
+        }
+        
+        // ゲームループを再開
+        startGameLoop()
+        
+        // 開始メッセージ
+        getAllPlayers().forEach { player ->
+            player.clearTitle()
+            player.showTitle(Title.title(
+                plugin.languageManager.getMessageAsComponent("phase-extended.round-start"),
+                plugin.languageManager.getMessageAsComponent("phase-extended.build-phase-start"),
+                Title.Times.times(
+                    Duration.ofMillis(500),
+                    Duration.ofSeconds(2),
+                    Duration.ofMillis(500)
+                )
+            ))
+            player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f)
+        }
+    }
+
+
+    
+    /**
+     * BossBarを作成（マッチインターバル用）
+     */
+    fun createBossBar() {
+        bossBar = Bukkit.createBossBar(
+            "",
+            BarColor.YELLOW,
+            BarStyle.SOLID
+        )
     }
     
     /**
@@ -1276,6 +1392,45 @@ class Game(
         
         // 勝者を決定
         val winner = getWinner()
+        
+        // 最終ゲーム終了時は結果を表示
+        if (gameEndCallback == null || (matchWrapper != null && matchWrapper!!.isMatchComplete())) {
+            // 最終結果をタイトルで表示（最終ゲームのみ）
+            getAllPlayers().forEach { player ->
+                if (winner != null) {
+                    player.clearTitle()
+                    player.showTitle(Title.title(
+                        plugin.languageManager.getMessageAsComponent("phase-extended.winner-title", 
+                            "color" to winner.getChatColor(),
+                            "team" to plugin.languageManager.getMessage("teams.${winner.name.lowercase()}")
+                        ),
+                        plugin.languageManager.getMessageAsComponent("phase-extended.score-display",
+                            "red" to score[Team.RED].toString(),
+                            "blue" to score[Team.BLUE].toString()
+                        ),
+                        Title.Times.times(
+                            Duration.ofMillis(500),
+                            Duration.ofSeconds(5),
+                            Duration.ofMillis(1000)
+                        )
+                    ))
+                } else {
+                    player.clearTitle()
+                    player.showTitle(Title.title(
+                        plugin.languageManager.getMessageAsComponent("phase-extended.draw-title"),
+                        plugin.languageManager.getMessageAsComponent("phase-extended.score-display",
+                            "red" to score[Team.RED].toString(),
+                            "blue" to score[Team.BLUE].toString()
+                        ),
+                        Title.Times.times(
+                            Duration.ofMillis(500),
+                            Duration.ofSeconds(5),
+                            Duration.ofMillis(1000)
+                        )
+                    ))
+                }
+            }
+        }
         
         plugin.logger.info("Game $gameName winner: $winner, has callback: ${gameEndCallback != null}")
         
@@ -1763,7 +1918,7 @@ class Game(
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
         if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
-            val shopItem = plugin.shopManager.createShopItem()
+            val shopItem = createShopItem()
             markAsInitialItem(shopItem, InitialItemType.SHOP_EMERALD)
             player.inventory.setItem(8, shopItem)
         }
@@ -1858,7 +2013,7 @@ class Game(
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
         if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
-            val shopItem = plugin.shopManager.createShopItem()
+            val shopItem = createShopItem()
             markAsInitialItem(shopItem, InitialItemType.SHOP_EMERALD)
             player.inventory.setItem(8, shopItem)
         }
@@ -1872,7 +2027,7 @@ class Game(
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
         if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
-            val shopItem = plugin.shopManager.createShopItem()
+            val shopItem = createShopItem()
             markAsInitialItem(shopItem, InitialItemType.SHOP_EMERALD)
             player.inventory.setItem(8, shopItem)
         }
@@ -2274,6 +2429,15 @@ class Game(
             updatePlayerScoreboard(player)
         }
     }
+
+    /**
+     * スコアボードを強制的に即座に更新する（スコア獲得時など）
+     */
+    fun forceUpdateScoreboard() {
+        // レート制限を回避して即座に更新
+        lastScoreboardUpdate = 0
+        updateScoreboard()
+    }
     
     fun updatePlayerTabColor(player: Player) {
         // プレイヤーのタブリスト色を更新
@@ -2335,10 +2499,21 @@ class Game(
                     "red" to redCount.toString(), "blue" to blueCount.toString())).score = line--
             }
             
-            // マッチモードの場合、先行勝利数を表示
+            // マッチモードの場合、ゲーム番号と先行勝利数を表示
             val match = matchWrapper
             if (match != null) {
-                obj.getScore(plugin.languageManager.getMessage("match-types.first-to-score", "score" to match.config.matchTarget.toString())).score = line--
+                obj.getScore(plugin.languageManager.getMessage("scoreboard.match-game-number", 
+                    "current" to match.currentGameNumber.toString(), 
+                    "total" to match.config.matchTarget.toString())).score = line--
+                
+                // 現在の勝利数
+                val redWins = match.matchWins[Team.RED] ?: 0
+                val blueWins = match.matchWins[Team.BLUE] ?: 0
+                if (redWins > 0 || blueWins > 0) {
+                    obj.getScore(plugin.languageManager.getMessage("scoreboard.match-wins", 
+                        "red" to redWins.toString(), 
+                        "blue" to blueWins.toString())).score = line--
+                }
             }
             
             // ゲーム設定
@@ -2358,91 +2533,76 @@ class Game(
         val playerTeam = getPlayerTeam(player.uniqueId)
         val isSpectator = playerTeam == Team.SPECTATOR
         
-        // フェーズと時間
-        val phaseText = when (phase) {
-            GamePhase.BUILD -> plugin.languageManager.getMessage("game-phases.build")
-            GamePhase.COMBAT -> plugin.languageManager.getMessage("game-phases.combat")
-            GamePhase.INTERMISSION -> plugin.languageManager.getMessage("game-phases.intermission")
-        }
-        obj.getScore("$phaseText ${formatTime(currentPhaseTime)}").score = line--
-        obj.getScore(" ").score = line-- // 空行
-        
-        // スコア表示
-        val redScore = score[Team.RED] ?: 0
-        val blueScore = score[Team.BLUE] ?: 0
-        obj.getScore(plugin.languageManager.getMessage("scoreboard.match-score", "red" to redScore.toString(), "blue" to blueScore.toString())).score = line--
-        
-        // マッチモードの場合
         if (matchWrapper != null) {
+            // マッチモードの場合：現在のゲーム番号を表示
+            val currentGame = matchWrapper!!.currentGameNumber
+            val totalGames = matchWrapper!!.config.matchTarget
+            obj.getScore(plugin.languageManager.getMessage("scoreboard.match-game-number", 
+                "current" to currentGame.toString(), 
+                "total" to totalGames.toString())).score = line--
+            
+            // 全体の勝利数
             val redWins = matchWrapper!!.matchWins[Team.RED] ?: 0
             val blueWins = matchWrapper!!.matchWins[Team.BLUE] ?: 0
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.match-wins", "red" to redWins.toString(), "blue" to blueWins.toString())).score = line--
+            obj.getScore(plugin.languageManager.getMessage("scoreboard.match-wins-compact", 
+                "red" to redWins.toString(), 
+                "blue" to blueWins.toString())).score = line--
+            
+        } else {
+            // 通常ゲームの場合：現在のスコアのみ
+            val redScore = score[Team.RED] ?: 0
+            val blueScore = score[Team.BLUE] ?: 0
+            obj.getScore(plugin.languageManager.getMessage("scoreboard.game-score", 
+                "red" to redScore.toString(), 
+                "blue" to blueScore.toString())).score = line--
         }
-        
-        // チーム人数
+
+        // === プレイヤー数 ===
         val redCount = redTeam.size
         val blueCount = blueTeam.size
-        obj.getScore(plugin.languageManager.getMessage("scoreboard.team-counts", "red" to redCount.toString(), "blue" to blueCount.toString())).score = line--
-        
-        // 旗の状態
-        if (phase == GamePhase.COMBAT) {
-            obj.getScore("  ").score = line-- // 空行
-            
-            // 赤旗の状態
-            val redFlagStatus = when {
-                redFlagCarrier != null -> {
-                    val carrier = Bukkit.getPlayer(redFlagCarrier!!)
-                    plugin.languageManager.getMessage("scoreboard.red-flag-carried", "carrier" to (carrier?.name ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")))
-                }
-                isRedFlagDropped -> plugin.languageManager.getMessage("scoreboard.red-flag-dropped")
-                else -> plugin.languageManager.getMessage("scoreboard.red-flag-home")
-            }
-            obj.getScore(redFlagStatus).score = line--
-            
-            // 青旗の状態
-            val blueFlagStatus = when {
-                blueFlagCarrier != null -> {
-                    val carrier = Bukkit.getPlayer(blueFlagCarrier!!)
-                    plugin.languageManager.getMessage("scoreboard.blue-flag-carried", "carrier" to (carrier?.name ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")))
-                }
-                isBlueFlagDropped -> plugin.languageManager.getMessage("scoreboard.blue-flag-dropped")
-                else -> plugin.languageManager.getMessage("scoreboard.blue-flag-home")
-            }
-            obj.getScore(blueFlagStatus).score = line--
+        val spectatorCount = spectators.size
+        if (spectatorCount > 0) {
+            obj.getScore(plugin.languageManager.getMessage("scoreboard.players-count-spectator", 
+                "red" to redCount.toString(), 
+                "blue" to blueCount.toString(), 
+                "spectator" to spectatorCount.toString())).score = line--
+        } else {
+            obj.getScore(plugin.languageManager.getMessage("scoreboard.players-count", 
+                "red" to redCount.toString(), 
+                "blue" to blueCount.toString())).score = line--
         }
-        
-        // 通貨表示
-        obj.getScore("   ").score = line-- // 空行
-        if (isSpectator) {
-            // 観戦者は両チームの通貨を表示
-            val redCurrency = if (matchWrapper != null) {
-                matchWrapper!!.getTeamCurrency(Team.RED)
-            } else {
-                getTeamCurrency(Team.RED)
+
+        obj.getScore("  ").score = line-- // 空行
+
+        // === チームのお金 ===
+        if (phase == GamePhase.COMBAT || phase == GamePhase.BUILD) {
+            if (isSpectator) {
+                // 観戦者は両チームの通貨を表示
+                val redCurrency = if (matchWrapper != null) {
+                    matchWrapper!!.getTeamCurrency(Team.RED)
+                } else {
+                    getTeamCurrency(Team.RED)
+                }
+                val blueCurrency = if (matchWrapper != null) {
+                    matchWrapper!!.getTeamCurrency(Team.BLUE)
+                } else {
+                    getTeamCurrency(Team.BLUE)
+                }
+                obj.getScore(plugin.languageManager.getMessage("scoreboard.both-currency", 
+                    "red" to redCurrency.toString(), 
+                    "blue" to blueCurrency.toString())).score = line--
+            } else if (playerTeam != null) {
+                // プレイヤーは自チームの通貨のみ表示
+                val currency = if (matchWrapper != null) {
+                    matchWrapper!!.getTeamCurrency(playerTeam)
+                } else {
+                    getTeamCurrency(playerTeam)
+                }
+                val teamColor = if (playerTeam == Team.RED) "§c" else "§9"
+                obj.getScore(plugin.languageManager.getMessage("scoreboard.team-currency", 
+                    "color" to teamColor, 
+                    "amount" to currency.toString())).score = line--
             }
-            val blueCurrency = if (matchWrapper != null) {
-                matchWrapper!!.getTeamCurrency(Team.BLUE)
-            } else {
-                getTeamCurrency(Team.BLUE)
-            }
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.currency-both", "red" to redCurrency.toString(), "blue" to blueCurrency.toString())).score = line--
-            obj.getScore(plugin.languageManager.getMessage("spectator.mode-label")).score = line--
-        } else if (playerTeam != null) {
-            // プレイヤーは自チームの通貨のみ表示
-            val currency = if (matchWrapper != null) {
-                matchWrapper!!.getTeamCurrency(playerTeam)
-            } else {
-                getTeamCurrency(playerTeam)
-            }
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.currency-display", "amount" to currency.toString())).score = line--
-        }
-    }
-    
-    private fun getPhaseDisplayName(): String {
-        return when (phase) {
-            GamePhase.BUILD -> plugin.languageManager.getMessage("game-phases.build")
-            GamePhase.COMBAT -> plugin.languageManager.getMessage("game-phases.combat")
-            GamePhase.INTERMISSION -> plugin.languageManager.getMessage("game-phases.intermission")
         }
     }
     
@@ -2462,12 +2622,22 @@ class Game(
                 // 戦闘フェーズ: 旗の取得数を表示
                 val redScore = score[Team.RED] ?: 0
                 val blueScore = score[Team.BLUE] ?: 0
-                plugin.languageManager.getMessage("phase-extended.combat-score-format", "red" to redScore.toString(), "blue" to blueScore.toString(), "time" to timeText)
+                // マッチモードの場合はゲーム番号も表示
+                if (matchWrapper != null) {
+                    plugin.languageManager.getMessage("phase-extended.combat-score-format-match", 
+                        "current" to matchWrapper!!.currentGameNumber.toString(),
+                        "total" to matchWrapper!!.config.matchTarget.toString(),
+                        "red" to redScore.toString(), 
+                        "blue" to blueScore.toString(), 
+                        "time" to timeText)
+                } else {
+                    plugin.languageManager.getMessage("phase-extended.combat-score-format", 
+                        "red" to redScore.toString(), 
+                        "blue" to blueScore.toString(), 
+                        "time" to timeText)
+                }
             }
-            GamePhase.INTERMISSION -> {
-                // 作戦会議フェーズ
-                plugin.languageManager.getMessage("phase-extended.intermission-time-format", "time" to timeText)
-            }
+
         }
         
         bar.setTitle(barTitle)
@@ -2476,14 +2646,14 @@ class Game(
         bar.color = when (phase) {
             GamePhase.BUILD -> BarColor.GREEN
             GamePhase.COMBAT -> BarColor.RED
-            GamePhase.INTERMISSION -> BarColor.YELLOW
+
         }
         
         // 進行度を更新
         val totalTime = when (phase) {
             GamePhase.BUILD -> buildDuration
             GamePhase.COMBAT -> combatDuration
-            GamePhase.INTERMISSION -> resultDuration
+
         }
         
         val progress = currentPhaseTime.toDouble() / totalTime.toDouble()
@@ -2831,6 +3001,9 @@ class Game(
         // スコア加算
         score[team] = (score[team] ?: 0) + 1
         
+        // スコアボードを即座に更新
+        forceUpdateScoreboard()
+        
         // キャプチャー統計を記録
         playerCaptures[player.uniqueId] = (playerCaptures[player.uniqueId] ?: 0) + 1
         
@@ -2898,6 +3071,7 @@ class Game(
             p.showTitle(Title.title(
                 plugin.languageManager.getMessageAsComponent("flag.scored-title", "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}")),
                 plugin.languageManager.getMessageAsComponent("flag.score-subtitle", 
+                    "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}"),
                     "red" to (score[Team.RED] ?: 0).toString(),
                     "blue" to (score[Team.BLUE] ?: 0).toString()),
                 Title.Times.times(
@@ -2950,10 +3124,22 @@ class Game(
                     // リスポーン時はブロックを再配布しない（消費型のため）
                     // ピッケルやシャベルなどの初期装備のみチェック
                 
-                // ショップアイテムがない場合のみ再配布
-                val existingShopItem = player.inventory.getItem(8)
-                if (existingShopItem?.type != Material.EMERALD || !plugin.shopManager.isShopItem(existingShopItem)) {
-                    val shopItem = plugin.shopManager.createShopItem()
+                // ショップアイテムの重複チェック - スロット8にのみ配置
+                // まず全インベントリをチェックして既存のショップアイテムを削除
+                for (i in 0 until player.inventory.size) {
+                    val item = player.inventory.getItem(i)
+                    if (item != null && isShopItem(item)) {
+                        if (i != 8) {
+                            // スロット8以外にある場合は削除
+                            player.inventory.setItem(i, null)
+                        }
+                    }
+                }
+                
+                // スロット8を確認して、ショップアイテムがなければ配置
+                val slot8Item = player.inventory.getItem(8)
+                if (slot8Item == null || !isShopItem(slot8Item)) {
+                    val shopItem = createShopItem()
                     player.inventory.setItem(8, shopItem)
                 }
                 
@@ -2970,7 +3156,7 @@ class Game(
                     plugin.equipmentManager.giveArmor(player, team)
                 }
             }
-            GamePhase.INTERMISSION -> {}
+
         }
         
         player.sendMessage(plugin.languageManager.getMessageAsComponent("spawn.protection-active"))
@@ -3070,10 +3256,7 @@ class Game(
                     }
                 }
                 
-                GamePhase.INTERMISSION -> {
-                    // 作戦会議フェーズでは何も表示しない
-                    return@forEach
-                }
+
             }
             
             player.sendActionBar(message)
@@ -3083,6 +3266,69 @@ class Game(
     // 通貨管理メソッド（マッチがない場合用）
     fun getTeamCurrency(team: Team): Int {
         return matchWrapper?.getTeamCurrency(team) ?: teamCurrency[team] ?: 0
+    }
+
+    
+    fun removeTeamCurrency(team: Team, amount: Int) {
+        if (matchWrapper != null) {
+            matchWrapper!!.removeTeamCurrency(team, amount)
+        } else {
+            val current = teamCurrency[team] ?: 0
+            teamCurrency[team] = maxOf(0, current - amount)
+        }
+    }
+    
+    fun getDiscountRate(team: Team): Double {
+        val redScore = score[Team.RED] ?: 0
+        val blueScore = score[Team.BLUE] ?: 0
+        val difference = when (team) {
+            Team.RED -> blueScore - redScore
+            Team.BLUE -> redScore - blueScore
+            else -> 0
+        }
+        
+        return when {
+            difference >= 4 -> plugin.config.getDouble("shop.discount.4-point-plus", 0.4)
+            difference == 3 -> plugin.config.getDouble("shop.discount.3-point", 0.3)
+            difference == 2 -> plugin.config.getDouble("shop.discount.2-point", 0.2)
+            difference == 1 -> plugin.config.getDouble("shop.discount.1-point", 0.1)
+            else -> 0.0
+        }
+    }
+
+    
+    fun createShopItem(): ItemStack {
+        val emerald = ItemStack(Material.EMERALD)
+        val meta = emerald.itemMeta
+        meta.displayName(plugin.languageManager.getMessageAsComponent("shop.item.emerald.name"))
+        
+        val lore = mutableListOf<Component>()
+        lore.add(plugin.languageManager.getMessageAsComponent("shop.item.emerald.lore1"))
+        lore.add(plugin.languageManager.getMessageAsComponent("shop.item.emerald.lore2"))
+        meta.lore(lore)
+        
+        // NBTタグを設定してショップアイテムであることを識別
+        meta.persistentDataContainer.set(
+            NamespacedKey(plugin, "is_shop_item"),
+            PersistentDataType.BYTE,
+            1
+        )
+        
+        emerald.itemMeta = meta
+        return emerald
+    }
+    
+    fun isShopItem(item: ItemStack?): Boolean {
+        if (item == null || item.type != Material.EMERALD) return false
+        val meta = item.itemMeta ?: return false
+        return meta.persistentDataContainer.has(
+            NamespacedKey(plugin, "is_shop_item"),
+            PersistentDataType.BYTE
+        )
+    }
+    
+    fun resetGamePurchases() {
+        plugin.shopManager.clearPurchaseHistory(gameName)
     }
     
     fun addTeamCurrency(team: Team, amount: Int, reason: String = "") {
@@ -3283,14 +3529,14 @@ class Game(
                     val blocks = playerBlocksPlaced[uuid] ?: 0
                     val deaths = playerDeaths[uuid] ?: 0
                     
-                    if (kills > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.kills-display", "kills" to kills.toString()).color(NamedTextColor.GREEN))
-                    if (assists > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.assists-display", "assists" to assists.toString()).color(NamedTextColor.GREEN))
-                    if (captures > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.captures-display", "captures" to captures.toString()).color(NamedTextColor.GOLD))
-                    if (flagPickups > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.flag-pickups-display", "pickups" to flagPickups.toString()).color(NamedTextColor.YELLOW))
-                    if (flagDefends > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.flag-defends-display", "defends" to flagDefends.toString()).color(NamedTextColor.AQUA))
+                    if (kills > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.kills-display", "count" to kills.toString()).color(NamedTextColor.GREEN))
+                    if (assists > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.assists-display", "count" to assists.toString()).color(NamedTextColor.GREEN))
+                    if (captures > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.captures-display", "count" to captures.toString()).color(NamedTextColor.GOLD))
+                    if (flagPickups > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.flag-pickups-display", "count" to flagPickups.toString()).color(NamedTextColor.YELLOW))
+                    if (flagDefends > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.flag-defends-display", "count" to flagDefends.toString()).color(NamedTextColor.AQUA))
                     if (moneySpent > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.money-spent-display", "amount" to moneySpent.toString()).color(NamedTextColor.YELLOW))
-                    if (blocks > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.blocks-placed-display", "blocks" to blocks.toString()).color(NamedTextColor.WHITE))
-                    if (deaths > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.deaths-display", "deaths" to deaths.toString()).color(NamedTextColor.RED))
+                    if (blocks > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.blocks-placed-display", "count" to blocks.toString()).color(NamedTextColor.WHITE))
+                    if (deaths > 0) player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.deaths-display", "count" to deaths.toString()).color(NamedTextColor.RED))
                     
                     player.sendMessage(plugin.languageManager.getMessageAsComponent("mvp.star-decoration").color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
                     
@@ -3963,6 +4209,9 @@ class Game(
                         // プレイヤーが有効でない場合はスキップ
                         if (!player.isOnline || player.isDead) continue
                         
+                        // シールドシステムが無効の場合はスキップ
+                        if (!plugin.config.getBoolean("shield.enabled", true)) continue
+                        
                         val playerTeam = getPlayerTeam(player.uniqueId)
                         if (playerTeam == null) continue
                         
@@ -3976,7 +4225,8 @@ class Game(
                         }
                         
                         // 現在のシールド値を取得（初期値100）
-                        var shield = playerShield.getOrDefault(player.uniqueId, 100f)
+                        val maxShield = plugin.config.getInt("shield.max-shield", 100).toFloat()
+                        var shield = playerShield.getOrDefault(player.uniqueId, maxShield)
                         
                         if (isOnEnemyBlock) {
                             // 初めて敵陣に乗った時だけ警告
@@ -3985,14 +4235,18 @@ class Game(
                                 player.sendMessage(plugin.languageManager.getMessageAsComponent("shield.decreasing"))
                             }
                             
-                            // シールドを減らす（0.5秒ごとに2減少 = 25秒で枯渇）
-                            shield = (shield - 2f).coerceAtLeast(0f)
+                            // シールドを減らす（設定値に基づく）
+                            val decreaseRate = plugin.config.getDouble("shield.decrease-rate", 2.0).toFloat()
+                            shield = (shield - decreaseRate).coerceAtLeast(0f)
                             
                             // シールドが少なくなったら警告
-                            if (shield == 40f) {
+                            val warningThreshold = plugin.config.getInt("shield.warning-threshold", 40).toFloat()
+                            val criticalThreshold = plugin.config.getInt("shield.critical-threshold", 20).toFloat()
+                            
+                            if (shield == warningThreshold) {
                                 player.sendMessage(plugin.languageManager.getMessageAsComponent("shield.weakening"))
                                 player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.5f)
-                            } else if (shield == 20f) {
+                            } else if (shield == criticalThreshold) {
                                 player.sendMessage(plugin.languageManager.getMessageAsComponent("shield.critical"))
                                 player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.3f)
                             }
@@ -4006,12 +4260,14 @@ class Game(
                                 
                                 val currentTime = System.currentTimeMillis()
                                 val lastDamage = lastDamageTime[player.uniqueId] ?: 0
+                                val damageInterval = plugin.config.getLong("shield.damage-interval", 1000)
+                                val damageAmount = plugin.config.getDouble("shield.damage-amount", 1.0)
                                 
-                                // 2秒ごとにダメージ
-                                if (currentTime - lastDamage >= 2000) {
+                                // 設定された間隔でダメージ
+                                if (currentTime - lastDamage >= damageInterval) {
                                     if (player.health > 1.0) {
                                         // ダメージを与える
-                                        val event = EntityDamageEvent(player, EntityDamageEvent.DamageCause.CUSTOM, 1.0)
+                                        val event = EntityDamageEvent(player, EntityDamageEvent.DamageCause.CUSTOM, damageAmount)
                                         Bukkit.getPluginManager().callEvent(event)
                                         if (!event.isCancelled) {
                                             player.health = (player.health - event.finalDamage).coerceAtLeast(1.0)
@@ -4028,12 +4284,15 @@ class Game(
                                 lastDamageTime.remove(player.uniqueId)
                             }
                             
-                            // シールドを回復（0.5秒ごとに5回復 = 10秒で全回復）
-                            if (shield < 100f) {
-                                shield = (shield + 5f).coerceAtMost(100f)
+                            // シールドを回復（設定値に基づく）
+                            val maxShield = plugin.config.getInt("shield.max-shield", 100).toFloat()
+                            val recoveryRate = plugin.config.getDouble("shield.recovery-rate", 5.0).toFloat()
+                            
+                            if (shield < maxShield) {
+                                shield = (shield + recoveryRate).coerceAtMost(maxShield)
                                 
                                 // 全回復したら通知
-                                if (shield == 100f) {
+                                if (shield == maxShield) {
                                     player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 2.0f)
                                 }
                             }
@@ -4049,8 +4308,9 @@ class Game(
                             else -> NamedTextColor.RED
                         }
                         
-                        if (shield < 100f) {
-                            val shieldBar = "█".repeat((shield / 10).toInt()).padEnd(10, '░')
+                        val maxShieldDisplay = plugin.config.getInt("shield.max-shield", 100).toFloat()
+                        if (shield < maxShieldDisplay) {
+                            val shieldBar = "█".repeat((shield * 10 / maxShieldDisplay).toInt()).padEnd(10, '░')
                             player.sendActionBar(plugin.languageManager.getMessageAsComponent("shield.status", "bar" to shieldBar, "percent" to shield.toInt().toString()))
                         }
                     }

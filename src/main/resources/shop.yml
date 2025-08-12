@@ -1,0 +1,489 @@
+# EasyCTF Shop Configuration
+# ショップアイテムの設定ファイル
+# 
+# 各アイテムの設定項目:
+# - id: アイテムの一意識別子（必須）
+# - material: Minecraft マテリアル名（必須）
+# - amount: アイテムの個数（デフォルト: 1）
+# - price: 基本価格（必須）
+# - category: カテゴリー（WEAPONS, ARMOR, CONSUMABLES, BLOCKS）
+# - death-behavior: 死亡時の挙動（KEEP: 保持, DROP: ドロップ, DESTROY: 消失）
+# - max-purchase-per-player: プレイヤーごとの購入制限（-1 = 無制限）
+# - max-purchase-per-team: チームごとの購入制限（-1 = 無制限）
+# - available-phases: 利用可能なフェーズ（BUILD, COMBAT）
+# - unbreakable: 壊れない設定（true/false）
+# - enchantments: エンチャント設定
+# - display-name: 表示名（言語キーまたは直接テキスト）
+# - lore: 説明文リスト（言語キーまたは直接テキスト）
+
+# 言語キーについて:
+# display-nameやloreに"lang:"で始まる値を設定すると、言語ファイルから対応するテキストを取得します
+# 例: display-name: "lang:shop.items.wooden_sword"
+
+items:
+  # ===== 武器 (WEAPONS) =====
+  wooden_sword:
+    material: WOODEN_SWORD
+    amount: 1
+    price: 10
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.wooden_sword"
+    
+  stone_sword:
+    material: STONE_SWORD
+    amount: 1
+    price: 15
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.stone_sword"
+    
+  iron_sword:
+    material: IRON_SWORD
+    amount: 1
+    price: 25
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.iron_sword"
+    
+  diamond_sword:
+    material: DIAMOND_SWORD
+    amount: 1
+    price: 60
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.diamond_sword"
+    
+  netherite_sword:
+    material: NETHERITE_SWORD
+    amount: 1
+    price: 100
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.netherite_sword"
+    
+  enchanted_sword:
+    material: DIAMOND_SWORD
+    amount: 1
+    price: 100
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.enchanted_sword"
+    enchantments:
+      SHARPNESS: 3
+      KNOCKBACK: 1
+    lore:
+      - "lang:shop.items.enchanted_sword_lore.lore1"
+      - "lang:shop.items.enchanted_sword_lore.lore2"
+      
+  wooden_axe:
+    material: WOODEN_AXE
+    amount: 1
+    price: 15
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.wooden_axe"
+    
+  stone_axe:
+    material: STONE_AXE
+    amount: 1
+    price: 20
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.stone_axe"
+    
+  iron_axe:
+    material: IRON_AXE
+    amount: 1
+    price: 45
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.iron_axe"
+    
+  diamond_axe:
+    material: DIAMOND_AXE
+    amount: 1
+    price: 80
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.diamond_axe"
+    
+  netherite_axe:
+    material: NETHERITE_AXE
+    amount: 1
+    price: 120
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.netherite_axe"
+    
+  shield:
+    material: SHIELD
+    amount: 1
+    price: 20
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.shield"
+    
+  bow:
+    material: BOW
+    amount: 1
+    price: 20
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.bow"
+    
+  enchanted_bow:
+    material: BOW
+    amount: 1
+    price: 50
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.enchanted_bow"
+    enchantments:
+      POWER: 2
+      INFINITY: 1
+    lore:
+      - "lang:shop.items.enchanted_bow_lore.lore1"
+      - "lang:shop.items.enchanted_bow_lore.lore2"
+
+  # ===== 消耗品 (CONSUMABLES) =====
+  arrows:
+    material: ARROW
+    amount: 8
+    price: 10
+    category: CONSUMABLES
+    death-behavior: DROP
+    display-name: "lang:shop.items.arrows"
+    
+  bread:
+    material: BREAD
+    amount: 8
+    price: 5
+    category: CONSUMABLES
+    death-behavior: DROP
+    display-name: "lang:shop.items.bread"
+    
+  cooked_beef:
+    material: COOKED_BEEF
+    amount: 8
+    price: 10
+    category: CONSUMABLES
+    death-behavior: DROP
+    display-name: "lang:shop.items.cooked_beef"
+    
+  golden_apple:
+    material: GOLDEN_APPLE
+    amount: 1
+    price: 30
+    category: CONSUMABLES
+    death-behavior: DROP
+    display-name: "lang:shop.items.golden_apple"
+    
+  enchanted_golden_apple:
+    material: ENCHANTED_GOLDEN_APPLE
+    amount: 1
+    price: 100
+    category: CONSUMABLES
+    death-behavior: DROP
+    max-purchase-per-player: 2
+    display-name: "lang:shop.items.enchanted_golden_apple"
+    lore:
+      - "lang:shop.items.enchanted_golden_apple_lore.lore"
+      
+  ender_pearl:
+    material: ENDER_PEARL
+    amount: 1
+    price: 50
+    category: CONSUMABLES
+    death-behavior: DROP
+    display-name: "lang:shop.items.ender_pearl"
+    
+  # ===== ブロック (BLOCKS) =====
+  stone:
+    material: STONE
+    amount: 16
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.stone"
+    
+  cobblestone:
+    material: COBBLESTONE
+    amount: 16
+    price: 8
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.cobblestone"
+    
+  wood_planks:
+    material: OAK_PLANKS
+    amount: 16
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.wood_planks"
+    
+  dirt:
+    material: DIRT
+    amount: 16
+    price: 5
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.dirt"
+    
+  sand:
+    material: SAND
+    amount: 16
+    price: 8
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.sand"
+    
+  glass:
+    material: GLASS
+    amount: 16
+    price: 15
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.glass"
+    
+  obsidian:
+    material: OBSIDIAN
+    amount: 4
+    price: 50
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.obsidian"
+    
+  tnt:
+    material: TNT
+    amount: 1
+    price: 100
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.tnt"
+    
+  ladder:
+    material: LADDER
+    amount: 16
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.ladder"
+    
+  cobweb:
+    material: COBWEB
+    amount: 4
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.cobweb"
+    
+  hay_block:
+    material: HAY_BLOCK
+    amount: 8
+    price: 15
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.hay_block"
+    
+  slime_block:
+    material: SLIME_BLOCK
+    amount: 4
+    price: 30
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.slime_block"
+    
+  # ===== ツール (BUILD専用) =====
+  shears:
+    material: SHEARS
+    amount: 1
+    price: 15
+    category: WEAPONS
+    death-behavior: KEEP
+    available-phases: [BUILD]
+    display-name: "lang:shop.items.shears"
+    
+  water_bucket:
+    material: WATER_BUCKET
+    amount: 1
+    price: 30
+    category: BLOCKS
+    death-behavior: DROP
+    available-phases: [BUILD]
+    display-name: "lang:shop.items.water_bucket"
+    
+  lava_bucket:
+    material: LAVA_BUCKET
+    amount: 1
+    price: 50
+    category: BLOCKS
+    death-behavior: DROP
+    available-phases: [BUILD]
+    display-name: "lang:shop.items.lava_bucket"
+    
+  # ===== レッドストーン =====
+  redstone_dust:
+    material: REDSTONE
+    amount: 16
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.redstone_dust"
+    
+  redstone_torch:
+    material: REDSTONE_TORCH
+    amount: 8
+    price: 15
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.redstone_torch"
+    
+  redstone_repeater:
+    material: REPEATER
+    amount: 4
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.redstone_repeater"
+    
+  redstone_block:
+    material: REDSTONE_BLOCK
+    amount: 1
+    price: 30
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.redstone_block"
+    
+  piston:
+    material: PISTON
+    amount: 2
+    price: 25
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.piston"
+    
+  sticky_piston:
+    material: STICKY_PISTON
+    amount: 2
+    price: 35
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.sticky_piston"
+    
+  dispenser:
+    material: DISPENSER
+    amount: 1
+    price: 25
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.dispenser"
+    
+  hopper:
+    material: HOPPER
+    amount: 1
+    price: 30
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.hopper"
+    
+  lever:
+    material: LEVER
+    amount: 4
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.lever"
+    
+  stone_button:
+    material: STONE_BUTTON
+    amount: 4
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.stone_button"
+    
+  stone_pressure_plate:
+    material: STONE_PRESSURE_PLATE
+    amount: 4
+    price: 15
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.stone_pressure_plate"
+    
+  # ===== ドア・フェンス =====
+  oak_door:
+    material: OAK_DOOR
+    amount: 2
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.oak_door"
+    
+  iron_door:
+    material: IRON_DOOR
+    amount: 1
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.iron_door"
+    
+  oak_trapdoor:
+    material: OAK_TRAPDOOR
+    amount: 4
+    price: 10
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.oak_trapdoor"
+    
+  iron_trapdoor:
+    material: IRON_TRAPDOOR
+    amount: 2
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.iron_trapdoor"
+    
+  oak_fence:
+    material: OAK_FENCE
+    amount: 16
+    price: 15
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.oak_fence"
+    
+  iron_bars:
+    material: IRON_BARS
+    amount: 16
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.iron_bars"
+    
+  torch:
+    material: TORCH
+    amount: 16
+    price: 5
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.torch"
+
+# カテゴリー設定
+categories:
+  WEAPONS:
+    display-name: "lang:shop.categories.weapons"
+    description: "lang:shop.category_descriptions.weapons"
+    material: DIAMOND_SWORD
+  ARMOR:
+    display-name: "lang:shop.categories.armor"
+    description: "lang:shop.category_descriptions.armor"
+    material: DIAMOND_CHESTPLATE
+  CONSUMABLES:
+    display-name: "lang:shop.categories.consumables"
+    description: "lang:shop.category_descriptions.consumables"
+    material: GOLDEN_APPLE
+  BLOCKS:
+    display-name: "lang:shop.categories.blocks"
+    description: "lang:shop.category_descriptions.blocks"
+    material: STONE

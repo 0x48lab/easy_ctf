@@ -27,7 +27,11 @@ import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryDragEvent
+import org.bukkit.event.inventory.InventoryMoveItemEvent
+import org.bukkit.event.inventory.InventoryCreativeEvent
+import org.bukkit.event.Event
 import org.bukkit.event.player.*
+import org.bukkit.inventory.InventoryHolder
 import org.bukkit.event.block.Action
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.EquipmentSlot
@@ -211,21 +215,23 @@ class GameListenerNew(private val plugin: Main) : Listener {
             return
         }
         
-        // 白いブロックを拾ったときに自分のチーム色に変換（建築フェーズのみ）
-        if (game.state == GameState.RUNNING && game.phase == GamePhase.BUILD) {
+        // ブロックを拾った時の処理（全フェーズ共通）
+        if (game.state == GameState.RUNNING) {
             val item = event.item.itemStack
             val team = game.getPlayerTeam(player.uniqueId) ?: return
             
-            // 白いブロックをチームカラーに変換
+            // チームブロックの変換処理
             val convertedMaterial = when (item.type) {
-                Material.WHITE_CONCRETE -> {
+                // コンクリートブロック
+                Material.WHITE_CONCRETE, Material.RED_CONCRETE, Material.BLUE_CONCRETE -> {
                     when (team) {
                         Team.RED -> Material.RED_CONCRETE
                         Team.BLUE -> Material.BLUE_CONCRETE
                         Team.SPECTATOR -> return
                     }
                 }
-                Material.WHITE_STAINED_GLASS -> {
+                // ガラスブロック
+                Material.WHITE_STAINED_GLASS, Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
                     when (team) {
                         Team.RED -> Material.RED_STAINED_GLASS
                         Team.BLUE -> Material.BLUE_STAINED_GLASS
@@ -236,7 +242,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }
             
             // 変換が必要な場合
-            if (convertedMaterial != null) {
+            if (convertedMaterial != null && convertedMaterial != item.type) {
                 // 元のアイテムをキャンセルして、変換されたアイテムを追加
                 event.isCancelled = true
                 event.item.remove()
@@ -255,7 +261,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 // 拾い上げの音を再生
                 player.playSound(player.location, org.bukkit.Sound.ENTITY_ITEM_PICKUP, 0.3f, 1.0f)
                 
-                plugin.logger.info("[ItemPickup] Converted white block to team color: $convertedMaterial")
+                plugin.logger.info("[ItemPickup] Converted block to team color: ${item.type} -> $convertedMaterial")
                 return
             }
         }
@@ -435,7 +441,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             } else if (game.phase == GamePhase.COMBAT) {
                 // 戦闘フェーズ：ショップアイテムと革装備以外をドロップ
-                for (item in player.inventory.contents) {
+                var shopItemFound = false
+                for ((index, item) in player.inventory.contents.withIndex()) {
                     if (item != null) {
                         when {
                             isLeatherArmor(item.type) -> {
@@ -443,8 +450,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 leatherArmorToKeep.add(item.clone())
                             }
                             shopManager.isShopItem(item) -> {
-                                // ショップアイテム（エメラルド）は保持
-                                itemsToKeep.add(item.clone())
+                                // ショップアイテム（エメラルド）は1つだけ保持
+                                if (!shopItemFound) {
+                                    itemsToKeep.add(item.clone())
+                                    shopItemFound = true
+                                }
                             }
                             item.itemMeta?.persistentDataContainer?.has(
                                 NamespacedKey(plugin, "no_drop"),
@@ -579,8 +589,20 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val keptItems = player.getMetadata("ctf_items_to_keep")
                         .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
                     
+                    // ショップアイテムはスロット8に、その他はaddItemで追加
                     for (item in keptItems) {
-                        player.inventory.addItem(item)
+                        if (plugin.shopManager.isShopItem(item)) {
+                            // 既存のショップアイテムを削除してから配置
+                            for (i in 0 until player.inventory.size) {
+                                val existingItem = player.inventory.getItem(i)
+                                if (existingItem != null && plugin.shopManager.isShopItem(existingItem)) {
+                                    player.inventory.setItem(i, null)
+                                }
+                            }
+                            player.inventory.setItem(8, item)
+                        } else {
+                            player.inventory.addItem(item)
+                        }
                     }
                     
                     player.removeMetadata("ctf_items_to_keep", plugin)
@@ -789,17 +811,28 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                     // 通常のドロップをキャンセルして白いブロックをドロップ
                                     event.isDropItems = false
                                     
-                                    // 白いブロックとしてドロップ
+                                    // 自チームのブロックとしてドロップ
                                     val world = event.block.world
                                     val location = event.block.location.add(0.5, 0.5, 0.5)
-                                    val whiteBlock = when (blockType) {
-                                        Material.RED_CONCRETE, Material.BLUE_CONCRETE -> Material.WHITE_CONCRETE
-                                        Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> Material.WHITE_STAINED_GLASS
-                                        else -> blockType // 既に白い場合はそのまま
+                                    val playerTeam = game.getPlayerTeam(player.uniqueId)
+                                    val teamBlock = when (blockType) {
+                                        Material.RED_CONCRETE, Material.BLUE_CONCRETE -> {
+                                            if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
+                                        }
+                                        Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
+                                            if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
+                                        }
+                                        Material.WHITE_CONCRETE -> {
+                                            if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
+                                        }
+                                        Material.WHITE_STAINED_GLASS -> {
+                                            if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
+                                        }
+                                        else -> blockType
                                     }
                                     
-                                    world.dropItemNaturally(location, ItemStack(whiteBlock))
-                                    plugin.logger.info("[BlockBreak] Dropping white block: $whiteBlock")
+                                    world.dropItemNaturally(location, ItemStack(teamBlock))
+                                    plugin.logger.info("[BlockBreak] Dropping team block: $teamBlock")
                                 }
                             }
                             
@@ -884,17 +917,28 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         // 通常のドロップをキャンセルして白いブロックをドロップ
                         event.isDropItems = false
                         
-                        // 白いブロックとしてドロップ
+                        // 自チームのブロックとしてドロップ
                         val world = event.block.world
                         val location = event.block.location.add(0.5, 0.5, 0.5)
-                        val whiteBlock = when (blockType) {
-                            Material.RED_CONCRETE, Material.BLUE_CONCRETE -> Material.WHITE_CONCRETE
-                            Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> Material.WHITE_STAINED_GLASS
-                            else -> blockType // 既に白い場合はそのまま
+                        val playerTeam = game.getPlayerTeam(player.uniqueId)
+                        val teamBlock = when (blockType) {
+                            Material.RED_CONCRETE, Material.BLUE_CONCRETE -> {
+                                if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
+                            }
+                            Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
+                                if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
+                            }
+                            Material.WHITE_CONCRETE -> {
+                                if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
+                            }
+                            Material.WHITE_STAINED_GLASS -> {
+                                if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
+                            }
+                            else -> blockType
                         }
                         
-                        world.dropItemNaturally(location, ItemStack(whiteBlock))
-                        plugin.logger.info("[BlockBreak] Combat phase - dropping white block: $whiteBlock")
+                        world.dropItemNaturally(location, ItemStack(teamBlock))
+                        plugin.logger.info("[BlockBreak] Combat phase - dropping team block: $teamBlock")
                     } else {
                         // その他のブロックは通常通りドロップ
                         event.isDropItems = true
@@ -904,10 +948,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     game.recordBlockBreak(event.block.location)
                 }
             }
-            GamePhase.INTERMISSION -> {
-                // 作戦会議フェーズ：全面的に破壊禁止
-                event.isCancelled = true
-            }
+
         }
     }
 
@@ -1025,10 +1066,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 // ブロック設置統計を記録
                 game.playerBlocksPlaced[player.uniqueId] = (game.playerBlocksPlaced[player.uniqueId] ?: 0) + 1
             }
-            GamePhase.INTERMISSION -> {
-                // 作戦会議フェーズ：全面的に設置禁止
-                event.isCancelled = true
-            }
+
         }
         
         // 無限ブロックシステムは削除されました
@@ -1101,14 +1139,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             }
             
             // ショップアイテムのチェック
-            plugin.logger.info("[DEBUG] Right-click with item: ${item.type}, has meta: ${item.hasItemMeta()}")
-            if (item.type == Material.EMERALD && item.hasItemMeta()) {
-                val meta = item.itemMeta
-                // Check for shop item using persistent data or item type
-                val container = meta.persistentDataContainer
-                val isShopItem = container.has(org.bukkit.NamespacedKey(plugin, "shop_item_id"), org.bukkit.persistence.PersistentDataType.STRING)
-                plugin.logger.info("[DEBUG] Is shop item: $isShopItem")
-                if (isShopItem) {
+            if (plugin.shopManager.isShopItem(item)) {
                     event.isCancelled = true
                     
                     val team = game.getPlayerTeam(player.uniqueId)
@@ -1126,15 +1157,90 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     }
                     
                     // 距離制限を削除し、直接カテゴリーメニューを開く
-                    shopManager.openCategoryMenu(player, game, team)
+                    shopManager.openShop(player, game)
                 }
-            }
         }
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
+        val inventory = event.inventory
+        val title = event.view.title()
+        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        val lang = plugin.languageManager
+        
+        // ショップまたはカテゴリーメニューが開いているかチェック
+        val isShopUI = titleText.contains(lang.getMessage("shop.title")) || 
+                        titleText.contains("Shop") ||
+                        titleText.contains(lang.getMessage("shop.category_menu.title")) ||
+                        titleText.contains("ショップ") ||
+                        titleText.contains("カテゴリー選択")
+        
+        if (isShopUI) {
+            // すべてのクリックをまずキャンセル
+            event.isCancelled = true
+            
+            // プレイヤーインベントリのクリックは無視
+            if (event.rawSlot >= inventory.size) {
+                return
+            }
+            
+            // クリックしたアイテムを取得
+            val clickedItem = event.currentItem
+            if (clickedItem == null || clickedItem.type == Material.AIR) {
+                return
+            }
+            
+            // 左クリックのみ処理
+            if (event.click != org.bukkit.event.inventory.ClickType.LEFT) {
+                return
+            }
+            
+            val game = gameManager.getPlayerGame(player)
+            val team = game?.getPlayerTeam(player.uniqueId)
+            
+            if (game == null || team == null) {
+                player.closeInventory()
+                return
+            }
+            
+            // カテゴリー選択画面の処理
+            if (titleText.contains(lang.getMessage("shop.category_menu.title")) || 
+                titleText.contains("カテゴリー選択")) {
+                val meta = clickedItem.itemMeta ?: return
+                val displayNameComponent = meta.displayName() ?: return
+                val displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayNameComponent)
+                
+                val page = when {
+                    displayName.contains(lang.getMessage("shop.category_menu.weapons.title")) || 
+                    displayName.contains("武器") -> 0
+                    displayName.contains(lang.getMessage("shop.category_menu.consumables.title")) || 
+                    displayName.contains("消耗品") -> 1
+                    displayName.contains(lang.getMessage("shop.category_menu.blocks.title")) || 
+                    displayName.contains("ブロック") -> 2
+                    else -> return
+                }
+                
+                shopManager.handleInventoryClick(event, game)
+                return
+            }
+            
+            // ショップアイテムのクリック処理
+            val meta = clickedItem.itemMeta ?: return
+            val displayNameComponent = meta.displayName()
+            if (displayNameComponent == null) {
+                return
+            }
+            
+            val displayName = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayNameComponent)
+            
+            // すべてのショップ関連処理をShopManagerに委譲
+            shopManager.handleInventoryClick(event, game)
+            return
+        }
+        
+        // ゲームに参加していない場合はここで終了
         val game = gameManager.getPlayerGame(player) ?: return
         
         // 観戦者メニューの処理
@@ -1176,15 +1282,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 }
                             }
                             game.isRedFlagDropped -> {
-                                game.droppedFlags.entries.find { it.value.first == Team.RED }?.let {
-                                    player.teleport(it.key.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_dropped"), NamedTextColor.RED))
+                                // ドロップされた旗の位置にテレポート
+                                game.getRedFlagLocation()?.let { loc ->
+                                    player.teleport(loc)
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.dropped_red_flag"), NamedTextColor.RED))
                                 }
                             }
                             else -> {
-                                game.getRedFlagLocation()?.let {
-                                    player.teleport(it.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_home"), NamedTextColor.RED))
+                                game.getRedFlagLocation()?.let { loc ->
+                                    player.teleport(loc)
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_base"), NamedTextColor.RED))
                                 }
                             }
                         }
@@ -1199,15 +1306,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 }
                             }
                             game.isBlueFlagDropped -> {
-                                game.droppedFlags.entries.find { it.value.first == Team.BLUE }?.let {
-                                    player.teleport(it.key.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_dropped"), NamedTextColor.BLUE))
+                                // ドロップされた旗の位置にテレポート
+                                game.getBlueFlagLocation()?.let { loc ->
+                                    player.teleport(loc)
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.dropped_blue_flag"), NamedTextColor.BLUE))
                                 }
                             }
                             else -> {
-                                game.getBlueFlagLocation()?.let {
-                                    player.teleport(it.clone().add(0.0, 5.0, 0.0))
-                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_home"), NamedTextColor.BLUE))
+                                game.getBlueFlagLocation()?.let { loc ->
+                                    player.teleport(loc)
+                                    player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_base"), NamedTextColor.BLUE))
                                 }
                             }
                         }
@@ -1220,7 +1328,6 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         // ショップアイテム（エメラルド）の移動制限
         if (game.state == GameState.RUNNING) {
-            val clickedItem = event.currentItem
             val hotbarSlot = event.hotbarButton
             
             // スロット8（9番目）のアイテムをクリックした場合
@@ -1250,7 +1357,6 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         // 防具の装備制限
         if (game.state == GameState.RUNNING) {
-            val clickedItem = event.currentItem
             val cursor = event.cursor
             
             // 防具スロットへの装備チェック
@@ -1284,90 +1390,28 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
         }
-        
-        // ショップUIのクリック処理
-        val inventory = event.inventory
-        val title = event.view.title()
-        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
-        
-        if (inventory.holder == null && (titleText.contains(plugin.languageManager.getMessage("shop.title")) || titleText.contains("Shop"))) {
-            // すべてのクリックをキャンセル
-            event.isCancelled = true
-            
-            // クリックされたインベントリがプレイヤーのものならreturn（アイテム移動防止）
-            if (event.clickedInventory == player.inventory) {
-                return
-            }
-            
-            // ショップインベントリのアイテムをクリックした場合のみ処理
-            val clickedItem = event.currentItem ?: return
-            if (clickedItem.type == Material.AIR) return
-            
-            val team = game.getPlayerTeam(player.uniqueId) ?: return
-            
-            // カテゴリー選択画面の処理
-            if (titleText.contains("カテゴリー選択")) {
-                val meta = clickedItem.itemMeta ?: return
-                val displayNameComponent = meta.displayName()
-                if (displayNameComponent == null) return
-                val displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayNameComponent)
-                
-                val page = when (displayName) {
-                    "武器" -> 0
-                    "消耗品" -> 1
-                    "ブロック" -> 2
-                    else -> return
-                }
-                
-                shopManager.openShop(player, game, team, page)
-                return
-            }
-            
-            // アイテム名から購入処理
-            val meta = clickedItem.itemMeta ?: return
-            val displayNameComponent = meta.displayName()
-            if (displayNameComponent == null) {
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.item-name-error"), NamedTextColor.RED))
-                return
-            }
-            // レガシーフォーマットを含むテキストを取得
-            val displayName = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayNameComponent)
-            plugin.logger.info("Clicked item displayName: '$displayName'")
-            
-            // ナビゲーションボタンのチェック（レガシーフォーマットを含む）
-            when (displayName) {
-                "§a§l← 前のページ" -> {
-                    val currentPage = shopManager.getCurrentPage(player)
-                    if (currentPage > 0) {
-                        shopManager.openShop(player, game, team, currentPage - 1)
-                    }
-                    return
-                }
-                "§a§l次のページ →" -> {
-                    val currentPage = shopManager.getCurrentPage(player)
-                    shopManager.openShop(player, game, team, currentPage + 1)
-                    return
-                }
-                "§6§lメインメニュー" -> {
-                    // カテゴリー選択画面を開く
-                    shopManager.openCategoryMenu(player, game, team)
-                    return
-                }
-            }
-            
-            // 通常のアイテム購入
-            if (shopManager.handlePurchase(player, displayName, game, team)) {
-                // 購入成功時はUIを更新
-                player.closeInventory()
-                val currentPage = shopManager.getCurrentPage(player)
-                shopManager.openShop(player, game, team, currentPage)
-            }
-        }
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onInventoryDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player ?: return
+        val title = event.view.title()
+        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        val lang = plugin.languageManager
+        
+        // ショップUIでのドラッグを完全に防止
+        val isShopUI = titleText.contains(lang.getMessage("shop.title")) || 
+                        titleText.contains("Shop") ||
+                        titleText.contains(lang.getMessage("shop.category_menu.title")) ||
+                        titleText.contains("ショップ") ||
+                        titleText.contains("カテゴリー選択")
+        
+        if (isShopUI) {
+            event.isCancelled = true
+            event.result = Event.Result.DENY
+            return
+        }
+        
         val game = gameManager.getPlayerGame(player) ?: return
         
         // ショップアイテムのドラッグ制限
@@ -1384,13 +1428,79 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 return
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onInventoryMoveItem(event: InventoryMoveItemEvent) {
+        // ショップインベントリへの/からのアイテム移動を防止
+        // ホッパーやドロッパーなどによる自動移動も防ぐ
+        val source = event.source
+        val destination = event.destination
         
-        // ショップUIでのドラッグを防止
+        // インベントリのホルダーがnullの場合はカスタムGUIの可能性
+        if (source.holder == null || destination.holder == null) {
+            event.isCancelled = true
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onInventoryCreative(event: InventoryCreativeEvent) {
+        val player = event.whoClicked as? Player ?: return
+        
+        // ショップUIでのクリエイティブアイテム生成を防止
         val title = event.view.title()
         val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        val lang = plugin.languageManager
         
-        if (event.inventory.holder == null && (titleText.contains(plugin.languageManager.getMessage("shop.title")) || titleText.contains("Shop"))) {
+        if (event.inventory.holder == null && (
+            titleText.contains(lang.getMessage("shop.title")) || 
+            titleText.contains("Shop") ||
+            titleText.contains(lang.getMessage("shop.category_menu.title"))
+        )) {
             event.isCancelled = true
+            event.result = Event.Result.DENY
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun onInventoryClickFirst(event: InventoryClickEvent) {
+        // 最初にショップUIかどうかをチェック（最高優先度で処理）
+        val title = event.view.title()
+        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        val lang = plugin.languageManager
+        
+        val isShopUI = titleText.contains(lang.getMessage("shop.title")) || 
+                        titleText.contains("Shop") ||
+                        titleText.contains(lang.getMessage("shop.category_menu.title")) ||
+                        titleText.contains("ショップ") ||
+                        titleText.contains("カテゴリー選択")
+        
+        if (isShopUI) {
+            // ショップUIの場合は即座にキャンセル
+            event.isCancelled = true
+            event.result = Event.Result.DENY
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onInventoryClickMonitor(event: InventoryClickEvent) {
+        // 最後にもう一度チェック（確実にキャンセル）
+        if (event.isCancelled) return
+        
+        val title = event.view.title()
+        val titleText = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(title)
+        val lang = plugin.languageManager
+        
+        val isShopUI = titleText.contains(lang.getMessage("shop.title")) || 
+                        titleText.contains("Shop") ||
+                        titleText.contains(lang.getMessage("shop.category_menu.title")) ||
+                        titleText.contains("ショップ") ||
+                        titleText.contains("カテゴリー選択")
+        
+        if (isShopUI) {
+            // 何らかの理由でキャンセルされていない場合、強制的にキャンセル
+            event.isCancelled = true
+            event.result = Event.Result.DENY
         }
     }
     
@@ -1607,8 +1717,20 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val keptItems = player.getMetadata("ctf_items_to_keep")
                         .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
                     
+                    // ショップアイテムはスロット8に、その他はaddItemで追加
                     for (item in keptItems) {
-                        player.inventory.addItem(item)
+                        if (plugin.shopManager.isShopItem(item)) {
+                            // 既存のショップアイテムを削除してから配置
+                            for (i in 0 until player.inventory.size) {
+                                val existingItem = player.inventory.getItem(i)
+                                if (existingItem != null && plugin.shopManager.isShopItem(existingItem)) {
+                                    player.inventory.setItem(i, null)
+                                }
+                            }
+                            player.inventory.setItem(8, item)
+                        } else {
+                            player.inventory.addItem(item)
+                        }
                     }
                     
                     // 革防具を再装備

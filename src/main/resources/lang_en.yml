@@ -172,6 +172,7 @@ countdown:
   start: START!
   three: '3'
   two: '2'
+  seconds: '{seconds}'
 currency:
   capture-assist: Capture assist
   capture-currency: Capture currency
@@ -187,7 +188,7 @@ death:
   kill-streak-notification: Kill streak notification
 flag:
   scored-title: SCORED!
-  score-subtitle: '{team} scored a point'
+  score-subtitle: '{team} scored a point (Red {red} - {blue} Blue)'
   cannot-capture-no-flag: Cannot capture - your flag is not at base
   flag-carrier-unknown: Unknown
   picked-up: '{player} picked up the {team} flag'
@@ -397,12 +398,18 @@ phase-extended:
   draw-title: DRAW
   build-time-format: 'Build Phase - Time Left: {time}'
   combat-score-format: 'Combat Phase - Red {red} : {blue} Blue - Time Left: {time}'
+  combat-score-format-match: 'Match {current}/{total} - Red {red} : {blue} Blue - Time Left: {time}'
   combat-time-format: 'Combat Phase - Time Left: {time}'
   intermission-time-format: 'Strategy Meeting - Time Left: {time}'
   phase-end-bonus: 'Phase End Bonus'
   score-display: 'Score: Red {red} - Blue {blue}'
   game-ended: 'Game Ended'
   wait-next-game: 'Please wait for the next game'
+  next-round-countdown: 'Next round in: {seconds} seconds'
+  round-start: 'New Round Start!'
+  build-phase-start: 'Build Phase'
+  round-result-winner: '{team} wins! Score: Red {red} - Blue {blue}'
+  round-result-draw: 'Draw! Score: Red {red} - Blue {blue}'
 report:
   header: ========== GAME REPORT ==========
   winner: 'Winner: {team}'
@@ -457,6 +464,13 @@ scoreboard:
   team-counts: 'Red:{red} Blue:{blue}'
   team-players: 'Red:{red} Blue:{blue}'
   team-players-spectator: 'Red:{red} Blue:{blue} Spec:{spectator}'
+  match-game-number: '§e§lGame {current}/{total}'
+  match-wins-compact: '§cRed: §f{red}W §7: §9Blue: §f{blue}W'
+  game-score: '§cRed: §f{red}pts §7: §9Blue: §f{blue}pts'
+  players-count: '§cRed: §f{red} §7vs §9Blue: §f{blue}'
+  players-count-spectator: '§cRed: §f{red} §7| §9Blue: §f{blue} §7| §7Spec: §f{spectator}'
+  team-currency: '§6Team Money: {color}{amount}G'
+  both-currency: '§6Money: §cRed {red}G §7| §9Blue {blue}G'
 setup:
   all_update_menu: 15. Update all
   block-not-found: Block Not Found not found
@@ -621,7 +635,8 @@ shop:
     price: 'Price: {price}G'
     purchase_limit_reached: ✗ Purchase limit reached
     team_limit: 'Team Limit: {current}/{max}'
-    death_behavior:
+    death_behavior: 'On Death: {behavior}'
+    death_behavior_types:
       destroy: Destroy
       drop: Drop
       keep: Keep
@@ -688,12 +703,15 @@ shop:
     wood_planks: Wood Planks x16
     wooden_axe: Wooden Axe
     wooden_sword: Wooden Sword
-    enchanted_bow:
+    enchanted_bow: Enchanted Bow
+    enchanted_bow_lore:
       lore1: Power II
       lore2: Infinity I
-    enchanted_golden_apple:
+    enchanted_golden_apple: Enchanted Golden Apple
+    enchanted_golden_apple_lore:
       lore: Max 2 per player
-    enchanted_sword:
+    enchanted_sword: Enchanted Sword
+    enchanted_sword_lore:
       lore1: Sharpness III
       lore2: Knockback I
   navigation:
@@ -775,3 +793,4 @@ stats:
   top-players-header: ===== Top Players =====
   top-spent-label: Top money spent
   top-spent-value: '{player}: {amount}G'
+

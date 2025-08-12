@@ -114,6 +114,12 @@ class MatchWrapper(
      * チーム通貨の取得
      */
     fun getTeamCurrency(team: Team): Int = teamCurrency[team] ?: 0
+
+    
+    fun removeTeamCurrency(team: Team, amount: Int) {
+        val current = teamCurrency[team] ?: 0
+        teamCurrency[team] = maxOf(0, current - amount)
+    }
     
     /**
      * チーム通貨の追加

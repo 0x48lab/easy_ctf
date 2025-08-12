@@ -410,6 +410,9 @@ class GameManager(private val plugin: Main) {
         // マッチのスコアを更新
         match.onGameEnd(winner)
         
+        // スコアボードを即座に更新
+        game.forceUpdateScoreboard()
+        
         // 勝敗表示
         val winnerText = when (winner) {
             Team.RED -> plugin.languageManager.getMessage("match.red-wins")
@@ -465,6 +468,22 @@ class GameManager(private val plugin: Main) {
     private fun showMatchInterval(game: Game, match: MatchWrapper, gameName: String) {
         // 設定から休憩時間を取得
         var remainingSeconds = match.config.matchIntervalDuration
+        val totalSeconds = remainingSeconds
+        
+        // BossBarを作成または取得
+        if (game.bossBar == null) {
+            game.createBossBar()
+        }
+        
+        // BossBarを初期化
+        game.bossBar?.apply {
+            setTitle(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to remainingSeconds.toString()))
+            color = org.bukkit.boss.BarColor.YELLOW
+            progress = 1.0
+            game.getAllPlayers().forEach { player ->
+                addPlayer(player)
+            }
+        }
         
         // プレイヤーに次のゲームまでの時間を通知
         game.getAllPlayers().forEach { player ->
@@ -474,19 +493,22 @@ class GameManager(private val plugin: Main) {
         
         object : BukkitRunnable() {
             override fun run() {
-                if (remainingSeconds > 5) {
-                    // 5秒前まではカウントダウンを表示しない
-                    remainingSeconds--
-                    return
-                }
-                
                 remainingSeconds--
                 
+                // BossBarを更新
+                game.bossBar?.apply {
+                    setTitle(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to remainingSeconds.toString()))
+                    progress = remainingSeconds.toDouble() / totalSeconds.toDouble()
+                }
+                
                 when (remainingSeconds) {
-                    4 -> {
+                    5 -> {
                         game.getAllPlayers().forEach { player ->
                             player.sendMessage(Component.text(plugin.languageManager.getMessage("match.starting-in-5"), NamedTextColor.YELLOW))
                         }
+                    }
+                    4 -> {
+                        // 4秒の時は何も表示しない（音声カウントダウンは3秒から）
                     }
                     3 -> {
                         game.getAllPlayers().forEach { player ->

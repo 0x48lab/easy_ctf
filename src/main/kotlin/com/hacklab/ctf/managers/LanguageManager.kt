@@ -40,7 +40,18 @@ class LanguageManager(private val plugin: Main) {
     }
     
     fun getMessage(key: String, vararg replacements: Pair<String, String>): String {
-        var message = languageConfig.getString(key, "Missing message: $key") ?: "Missing message: $key"
+        val value = languageConfig.get(key)
+        
+        // 値が文字列でない場合（ConfigurationSectionなど）は、そのまま文字列化せずにエラーメッセージを返す
+        var message = when (value) {
+            is String -> value
+            null -> "MissingText: $key"
+            else -> {
+                // ConfigurationSectionなどのオブジェクトの場合
+                plugin.logger.warning("Invalid language key: $key returned ${value.javaClass.simpleName}")
+                "MissingText: $key"
+            }
+        }
         
         // プレースホルダーを置換
         for ((placeholder, value) in replacements) {
@@ -120,6 +131,9 @@ class LanguageManager(private val plugin: Main) {
         for ((placeholder, value) in replacements) {
             message = message.replace("{$placeholder}", value)
         }
+        
+        // §記号を&記号に変換してからデシリアライズ（既存の§と&の両方に対応）
+        message = message.replace('§', '&')
         
         // &でエンコードされたレガシーカラーコードをComponentに変換
         return LegacyComponentSerializer.legacyAmpersand().deserialize(message)

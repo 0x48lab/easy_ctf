@@ -13,15 +13,17 @@ class EquipmentManager(private val plugin: Main) {
     fun giveBuildPhaseEquipment(player: Player) {
         player.inventory.clear()
         
-        // ショップアイテム（エメラルド）のみ配布
-        player.inventory.addItem(plugin.shopManager.createShopItem())
+        // ショップアイテム（エメラルド）をスロット8に配置
+        val shopItem = plugin.shopManager.createShopItem()
+        player.inventory.setItem(8, shopItem)
     }
     
     fun giveCombatPhaseEquipment(player: Player, team: Team) {
         player.inventory.clear()
         
-        // ショップアイテム（エメラルド）のみ配布
-        player.inventory.addItem(plugin.shopManager.createShopItem())
+        // ショップアイテム（エメラルド）をスロット8に配置
+        val shopItem = plugin.shopManager.createShopItem()
+        player.inventory.setItem(8, shopItem)
         
         // 防具を装備（チーム色の革防具のみ）
         giveArmor(player, team)

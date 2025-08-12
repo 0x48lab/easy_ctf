@@ -1,7 +1,7 @@
 # EasyCTF Configuration File
 
 # Language Settings
-language: "en"  # Available: "en" (English), "ja" (Japanese)
+language: "ja"  # Available: "en" (English), "ja" (Japanese)
 
 # Default Game Settings (used when creating new games)
 default-game:
@@ -36,6 +36,9 @@ default-phases:
   
   # Phase 2: Combat phase duration in seconds (default: 2 minutes)
   combat-duration: 120
+  
+  # Countdown after combat phase ends before next round starts (in seconds)
+  combat-end-countdown: 15
   
   # Phase 3: Result phase duration in seconds (default: 15 seconds)
   result-duration: 15
@@ -108,6 +111,17 @@ shop:
     2-point: 0.2    # 20% off
     3-point: 0.3    # 30% off
     4-point-plus: 0.4  # 40% off
+
+# Shield Settings
+shield:
+  enabled: true                     # Enable/disable shield system
+  max-shield: 100                   # Maximum shield value
+  decrease-rate: 2.0                # Decrease rate on enemy blocks (per 0.5 seconds)
+  recovery-rate: 5.0                # Recovery rate on friendly blocks (per 0.5 seconds)
+  warning-threshold: 40             # Shield value for warning message
+  critical-threshold: 20            # Shield value for critical warning
+  damage-interval: 1000             # Damage interval when shield is 0 (milliseconds)
+  damage-amount: 1.0                # Damage amount when shield is 0
 
 # Debug Settings
 debug:
