@@ -214,21 +214,7 @@ game:
   started: ゲームが開始されました！
   stopping: ゲームを停止しています...
   stopped: ゲームが停止されました
-  ending: ゲームが終了しました
-  cannot-start: ゲームを開始できません
-  already-running: ゲームは既に実行中です
-  not-running: ゲームは実行されていません
   player-list-item: '{player} - {team}'
-game-phases:
-  build: '建築'
-  combat: '戦闘'
-  intermission: '作戦'
-game-states:
-  already-state: 'ゲームは既に{state}状態です'
-  waiting: '待機中'
-  starting: '開始準備中'
-  running: '実行中'
-  ending: '終了処理中'
 game_events:
   flag_capture:
     subtitle: '{player} が {team}の旗を取得'
@@ -283,20 +269,12 @@ gameplay:
   cannot-place-on-beacon: 'ビーコンの上には設置できません'
   clear-command-disabled: '[clear command disabled]'
   flag-info: '旗情報'
-  item-name-error: 'アイテム名エラー'
   need-adjacent-block: '隣接する自チームのブロックが必要です'
   player-has-spawn-protection: 'プレイヤーはスポーン保護中です'
   respawn-countdown: 'リスポーンまで: {seconds}秒'
   shop-item-redistributed: 'ショップアイテムが再配布されました'
   spectator-mode: '[spectator mode]'
-general:
-  $action: '[$action]'
-  disabled: EasyCTFが無効になりました！
-  enabled: EasyCTFが有効になりました！
 items:
-  build: 建築
-  combat: 戦闘
-  intermission: 作戦会議
   building-block: 建築ブロック
   efficient-diamond-pickaxe: 効率強化ダイヤモンドピッケル
   efficient-diamond-shovel: 効率強化ダイヤモンドシャベル
@@ -371,7 +349,6 @@ match:
     ${mode:
       name.lowercase()}: '[マッチ.mode.${mode.name.lowercase()}]'
 mvp:
-  header: ========== MVP発表 ==========
   mvp-title: MVP
   mvp-subtitle: '{player}'
   announcement-title: ========== MVP 発表 ==========

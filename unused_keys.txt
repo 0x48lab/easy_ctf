@@ -1,0 +1,197 @@
+# Unused keys in language files
+# Total: 156 keys
+
+
+## action-bar (1 keys)
+action-bar.cannot-place-block
+
+## game (8 keys)
+game.already-running
+game.cannot-start
+game.ending
+game.not-running
+game.started
+game.starting
+game.stopped
+game.stopping
+
+## game-phases (3 keys)
+game-phases.build
+game-phases.combat
+game-phases.intermission
+
+## game-states (4 keys)
+game-states.ending
+game-states.running
+game-states.starting
+game-states.waiting
+
+## game_events (6 keys)
+game_events.teleport.blue_flag_dropped
+game_events.teleport.blue_flag_home
+game_events.teleport.not_found
+game_events.teleport.player_not_found
+game_events.teleport.red_flag_dropped
+game_events.teleport.red_flag_home
+
+## gameplay (1 keys)
+gameplay.item-name-error
+
+## general (2 keys)
+general.disabled
+general.enabled
+
+## items (3 keys)
+items.build
+items.combat
+items.intermission
+
+## log (4 keys)
+log.shop-available-items
+log.shop-item-list
+log.shop-item-not-found
+log.shop-purchase-called
+
+## match (2 keys)
+match.mode.first_to_x
+match.mode.fixed_rounds
+
+## mvp (1 keys)
+mvp.header
+
+## phase-extended (1 keys)
+phase-extended.intermission-time-format
+
+## report (9 keys)
+report.draw
+report.final-score
+report.game-duration
+report.match-score
+report.mvp
+report.top-assists
+report.top-captures
+report.top-kills
+report.winner
+
+## scoreboard (11 keys)
+scoreboard.blue-flag-carried
+scoreboard.blue-flag-dropped
+scoreboard.blue-flag-home
+scoreboard.currency-both
+scoreboard.currency-display
+scoreboard.first-to-score
+scoreboard.match-score
+scoreboard.red-flag-carried
+scoreboard.red-flag-dropped
+scoreboard.red-flag-home
+scoreboard.team-counts
+
+## shop (84 keys)
+shop.categories.blocks
+shop.categories.consumables
+shop.categories.weapons
+shop.category_descriptions.blocks
+shop.category_descriptions.consumables
+shop.category_descriptions.weapons
+shop.category_menu.blocks.description
+shop.category_menu.consumables.description
+shop.category_menu.weapons.description
+shop.inventory-full
+shop.item_info.death_behavior_types.destroy
+shop.item_info.death_behavior_types.drop
+shop.item_info.death_behavior_types.keep
+shop.items.arrows
+shop.items.bow
+shop.items.bread
+shop.items.cobblestone
+shop.items.cobweb
+shop.items.cooked_beef
+shop.items.diamond_axe
+shop.items.diamond_boots
+shop.items.diamond_chestplate
+shop.items.diamond_helmet
+shop.items.diamond_leggings
+shop.items.diamond_sword
+shop.items.dirt
+shop.items.dispenser
+shop.items.enchanted_bow
+shop.items.enchanted_bow_lore.lore1
+shop.items.enchanted_bow_lore.lore2
+shop.items.enchanted_golden_apple
+shop.items.enchanted_golden_apple_lore.lore
+shop.items.enchanted_sword
+shop.items.enchanted_sword_lore.lore1
+shop.items.enchanted_sword_lore.lore2
+shop.items.ender_pearl
+shop.items.glass
+shop.items.golden_apple
+shop.items.hay_block
+shop.items.hopper
+shop.items.iron_axe
+shop.items.iron_bars
+shop.items.iron_boots
+shop.items.iron_chestplate
+shop.items.iron_door
+shop.items.iron_helmet
+shop.items.iron_leggings
+shop.items.iron_sword
+shop.items.iron_trapdoor
+shop.items.ladder
+shop.items.lava_bucket
+shop.items.lever
+shop.items.netherite_axe
+shop.items.netherite_boots
+shop.items.netherite_chestplate
+shop.items.netherite_helmet
+shop.items.netherite_leggings
+shop.items.netherite_sword
+shop.items.oak_door
+shop.items.oak_fence
+shop.items.oak_trapdoor
+shop.items.obsidian
+shop.items.piston
+shop.items.redstone_block
+shop.items.redstone_dust
+shop.items.redstone_repeater
+shop.items.redstone_torch
+shop.items.sand
+shop.items.shears
+shop.items.shield
+shop.items.slime_block
+shop.items.sticky_piston
+shop.items.stone
+shop.items.stone_axe
+shop.items.stone_button
+shop.items.stone_pressure_plate
+shop.items.stone_sword
+shop.items.tnt
+shop.items.torch
+shop.items.water_bucket
+shop.items.wood_planks
+shop.items.wooden_axe
+shop.items.wooden_sword
+shop.navigation.category
+
+## spectator (1 keys)
+spectator.mode-label
+
+## team (3 keys)
+team.full
+team.join
+team.leave
+
+## time (1 keys)
+time.warning
+
+## ui (11 keys)
+ui.cancelled
+ui.disabled
+ui.enabled
+ui.ending
+ui.failed
+ui.loading
+ui.running
+ui.saving
+ui.starting
+ui.success
+ui.waiting

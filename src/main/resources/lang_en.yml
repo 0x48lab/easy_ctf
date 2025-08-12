@@ -214,21 +214,7 @@ game:
   started: Game started!
   stopping: Stopping game...
   stopped: Game stopped
-  ending: Game ended
-  cannot-start: Cannot start game
-  already-running: Game is already running
-  not-running: Game is not running
   player-list-item: '{player} - {team}'
-game-phases:
-  build: 'Build'
-  combat: 'Combat'
-  intermission: 'Result'
-game-states:
-  already-state: 'Game is already in {state} state'
-  waiting: 'Waiting'
-  starting: 'Starting'
-  running: 'Running'
-  ending: 'Ending'
 game_events:
   flag_capture:
     subtitle: '{player} obtained {team} flag'
@@ -283,20 +269,12 @@ gameplay:
   cannot-place-on-beacon: Cannot place on beacon
   clear-command-disabled: Clear command disabled
   flag-info: Flag info
-  item-name-error: Item Name Error failed
   need-adjacent-block: Need adjacent block
   player-has-spawn-protection: Player has spawn protection
   respawn-countdown: Respawn countdown
   shop-item-redistributed: Shop item redistributed
   spectator-mode: Spectator mode
-general:
-  $action: '[general.$action]'
-  disabled: EasyCTF has been disabled!
-  enabled: EasyCTF has been enabled!
 items:
-  build: BUILD
-  combat: COMBAT
-  intermission: STRATEGY
   building-block: Building block
   efficient-diamond-pickaxe: Efficient diamond pickaxe
   efficient-diamond-shovel: Efficient diamond shovel
@@ -371,7 +349,6 @@ match:
     ${mode:
       name.lowercase()}: '[match.mode.${mode.name.lowercase()}]'
 mvp:
-  header: ========== MVP ANNOUNCEMENT ==========
   mvp-title: MVP
   mvp-subtitle: '{player}'
   announcement-title: ========== MVP ANNOUNCEMENT ==========
