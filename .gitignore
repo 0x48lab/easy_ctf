@@ -109,3 +109,5 @@ run/usercache.json
 run/*.log
 run
 run
+.serena
+.claude
