@@ -3863,9 +3863,17 @@ class Game(
         // チームカラーのブロックかチェック
         val teamBlocks = TEAM_BLOCKS[team] ?: return null
         val isTeamBlock = block.type in teamBlocks
-        val isDevice = isDeviceOrFence(block.type)
         
-        plugin.logger.info("[canPlaceBlock] isTeamBlock: $isTeamBlock, isDevice: $isDevice")
+        plugin.logger.info("[canPlaceBlock] isTeamBlock: $isTeamBlock, block.type: ${block.type}")
+        
+        // チームカラーブロック以外は制限なしで設置可能
+        if (!isTeamBlock) {
+            plugin.logger.info("[canPlaceBlock] Non-team block, allowing placement freely")
+            // ダミーの位置を返す（recordBlockPlacementで使用されるが、非チームブロックなので影響なし）
+            return location
+        }
+        
+        // 以下、チームカラーブロック（コンクリート・ステンドグラス）のみの制限
         
         // 自チームの旗位置を取得
         val teamFlagLocation = when (team) {
@@ -3886,9 +3894,9 @@ class Game(
         
         // デバッグログ追加
         plugin.logger.info("[canPlaceBlock] Team: $team, PlacedBlocks count: ${placedBlocks.size}, Phase: $phase")
-        plugin.logger.info("[canPlaceBlock] Block type: ${block.type}, Location: ${location}")
+        plugin.logger.info("[canPlaceBlock] Team block placement check - Location: ${location}")
         
-        // チームカラーブロック、装置、その他のブロック全て同じロジック：
+        // チームカラーブロックの設置制限：
         // 1. 旗から3ブロック以内なら旗位置を返す
         // 2. スポーン地点から3ブロック以内ならスポーン地点を返す
         // 3. 既存のチームブロックに隣接していれば、その位置を返す
@@ -3896,61 +3904,38 @@ class Game(
         
         // 旗から3ブロック以内かチェック
         if (location.world == teamFlagLocation.world && location.distance(teamFlagLocation) <= 3.0) {
-            plugin.logger.info("[canPlaceBlock] Block is within 3 blocks of team flag")
+            plugin.logger.info("[canPlaceBlock] Team block is within 3 blocks of team flag")
             // チームカラーブロックの場合は旗の基礎ブロックの位置を返す
-            if (isTeamBlock) {
-                plugin.logger.info("[canPlaceBlock] This is a team color block, finding nearest flag base block")
-                val flagBaseBlocks = mutableListOf<Location>()
-                for (x in -1..1) {
-                    for (z in -1..1) {
-                        flagBaseBlocks.add(teamFlagLocation.clone().add(x.toDouble(), -1.0, z.toDouble()))
-                    }
+            val flagBaseBlocks = mutableListOf<Location>()
+            for (x in -1..1) {
+                for (z in -1..1) {
+                    flagBaseBlocks.add(teamFlagLocation.clone().add(x.toDouble(), -1.0, z.toDouble()))
                 }
-                val result = flagBaseBlocks.minByOrNull { it.distance(location) } ?: teamFlagLocation
-                plugin.logger.info("[canPlaceBlock] Returning flag base location: $result")
-                return result
             }
-            plugin.logger.info("[canPlaceBlock] Not a team block, returning flag location: $teamFlagLocation")
-            return teamFlagLocation
+            val result = flagBaseBlocks.minByOrNull { it.distance(location) } ?: teamFlagLocation
+            plugin.logger.info("[canPlaceBlock] Returning flag base location: $result")
+            return result
         }
         
         // スポーン地点から3ブロック以内かチェック
         for (teamSpawnLocation in teamSpawnLocations) {
             if (location.world == teamSpawnLocation.world && location.distance(teamSpawnLocation) <= 3.0) {
-                plugin.logger.info("[canPlaceBlock] Block is within 3 blocks of spawn location")
+                plugin.logger.info("[canPlaceBlock] Team block is within 3 blocks of spawn location")
                 return teamSpawnLocation
             }
         }
         
-        // 装置やフェンスの場合は3ブロック以内、それ以外は隣接チェック
-        if (isDevice) {
-            plugin.logger.info("[canPlaceBlock] Checking device placement, need team block within 3 blocks")
-            // 周囲3ブロック以内に自チームのカラーブロックがあるかチェック
-            for (placedBlock in placedBlocks) {
-                if (location.world == placedBlock.world && location.distance(placedBlock) <= 3.0) {
-                    plugin.logger.info("[canPlaceBlock] Found team block within 3 blocks for device")
-                    return placedBlock
-                }
-            }
-        } else {
-            plugin.logger.info("[canPlaceBlock] Checking normal block placement, need adjacent team block")
-            // 隣接ブロックをチェック
-            for (placedBlock in placedBlocks) {
-                if (isAdjacent(location, placedBlock)) {
-                    plugin.logger.info("[canPlaceBlock] Found adjacent team block")
-                    return placedBlock
-                }
+        // 既存チームブロックに隣接チェック
+        plugin.logger.info("[canPlaceBlock] Checking team block placement, need adjacent team block")
+        for (placedBlock in placedBlocks) {
+            if (isAdjacent(location, placedBlock)) {
+                plugin.logger.info("[canPlaceBlock] Found adjacent team block")
+                return placedBlock
             }
         }
         
         // どの条件も満たさない場合は設置不可
-        if (isTeamBlock) {
-            showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-flag"))
-        } else if (isDevice) {
-            showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-team"))
-        } else {
-            showActionBarError(player, plugin.languageManager.getMessage("gameplay.need-adjacent-block"))
-        }
+        showActionBarError(player, plugin.languageManager.getMessage("action-bar.place-restriction-flag"))
         return null
     }
 

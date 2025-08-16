@@ -579,36 +579,31 @@ class ShopManager(private val plugin: Main) {
             }
             titleText.contains(plugin.languageManager.getMessage("shop.title").split("{")[0]) -> {
                 // ショップメニュー
-                when (clickedItem.type) {
-                    Material.ARROW -> {
-                        // ページ切り替え
-                        val slot = event.slot
-                        if (slot == 48) {
-                            // 前のページ
+                val slot = event.slot
+                
+                // ページ切り替えボタンの判定（スロット位置で判断）
+                if (slot == 48 && clickedItem.type == Material.ARROW) {
+                    // 前のページ（左下のボタン）
+                    val currentPage = getCurrentPage(titleText)
+                    val category = getCurrentCategory(event.inventory)
+                    openCategoryShop(player, game, category, currentPage - 1)
+                } else if (slot == 50 && clickedItem.type == Material.ARROW) {
+                    // 次のページ（右下のボタン）
+                    val currentPage = getCurrentPage(titleText)
+                    val category = getCurrentCategory(event.inventory)
+                    openCategoryShop(player, game, category, currentPage + 1)
+                } else if (clickedItem.type == Material.BARRIER) {
+                    // メインメニューに戻る
+                    openCategoryMenu(player, game)
+                } else {
+                    // アイテム購入処理
+                    val shopItem = findShopItemByDisplayItem(clickedItem)
+                    if (shopItem != null) {
+                        if (purchaseItem(player, shopItem, game)) {
+                            // 購入成功後、インベントリを更新
                             val currentPage = getCurrentPage(titleText)
                             val category = getCurrentCategory(event.inventory)
-                            openCategoryShop(player, game, category, currentPage - 1)
-                        } else if (slot == 50) {
-                            // 次のページ
-                            val currentPage = getCurrentPage(titleText)
-                            val category = getCurrentCategory(event.inventory)
-                            openCategoryShop(player, game, category, currentPage + 1)
-                        }
-                    }
-                    Material.BARRIER -> {
-                        // メインメニューに戻る
-                        openCategoryMenu(player, game)
-                    }
-                    else -> {
-                        // アイテム購入処理
-                        val shopItem = findShopItemByDisplayItem(clickedItem)
-                        if (shopItem != null) {
-                            if (purchaseItem(player, shopItem, game)) {
-                                // 購入成功後、インベントリを更新
-                                val currentPage = getCurrentPage(titleText)
-                                val category = getCurrentCategory(event.inventory)
-                                openCategoryShop(player, game, category, currentPage)
-                            }
+                            openCategoryShop(player, game, category, currentPage)
                         }
                     }
                 }

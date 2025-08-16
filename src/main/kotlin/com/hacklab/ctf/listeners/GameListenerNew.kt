@@ -1008,9 +1008,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         event.isCancelled = false
                         plugin.logger.info("[BlockPlace] Allowing block placement in $gameMode mode at ${block.location}")
                         
-                        // ブロック設置を記録（ツリー構造で）
+                        // ブロック設置を記録（チームカラーブロックのみツリー構造で記録）
                         val team = game.getPlayerTeam(player.uniqueId)
-                        if (team != null) {
+                        if (team != null && parent != block.location) {
+                            // parentがblock.locationと同じ場合は非チームブロックなので記録しない
                             game.recordBlockPlacement(team, block.location, parent)
                         }
                         
@@ -1060,8 +1061,11 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 event.isCancelled = false
                 plugin.logger.info("[BlockPlace] Allowing block placement in combat phase at ${block.location}")
                 
-                // ブロック設置を記録
-                game.recordBlockPlacement(team, block.location, parent)
+                // ブロック設置を記録（チームカラーブロックのみツリー構造で記録）
+                if (parent != block.location) {
+                    // parentがblock.locationと同じ場合は非チームブロックなので記録しない
+                    game.recordBlockPlacement(team, block.location, parent)
+                }
                 
                 // ブロック設置統計を記録
                 game.playerBlocksPlaced[player.uniqueId] = (game.playerBlocksPlaced[player.uniqueId] ?: 0) + 1
@@ -1763,6 +1767,17 @@ class GameListenerNew(private val plugin: Main) : Listener {
             if (spawnLocation != null) {
                 event.respawnLocation = spawnLocation
             }
+            
+            // 建築フェーズのゲームモードと飛行許可を再設定
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                val buildPhaseGameMode = game.buildPhaseGameMode
+                player.gameMode = GameMode.valueOf(buildPhaseGameMode)
+                player.allowFlight = true
+                player.isFlying = false
+                
+                // 建築フェーズのアイテムを再付与
+                game.giveBuildPhaseItems(player, team)
+            }, 1L)
         }
     }
 
