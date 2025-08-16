@@ -121,7 +121,7 @@ shield:
   warning-threshold: 40             # Shield value for warning message
   critical-threshold: 20            # Shield value for critical warning
   damage-interval: 1000             # Damage interval when shield is 0 (milliseconds)
-  damage-amount: 1.0                # Damage amount when shield is 0
+  damage-amount: 1.5                # Damage amount when shield is 0
 
 # Debug Settings
 debug:

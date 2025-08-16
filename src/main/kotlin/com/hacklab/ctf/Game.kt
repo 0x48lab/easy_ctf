@@ -4246,7 +4246,7 @@ class Game(
                                 val currentTime = System.currentTimeMillis()
                                 val lastDamage = lastDamageTime[player.uniqueId] ?: 0
                                 val damageInterval = plugin.config.getLong("shield.damage-interval", 1000)
-                                val damageAmount = plugin.config.getDouble("shield.damage-amount", 1.0)
+                                val damageAmount = plugin.config.getDouble("shield.damage-amount", 1.5)
                                 
                                 // 設定された間隔でダメージ
                                 if (currentTime - lastDamage >= damageInterval) {

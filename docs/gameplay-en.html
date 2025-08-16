@@ -60,7 +60,7 @@
 
         <section class="content-section">
             <h2>🏃 Game Flow</h2>
-            <p>CTF games are divided into three phases, each with unique objectives:</p>
+            <p>CTF games are divided into two phases, each with unique objectives:</p>
             
             <div class="phase-timeline">
                 <div class="phase">
@@ -90,21 +90,6 @@
                         <li>No block placement</li>
                         <li>Base 10s respawn delay (+2s per death, max 20s)</li>
                     </ul>
-                </div>
-                
-                <div class="phase-arrow">→</div>
-                
-                <div class="phase">
-                    <div class="phase-icon">🏆</div>
-                    <h3>INTERMISSION PHASE</h3>
-                    <p class="phase-duration">Default: 15 seconds (configurable)</p>
-                    <ul>
-                        <li>Review game results</li>
-                        <li>MVP announcement</li>
-                        <li>Plan strategy for next game (Match mode)</li>
-                        <li>Automatic team currency carry-over</li>
-                    </ul>
-                    <p class="phase-note">Note: Different durations can be set for intermediate rounds and final results in match mode.</p>
                 </div>
             </div>
         </section>
@@ -152,7 +137,7 @@
             <div class="tip-cards">
                 <div class="tip-card">
                     <h3>Defense Building</h3>
-                    <p>Create obstacles around your flag using the infinite team-colored blocks. Build walls, mazes, or towers to protect your flag.</p>
+                    <p>Create obstacles around your flag using team-colored blocks (red/blue concrete and stained glass). These blocks must be connected to your beacon or existing team blocks. Blocks purchased from the shop (stone, wood, dirt, etc.) can be placed freely without connection restrictions.</p>
                 </div>
                 
                 <div class="tip-card">
@@ -164,6 +149,32 @@
                     <h3>Team Coordination</h3>
                     <p>Discuss strategies with your team. Decide who will attack and who will defend before combat begins.</p>
                 </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>🔗 Team Block Connection System</h2>
+            
+            <div class="subsection">
+                <h3>Basic Rules</h3>
+                <p>An important system when placing team-colored blocks during the build phase:</p>
+                <ul>
+                    <li><strong>Applicable Blocks</strong>: Only applies to red/blue concrete and stained glass</li>
+                    <li><strong>Connection Required</strong>: Team-colored blocks must be connected to your team's beacon (flag), existing team blocks, or spawn points</li>
+                    <li><strong>Connection Definition</strong>: Must be adjacent in one of 6 directions (up, down, left, right, front, back) or within 3 blocks of flag/spawn</li>
+                    <li><strong>No Diagonal Connection</strong>: Diagonal connections are not considered valid</li>
+                    <li><strong>Other Blocks</strong>: Blocks purchased from the shop (stone, wood, dirt, etc.) can be placed freely without connection restrictions</li>
+                </ul>
+            </div>
+            
+            <div class="subsection">
+                <h3>Disconnection and Neutralization</h3>
+                <ul>
+                    <li><strong>Connection Check</strong>: When a team-colored block is destroyed, surrounding team blocks are automatically checked for connection</li>
+                    <li><strong>Isolated Block Neutralization</strong>: Team-colored blocks that lose their connection path to the beacon automatically turn white (quartz blocks)</li>
+                    <li><strong>Reusable</strong>: Neutralized blocks can be used as new connection points by either team</li>
+                    <li><strong>Other Blocks Unaffected</strong>: Regular blocks (stone, wood, etc.) are not subject to disconnection checks</li>
+                </ul>
             </div>
         </section>
 
