@@ -280,6 +280,12 @@ items:
   efficient-diamond-shovel: 効率強化ダイヤモンドシャベル
   initial-equipment: 初期装備
   no-drop-on-death: 死亡時ドロップなし
+
+event-chest:
+  spawn-title: イベントチェストが出現！
+  spawn-subtitle: マップ中央に貴重なアイテムが！
+  spawn-message: '[イベント] マップ中央にレアアイテムが入ったチェストが出現しました！'
+
 log:
   block-restore-failed: Block Restore Failed 失敗しました
   game-cannot-start: Cannot ゲーム start

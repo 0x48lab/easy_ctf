@@ -123,6 +123,11 @@ shield:
   damage-interval: 1000             # Damage interval when shield is 0 (milliseconds)
   damage-amount: 1.5                # Damage amount when shield is 0
 
+# Event Chest Settings
+event-chest:
+  enabled: true                     # Enable/disable event chest system
+  spawn-count: 1                     # Number of times chests spawn during combat phase (1=middle, 2=1/3 and 2/3, etc.)
+
 # Debug Settings
 debug:
   # Enable debug messages

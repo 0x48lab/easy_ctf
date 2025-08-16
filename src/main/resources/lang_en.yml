@@ -280,6 +280,12 @@ items:
   efficient-diamond-shovel: Efficient diamond shovel
   initial-equipment: Initial equipment
   no-drop-on-death: No drop on death
+
+event-chest:
+  spawn-title: Event Chest Spawned!
+  spawn-subtitle: Rare items at the center!
+  spawn-message: '[Event] A chest with rare items has spawned at the map center!'
+
 log:
   block-restore-failed: Block Restore Failed failed
   game-cannot-start: Cannot game start

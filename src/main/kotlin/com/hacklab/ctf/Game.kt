@@ -137,6 +137,11 @@ class Game(
     private val spawnProtectionTasks = mutableMapOf<UUID, BukkitRunnable>()
     val respawnTasks = mutableMapOf<UUID, BukkitRunnable>()
     
+    // イベントチェスト関連
+    private val eventChestLocations = mutableListOf<Location>()
+    private val eventChestTasks = mutableListOf<BukkitRunnable>()
+    private var eventChestSpawnCount = 0
+    
     // ゲッター
     val name: String get() = gameName
     
@@ -945,6 +950,9 @@ class Game(
         // 窒息チェックタスクを開始
         startSuffocationTask()
         
+        // イベントチェストのタイマーを開始
+        startEventChestTimer()
+        
         // プレイヤーの準備（バッチ処理で安全にテレポート）
         val allPlayers = getAllPlayers().toList()
         val redPlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.RED }
@@ -1020,6 +1028,9 @@ class Game(
         getAllPlayers().forEach { player ->
             player.sendMessage(Component.text(resultMessage))
         }
+        
+        // イベントチェストをクリーンアップ
+        cleanupEventChest()
         
         // マッチモードの場合はゲーム終了処理を呼ぶ
         if (matchWrapper != null) {
@@ -1349,6 +1360,9 @@ class Game(
             blueTeam.clear()
             disconnectedPlayers.clear()
         }
+        
+        // イベントチェストをクリーンアップ
+        cleanupEventChest()
         
         // ゲーム状態データはリセット
         score.clear()
@@ -4436,6 +4450,324 @@ class Game(
         val avgZ = sumZ / locations.size
         
         mapCenterLocation = Location(world, avgX, avgY, avgZ)
+    }
+
+    
+    /**
+     * イベントチェストのタイマーを開始
+     */
+    private fun startEventChestTimer() {
+        // 既存のタスクをキャンセル
+        eventChestTasks.forEach { it.cancel() }
+        eventChestTasks.clear()
+        eventChestLocations.clear()
+        eventChestSpawnCount = 0
+        
+        // 設定から有効かチェック
+        val enabled = plugin.config.getBoolean("event-chest.enabled", true)
+        if (!enabled) return
+        
+        // スポーン回数を取得（デフォルト: 1回）
+        val spawnCount = plugin.config.getInt("event-chest.spawn-count", 1)
+        if (spawnCount <= 0) return
+        
+        // 戦闘フェーズを等分してスポーンタイミングを計算
+        val segments = spawnCount + 1  // n回スポーンする場合、フェーズをn+1等分
+        val segmentDuration = combatDuration / segments
+        
+        // 各スポーンタイミングでタスクを作成
+        for (i in 1..spawnCount) {
+            val spawnDelay = segmentDuration * i  // i番目のセグメントの終わりでスポーン
+            
+            val task = object : BukkitRunnable() {
+                override fun run() {
+                    if (phase != GamePhase.COMBAT || state != GameState.RUNNING) {
+                        cancel()
+                        return
+                    }
+                    spawnEventChest(i)
+                }
+            }
+            task.runTaskLater(plugin, (spawnDelay * 20L))
+            eventChestTasks.add(task)
+            
+            plugin.logger.info("Event chest #$i scheduled at $spawnDelay seconds")
+        }
+    }
+    
+    /**
+     * イベントチェストをスポーン
+     */
+    private fun spawnEventChest(chestNumber: Int) {
+        
+        // チェスト番号に応じて異なる場所を探す
+        val centerLoc = findEventChestLocation(chestNumber) ?: run {
+            plugin.logger.warning("Could not find suitable location for event chest #$chestNumber")
+            return
+        }
+        
+        // 既に同じ位置にチェストがある場合はスキップ
+        if (eventChestLocations.any { it.block == centerLoc.block }) {
+            plugin.logger.info("Event chest already exists at this location")
+            return
+        }
+        
+        eventChestLocations.add(centerLoc)
+        eventChestSpawnCount++
+        
+        // チェストを設置
+        val block = centerLoc.block
+        block.type = Material.CHEST
+        
+        // チェストにアイテムを配置
+        val chest = block.state as? org.bukkit.block.Chest ?: return
+        val inventory = chest.inventory
+        
+        // 高価なショップアイテムからランダムに選択
+        val rareItems = selectRareItems()
+        rareItems.forEach { item ->
+            inventory.addItem(item)
+        }
+        
+        // 全プレイヤーに通知
+        sendEventNotification(
+            Component.text(plugin.languageManager.getMessage("event-chest.spawn-title")).color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD),
+            Component.text(plugin.languageManager.getMessage("event-chest.spawn-subtitle"), NamedTextColor.YELLOW),
+            sound = org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL,
+            soundPitch = 1.2f
+        )
+        
+        // チャットメッセージも送信
+        getAllPlayers().forEach { player ->
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("event-chest.spawn-message"), NamedTextColor.GOLD))
+        }
+        
+        // チェストの位置に光るエフェクト（固定で有効）
+        centerLoc.world?.spawnParticle(
+            org.bukkit.Particle.END_ROD,
+            centerLoc.clone().add(0.5, 1.0, 0.5),
+            100,
+            0.5,
+            1.0,
+            0.5,
+            0.1
+        )
+    }
+    
+    /**
+     * マップ中央の陸地を探す
+     */
+    private fun findCenterLandLocation(): Location? {
+        val world = tempWorld ?: originalWorld ?: return null
+        
+        // 旗の位置から中央を計算
+        val redFlag = redFlagLocation ?: return null
+        val blueFlag = blueFlagLocation ?: return null
+        
+        val centerX = (redFlag.blockX + blueFlag.blockX) / 2
+        val centerZ = (redFlag.blockZ + blueFlag.blockZ) / 2
+        
+        // 中央付近で陸地を探す（半径10ブロック内）
+        for (radius in 0..10) {
+            for (dx in -radius..radius) {
+                for (dz in -radius..radius) {
+                    if (kotlin.math.abs(dx) != radius && kotlin.math.abs(dz) != radius) continue
+                    
+                    val checkX = centerX + dx
+                    val checkZ = centerZ + dz
+                    
+                    // 最も高い固体ブロックを探す
+                    for (y in world.maxHeight downTo world.minHeight) {
+                        val loc = Location(world, checkX.toDouble(), y.toDouble(), checkZ.toDouble())
+                        val block = loc.block
+                        
+                        if (block.type.isSolid && block.getRelative(0, 1, 0).type == Material.AIR) {
+                            // 上が空気で、固体ブロックの上なら陸地
+                            return loc.clone().add(0.0, 1.0, 0.0)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 見つからない場合は中央の最高地点
+        val centerLoc = Location(world, centerX.toDouble(), 64.0, centerZ.toDouble())
+        return world.getHighestBlockAt(centerLoc).location.clone().add(0.0, 1.0, 0.0)
+    }
+
+    
+    /**
+     * イベントチェストの位置を探す（チェスト番号に応じて異なる場所）
+     */
+    private fun findEventChestLocation(chestNumber: Int): Location? {
+        val world = tempWorld ?: originalWorld ?: return null
+        
+        // 旗の位置から中央を計算
+        val redFlag = redFlagLocation ?: return null
+        val blueFlag = blueFlagLocation ?: return null
+        
+        // 総スポーン数を取得
+        val totalCount = plugin.config.getInt("event-chest.spawn-count", 1)
+        
+        // スポーン位置を計算
+        val location = when {
+            totalCount == 1 -> {
+                // 1個の場合: 中央
+                Location(
+                    world,
+                    (redFlag.blockX + blueFlag.blockX) / 2.0,
+                    64.0,
+                    (redFlag.blockZ + blueFlag.blockZ) / 2.0
+                )
+            }
+            totalCount == 2 -> {
+                // 2個の場合: 旗を結ぶ線を3等分した1/3と2/3の位置
+                when (chestNumber) {
+                    1 -> Location(
+                        world,
+                        redFlag.blockX * 2.0/3.0 + blueFlag.blockX * 1.0/3.0,
+                        64.0,
+                        redFlag.blockZ * 2.0/3.0 + blueFlag.blockZ * 1.0/3.0
+                    )
+                    2 -> Location(
+                        world,
+                        redFlag.blockX * 1.0/3.0 + blueFlag.blockX * 2.0/3.0,
+                        64.0,
+                        redFlag.blockZ * 1.0/3.0 + blueFlag.blockZ * 2.0/3.0
+                    )
+                    else -> null
+                }
+            }
+            totalCount >= 3 -> {
+                // 3個以上の場合: 中央を中心に円状に配置
+                val centerX = (redFlag.blockX + blueFlag.blockX) / 2.0
+                val centerZ = (redFlag.blockZ + blueFlag.blockZ) / 2.0
+                val radius = kotlin.math.min(
+                    kotlin.math.abs(redFlag.blockX - blueFlag.blockX),
+                    kotlin.math.abs(redFlag.blockZ - blueFlag.blockZ)
+                ) / 4.0  // 旗間距離の1/4を半径とする
+                
+                val angle = 2.0 * Math.PI * (chestNumber - 1) / totalCount
+                Location(
+                    world,
+                    centerX + radius * kotlin.math.cos(angle),
+                    64.0,
+                    centerZ + radius * kotlin.math.sin(angle)
+                )
+            }
+            else -> null
+        } ?: return null
+        
+        // その位置付近で陸地を探す
+        return findNearestLandLocation(location)
+    }
+    
+    /**
+     * 指定位置付近の陸地を探す
+     */
+    private fun findNearestLandLocation(targetLoc: Location): Location? {
+        val world = targetLoc.world ?: return null
+        
+        // ターゲット位置から半径10ブロック内で陸地を探す
+        for (radius in 0..10) {
+            for (dx in -radius..radius) {
+                for (dz in -radius..radius) {
+                    if (kotlin.math.abs(dx) != radius && kotlin.math.abs(dz) != radius) continue
+                    
+                    val checkX = targetLoc.blockX + dx
+                    val checkZ = targetLoc.blockZ + dz
+                    
+                    // 最も高い固体ブロックを探す
+                    for (y in world.maxHeight downTo world.minHeight) {
+                        val loc = Location(world, checkX.toDouble(), y.toDouble(), checkZ.toDouble())
+                        val block = loc.block
+                        
+                        if (block.type.isSolid && block.getRelative(0, 1, 0).type == Material.AIR) {
+                            // 上が空気で、固体ブロックの上なら陸地
+                            return loc.clone().add(0.0, 1.0, 0.0)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 見つからない場合はターゲット位置の最高地点
+        return world.getHighestBlockAt(targetLoc).location.clone().add(0.0, 1.0, 0.0)
+    }
+    
+    /**
+     * レアアイテムを選択
+     */
+    private fun selectRareItems(): List<ItemStack> {
+        val items = mutableListOf<ItemStack>()
+        
+        // 高価なアイテムのリスト
+        val rareItemPool = mutableListOf<ItemStack>()
+        
+        // ダイヤモンド装備
+        rareItemPool.add(ItemStack(Material.DIAMOND_HELMET))
+        rareItemPool.add(ItemStack(Material.DIAMOND_CHESTPLATE))
+        rareItemPool.add(ItemStack(Material.DIAMOND_LEGGINGS))
+        rareItemPool.add(ItemStack(Material.DIAMOND_BOOTS))
+        rareItemPool.add(ItemStack(Material.DIAMOND_SWORD))
+        rareItemPool.add(ItemStack(Material.DIAMOND_AXE))
+        
+        // ネザライト装備（より希少）
+        if (Random().nextDouble() < 0.3) {  // 30%の確率でネザライト
+            rareItemPool.add(ItemStack(Material.NETHERITE_HELMET))
+            rareItemPool.add(ItemStack(Material.NETHERITE_CHESTPLATE))
+            rareItemPool.add(ItemStack(Material.NETHERITE_LEGGINGS))
+            rareItemPool.add(ItemStack(Material.NETHERITE_BOOTS))
+            rareItemPool.add(ItemStack(Material.NETHERITE_SWORD))
+        }
+        
+        // 特殊アイテム
+        rareItemPool.add(ItemStack(Material.GOLDEN_APPLE, 3))
+        rareItemPool.add(ItemStack(Material.ENDER_PEARL, 8))
+        rareItemPool.add(ItemStack(Material.TOTEM_OF_UNDYING))
+        rareItemPool.add(ItemStack(Material.BOW).apply {
+            addEnchantment(Enchantment.POWER, 3)
+            addEnchantment(Enchantment.INFINITY, 1)
+        })
+        rareItemPool.add(ItemStack(Material.ARROW, 64))
+        
+        // エンチャント本
+        val enchantBook = ItemStack(Material.ENCHANTED_BOOK)
+        val bookMeta = enchantBook.itemMeta as? org.bukkit.inventory.meta.EnchantmentStorageMeta
+        bookMeta?.addStoredEnchant(Enchantment.PROTECTION, 4, true)
+        enchantBook.itemMeta = bookMeta
+        rareItemPool.add(enchantBook)
+        
+        // ランダムに1個選択（固定）
+        val shuffled = rareItemPool.shuffled()
+        if (shuffled.isNotEmpty()) {
+            items.add(shuffled[0])
+        }
+        
+        return items
+    }
+    
+    /**
+     * イベントチェストをクリーンアップ
+     */
+    private fun cleanupEventChest() {
+        // 全てのタスクをキャンセル
+        eventChestTasks.forEach { it.cancel() }
+        eventChestTasks.clear()
+        
+        // 全てのチェストを削除
+        eventChestLocations.forEach { loc ->
+            if (loc.block.type == Material.CHEST) {
+                // チェストの中身をクリア
+                val chest = loc.block.state as? org.bukkit.block.Chest
+                chest?.inventory?.clear()
+                // チェストを削除
+                loc.block.type = Material.AIR
+            }
+        }
+        
+        eventChestLocations.clear()
+        eventChestSpawnCount = 0
     }
     
     /**
