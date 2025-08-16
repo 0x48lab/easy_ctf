@@ -1833,7 +1833,7 @@ class Game(
         }
     }
     
-    private fun giveBuildPhaseItems(player: Player, team: Team) {
+    internal fun giveBuildPhaseItems(player: Player, team: Team) {
         // 観戦者には建築フェーズアイテムを配布しない
         if (team == Team.SPECTATOR) return
         
