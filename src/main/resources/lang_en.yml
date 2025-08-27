@@ -272,6 +272,7 @@ gameplay:
   need-adjacent-block: Need adjacent block
   player-has-spawn-protection: Player has spawn protection
   respawn-countdown: Respawn countdown
+  respawn-instant: Instant respawn!
   shop-item-redistributed: Shop item redistributed
   spectator-mode: Spectator mode
 items:

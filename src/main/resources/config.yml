@@ -14,10 +14,10 @@ default-game:
   # Maximum players per team
   max-players-per-team: 10
   
-  # Respawn delay in seconds (base + kill penalty)
-  respawn-delay-base: 10
-  respawn-delay-per-death: 2  # Additional seconds per death
-  respawn-delay-max: 20  # Maximum respawn delay
+  # Respawn delay in seconds (disabled - instant respawn)
+  respawn-delay-base: 0
+  respawn-delay-per-death: 0  # No additional delay
+  respawn-delay-max: 0  # Instant respawn
   
   # Force PVP during combat phase (ignore server pvp settings)
   force-pvp: true

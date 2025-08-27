@@ -272,6 +272,7 @@ gameplay:
   need-adjacent-block: '隣接する自チームのブロックが必要です'
   player-has-spawn-protection: 'プレイヤーはスポーン保護中です'
   respawn-countdown: 'リスポーンまで: {seconds}秒'
+  respawn-instant: '即座にリスポーンします！'
   shop-item-redistributed: 'ショップアイテムが再配布されました'
   spectator-mode: '[spectator mode]'
 items:

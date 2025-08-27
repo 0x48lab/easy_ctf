@@ -490,13 +490,14 @@ class GameListenerNew(private val plugin: Main) : Listener {
             event.drops.clear()
             event.drops.addAll(itemsToDrop)
             
-            // 保持するアイテムと革防具を記録
-            player.setMetadata("ctf_items_to_keep", 
-                org.bukkit.metadata.FixedMetadataValue(plugin, itemsToKeep))
-            player.setMetadata("ctf_leather_armor_to_keep", 
-                org.bukkit.metadata.FixedMetadataValue(plugin, leatherArmorToKeep))
+            // 保持するアイテムをインベントリから削除（ドロップするアイテムのみ）
+            for (item in itemsToDrop) {
+                player.inventory.remove(item)
+            }
             
-            event.keepInventory = false
+            // 保持するアイテムはインベントリに残す
+            event.keepInventory = true
+            event.keepLevel = true
             event.droppedExp = 0
             
             // 死亡位置を記録（旗ドロップ前に）
@@ -544,18 +545,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 }
             }
             
-            // リスポーン処理（死亡回数に応じた遅延）
-            // ゲーム固有の設定を使用
-            val config = gameManager.getGameConfig(game.name)
-            val baseDelay = config?.respawnDelayBase ?: plugin.config.getInt("default-game.respawn-delay-base", 10)
-            val deathPenalty = config?.respawnDelayPerDeath ?: plugin.config.getInt("default-game.respawn-delay-per-death", 2)
-            val maxDelay = config?.respawnDelayMax ?: plugin.config.getInt("default-game.respawn-delay-max", 20)
-            
-            val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
-            
-            // 死亡メッセージにリスポーン時間を表示
-            player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.respawn-countdown",
-                "seconds" to respawnDelay.toString()), NamedTextColor.YELLOW))
+            // リスポーン処理（即座にリスポーン）
+            // 即座にリスポーンメッセージを表示
+            player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.respawn-instant"), NamedTextColor.YELLOW))
             
             // 死亡位置を保存
             player.setMetadata("death_location", org.bukkit.metadata.FixedMetadataValue(plugin, deathLocation))
@@ -614,7 +606,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             
             // リスポーンタスクを記録
             game.respawnTasks[player.uniqueId] = respawnTask
-            respawnTask.runTaskLater(plugin, respawnDelay * 20L) // 秒をticksに変換
+            respawnTask.runTaskLater(plugin, 1L) // 即座にリスポーン（1tick後）
             }
         }
     }
@@ -1680,81 +1672,22 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         if (game.state == GameState.RUNNING && game.phase == GamePhase.COMBAT) {
             // 戦闘フェーズ中の死亡リスポーン
-            // 保存された死亡位置を取得（なければ現在位置を使用）
-            val deathLocation = player.getMetadata("death_location")
-                .firstOrNull()?.value() as? Location ?: player.location.clone()
-            
-            // メタデータをクリア
-            player.removeMetadata("death_location", plugin)
-            
-            // 死亡位置がゲームワールドであることを確認
-            val gameWorld = game.world
-            if (deathLocation.world != gameWorld) {
-                // ワールドが違う場合は、ゲームワールドの同じ座標に修正
-                deathLocation.world = gameWorld
+            // チームのスポーン地点へ即座にリスポーン
+            val team = game.getPlayerTeam(player.uniqueId) ?: return
+            val spawnLocation = when (team) {
+                Team.RED -> game.getRedSpawnLocation()
+                Team.BLUE -> game.getBlueSpawnLocation()
+                Team.SPECTATOR -> game.getCenterLocation()
+            }
+            if (spawnLocation != null) {
+                event.respawnLocation = spawnLocation
             }
             
-            val spectatorLocation = game.findSafeSpectatorLocation(deathLocation)
-            
-            // リスポーン地点をゲームワールドの観戦位置に設定
-            event.respawnLocation = spectatorLocation
-            
-            // スペクテーターモードに設定
+            // 即座にサバイバルモードで復活
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
-                player.gameMode = GameMode.SPECTATOR
-                player.sendMessage(Component.text(plugin.languageManager.getMessage("gameplay.spectator-mode"), NamedTextColor.GRAY))
-                
-                // 死亡回数を取得してリスポーン遅延を計算
-                val deaths = game.playerDeaths[player.uniqueId] ?: 1
-                val config = gameManager.getGameConfig(game.name)
-                val baseDelay = config?.respawnDelayBase ?: plugin.config.getInt("default-game.respawn-delay-base", 10)
-                val deathPenalty = config?.respawnDelayPerDeath ?: plugin.config.getInt("default-game.respawn-delay-per-death", 2)
-                val maxDelay = config?.respawnDelayMax ?: plugin.config.getInt("default-game.respawn-delay-max", 20)
-                val respawnDelay = minOf(baseDelay + (deaths - 1) * deathPenalty, maxDelay)
-                
-                // 指定時間後にサバイバルモードで復活
-                plugin.server.scheduler.runTaskLater(plugin, Runnable {
-                    game.handleRespawn(player)
-                    player.gameMode = GameMode.SURVIVAL
-                    
-                    // 保持アイテムを再配布
-                    val keptItems = player.getMetadata("ctf_items_to_keep")
-                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
-                    
-                    // ショップアイテムはスロット8に、その他はaddItemで追加
-                    for (item in keptItems) {
-                        if (plugin.shopManager.isShopItem(item)) {
-                            // 既存のショップアイテムを削除してから配置
-                            for (i in 0 until player.inventory.size) {
-                                val existingItem = player.inventory.getItem(i)
-                                if (existingItem != null && plugin.shopManager.isShopItem(existingItem)) {
-                                    player.inventory.setItem(i, null)
-                                }
-                            }
-                            player.inventory.setItem(8, item)
-                        } else {
-                            player.inventory.addItem(item)
-                        }
-                    }
-                    
-                    // 革防具を再装備
-                    val keptArmor = player.getMetadata("ctf_leather_armor_to_keep")
-                        .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
-                    
-                    player.equipment?.let { equipment ->
-                        for (armor in keptArmor) {
-                            when {
-                                armor.type == Material.LEATHER_HELMET -> equipment.helmet = armor
-                                armor.type == Material.LEATHER_CHESTPLATE -> equipment.chestplate = armor
-                                armor.type == Material.LEATHER_LEGGINGS -> equipment.leggings = armor
-                                armor.type == Material.LEATHER_BOOTS -> equipment.boots = armor
-                            }
-                        }
-                    }
-                    
-                    player.removeMetadata("ctf_items_to_keep", plugin)
-                    player.removeMetadata("ctf_leather_armor_to_keep", plugin)
-                }, respawnDelay * 20L) // 秒をticksに変換
+                game.handleRespawn(player)
+                player.gameMode = GameMode.SURVIVAL
+                // アイテムはkeepInventory=trueで保持されているので再配布不要
             }, 1L)
         } else if (game.state == GameState.RUNNING && game.phase == GamePhase.BUILD) {
             // 建築フェーズ中のリスポーン
