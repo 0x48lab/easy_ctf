@@ -4,6 +4,7 @@ import com.hacklab.ctf.Main
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.data.BlockData
+import org.bukkit.block.Container
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import java.io.ByteArrayOutputStream
@@ -93,8 +94,9 @@ class CompressedMapManager(private val plugin: Main) {
      * 圧縮されたマップデータを読み込んで復元
      * @param gameName ゲーム名
      * @param targetWorld 復元先のワールド（省略時は保存時のワールド）
+     * @param game ゲームインスタンス（旗位置情報取得用、オプション）
      */
-    fun loadAndRestoreMap(gameName: String, targetWorld: org.bukkit.World? = null): Boolean {
+    fun loadAndRestoreMap(gameName: String, targetWorld: org.bukkit.World? = null, game: com.hacklab.ctf.Game? = null): Boolean {
         try {
             val file = File(mapsFolder, "$gameName.yml")
             if (!file.exists()) return false
@@ -176,6 +178,15 @@ class CompressedMapManager(private val plugin: Main) {
             }
             
             plugin.logger.info("[CompressedMapManager] 復元完了: $restoredBlocks ブロックを復元")
+            
+            // コンテナブロックの中身をクリア
+            clearContainerContents(world, minX, minY, minZ, maxX, maxY, maxZ)
+            
+            // ビーコンの色を設定（ゲーム情報がある場合）
+            if (game != null) {
+                setupBeaconColors(world, game)
+            }
+            
             plugin.logger.info(plugin.languageManager.getMessage("log.map-restored-blocks", "game" to gameName, "blocks" to restoredBlocks.toString()))
             return true
             
@@ -212,6 +223,60 @@ class CompressedMapManager(private val plugin: Main) {
      */
     fun hasMap(gameName: String): Boolean {
         return File(mapsFolder, "$gameName.yml").exists()
+    }
+    
+    /**
+     * コンテナブロックの中身をクリア
+     */
+    private fun clearContainerContents(world: org.bukkit.World, minX: Int, minY: Int, minZ: Int, maxX: Int, maxY: Int, maxZ: Int) {
+        var clearedContainers = 0
+        
+        for (x in minX..maxX) {
+            for (y in minY..maxY) {
+                for (z in minZ..maxZ) {
+                    val block = world.getBlockAt(x, y, z)
+                    val blockState = block.state
+                    
+                    // コンテナブロックの場合、インベントリをクリア
+                    if (blockState is Container) {
+                        blockState.inventory.clear()
+                        clearedContainers++
+                        plugin.logger.fine("[CompressedMapManager] コンテナの中身をクリア: ${block.type} at $x, $y, $z")
+                    }
+                }
+            }
+        }
+        
+        if (clearedContainers > 0) {
+            plugin.logger.info("[CompressedMapManager] $clearedContainers 個のコンテナの中身をクリアしました")
+        }
+    }
+    
+    /**
+     * ビーコンの上に適切な色のガラスを設置
+     */
+    private fun setupBeaconColors(world: org.bukkit.World, game: com.hacklab.ctf.Game) {
+        // 赤チームの旗位置にビーコンと赤ガラスを設置
+        game.getRedFlagLocation()?.let { flagLoc ->
+            val beaconBlock = world.getBlockAt(flagLoc)
+            if (beaconBlock.type == Material.BEACON) {
+                // ビーコンの上に赤ガラスを設置
+                val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
+                glassBlock.type = Material.RED_STAINED_GLASS
+                plugin.logger.info("[CompressedMapManager] 赤チームのビーコンに赤ガラスを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
+            }
+        }
+        
+        // 青チームの旗位置にビーコンと青ガラスを設置
+        game.getBlueFlagLocation()?.let { flagLoc ->
+            val beaconBlock = world.getBlockAt(flagLoc)
+            if (beaconBlock.type == Material.BEACON) {
+                // ビーコンの上に青ガラスを設置
+                val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
+                glassBlock.type = Material.BLUE_STAINED_GLASS
+                plugin.logger.info("[CompressedMapManager] 青チームのビーコンに青ガラスを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
+            }
+        }
     }
     
     /**

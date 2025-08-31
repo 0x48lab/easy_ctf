@@ -445,10 +445,6 @@ class GameManager(private val plugin: Main) {
                     val blueBlocks = game.teamPlacedBlocks[Team.BLUE]?.size ?: 0
                     player.sendMessage(plugin.languageManager.getMessage("match.block-count", "red" to redBlocks.toString(), "blue" to blueBlocks.toString()))
                 }
-            } else {
-                val intervalSeconds = match.config.matchIntervalDuration
-                player.sendMessage("")
-                player.sendMessage(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to intervalSeconds.toString()))
             }
         }
         
@@ -457,128 +453,9 @@ class GameManager(private val plugin: Main) {
             // マッチ終了処理
             handleMatchComplete(gameName)
         } else {
-            // インターバル表示を開始
-            showMatchInterval(game, match, gameName)
+            // 即座に次のゲームを開始
+            startNextMatchGame(gameName)
         }
-    }
-    
-    /**
-     * マッチインターバル表示
-     */
-    private fun showMatchInterval(game: Game, match: MatchWrapper, gameName: String) {
-        // 設定から休憩時間を取得
-        var remainingSeconds = match.config.matchIntervalDuration
-        val totalSeconds = remainingSeconds
-        
-        // BossBarを作成または取得
-        if (game.bossBar == null) {
-            game.createBossBar()
-        }
-        
-        // BossBarを初期化
-        game.bossBar?.apply {
-            setTitle(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to remainingSeconds.toString()))
-            color = org.bukkit.boss.BarColor.YELLOW
-            progress = 1.0
-            game.getAllPlayers().forEach { player ->
-                addPlayer(player)
-            }
-        }
-        
-        // プレイヤーに次のゲームまでの時間を通知
-        game.getAllPlayers().forEach { player ->
-            player.sendMessage(Component.text(""))
-            player.sendMessage(Component.text(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to remainingSeconds.toString()), NamedTextColor.GREEN))
-        }
-        
-        object : BukkitRunnable() {
-            override fun run() {
-                remainingSeconds--
-                
-                // BossBarを更新
-                game.bossBar?.apply {
-                    setTitle(plugin.languageManager.getMessage("match.next-game-countdown", "seconds" to remainingSeconds.toString()))
-                    progress = remainingSeconds.toDouble() / totalSeconds.toDouble()
-                }
-                
-                when (remainingSeconds) {
-                    5 -> {
-                        game.getAllPlayers().forEach { player ->
-                            player.sendMessage(Component.text(plugin.languageManager.getMessage("match.starting-in-5"), NamedTextColor.YELLOW))
-                        }
-                    }
-                    4 -> {
-                        // 4秒の時は何も表示しない（音声カウントダウンは3秒から）
-                    }
-                    3 -> {
-                        game.getAllPlayers().forEach { player ->
-                            player.clearTitle() // 既存のタイトルをクリア
-                            player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text(plugin.languageManager.getMessage("countdown.three"), NamedTextColor.YELLOW),
-                                Component.empty(),
-                                net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(100),
-                                    java.time.Duration.ofMillis(700),
-                                    java.time.Duration.ofMillis(200)
-                                )
-                            ))
-                            player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f)
-                        }
-                    }
-                    2 -> {
-                        game.getAllPlayers().forEach { player ->
-                            player.clearTitle() // 既存のタイトルをクリア
-                            player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text(plugin.languageManager.getMessage("countdown.two"), NamedTextColor.GOLD),
-                                Component.empty(),
-                                net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(100),
-                                    java.time.Duration.ofMillis(700),
-                                    java.time.Duration.ofMillis(200)
-                                )
-                            ))
-                            player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f)
-                        }
-                    }
-                    1 -> {
-                        game.getAllPlayers().forEach { player ->
-                            player.clearTitle() // 既存のタイトルをクリア
-                            player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text(plugin.languageManager.getMessage("countdown.one"), NamedTextColor.RED),
-                                Component.empty(),
-                                net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(100),
-                                    java.time.Duration.ofMillis(700),
-                                    java.time.Duration.ofMillis(200)
-                                )
-                            ))
-                            player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f)
-                        }
-                    }
-                    0 -> {
-                        game.getAllPlayers().forEach { player ->
-                            player.clearTitle() // 既存のタイトルをクリア
-                            player.showTitle(net.kyori.adventure.title.Title.title(
-                                Component.text(plugin.languageManager.getMessage("countdown.start"), NamedTextColor.GREEN),
-                                Component.empty(),
-                                net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(200),
-                                    java.time.Duration.ofMillis(1000),
-                                    java.time.Duration.ofMillis(500)
-                                )
-                            ))
-                            player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f)
-                        }
-                        cancel()
-                        // 次のゲームを開始
-                        startNextMatchGame(gameName)
-                    }
-                    else -> {
-                        // それ以外の場合は何もしない
-                    }
-                }
-            }
-        }.runTaskTimer(plugin, 20L, 20L) // 1秒ごとに実行
     }
     
     /**
@@ -801,8 +678,8 @@ class GameManager(private val plugin: Main) {
     /**
      * ゲーム開始時にマップをリセット
      */
-    fun resetGameMap(gameName: String, targetWorld: org.bukkit.World? = null): Boolean {
-        return mapManager.loadAndRestoreMap(gameName, targetWorld)
+    fun resetGameMap(gameName: String, targetWorld: org.bukkit.World? = null, game: Game? = null): Boolean {
+        return mapManager.loadAndRestoreMap(gameName, targetWorld, game)
     }
     
     private fun formatLocation(loc: Location): String {

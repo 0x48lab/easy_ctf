@@ -30,6 +30,9 @@ class MapScanner(private val plugin: Main) {
         val blueFlags = mutableListOf<Location>()
         val errors = mutableListOf<String>()
         
+        // 一時リストをクリア
+        tempBeacons.clear()
+        
         // スキャン開始
         
         // すべてのブロックをスキャン
@@ -65,6 +68,9 @@ class MapScanner(private val plugin: Main) {
         
         // スキャン完了
         
+        // ビーコンをスポーン地点との距離で分類
+        assignBeaconsToTeams(redSpawns, blueSpawns, redFlags, blueFlags, errors)
+        
         // 検証
         validateScanResult(redSpawns, blueSpawns, redFlags, blueFlags, errors)
         
@@ -72,26 +78,59 @@ class MapScanner(private val plugin: Main) {
     }
     
     /**
-     * ビーコンの上のガラスブロックをチェックして旗位置を判定
+     * ビーコンの旗位置を一時的に保存
+     */
+    private val tempBeacons = mutableListOf<Location>()
+    
+    /**
+     * ビーコンを一時リストに追加（後でスポーン地点との距離で判定）
      */
     private fun checkBeaconFlag(
         beaconBlock: Block,
         redFlags: MutableList<Location>,
         blueFlags: MutableList<Location>
     ) {
-        val aboveBlock = beaconBlock.getRelative(0, 1, 0)
+        val location = beaconBlock.location.clone().add(0.5, 0.0, 0.5)
+        tempBeacons.add(location)
+    }
+    
+    /**
+     * ビーコンをスポーン地点との距離で各チームに割り当て
+     */
+    private fun assignBeaconsToTeams(
+        redSpawns: List<Location>,
+        blueSpawns: List<Location>,
+        redFlags: MutableList<Location>,
+        blueFlags: MutableList<Location>,
+        errors: MutableList<String>
+    ) {
+        // スポーン地点がない場合はエラー
+        if (redSpawns.isEmpty() || blueSpawns.isEmpty()) {
+            // スポーン地点がない場合は後の検証でエラーになるため、ここでは処理しない
+            return
+        }
         
-        when (aboveBlock.type) {
-            Material.RED_STAINED_GLASS -> {
-                // ビーコンの上に赤ガラス発見
-                redFlags.add(beaconBlock.location.clone().add(0.5, 0.0, 0.5))
-            }
-            Material.BLUE_STAINED_GLASS -> {
-                // ビーコンの上に青ガラス発見
-                blueFlags.add(beaconBlock.location.clone().add(0.5, 0.0, 0.5))
-            }
-            else -> {
-                // ビーコンの上のブロック: ${aboveBlock.type}
+        // 各ビーコンについて、最も近いスポーン地点のチームに割り当てる
+        for (beacon in tempBeacons) {
+            // 赤スポーンまでの最小距離
+            val minRedDistance = redSpawns.minOf { it.distance(beacon) }
+            // 青スポーンまでの最小距離
+            val minBlueDistance = blueSpawns.minOf { it.distance(beacon) }
+            
+            // より近いチームに割り当て
+            when {
+                minRedDistance < minBlueDistance -> {
+                    redFlags.add(beacon)
+                    plugin.logger.info("ビーコン at ${beacon.blockX}, ${beacon.blockY}, ${beacon.blockZ} -> RED (距離: ${String.format("%.1f", minRedDistance)})")
+                }
+                minBlueDistance < minRedDistance -> {
+                    blueFlags.add(beacon)
+                    plugin.logger.info("ビーコン at ${beacon.blockX}, ${beacon.blockY}, ${beacon.blockZ} -> BLUE (距離: ${String.format("%.1f", minBlueDistance)})")
+                }
+                else -> {
+                    // 距離が同じ場合はエラー
+                    errors.add("ビーコン at ${beacon.blockX}, ${beacon.blockY}, ${beacon.blockZ} は両チームのスポーンから等距離です")
+                }
             }
         }
     }

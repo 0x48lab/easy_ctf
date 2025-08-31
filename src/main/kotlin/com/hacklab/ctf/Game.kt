@@ -4,6 +4,8 @@ import com.hacklab.ctf.utils.GamePhase
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.Team
 import com.hacklab.ctf.utils.MatchMode
+import com.hacklab.ctf.shop.ShopCategory
+import com.hacklab.ctf.shop.ShopItem
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
@@ -56,6 +58,7 @@ class Game(
     private var redSpawnLocation: Location? = null
     private var blueFlagLocation: Location? = null
     private var mapCenterLocation: Location? = null
+    
     
     // 設定
     var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
@@ -149,12 +152,10 @@ class Game(
     companion object {
         val TEAM_BLOCKS = mapOf(
             Team.RED to setOf(
-                Material.RED_CONCRETE,
-                Material.RED_STAINED_GLASS
+                Material.RED_CONCRETE
             ),
             Team.BLUE to setOf(
-                Material.BLUE_CONCRETE,
-                Material.BLUE_STAINED_GLASS
+                Material.BLUE_CONCRETE
             )
         )
         
@@ -604,9 +605,6 @@ class Game(
         phase = GamePhase.BUILD
         currentPhaseTime = buildDuration
         
-        // マッチモードで既にテンポラリワールドがある場合は再利用
-        val isMatchMode = matchWrapper != null && matchWrapper!!.isActive
-        
         // 初回のゲーム開始時、またはマッチの最初のゲーム、またはテンポラリワールドが無効な場合は新規作成
         plugin.logger.info("[Game] Checking if new world needed: tempWorld=${tempWorld?.name}, matchWrapper=${matchWrapper != null}, gameNumber=${matchWrapper?.currentGameNumber}")
         val needNewWorld = tempWorld == null || 
@@ -651,12 +649,12 @@ class Game(
         
         // マップを復元（マッチの最初のゲームのみ）
         if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
-            val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
+            val gameManager = plugin.gameManager
             val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
             
             // 保存されたマップがある場合は復元
             if (mapManager.hasMap(gameName)) {
-                if (!gameManager.resetGameMap(gameName, tempWorld)) {
+                if (!gameManager.resetGameMap(gameName, tempWorld, this)) {
                     plugin.logger.warning(plugin.languageManager.getMessage("log.map-restore-failed"))
                 } else {
                     plugin.logger.info(plugin.languageManager.getMessage("log.map-restored"))
@@ -679,7 +677,6 @@ class Game(
                     
                     // 元のワールドからテンポラリワールドにブロックをコピー
                     plugin.logger.info("Starting block copy from original world to temporary world...")
-                    val totalBlocks = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1)
                     var copiedBlocks = 0
                     val startTime = System.currentTimeMillis()
                     
@@ -798,8 +795,6 @@ class Game(
         // 全プレイヤーの初期化処理（テレポート後に実行）
         plugin.server.scheduler.runTaskLater(plugin, Runnable {
             getAllPlayers().forEach { player ->
-                val team = getPlayerTeam(player.uniqueId)!!
-                
                 // タイトル表示
                 player.showTitle(Title.title(
                 plugin.languageManager.getMessageAsComponent("phase-extended.game-start-title"),
@@ -997,7 +992,7 @@ class Game(
         respawnTasks.clear()
         
         // 戦闘フェーズ終了ボーナス
-        val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 50)
+        val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 100)
         val bonusReason = plugin.languageManager.getMessage("phase-extended.phase-end-bonus")
         addTeamCurrency(Team.RED, phaseEndBonus, bonusReason)
         addTeamCurrency(Team.BLUE, phaseEndBonus, bonusReason)
@@ -1037,48 +1032,9 @@ class Game(
             // マッチモードではendGameを呼んでコールバックを実行
             endGame()
         } else {
-            // 通常モードでは次ラウンドへのカウントダウン開始（設定から時間を取得）
-            val countdownSeconds = plugin.config.getInt("default-phases.combat-end-countdown", 15)
-            startNextRoundCountdown(countdownSeconds)
+            // 通常モードでは即座に次ラウンドを開始
+            startNextRound()
         }
-    }
-    
-    /**
-     * 次のラウンドへのカウントダウン
-     */
-    private fun startNextRoundCountdown(seconds: Int) {
-        var remainingSeconds = seconds
-        
-        object : BukkitRunnable() {
-            override fun run() {
-                if (state != GameState.RUNNING) {
-                    cancel()
-                    return
-                }
-                
-                remainingSeconds--
-                
-                // BossBarを更新
-                bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.next-round-countdown", "seconds" to remainingSeconds.toString()))
-                bossBar?.color = BarColor.YELLOW
-                bossBar?.progress = remainingSeconds.toDouble() / seconds.toDouble()
-                
-                // カウントダウン表示
-                when (remainingSeconds) {
-                    5, 4, 3, 2, 1 -> {
-                        getAllPlayers().forEach { player ->
-                            player.sendMessage(plugin.languageManager.getMessageAsComponent("countdown.seconds", "seconds" to remainingSeconds.toString()))
-                            player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f + (5 - remainingSeconds) * 0.2f)
-                        }
-                    }
-                    0 -> {
-                        cancel()
-                        // 次のラウンドを開始
-                        startNextRound()
-                    }
-                }
-            }
-        }.runTaskTimer(plugin, 20L, 20L)  // 1秒ごと
     }
     
     /**
@@ -1145,11 +1101,9 @@ class Game(
         // 旗を復元
         redFlagLocation?.let { loc ->
             loc.block.type = Material.BEACON
-            loc.clone().add(0.0, 1.0, 0.0).block.type = Material.RED_STAINED_GLASS
         }
         blueFlagLocation?.let { loc ->
             loc.block.type = Material.BEACON
-            loc.clone().add(0.0, 1.0, 0.0).block.type = Material.BLUE_STAINED_GLASS
         }
         
         // ゲームループを再開
@@ -1308,7 +1262,7 @@ class Game(
                 player.sendMessage(plugin.languageManager.getMessageAsComponent("phase-extended.game-ended"))
                 
                 // GameManagerからプレイヤーを削除
-                val gameManager = plugin.gameManager as com.hacklab.ctf.managers.GameManager
+                val gameManager = plugin.gameManager
                 gameManager.removePlayerFromGame(player)
             } else {
                 // マッチモードの場合は、テンポラリワールド内でスポーン地点に戻してアドベンチャーモードに
@@ -1525,7 +1479,7 @@ class Game(
         val batchSize = 5 // 一度にテレポートする人数
         var currentDelay = initialDelay
         
-        players.chunked(batchSize).forEachIndexed { batchIndex, batch ->
+        players.chunked(batchSize).forEachIndexed { _, batch ->
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 batch.forEachIndexed { playerIndex, player ->
                     // 各プレイヤーに少しずつ遅延を追加
@@ -1582,7 +1536,7 @@ class Game(
         val batchSize = 5
         var currentDelay = initialDelay
         
-        players.chunked(batchSize).forEachIndexed { batchIndex, batch ->
+        players.chunked(batchSize).forEachIndexed { _, batch ->
             plugin.server.scheduler.runTaskLater(plugin, Runnable {
                 batch.forEachIndexed { playerIndex, player ->
                     plugin.server.scheduler.runTaskLater(plugin, Runnable {
@@ -1910,25 +1864,7 @@ class Game(
             }
         }
         
-        val teamGlass = ItemStack(
-            when (team) {
-                Team.RED -> Material.RED_STAINED_GLASS
-                Team.BLUE -> Material.BLUE_STAINED_GLASS
-                Team.SPECTATOR -> Material.WHITE_STAINED_GLASS // 観戦者用（到達しないはず）
-            },
-            blocksToGive
-        ).apply {
-            itemMeta = itemMeta?.apply {
-                displayName(plugin.languageManager.getMessageAsComponent("flag.glass-name",
-                    "color" to team.getChatColor(),
-                    "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}")
-                ))
-                lore(listOf(plugin.languageManager.getMessageAsComponent("items.building-block")))
-            }
-        }
-        
         player.inventory.addItem(teamConcrete)
-        player.inventory.addItem(teamGlass)
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
         if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
@@ -1964,25 +1900,7 @@ class Game(
                 }
             }
             
-            val teamGlass = ItemStack(
-                when (team) {
-                    Team.RED -> Material.RED_STAINED_GLASS
-                    Team.BLUE -> Material.BLUE_STAINED_GLASS
-                    Team.SPECTATOR -> Material.WHITE_STAINED_GLASS
-                },
-                combatPhaseBlocks
-            ).apply {
-                itemMeta = itemMeta?.apply {
-                    displayName(plugin.languageManager.getMessageAsComponent("flag.glass-name",
-                        "color" to team.getChatColor(),
-                        "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}")
-                    ))
-                    lore(listOf(plugin.languageManager.getMessageAsComponent("items.building-block")))
-                }
-            }
-            
             inv.addItem(teamConcrete)
-            inv.addItem(teamGlass)
         }
         
         // ダイヤピッケル（効率エンチャント付き）を配布（重複チェック）
@@ -2034,7 +1952,7 @@ class Game(
     }
     
     private fun giveDefaultCombatItems(player: Player, team: Team) {
-        val inv = player.inventory
+        @Suppress("UNUSED_PARAMETER")
         // 初期装備なし - ショップで購入する必要がある
         
         // 戦闘フェーズではチームカラーブロックは配布しない
@@ -2179,8 +2097,6 @@ class Game(
         // 観戦者には旗を設置しない
         if (team == Team.SPECTATOR) return
         
-        val world = location.world
-        
         // ビーコンを設置
         location.block.type = Material.BEACON
         
@@ -2203,7 +2119,7 @@ class Game(
         val glassType = when (team) {
             Team.RED -> Material.RED_STAINED_GLASS
             Team.BLUE -> Material.BLUE_STAINED_GLASS
-            Team.SPECTATOR -> Material.WHITE_STAINED_GLASS // 観戦者用（到達しないはず）
+            else -> Material.WHITE_STAINED_GLASS
         }
         location.clone().add(0.0, 1.0, 0.0).block.type = glassType
         
@@ -3022,7 +2938,7 @@ class Game(
         playerCaptures[player.uniqueId] = (playerCaptures[player.uniqueId] ?: 0) + 1
         
         // 通貨報酬（マッチがある場合もない場合も）
-        val captureReward = plugin.config.getInt("currency.capture-reward", 30)
+        val captureReward = plugin.config.getInt("currency.capture-reward", 50)
         addTeamCurrency(team, captureReward, plugin.languageManager.getMessage("currency.capture-currency", "player" to player.name))
         
         // キャプチャーアシスト報酬
@@ -3030,7 +2946,7 @@ class Game(
         assists.remove(player.uniqueId) // キャプチャーした本人は除外
         
         if (assists.isNotEmpty()) {
-            val assistReward = plugin.config.getInt("currency.capture-assist-reward", 15)
+            val assistReward = plugin.config.getInt("currency.capture-assist-reward", 20)
             assists.forEach { assisterId ->
                 val assister = Bukkit.getPlayer(assisterId)
                 if (assister != null) {
@@ -3972,8 +3888,8 @@ class Game(
                     
                     // 自チームのブロックかチェック
                     val isTeamBlock = when (team) {
-                        Team.RED -> blockType == Material.RED_CONCRETE || blockType == Material.RED_STAINED_GLASS
-                        Team.BLUE -> blockType == Material.BLUE_CONCRETE || blockType == Material.BLUE_STAINED_GLASS
+                        Team.RED -> blockType == Material.RED_CONCRETE
+                        Team.BLUE -> blockType == Material.BLUE_CONCRETE
                         Team.SPECTATOR -> false
                     }
                     
@@ -4168,7 +4084,6 @@ class Game(
                 val block = blockLoc.block
                 when (block.type) {
                     Material.RED_CONCRETE, Material.BLUE_CONCRETE -> block.type = Material.WHITE_CONCRETE
-                    Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> block.type = Material.WHITE_STAINED_GLASS
                     else -> {}
                 }
                 
@@ -4190,6 +4105,7 @@ class Game(
         // プレイヤーごとのシールド値を管理（最大値: 100）
         val playerShield = mutableMapOf<UUID, Float>()
         val lastDamageTime = mutableMapOf<UUID, Long>()
+        val lastFoodRecoveryTime = mutableMapOf<UUID, Long>() // 空腹度回復のタイマー
         
         suffocationTask = object : BukkitRunnable() {
             override fun run() {
@@ -4215,23 +4131,61 @@ class Game(
                         if (playerTeam == null) continue
                         
                         val blockBelow = player.location.clone().subtract(0.0, 0.5, 0.0).block
+                        val playerLoc = player.location
                         
                         // プレイヤーの下のブロックが敵チームの色ブロックかチェック
                         val isOnEnemyBlock = when (playerTeam) {
-                            Team.RED -> blockBelow.type == Material.BLUE_CONCRETE || blockBelow.type == Material.BLUE_STAINED_GLASS
-                            Team.BLUE -> blockBelow.type == Material.RED_CONCRETE || blockBelow.type == Material.RED_STAINED_GLASS
+                            Team.RED -> blockBelow.type == Material.BLUE_CONCRETE
+                            Team.BLUE -> blockBelow.type == Material.RED_CONCRETE
                             Team.SPECTATOR -> false // 観戦者は敵ブロックでダメージを受けない
                         }
+                        
+                        // ビーコン周囲9マス（3x3）のダメージエリアチェック
+                        val isInEnemyBeaconArea = when (playerTeam) {
+                            Team.RED -> {
+                                // 青チームのビーコン周囲かチェック
+                                getBlueFlagLocation()?.let { beaconLoc ->
+                                    if (playerLoc.world == beaconLoc.world) {
+                                        val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
+                                        val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
+                                        val dy = kotlin.math.abs(playerLoc.blockY - (beaconLoc.blockY - 1))
+                                        // ビーコンの鉄ブロックベース（Y-1）の3x3範囲内かチェック
+                                        dx <= 1 && dz <= 1 && dy <= 2
+                                    } else false
+                                } ?: false
+                            }
+                            Team.BLUE -> {
+                                // 赤チームのビーコン周囲かチェック
+                                getRedFlagLocation()?.let { beaconLoc ->
+                                    if (playerLoc.world == beaconLoc.world) {
+                                        val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
+                                        val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
+                                        val dy = kotlin.math.abs(playerLoc.blockY - (beaconLoc.blockY - 1))
+                                        // ビーコンの鉄ブロックベース（Y-1）の3x3範囲内かチェック
+                                        dx <= 1 && dz <= 1 && dy <= 2
+                                    } else false
+                                } ?: false
+                            }
+                            Team.SPECTATOR -> false
+                        }
+                        
+                        // 敵陣ブロック上またはビーコン周囲にいる場合
+                        val isInDamageArea = isOnEnemyBlock || isInEnemyBeaconArea
                         
                         // 現在のシールド値を取得（初期値100）
                         val maxShield = plugin.config.getInt("shield.max-shield", 100).toFloat()
                         var shield = playerShield.getOrDefault(player.uniqueId, maxShield)
                         
-                        if (isOnEnemyBlock) {
-                            // 初めて敵陣に乗った時だけ警告
+                        if (isInDamageArea) {
+                            // 初めて敵陣エリアに入った時だけ警告
                             if (!player.hasMetadata("on_enemy_block")) {
                                 player.setMetadata("on_enemy_block", org.bukkit.metadata.FixedMetadataValue(plugin, true))
-                                player.sendMessage(plugin.languageManager.getMessageAsComponent("shield.decreasing"))
+                                val warningMessage = if (isInEnemyBeaconArea && !isOnEnemyBlock) {
+                                    plugin.languageManager.getMessageAsComponent("shield.beacon-area")
+                                } else {
+                                    plugin.languageManager.getMessageAsComponent("shield.decreasing")
+                                }
+                                player.sendMessage(warningMessage)
                             }
                             
                             // シールドを減らす（設定値に基づく）
@@ -4283,17 +4237,72 @@ class Game(
                                 lastDamageTime.remove(player.uniqueId)
                             }
                             
-                            // シールドを回復（設定値に基づく）
-                            val maxShield = plugin.config.getInt("shield.max-shield", 100).toFloat()
-                            val recoveryRate = plugin.config.getDouble("shield.recovery-rate", 5.0).toFloat()
+                            // 自陣ブロックの上にいる場合、空腹度を回復
+                            val isOnOwnBlock = when (playerTeam) {
+                                Team.RED -> blockBelow.type == Material.RED_CONCRETE
+                                Team.BLUE -> blockBelow.type == Material.BLUE_CONCRETE
+                                Team.SPECTATOR -> false
+                            }
                             
-                            if (shield < maxShield) {
-                                shield = (shield + recoveryRate).coerceAtMost(maxShield)
-                                
-                                // 全回復したら通知
-                                if (shield == maxShield) {
-                                    player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 2.0f)
+                            // 自陣ビーコン周囲のチェック
+                            val isInOwnBeaconArea = when (playerTeam) {
+                                Team.RED -> {
+                                    getRedFlagLocation()?.let { beaconLoc ->
+                                        if (playerLoc.world == beaconLoc.world) {
+                                            val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
+                                            val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
+                                            val dy = kotlin.math.abs(playerLoc.blockY - (beaconLoc.blockY - 1))
+                                            dx <= 1 && dz <= 1 && dy <= 2
+                                        } else false
+                                    } ?: false
                                 }
+                                Team.BLUE -> {
+                                    getBlueFlagLocation()?.let { beaconLoc ->
+                                        if (playerLoc.world == beaconLoc.world) {
+                                            val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
+                                            val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
+                                            val dy = kotlin.math.abs(playerLoc.blockY - (beaconLoc.blockY - 1))
+                                            dx <= 1 && dz <= 1 && dy <= 2
+                                        } else false
+                                    } ?: false
+                                }
+                                Team.SPECTATOR -> false
+                            }
+                            
+                            // 自陣ブロックまたは自陣ビーコン周囲にいる場合のみ処理
+                            if (isOnOwnBlock || isInOwnBeaconArea) {
+                                // シールドを回復（設定値に基づく）
+                                val maxShield = plugin.config.getInt("shield.max-shield", 100).toFloat()
+                                val recoveryRate = plugin.config.getDouble("shield.recovery-rate", 5.0).toFloat()
+                                
+                                if (shield < maxShield) {
+                                    shield = (shield + recoveryRate).coerceAtMost(maxShield)
+                                    
+                                    // 全回復したら通知
+                                    if (shield == maxShield) {
+                                        player.playSound(player.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 2.0f)
+                                    }
+                                }
+                                // 空腹度とサチュレーションを回復
+                                if (player.foodLevel < 20) {
+                                    // 1秒に1ポイントの速度で回復（20ticksごと）
+                                    val currentTime = System.currentTimeMillis()
+                                    val lastFoodRecovery = lastFoodRecoveryTime.getOrDefault(player.uniqueId, 0L)
+                                    
+                                    if (currentTime - lastFoodRecovery >= 1000) { // 1秒ごと
+                                        player.foodLevel = (player.foodLevel + 1).coerceAtMost(20)
+                                        player.saturation = (player.saturation + 0.5f).coerceAtMost(20f)
+                                        lastFoodRecoveryTime[player.uniqueId] = currentTime
+                                        
+                                        // 回復エフェクト（小さな音）
+                                        if (player.foodLevel % 5 == 0) { // 5の倍数で音を鳴らす
+                                            player.playSound(player.location, org.bukkit.Sound.ENTITY_GENERIC_EAT, 0.3f, 1.5f)
+                                        }
+                                    }
+                                }
+                            } else {
+                                // 自陣ブロック上にいない場合は回復タイマーをリセット
+                                lastFoodRecoveryTime.remove(player.uniqueId)
                             }
                         }
                         
@@ -4301,12 +4310,6 @@ class Game(
                         playerShield[player.uniqueId] = shield
                         
                         // アクションバーにシールド状態を表示
-                        val shieldColor = when {
-                            shield > 60 -> NamedTextColor.AQUA
-                            shield > 30 -> NamedTextColor.YELLOW
-                            else -> NamedTextColor.RED
-                        }
-                        
                         val maxShieldDisplay = plugin.config.getInt("shield.max-shield", 100).toFloat()
                         if (shield < maxShieldDisplay) {
                             val shieldBar = "█".repeat((shield * 10 / maxShieldDisplay).toInt()).padEnd(10, '░')
@@ -4696,52 +4699,88 @@ class Game(
     }
     
     /**
-     * レアアイテムを選択
+     * レアアイテムを選択（ショップアイテムから）
      */
     private fun selectRareItems(): List<ItemStack> {
         val items = mutableListOf<ItemStack>()
         
-        // 高価なアイテムのリスト
-        val rareItemPool = mutableListOf<ItemStack>()
+        // ショップマネージャーからアイテムを取得
+        val shopManager = plugin.shopManager
+        val allShopItems = shopManager.getShopItems()
         
-        // ダイヤモンド装備
-        rareItemPool.add(ItemStack(Material.DIAMOND_HELMET))
-        rareItemPool.add(ItemStack(Material.DIAMOND_CHESTPLATE))
-        rareItemPool.add(ItemStack(Material.DIAMOND_LEGGINGS))
-        rareItemPool.add(ItemStack(Material.DIAMOND_BOOTS))
-        rareItemPool.add(ItemStack(Material.DIAMOND_SWORD))
-        rareItemPool.add(ItemStack(Material.DIAMOND_AXE))
-        
-        // ネザライト装備（より希少）
-        if (Random().nextDouble() < 0.3) {  // 30%の確率でネザライト
-            rareItemPool.add(ItemStack(Material.NETHERITE_HELMET))
-            rareItemPool.add(ItemStack(Material.NETHERITE_CHESTPLATE))
-            rareItemPool.add(ItemStack(Material.NETHERITE_LEGGINGS))
-            rareItemPool.add(ItemStack(Material.NETHERITE_BOOTS))
-            rareItemPool.add(ItemStack(Material.NETHERITE_SWORD))
+        if (allShopItems.isEmpty()) {
+            plugin.logger.warning("No shop items available for event chest")
+            return items
         }
         
-        // 特殊アイテム
-        rareItemPool.add(ItemStack(Material.GOLDEN_APPLE, 3))
-        rareItemPool.add(ItemStack(Material.ENDER_PEARL, 8))
-        rareItemPool.add(ItemStack(Material.TOTEM_OF_UNDYING))
-        rareItemPool.add(ItemStack(Material.BOW).apply {
-            addEnchantment(Enchantment.POWER, 3)
-            addEnchantment(Enchantment.INFINITY, 1)
-        })
-        rareItemPool.add(ItemStack(Material.ARROW, 64))
+        // 高価なアイテムを優先的に選択（価格が高い順にソート）
+        val sortedByPrice = allShopItems.sortedByDescending { it.basePrice }
         
-        // エンチャント本
-        val enchantBook = ItemStack(Material.ENCHANTED_BOOK)
-        val bookMeta = enchantBook.itemMeta as? org.bukkit.inventory.meta.EnchantmentStorageMeta
-        bookMeta?.addStoredEnchant(Enchantment.PROTECTION, 4, true)
-        enchantBook.itemMeta = bookMeta
-        rareItemPool.add(enchantBook)
+        // 上位の高価なアイテムから選択
+        val expensiveItems = sortedByPrice.take(sortedByPrice.size / 3) // 上位1/3のアイテム
         
-        // ランダムに1個選択（固定）
-        val shuffled = rareItemPool.shuffled()
-        if (shuffled.isNotEmpty()) {
-            items.add(shuffled[0])
+        // カテゴリごとに分類
+        val weaponItems = expensiveItems.filter { it.category == ShopCategory.WEAPONS }
+        val armorItems = expensiveItems.filter { it.category == ShopCategory.ARMOR }
+        val consumableItems = expensiveItems.filter { it.category == ShopCategory.CONSUMABLES }
+        val blockItems = expensiveItems.filter { it.category == ShopCategory.BLOCKS }
+        
+        val selectedItems = mutableListOf<ShopItem>()
+        
+        // 各カテゴリから1つずつ選択（存在する場合）
+        weaponItems.randomOrNull()?.let { selectedItems.add(it) }
+        armorItems.randomOrNull()?.let { selectedItems.add(it) }
+        consumableItems.randomOrNull()?.let { selectedItems.add(it) }
+        
+        // ブロックは確率で追加（30%）
+        if (Random().nextDouble() < 0.3) {
+            blockItems.randomOrNull()?.let { selectedItems.add(it) }
+        }
+        
+        // 選択されたアイテムが少ない場合は、追加でランダムに選択
+        if (selectedItems.size < 3) {
+            val remaining = expensiveItems.filter { it !in selectedItems }
+            val additionalCount = kotlin.math.min(3 - selectedItems.size, remaining.size)
+            selectedItems.addAll(remaining.shuffled().take(additionalCount))
+        }
+        
+        // ShopItemをItemStackに変換
+        for (shopItem in selectedItems) {
+            val itemStack = ItemStack(shopItem.material, shopItem.amount)
+            
+            // エンチャントを追加
+            for ((enchantment, level) in shopItem.enchantments) {
+                itemStack.addUnsafeEnchantment(enchantment, level)
+            }
+            
+            // アイテムメタを設定
+            val meta = itemStack.itemMeta
+            if (meta != null) {
+                // 表示名を設定
+                meta.displayName(Component.text(shopItem.displayName))
+                
+                // 説明文を設定
+                if (shopItem.lore.isNotEmpty()) {
+                    meta.lore(shopItem.lore.map { Component.text(it) })
+                }
+                
+                // 耐久無限を設定
+                if (shopItem.unbreakable) {
+                    meta.isUnbreakable = true
+                }
+                
+                itemStack.itemMeta = meta
+            }
+            
+            items.add(itemStack)
+        }
+        
+        // 最低1つはアイテムを保証
+        if (items.isEmpty() && allShopItems.isNotEmpty()) {
+            // ランダムに1つ選択
+            val randomItem = allShopItems.random()
+            val itemStack = ItemStack(randomItem.material, randomItem.amount)
+            items.add(itemStack)
         }
         
         return items
@@ -4791,9 +4830,7 @@ class Game(
         // 削除対象のマテリアル
         itemsToRemove.addAll(listOf(
             Material.RED_CONCRETE,
-            Material.BLUE_CONCRETE,
-            Material.RED_STAINED_GLASS,
-            Material.BLUE_STAINED_GLASS
+            Material.BLUE_CONCRETE
         ))
         
         // インベントリから削除（全てのチームカラーブロックを削除）

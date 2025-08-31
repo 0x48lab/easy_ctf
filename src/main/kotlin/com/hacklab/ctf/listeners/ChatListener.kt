@@ -10,7 +10,7 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 
 class ChatListener(private val plugin: Main) : Listener {
     
-    private val gameManager = plugin.gameManager as GameManager
+    private val gameManager = plugin.gameManager
     
     @EventHandler(priority = EventPriority.LOWEST)
     fun onAsyncChat(event: AsyncChatEvent) {

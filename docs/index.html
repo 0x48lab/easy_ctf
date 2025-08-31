@@ -3,294 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyCTF - Minecraft Capture The Flag Plugin</title>
+    <title>EasyCTF - Documentation</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <ul class="nav-menu">
-                <li><a href="index.html" class="active">ホーム</a></li>
-                <li><a href="gameplay.html">遊び方</a></li>
-                <li><a href="commands.html">コマンド</a></li>
-                <li><a href="shop.html">ショップ</a></li>
-                <li><a href="match.html">マッチ</a></li>
-                <li><a href="map-creation.html">マップ作成</a></li>
-                <li><a href="admin.html">管理者</a></li>
-                <li><a href="faq.html">FAQ</a></li>
-            </ul>
-            <div class="nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <header class="hero hero-with-image">
-        <div class="hero-background">
-            <img src="images/hero.png" alt="EasyCTF Hero Image" class="hero-image">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-content">
-            <h1 class="hero-title">EasyCTF</h1>
-            <p class="hero-subtitle">Minecraft Capture The Flag Plugin</p>
-            <p class="hero-description">Easy to play, Hard to master!</p>
-            <div class="hero-buttons">
-                <a href="#quick-start" class="btn btn-primary">始めよう</a>
-                <a href="https://github.com/yourusername/easy_ctf/releases" class="btn btn-secondary">
-                    <i class="fab fa-github"></i> ダウンロード
-                </a>
-            </div>
-            <div class="hero-features">
-                <span class="hero-feature"><i class="fas fa-check"></i> Paper 1.21.5対応</span>
-                <span class="hero-feature"><i class="fas fa-check"></i> 複数ゲーム同時実行</span>
-                <span class="hero-feature"><i class="fas fa-check"></i> 日本語/英語対応</span>
-            </div>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🎮 EasyCTF</span>
+            <span class="version">v2.0</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="features">
-            <h2 class="section-title">🎮 ゲームの特徴</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>チーム戦</h3>
-                    <p>各チーム最大10人まで（設定で変更可能）の白熱したバトル。自動チームバランス機能付き。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>2フェーズシステム</h3>
-                    <p>建築→戦闘のシンプルな流れで、戦略的なゲームプレイを実現。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <h3>マッチモード</h3>
-                    <p>固定ラウンド方式で複数ゲームを連続プレイ。最多勝利チームが優勝！</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <h3>ショップシステム</h3>
-                    <p>チーム共有通貨でアイテムを購入。負けているチームには自動割引も。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-ghost"></i>
-                    </div>
-                    <h3>スペクテーターモード</h3>
-                    <p>戦闘中の死亡時は観戦モードに。戦況を把握して次の作戦を立てよう。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <h3>柔軟な設定</h3>
-                    <p>自動開始、フェーズ時間、ゲームモードなど、細かくカスタマイズ可能。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-link"></i>
-                    </div>
-                    <h3>チームブロック接続システム</h3>
-                    <p>チームカラーブロック（赤/青のコンクリート・ステンドグラス）のみ接続必須。切断されたチームブロックは中立化。その他のブロックは自由に設置可能。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>敵陣ダメージ</h3>
-                    <p>敵チームのブロック上では徐々にダメージ。敵陣深くへの侵入にはリスクが伴う。</p>
-                </div>
-            </div>
-        </section>
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
 
-        <section id="quick-start" class="quick-start">
-            <h2 class="section-title">🚀 クイックスタート</h2>
-            
-            <div class="step-list">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>ゲームに参加</h3>
-                        <pre><code>/ctf join &lt;ゲーム名&gt;</code></pre>
-                        <p>自動的に人数の少ないチームに配置されます。</p>
-                    </div>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>建築フェーズで準備</h3>
-                        <p>デフォルト2分間（設定可能）で防御設備を建築。エメラルドを右クリックしてショップでブロックを購入。</p>
-                        <p class="step-note">建築中に死亡しても即復活！アイテムも失いません。</p>
-                    </div>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>戦闘フェーズで戦う</h3>
-                        <p>敵の旗（ビーコン）を奪って自陣に持ち帰ろう！キルで通貨を稼いで装備を強化。</p>
-                        <p class="step-note">死亡時はスペクテーターで観戦後、自動復活します。</p>
-                    </div>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h3>勝利を目指せ！</h3>
-                        <p>より多くの旗をキャプチャしたチームが勝利。マッチモードなら連戦で真の勝者を決めよう。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html" class="active"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
+            </ul>
+        </nav>
+    </aside>
 
-        <section class="game-flow">
-            <h2 class="section-title">📋 ゲームの流れ</h2>
-            
-            <div class="phase-timeline">
-                <div class="phase">
-                    <div class="phase-icon build">
-                        <i class="fas fa-hammer"></i>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>📋 EasyCTFへようこそ</h2>
+                <p>EasyCTFは、Minecraft Paper Server用の高機能なCapture The Flag（CTF）プラグインです。
+                2つのチームに分かれて相手の旗を奪い合う、戦略性の高いPvPゲームモードを提供します。</p>
+                
+                <div class="alert alert-success">
+                    <strong>最新バージョン 2.0</strong> - 大幅なシステム改善とパフォーマンス最適化を実施しました！
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>✨ 主な特徴</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4><span class="icon">🎮</span> 複数ゲーム同時実行</h4>
+                        <p>同一サーバーで複数のCTFゲームを並行して実行可能。各ゲームは独立したテンポラリワールドで動作します。</p>
                     </div>
-                    <h3>建築フェーズ</h3>
-                    <p class="phase-time">2分間（設定可能）</p>
-                    <ul>
-                        <li>防御設備の建築</li>
-                        <li>PvP無効で安全</li>
-                        <li>ショップで資材購入</li>
-                        <li>死亡時は即復活</li>
-                        <li>チームカラーブロックは自チームビーコンに接続必須</li>
-                        <li>ADVENTURE/SURVIVAL/CREATIVE選択可</li>
-                    </ul>
-                </div>
-                
-                <div class="phase-arrow">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-                
-                <div class="phase">
-                    <div class="phase-icon combat">
-                        <i class="fas fa-sword"></i>
+                    <div class="card">
+                        <h4><span class="icon">💰</span> ショップシステム</h4>
+                        <p>チーム共有通貨で戦略的なアイテム購入。エメラルドを右クリックでどこでもショップを開けます。</p>
                     </div>
-                    <h3>戦闘フェーズ</h3>
-                    <p class="phase-time">2分間（設定可能）</p>
-                    <ul>
-                        <li>旗の奪い合い</li>
-                        <li>PvP有効</li>
-                        <li>キル報酬で装備強化</li>
-                        <li>敵チームブロック上で継続ダメージ</li>
-                        <li>死亡時はスペクテーター</li>
-                        <li>10〜20秒で自動復活</li>
-                    </ul>
+                    <div class="card">
+                        <h4><span class="icon">🛡️</span> シールドシステム</h4>
+                        <p>敵陣でダメージを受け、自陣でのみ回復。戦術的な撤退と進軍が重要になります。</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🏆</span> マッチシステム</h4>
+                        <p>複数ラウンドで総合優勝を決定。アイテムは引き継がれ、戦略的な資源管理が求められます。</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🎁</span> イベントチェスト</h4>
+                        <p>戦闘フェーズ中に出現する特別な報酬。高価なショップアイテムを獲得するチャンス！</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🌏</span> 多言語対応</h4>
+                        <p>日本語と英語に完全対応。config.ymlで簡単に言語を切り替え可能です。</p>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="whats-new">
-            <h2 class="section-title">🆕 最新機能</h2>
-            
-            <div class="update-cards">
-                <div class="update-card">
-                    <span class="update-badge">NEW</span>
-                    <h3>固定ラウンドマッチ</h3>
-                    <p>マッチシステムが固定ラウンド方式に統一され、よりシンプルに。</p>
-                </div>
+            <section class="content-section">
+                <h2>🚀 クイックスタート</h2>
                 
-                <div class="update-card">
-                    <span class="update-badge">NEW</span>
-                    <h3>自動開始設定</h3>
-                    <p>自動ゲーム開始はデフォルトOFF。config.ymlで有効化可能に。</p>
-                </div>
-                
-                <div class="update-card">
-                    <span class="update-badge">IMPROVED</span>
-                    <h3>リスポーンシステム</h3>
-                    <p>建築中は即復活、戦闘中はスペクテーターモードで観戦可能に。</p>
-                </div>
-                
-                <div class="update-card">
-                    <span class="update-badge">IMPROVED</span>
-                    <h3>ショップ割引</h3>
-                    <p>スコア差に応じて負けているチームに最大40%の自動割引。</p>
-                </div>
-            </div>
-        </section>
+                <h3>必要環境</h3>
+                <ul>
+                    <li>Paper Server 1.21.5以上</li>
+                    <li>Java 21以上</li>
+                    <li>4GB以上のRAM推奨</li>
+                </ul>
 
-        <section class="tips">
-            <h2 class="section-title">💡 基本的なヒント</h2>
-            
-            <div class="tip-cards">
-                <div class="tip-card">
-                    <h3><i class="fas fa-handshake"></i> チームワーク重視</h3>
-                    <p>攻撃と防御のバランスが重要。役割分担を明確にしよう。</p>
-                </div>
-                
-                <div class="tip-card">
-                    <h3><i class="fas fa-coins"></i> ショップ活用</h3>
-                    <p>キル報酬で装備をアップグレード。チーム通貨は共有なので相談して使おう。</p>
-                </div>
-                
-                <div class="tip-card">
-                    <h3><i class="fas fa-lightbulb"></i> 旗キャリア</h3>
-                    <p>旗を持つと発光して目立つ。エンダーパールも使えないので慎重に。</p>
-                </div>
-                
-                <div class="tip-card">
-                    <h3><i class="fas fa-shield-alt"></i> スポーン保護</h3>
-                    <p>リスポーン後3秒間は無敵。この時間を活用して態勢を立て直そう。</p>
-                </div>
-            </div>
-        </section>
+                <h3>インストール手順</h3>
+                <ol>
+                    <li>最新版のJARファイルをダウンロード</li>
+                    <li><code>plugins</code>フォルダに配置</li>
+                    <li>サーバーを起動</li>
+                    <li>自動生成された設定ファイルを確認</li>
+                </ol>
 
-        <section class="cta">
-            <h2>準備はできましたか？</h2>
-            <p>詳しい遊び方やコマンドは各ページをご覧ください。</p>
-            <div class="cta-buttons">
-                <a href="gameplay.html" class="btn btn-primary">詳しい遊び方を見る</a>
-                <a href="commands.html" class="btn btn-secondary">コマンド一覧</a>
-            </div>
-        </section>
-    </main>
+                <h3>最初のゲーム作成</h3>
+                <div class="command-box">/ctf setpos1 game1</div>
+                <div class="command-box">/ctf setpos2 game1</div>
+                <div class="command-box">/ctf savemap game1</div>
+                
+                <div class="alert alert-info">
+                    <strong>ヒント:</strong> マップには赤と青のコンクリート（スポーン）、ビーコン+色付きガラス（旗）を配置してください。
+                </div>
+            </section>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>EasyCTF</h4>
-                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
-                    <p class="footer-version">Version 1.0 | Paper 1.21.5対応</p>
+            <section class="content-section">
+                <h2>🎯 ゲームフェーズ</h2>
+                <div class="phase-display">
+                    <div class="phase-item active">
+                        <div class="icon">🏗️</div>
+                        <div>建築</div>
+                        <div class="time">2分</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">⚔️</div>
+                        <div>戦闘</div>
+                        <div class="time">2分</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">💭</div>
+                        <div>作戦会議</div>
+                        <div class="time">15秒</div>
+                    </div>
                 </div>
-                <div class="footer-section">
-                    <h4>リンク</h4>
-                    <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>ドキュメント</h4>
-                    <ul>
-                        <li><a href="gameplay.html">遊び方</a></li>
-                        <li><a href="admin.html">管理者ガイド</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
-            </div>
+                
+                <p>各フェーズは自動的に移行し、インターバルはありません。スムーズなゲーム進行を実現しています。</p>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 最新の変更点</h2>
+                <ul>
+                    <li>✅ フェーズ間のインターバル削除（即座に移行）</li>
+                    <li>✅ リスポーン遅延を0に設定（即座に復活）</li>
+                    <li>✅ 通貨報酬を調整（キル15G、旗キャリアキル25G、キャプチャ50G、フェーズボーナス100G）</li>
+                    <li>✅ シールド回復を自陣のみに制限</li>
+                    <li>✅ ショップ使用範囲制限を削除（どこでも利用可能）</li>
+                    <li>✅ チームブロックをコンクリートのみに統一</li>
+                    <li>✅ ビーコン周囲3x3がダメージゾーンに</li>
+                    <li>✅ イベントチェストの中身をショップアイテムに限定</li>
+                    <li>✅ 距離ベースの旗検出アルゴリズム実装</li>
+                    <li>✅ チェスト内容物の自動クリア機能</li>
+                    <li>✅ 空腹度回復システム（自陣エリア）</li>
+                </ul>
+            </section>
         </div>
-    </footer>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>📋 Welcome to EasyCTF</h2>
+                <p>EasyCTF is a feature-rich Capture The Flag (CTF) plugin for Minecraft Paper Servers.
+                It provides a strategic PvP game mode where two teams compete to capture each other's flags.</p>
+                
+                <div class="alert alert-success">
+                    <strong>Latest Version 2.0</strong> - Major system improvements and performance optimizations implemented!
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>✨ Main Features</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4><span class="icon">🎮</span> Multiple Concurrent Games</h4>
+                        <p>Run multiple CTF games simultaneously on the same server. Each game operates in an independent temporary world.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">💰</span> Shop System</h4>
+                        <p>Strategic item purchases with team-shared currency. Right-click emerald to open shop anywhere.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🛡️</span> Shield System</h4>
+                        <p>Take damage in enemy territory, recover only in your own. Tactical retreats and advances become crucial.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🏆</span> Match System</h4>
+                        <p>Determine overall winner across multiple rounds. Items carry over, requiring strategic resource management.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🎁</span> Event Chests</h4>
+                        <p>Special rewards appearing during combat phase. A chance to obtain expensive shop items!</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🌏</span> Multi-language Support</h4>
+                        <p>Full support for Japanese and English. Easily switch languages in config.yml.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🚀 Quick Start</h2>
+                
+                <h3>Requirements</h3>
+                <ul>
+                    <li>Paper Server 1.21.5 or higher</li>
+                    <li>Java 21 or higher</li>
+                    <li>4GB+ RAM recommended</li>
+                </ul>
+
+                <h3>Installation Steps</h3>
+                <ol>
+                    <li>Download the latest JAR file</li>
+                    <li>Place in <code>plugins</code> folder</li>
+                    <li>Start the server</li>
+                    <li>Check auto-generated configuration files</li>
+                </ol>
+
+                <h3>Creating Your First Game</h3>
+                <div class="command-box">/ctf setpos1 game1</div>
+                <div class="command-box">/ctf setpos2 game1</div>
+                <div class="command-box">/ctf savemap game1</div>
+                
+                <div class="alert alert-info">
+                    <strong>Tip:</strong> Place red and blue concrete (spawns) and beacons with colored glass (flags) on your map.
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🎯 Game Phases</h2>
+                <div class="phase-display">
+                    <div class="phase-item active">
+                        <div class="icon">🏗️</div>
+                        <div>Build</div>
+                        <div class="time">2 min</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">⚔️</div>
+                        <div>Combat</div>
+                        <div class="time">2 min</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">💭</div>
+                        <div>Strategy</div>
+                        <div class="time">15 sec</div>
+                    </div>
+                </div>
+                
+                <p>Each phase transitions automatically with no intervals. Ensures smooth game progression.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 Latest Changes</h2>
+                <ul>
+                    <li>✅ Removed intervals between phases (instant transition)</li>
+                    <li>✅ Set respawn delay to 0 (instant respawn)</li>
+                    <li>✅ Adjusted currency rewards (Kill 15G, Flag carrier kill 25G, Capture 50G, Phase bonus 100G)</li>
+                    <li>✅ Limited shield recovery to own territory only</li>
+                    <li>✅ Removed shop usage range restriction (usable anywhere)</li>
+                    <li>✅ Unified team blocks to concrete only</li>
+                    <li>✅ 3x3 area around beacon becomes damage zone</li>
+                    <li>✅ Limited event chest contents to shop items</li>
+                    <li>✅ Implemented distance-based flag detection algorithm</li>
+                    <li>✅ Auto-clear chest contents feature</li>
+                    <li>✅ Hunger recovery system (own territory)</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.0 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/yourusername/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
 
     <script src="script.js"></script>
 </body>

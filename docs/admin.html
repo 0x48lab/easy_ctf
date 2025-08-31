@@ -3,418 +3,638 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理者ガイド - EasyCTF</title>
+    <title>EasyCTF - Admin Guide</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <ul class="nav-menu">
-                <li><a href="index.html">ホーム</a></li>
-                <li><a href="gameplay.html">遊び方</a></li>
-                <li><a href="commands.html">コマンド</a></li>
-                <li><a href="shop.html">ショップ</a></li>
-                <li><a href="match.html">マッチ</a></li>
-                <li><a href="map-creation.html">マップ作成</a></li>
-                <li><a href="admin.html" class="active">管理者</a></li>
-                <li><a href="faq.html">FAQ</a></li>
-            </ul>
-            <div class="nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <header class="page-header">
-        <div class="container">
-            <h1>管理者ガイド</h1>
-            <p>EasyCTFのセットアップと運用方法</p>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🎮 EasyCTF</span>
+            <span class="version">v2.0</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="content-section">
-            <h2><i class="fas fa-server"></i> セットアップ</h2>
-            
-            <h3>必要環境</h3>
-            <ul class="requirement-list">
-                <li><i class="fas fa-check"></i> Minecraft Paper Server 1.21.5以上</li>
-                <li><i class="fas fa-check"></i> Java 21</li>
-                <li><i class="fas fa-check"></i> 最低2GB以上のRAM推奨</li>
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="admin.html" class="active"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
             </ul>
-            
-            <h3>インストール手順</h3>
-            <ol class="install-steps">
-                <li>
-                    <strong>ダウンロード</strong>
-                    <p><a href="https://github.com/yourusername/easy_ctf/releases">Releases</a>から最新のjarファイルをダウンロード</p>
-                </li>
-                <li>
-                    <strong>配置</strong>
-                    <p>サーバーのpluginsフォルダに配置</p>
-                </li>
-                <li>
-                    <strong>起動</strong>
-                    <p>サーバーを起動すると<code>plugins/EasyCTF/</code>フォルダが生成される</p>
-                </li>
-                <li>
-                    <strong>設定</strong>
-                    <p><code>config.yml</code>を編集して基本設定を調整</p>
-                </li>
-            </ol>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-map"></i> ゲームアリーナの作成</h2>
-            
-            <h3>方法1: マップ自動検出方式（推奨）</h3>
-            <p>事前に作成したマップをゲームに登録する最も簡単な方法です。</p>
-            
-            <div class="setup-steps">
-                <div class="setup-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>マップ領域を設定</h4>
-                        <div class="command-block">
-                            <code>/ctf setpos1 arena1</code>
-                            <button class="copy-btn">コピー</button>
-                        </div>
-                        <div class="command-block">
-                            <code>/ctf setpos2 arena1</code>
-                            <button class="copy-btn">コピー</button>
-                        </div>
-                        <p class="note">対角の2点を指定してマップ範囲を設定</p>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>必須ブロックを配置</h4>
-                        <table class="block-table">
-                            <tr>
-                                <th>ブロック</th>
-                                <th>用途</th>
-                                <th>個数</th>
-                            </tr>
-                            <tr>
-                                <td><span style="color: #ff4444;">■</span> 赤のコンクリート</td>
-                                <td>赤チームスポーン地点</td>
-                                <td>1個のみ</td>
-                            </tr>
-                            <tr>
-                                <td><span style="color: #4444ff;">■</span> 青のコンクリート</td>
-                                <td>青チームスポーン地点</td>
-                                <td>1個のみ</td>
-                            </tr>
-                            <tr>
-                                <td>ビーコン + 赤のガラス</td>
-                                <td>赤チームの旗</td>
-                                <td>1セット</td>
-                            </tr>
-                            <tr>
-                                <td>ビーコン + 青のガラス</td>
-                                <td>青チームの旗</td>
-                                <td>1セット</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>マップを保存</h4>
-                        <div class="command-block">
-                            <code>/ctf savemap arena1</code>
-                            <button class="copy-btn">コピー</button>
-                        </div>
-                        <p class="note">ブロックが自動検出され、ゲームが作成されます</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>重要:</strong> 旗とスポーン地点は最低3ブロック離してください
-            </div>
-            
-            <h3>方法2: 対話形式での作成</h3>
-            <div class="command-block">
-                <code>/ctf create arena1</code>
-                <button class="copy-btn">コピー</button>
-            </div>
-            
-            <div class="setup-steps">
-                <div class="setup-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>位置設定</h4>
-                        <p>視線の先のブロックを指定して、各チームの旗とスポーン地点を設定</p>
-                        <p class="note">チャットで「set」と入力して確定</p>
-                    </div>
-                </div>
-                
-                <div class="setup-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>フェーズ設定</h4>
-                        <p>建築フェーズのゲームモード（ADVENTURE/SURVIVAL/CREATIVE）</p>
-                        <p>各フェーズの時間（秒単位）</p>
-                    </div>
-                </div>
-            </div>
-            
-            <h3>アリーナ設計のポイント</h3>
-            <div class="design-tips">
-                <div class="design-tip">
-                    <h4><i class="fas fa-ruler"></i> 推奨サイズ</h4>
-                    <ul>
-                        <li>最小: 50×50ブロック</li>
-                        <li>推奨: 100×100ブロック</li>
-                        <li>最大: 200×200ブロック</li>
-                    </ul>
-                </div>
-                
-                <div class="design-tip">
-                    <h4><i class="fas fa-map-marked-alt"></i> レイアウト</h4>
-                    <pre><code>[赤スポーン]---[赤旗]
-     |           |
-  (中央エリア)
-     |           |
-[青旗]---[青スポーン]</code></pre>
-                </div>
-                
-                <div class="design-tip">
-                    <h4><i class="fas fa-lightbulb"></i> 考慮事項</h4>
-                    <ul>
-                        <li>両チームの対称性</li>
-                        <li>複数の侵入ルート</li>
-                        <li>高低差の活用</li>
-                        <li>自然な障害物の配置</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-cog"></i> 設定ファイル詳細</h2>
-            
-            <h3>config.yml</h3>
-            <div class="config-section">
-                <h4>基本設定</h4>
-                <pre><code># 言語設定
-language: "ja"  # "en" または "ja"
-
-# デフォルトゲーム設定
-default-game:
-  min-players: 2            # 最小プレイヤー数
-  max-players-per-team: 10  # チームあたり最大人数
-  respawn-delay: 5          # リスポーン待機時間（秒）
-  force-pvp: true           # PvP強制有効化</code></pre>
-            </div>
-            
-            <div class="config-section">
-                <h4>フェーズ設定</h4>
-                <pre><code># フェーズ設定
-default-phases:
-  build-duration: 120       # 建築フェーズ（秒）
-  build-phase-gamemode: "ADVENTURE"  # ADVENTURE/SURVIVAL/CREATIVE
-  combat-duration: 120      # 戦闘フェーズ（秒）
-  result-duration: 15       # 作戦会議フェーズ（秒）
-  intermediate-result-duration: 15  # マッチ中間の作戦会議（秒）</code></pre>
-            </div>
-            
-            <div class="config-section">
-                <h4>通貨設定</h4>
-                <pre><code># 通貨設定
-currency:
-  name: "G"
-  initial: 50               # 初期通貨
-  phase-end-bonus: 50       # フェーズ終了ボーナス
-  kill-reward: 10           # キル報酬
-  carrier-kill-reward: 20   # 旗キャリアキル報酬
-  capture-reward: 30        # キャプチャ報酬</code></pre>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-key"></i> 権限管理</h2>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>権限</th>
-                        <th>説明</th>
-                        <th>デフォルト</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>ctf.use</code></td>
-                        <td>基本コマンド使用</td>
-                        <td>全員</td>
-                    </tr>
-                    <tr>
-                        <td><code>ctf.admin</code></td>
-                        <td>管理コマンド使用</td>
-                        <td>OP</td>
-                    </tr>
-                    <tr>
-                        <td><code>ctf.*</code></td>
-                        <td>全権限</td>
-                        <td>OP</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <h3>LuckPerms設定例</h3>
-            <pre><code>groups:
-  player:
-    permissions:
-    - ctf.use
-  
-  moderator:
-    permissions:
-    - ctf.use
-    - ctf.admin.stop
-    
-  admin:
-    permissions:
-    - ctf.*</code></pre>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-tachometer-alt"></i> 運用のヒント</h2>
-            
-            <div class="operation-tips">
-                <div class="operation-tip">
-                    <h3><i class="fas fa-rocket"></i> パフォーマンス最適化</h3>
-                    <ul>
-                        <li>同時実行ゲーム数は3-4個まで推奨</li>
-                        <li>大規模マッチ（20人）は1つずつ実施</li>
-                        <li>定期的にサーバー再起動を推奨</li>
-                    </ul>
-                </div>
-                
-                <div class="operation-tip">
-                    <h3><i class="fas fa-tools"></i> トラブルシューティング</h3>
-                    <div class="troubleshoot-item">
-                        <h4>ゲームが開始できない</h4>
-                        <ul>
-                            <li>旗とスポーン地点が設定されているか確認</li>
-                            <li>最小プレイヤー数を満たしているか確認</li>
-                        </ul>
-                    </div>
-                    <div class="troubleshoot-item">
-                        <h4>ラグが発生する</h4>
-                        <ul>
-                            <li>エンティティ数を確認</li>
-                            <li>同時実行ゲーム数を減らす</li>
-                            <li>サーバーのRAMを増やす</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="operation-tip">
-                    <h3><i class="fas fa-save"></i> バックアップ</h3>
-                    <p>定期的にバックアップすべきファイル：</p>
-                    <ul>
-                        <li><code>plugins/EasyCTF/config.yml</code></li>
-                        <li><code>plugins/EasyCTF/games/</code>フォルダ</li>
-                        <li><code>plugins/EasyCTF/lang_*.yml</code></li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-trophy"></i> イベント開催のヒント</h2>
-            
-            <div class="event-tips">
-                <h3>トーナメント形式</h3>
-                <ol>
-                    <li>複数のアリーナを準備</li>
-                    <li>トーナメント表を作成</li>
-                    <li>各試合は3勝先取マッチ</li>
-                    <li>決勝は5勝先取マッチ</li>
-                </ol>
-                
-                <h3>大会ルール例</h3>
-                <ul>
-                    <li>チーム人数: 5vs5固定</li>
-                    <li>建築フェーズ: 3分</li>
-                    <li>戦闘フェーズ: 7分</li>
-                    <li>使用禁止アイテム: TNT</li>
-                    <li>特別ルール: エンダーパール使用制限</li>
-                </ul>
-                
-                <h3>配信・観戦設定</h3>
-                <ul>
-                    <li>観戦者用の高所を準備</li>
-                    <li>ゲームモードをスペクテイターに設定</li>
-                    <li>配信者用の専用権限グループ</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-sync-alt"></i> アップデート手順</h2>
-            
-            <ol class="update-steps">
-                <li>サーバーを停止</li>
-                <li>設定ファイルをバックアップ</li>
-                <li>新しいjarファイルで置き換え</li>
-                <li>サーバーを起動</li>
-                <li>設定ファイルの互換性を確認</li>
-            </ol>
-            
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>注意:</strong> メジャーアップデートでは設定ファイルの変更が必要な場合があります。
-            </div>
-        </section>
-
-        <nav class="page-nav">
-            <a href="match.html" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> マッチモード
-            </a>
-            <a href="faq.html" class="btn btn-primary">
-                FAQ <i class="fas fa-arrow-right"></i>
-            </a>
         </nav>
-    </main>
+    </aside>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>EasyCTF</h4>
-                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>⚙️ 管理者ガイド</h2>
+                <p>このガイドでは、EasyCTFサーバーの管理者向けに、プラグインのセットアップ、設定、運用方法について説明します。</p>
+                
+                <div class="alert alert-info">
+                    <strong>重要:</strong> 管理者コマンドを実行するには <code>ctf.admin</code> 権限が必要です。
                 </div>
-                <div class="footer-section">
-                    <h4>リンク</h4>
+            </section>
+
+            <section class="content-section">
+                <h2>🚀 初期セットアップ</h2>
+                
+                <h3>1. インストール</h3>
+                <ol>
+                    <li>最新版の <code>easy_ctf-1.0-SNAPSHOT-all.jar</code> をダウンロード</li>
+                    <li>サーバーの <code>plugins</code> フォルダに配置</li>
+                    <li>サーバーを起動</li>
+                    <li>自動生成された設定ファイルを確認</li>
+                </ol>
+
+                <h3>2. 基本設定</h3>
+                <p>初回起動時に以下のファイルが自動生成されます：</p>
+                <ul>
+                    <li><code>plugins/EasyCTF/config.yml</code> - メイン設定ファイル</li>
+                    <li><code>plugins/EasyCTF/lang_ja.yml</code> - 日本語メッセージ</li>
+                    <li><code>plugins/EasyCTF/lang_en.yml</code> - 英語メッセージ</li>
+                </ul>
+
+                <h3>3. 言語設定</h3>
+                <div class="command-box">config.yml: language: "ja"  # "en" に変更で英語化</div>
+            </section>
+
+            <section class="content-section">
+                <h2>🗺️ マップ作成ガイド</h2>
+                
+                <h3>方法1: 自動検出方式（推奨）</h3>
+                
+                <div class="alert alert-success">
+                    この方法では、特定のブロックを配置してマップを自動設定できます。
+                </div>
+
+                <h4>必要なブロック配置</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ブロック</th>
+                            <th>用途</th>
+                            <th>個数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>赤のコンクリート</td>
+                            <td>赤チームのスポーン地点</td>
+                            <td>1個以上</td>
+                        </tr>
+                        <tr>
+                            <td>青のコンクリート</td>
+                            <td>青チームのスポーン地点</td>
+                            <td>1個以上</td>
+                        </tr>
+                        <tr>
+                            <td>ビーコン + 赤の色付きガラス</td>
+                            <td>赤チームの旗</td>
+                            <td>1個のみ</td>
+                        </tr>
+                        <tr>
+                            <td>ビーコン + 青の色付きガラス</td>
+                            <td>青チームの旗</td>
+                            <td>1個のみ</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>手順</h4>
+                <ol>
+                    <li>マップエリアの角に立つ</li>
+                    <li><code>/ctf setpos1 <ゲーム名></code> を実行</li>
+                    <li>対角の角に移動</li>
+                    <li><code>/ctf setpos2 <ゲーム名></code> を実行</li>
+                    <li><code>/ctf savemap <ゲーム名></code> を実行して自動検出</li>
+                </ol>
+
+                <div class="alert alert-warning">
+                    <strong>距離制限:</strong>
                     <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                        <li>スポーン地点同士: 4ブロック以上離す</li>
+                        <li>旗とスポーン: 3ブロック以上離す</li>
                     </ul>
                 </div>
-                <div class="footer-section">
-                    <h4>ドキュメント</h4>
-                    <ul>
-                        <li><a href="gameplay.html">遊び方</a></li>
-                        <li><a href="admin.html">管理者ガイド</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                    </ul>
+
+                <h3>方法2: 対話形式</h3>
+                
+                <ol>
+                    <li><code>/ctf create <ゲーム名></code> を実行</li>
+                    <li>チャットの指示に従って各位置を設定</li>
+                    <li>視線の先のブロックを見て <code>set</code> と入力</li>
+                    <li>全項目設定後、自動保存</li>
+                </ol>
+
+                <h4>対話形式のコマンド</h4>
+                <ul>
+                    <li><code>set</code> - 現在の視線先を設定</li>
+                    <li><code>skip</code> - 現在の項目をスキップ（デフォルト値使用）</li>
+                    <li><code>cancel</code> - 作成をキャンセル</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>📁 設定ファイル詳細</h2>
+                
+                <h3>config.yml 主要設定</h3>
+                
+                <h4>ゲーム基本設定</h4>
+                <div class="code-block">
+                    <pre>default-game:
+  min-players: 2              # 最小プレイヤー数
+  max-players-per-team: 10    # チーム最大人数
+  respawn-delay-base: 0       # リスポーン遅延（秒）
+  respawn-delay-per-death: 0  # 追加遅延
+  respawn-delay-max: 0        # 最大遅延
+  force-pvp: true             # PvP強制有効化</pre>
                 </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
-            </div>
+
+                <h4>フェーズ設定</h4>
+                <div class="code-block">
+                    <pre>default-phases:
+  build-duration: 120         # 建築フェーズ（秒）
+  combat-duration: 120        # 戦闘フェーズ（秒）
+  result-duration: 15         # 結果表示（秒）
+  build-phase-gamemode: "ADVENTURE"  # 建築時のゲームモード</pre>
+                </div>
+
+                <h4>通貨設定</h4>
+                <div class="code-block">
+                    <pre>currency:
+  name: "G"                   # 通貨名
+  initial: 50                 # 初期通貨
+  phase-end-bonus: 100        # フェーズ終了ボーナス
+  kill-reward: 15             # キル報酬
+  kill-assist-reward: 10      # キルアシスト報酬
+  carrier-kill-reward: 25     # 旗キャリアキル報酬
+  carrier-kill-assist-reward: 10  # 旗キャリアキルアシスト
+  capture-reward: 50          # キャプチャ報酬
+  capture-assist-reward: 20   # キャプチャアシスト報酬</pre>
+                </div>
+
+                <h4>シールドシステム</h4>
+                <div class="code-block">
+                    <pre>shield:
+  enabled: true               # シールド有効化
+  max-shield: 100.0           # 最大シールド値
+  recovery-rate: 5.0          # 回復速度（自陣のみ）
+  damage-rate: 2.0            # 敵陣でのダメージ速度</pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🎮 ゲーム管理</h2>
+                
+                <h3>ゲーム開始</h3>
+                
+                <h4>単一ゲーム</h4>
+                <div class="command-box">/ctf start <ゲーム名></div>
+                
+                <h4>マッチモード（複数ゲーム）</h4>
+                <div class="command-box">/ctf start <ゲーム名> match 5</div>
+                <p>5ゲームのマッチを開始。最多勝利チームが優勝。</p>
+
+                <h3>ゲーム停止</h3>
+                <div class="command-box">/ctf stop <ゲーム名></div>
+                <p>実行中のゲームまたはマッチを強制停止します。</p>
+
+                <h3>ゲーム状態確認</h3>
+                <div class="command-box">/ctf status <ゲーム名></div>
+                <p>現在のゲーム状態、プレイヤー、スコアを表示。</p>
+
+                <h3>ゲーム削除</h3>
+                <div class="command-box">/ctf delete <ゲーム名></div>
+                <div class="alert alert-danger">
+                    <strong>警告:</strong> ゲームデータとマップが完全に削除されます。
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🛠️ トラブルシューティング</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>ゲームが開始しない</h4>
+                        <ul>
+                            <li>最小プレイヤー数を確認</li>
+                            <li>マップ設定が完了しているか確認</li>
+                            <li><code>/ctf info <ゲーム名></code> で設定確認</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>マップが保存できない</h4>
+                        <ul>
+                            <li>必要なブロックが配置されているか確認</li>
+                            <li>距離制限を満たしているか確認</li>
+                            <li>領域が正しく設定されているか確認</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>言語が変わらない</h4>
+                        <ul>
+                            <li>config.yml の language 設定を確認</li>
+                            <li>サーバー再起動が必要</li>
+                            <li>言語ファイルが存在するか確認</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>プレイヤーが参加できない</h4>
+                        <ul>
+                            <li>権限 <code>ctf.use</code> を確認</li>
+                            <li>既に別のゲームに参加していないか確認</li>
+                            <li>チーム人数制限を確認</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🔐 権限管理</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>権限</th>
+                            <th>説明</th>
+                            <th>デフォルト</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ctf.use</code></td>
+                            <td>基本コマンド使用権限</td>
+                            <td>全プレイヤー</td>
+                        </tr>
+                        <tr>
+                            <td><code>ctf.admin</code></td>
+                            <td>管理者コマンド使用権限</td>
+                            <td>OP</td>
+                        </tr>
+                        <tr>
+                            <td><code>ctf.*</code></td>
+                            <td>全権限</td>
+                            <td>OP</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>権限の付与方法</h3>
+                <div class="command-box">/lp user <プレイヤー名> permission set ctf.admin true</div>
+                <p>※LuckPermsなどの権限管理プラグイン使用時</p>
+            </section>
+
+            <section class="content-section">
+                <h2>📊 パフォーマンス最適化</h2>
+                
+                <h3>推奨設定</h3>
+                <ul>
+                    <li><strong>メモリ割り当て:</strong> 最低4GB、推奨8GB以上</li>
+                    <li><strong>同時ゲーム数:</strong> サーバースペックに応じて制限</li>
+                    <li><strong>ワールド管理:</strong> テンポラリワールドは自動削除される</li>
+                </ul>
+
+                <h3>負荷軽減のヒント</h3>
+                <ul>
+                    <li>不要なプラグインを無効化</li>
+                    <li>表示距離を適切に設定</li>
+                    <li>エンティティ数を制限</li>
+                    <li>定期的にサーバーを再起動</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 バックアップ</h2>
+                
+                <h3>重要なファイル</h3>
+                <ul>
+                    <li><code>plugins/EasyCTF/games/</code> - ゲーム設定</li>
+                    <li><code>plugins/EasyCTF/maps/</code> - マップデータ</li>
+                    <li><code>plugins/EasyCTF/config.yml</code> - メイン設定</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    定期的にこれらのフォルダをバックアップすることを推奨します。
+                </div>
+            </section>
         </div>
-    </footer>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>⚙️ Administrator Guide</h2>
+                <p>This guide explains the setup, configuration, and operation of the EasyCTF plugin for server administrators.</p>
+                
+                <div class="alert alert-info">
+                    <strong>Important:</strong> Administrator commands require <code>ctf.admin</code> permission.
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🚀 Initial Setup</h2>
+                
+                <h3>1. Installation</h3>
+                <ol>
+                    <li>Download the latest <code>easy_ctf-1.0-SNAPSHOT-all.jar</code></li>
+                    <li>Place in server's <code>plugins</code> folder</li>
+                    <li>Start the server</li>
+                    <li>Check auto-generated configuration files</li>
+                </ol>
+
+                <h3>2. Basic Configuration</h3>
+                <p>The following files are auto-generated on first startup:</p>
+                <ul>
+                    <li><code>plugins/EasyCTF/config.yml</code> - Main configuration</li>
+                    <li><code>plugins/EasyCTF/lang_ja.yml</code> - Japanese messages</li>
+                    <li><code>plugins/EasyCTF/lang_en.yml</code> - English messages</li>
+                </ul>
+
+                <h3>3. Language Settings</h3>
+                <div class="command-box">config.yml: language: "en"  # Change to "ja" for Japanese</div>
+            </section>
+
+            <section class="content-section">
+                <h2>🗺️ Map Creation Guide</h2>
+                
+                <h3>Method 1: Auto-Detection (Recommended)</h3>
+                
+                <div class="alert alert-success">
+                    This method allows automatic setup by placing specific blocks.
+                </div>
+
+                <h4>Required Block Placement</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Block</th>
+                            <th>Purpose</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Red Concrete</td>
+                            <td>Red team spawn points</td>
+                            <td>1 or more</td>
+                        </tr>
+                        <tr>
+                            <td>Blue Concrete</td>
+                            <td>Blue team spawn points</td>
+                            <td>1 or more</td>
+                        </tr>
+                        <tr>
+                            <td>Beacon + Red Stained Glass</td>
+                            <td>Red team flag</td>
+                            <td>1 only</td>
+                        </tr>
+                        <tr>
+                            <td>Beacon + Blue Stained Glass</td>
+                            <td>Blue team flag</td>
+                            <td>1 only</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Steps</h4>
+                <ol>
+                    <li>Stand at corner of map area</li>
+                    <li>Execute <code>/ctf setpos1 <game name></code></li>
+                    <li>Move to opposite corner</li>
+                    <li>Execute <code>/ctf setpos2 <game name></code></li>
+                    <li>Execute <code>/ctf savemap <game name></code> for auto-detection</li>
+                </ol>
+
+                <div class="alert alert-warning">
+                    <strong>Distance Requirements:</strong>
+                    <ul>
+                        <li>Between spawn points: At least 4 blocks</li>
+                        <li>Flag to spawn: At least 3 blocks</li>
+                    </ul>
+                </div>
+
+                <h3>Method 2: Interactive Setup</h3>
+                
+                <ol>
+                    <li>Execute <code>/ctf create <game name></code></li>
+                    <li>Follow chat instructions to set each position</li>
+                    <li>Look at target block and type <code>set</code></li>
+                    <li>Auto-saves after all items configured</li>
+                </ol>
+
+                <h4>Interactive Commands</h4>
+                <ul>
+                    <li><code>set</code> - Set current line of sight</li>
+                    <li><code>skip</code> - Skip current item (use default)</li>
+                    <li><code>cancel</code> - Cancel creation</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>📁 Configuration Details</h2>
+                
+                <h3>config.yml Main Settings</h3>
+                
+                <h4>Game Basic Settings</h4>
+                <div class="code-block">
+                    <pre>default-game:
+  min-players: 2              # Minimum players
+  max-players-per-team: 10    # Max team size
+  respawn-delay-base: 0       # Respawn delay (seconds)
+  respawn-delay-per-death: 0  # Additional delay
+  respawn-delay-max: 0        # Maximum delay
+  force-pvp: true             # Force PvP enabled</pre>
+                </div>
+
+                <h4>Phase Settings</h4>
+                <div class="code-block">
+                    <pre>default-phases:
+  build-duration: 120         # Build phase (seconds)
+  combat-duration: 120        # Combat phase (seconds)
+  result-duration: 15         # Result display (seconds)
+  build-phase-gamemode: "ADVENTURE"  # Build phase game mode</pre>
+                </div>
+
+                <h4>Currency Settings</h4>
+                <div class="code-block">
+                    <pre>currency:
+  name: "G"                   # Currency name
+  initial: 50                 # Initial currency
+  phase-end-bonus: 100        # Phase end bonus
+  kill-reward: 15             # Kill reward
+  kill-assist-reward: 10      # Kill assist reward
+  carrier-kill-reward: 25     # Flag carrier kill reward
+  carrier-kill-assist-reward: 10  # Flag carrier kill assist
+  capture-reward: 50          # Capture reward
+  capture-assist-reward: 20   # Capture assist reward</pre>
+                </div>
+
+                <h4>Shield System</h4>
+                <div class="code-block">
+                    <pre>shield:
+  enabled: true               # Enable shields
+  max-shield: 100.0           # Maximum shield value
+  recovery-rate: 5.0          # Recovery speed (own territory only)
+  damage-rate: 2.0            # Damage rate in enemy territory</pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🎮 Game Management</h2>
+                
+                <h3>Starting Games</h3>
+                
+                <h4>Single Game</h4>
+                <div class="command-box">/ctf start <game name></div>
+                
+                <h4>Match Mode (Multiple Games)</h4>
+                <div class="command-box">/ctf start <game name> match 5</div>
+                <p>Starts a 5-game match. Team with most wins is champion.</p>
+
+                <h3>Stopping Games</h3>
+                <div class="command-box">/ctf stop <game name></div>
+                <p>Force stops running game or match.</p>
+
+                <h3>Checking Game Status</h3>
+                <div class="command-box">/ctf status <game name></div>
+                <p>Shows current game state, players, and scores.</p>
+
+                <h3>Deleting Games</h3>
+                <div class="command-box">/ctf delete <game name></div>
+                <div class="alert alert-danger">
+                    <strong>Warning:</strong> Game data and map will be permanently deleted.
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🛠️ Troubleshooting</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>Game Won't Start</h4>
+                        <ul>
+                            <li>Check minimum player count</li>
+                            <li>Verify map configuration complete</li>
+                            <li>Use <code>/ctf info <game name></code> to check settings</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Map Won't Save</h4>
+                        <ul>
+                            <li>Verify required blocks are placed</li>
+                            <li>Check distance requirements met</li>
+                            <li>Confirm area properly set</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Language Won't Change</h4>
+                        <ul>
+                            <li>Check config.yml language setting</li>
+                            <li>Server restart required</li>
+                            <li>Verify language files exist</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Players Can't Join</h4>
+                        <ul>
+                            <li>Check <code>ctf.use</code> permission</li>
+                            <li>Verify not in another game</li>
+                            <li>Check team size limits</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🔐 Permission Management</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Permission</th>
+                            <th>Description</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ctf.use</code></td>
+                            <td>Basic command permissions</td>
+                            <td>All players</td>
+                        </tr>
+                        <tr>
+                            <td><code>ctf.admin</code></td>
+                            <td>Admin command permissions</td>
+                            <td>OP</td>
+                        </tr>
+                        <tr>
+                            <td><code>ctf.*</code></td>
+                            <td>All permissions</td>
+                            <td>OP</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Granting Permissions</h3>
+                <div class="command-box">/lp user <player name> permission set ctf.admin true</div>
+                <p>※When using permission plugins like LuckPerms</p>
+            </section>
+
+            <section class="content-section">
+                <h2>📊 Performance Optimization</h2>
+                
+                <h3>Recommended Settings</h3>
+                <ul>
+                    <li><strong>Memory Allocation:</strong> Minimum 4GB, recommended 8GB+</li>
+                    <li><strong>Concurrent Games:</strong> Limit based on server specs</li>
+                    <li><strong>World Management:</strong> Temporary worlds auto-delete</li>
+                </ul>
+
+                <h3>Load Reduction Tips</h3>
+                <ul>
+                    <li>Disable unnecessary plugins</li>
+                    <li>Set appropriate view distance</li>
+                    <li>Limit entity counts</li>
+                    <li>Regular server restarts</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 Backups</h2>
+                
+                <h3>Important Files</h3>
+                <ul>
+                    <li><code>plugins/EasyCTF/games/</code> - Game configurations</li>
+                    <li><code>plugins/EasyCTF/maps/</code> - Map data</li>
+                    <li><code>plugins/EasyCTF/config.yml</code> - Main configuration</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    Regular backups of these folders are recommended.
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.0 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/yourusername/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
 
     <script src="script.js"></script>
 </body>

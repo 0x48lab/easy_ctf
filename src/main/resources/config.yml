@@ -37,8 +37,6 @@ default-phases:
   # Phase 2: Combat phase duration in seconds (default: 2 minutes)
   combat-duration: 120
   
-  # Countdown after combat phase ends before next round starts (in seconds)
-  combat-end-countdown: 15
   
   # Phase 3: Result phase duration in seconds (default: 15 seconds)
   result-duration: 15
@@ -66,8 +64,7 @@ match:
   # Default number of games to play in a match
   default-target: 3
   
-  # Interval between games in seconds
-  interval-duration: 15
+  # Interval between games removed - games start immediately
 
 # Currency Settings
 currency:
@@ -78,12 +75,12 @@ currency:
   initial: 50
   
   # Phase end bonus (given at end of combat phase)
-  phase-end-bonus: 50
+  phase-end-bonus: 100
   
   # Kill rewards
-  kill-reward: 10
-  kill-assist-reward: 5
-  carrier-kill-reward: 20
+  kill-reward: 15
+  kill-assist-reward: 10
+  carrier-kill-reward: 25
   carrier-kill-assist-reward: 10
   
   # Kill streak bonuses (additional currency per consecutive kill)
@@ -94,16 +91,13 @@ currency:
     5-plus-kills: 20  # +20G for 5+ consecutive kills
   
   # Capture rewards
-  capture-reward: 30
-  capture-assist-reward: 15
+  capture-reward: 50
+  capture-assist-reward: 20
 
 # Shop Settings
 shop:
   # Enable shop system
   enabled: true
-  
-  # Shop usage range from spawn point (blocks)
-  use-range: 15
   
   # Discount rates based on score difference
   discount:

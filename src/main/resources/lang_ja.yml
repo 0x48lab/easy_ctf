@@ -564,6 +564,7 @@ setup:
 shield:
   critical: シールドが危険レベルです！
   decreasing: 敵陣ブロックでシールドが減少しています！
+  beacon-area: 敵のビーコン周辺でシールドが減少しています！
   status: 'シールド: [{bar}] {percent}%'
   weakening: シールドが弱まっています！
 shop:

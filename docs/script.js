@@ -1,351 +1,387 @@
-// ナビゲーションのトグル
-document.addEventListener('DOMContentLoaded', function() {
-    const navToggle = document.querySelector('.nav-toggle');
-    const navMenu = document.querySelector('.nav-menu');
-    
-    if (navToggle) {
-        navToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-        });
+// EasyCTF Documentation JavaScript
+
+// Language Management
+let currentLang = localStorage.getItem('ctf-lang') || 'ja';
+
+// Translations
+const translations = {
+    ja: {
+        'nav.home': 'ホーム',
+        'nav.gameplay': 'ゲームプレイ',
+        'nav.commands': 'コマンド',
+        'nav.shop': 'ショップ',
+        'nav.match': 'マッチ',
+        'nav.admin': '管理者ガイド',
+        'nav.faq': 'FAQ',
+        'sidebar.menu': 'メニュー',
+        'search.placeholder': '検索...',
+        'copy': 'コピー',
+        'copied': 'コピーしました！'
+    },
+    en: {
+        'nav.home': 'Home',
+        'nav.gameplay': 'Gameplay',
+        'nav.commands': 'Commands',
+        'nav.shop': 'Shop',
+        'nav.match': 'Match',
+        'nav.admin': 'Admin Guide',
+        'nav.faq': 'FAQ',
+        'sidebar.menu': 'Menu',
+        'search.placeholder': 'Search...',
+        'copy': 'Copy',
+        'copied': 'Copied!'
     }
-    
-    // ページ外クリックでメニューを閉じる
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.navbar')) {
-            navMenu.classList.remove('active');
-        }
-    });
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSidebar();
+    initializeLanguage();
+    initializeSearch();
+    initializeCopyButtons();
+    initializeTooltips();
+    initializeScrollSpy();
+    initializeTheme();
 });
 
-// スムーススクロール
+// Sidebar Toggle
+function initializeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const mainContent = document.querySelector('.main-content');
+    
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            mainContent.classList.toggle('full-width');
+            
+            // Save state
+            const isActive = sidebar.classList.contains('active');
+            localStorage.setItem('sidebar-state', isActive ? 'active' : 'collapsed');
+        });
+        
+        // Restore state
+        const savedState = localStorage.getItem('sidebar-state');
+        if (savedState === 'active' && window.innerWidth <= 1024) {
+            sidebar.classList.add('active');
+        }
+    }
+    
+    // Submenu handling
+    const menuItems = document.querySelectorAll('.has-submenu > a');
+    menuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const submenu = this.nextElementSibling;
+            if (submenu) {
+                submenu.classList.toggle('active');
+                this.classList.toggle('expanded');
+            }
+        });
+    });
+    
+    // Active link highlighting
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    const links = document.querySelectorAll('.sidebar nav a');
+    links.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+            // Expand parent submenu if exists
+            const parentSubmenu = link.closest('.submenu');
+            if (parentSubmenu) {
+                parentSubmenu.classList.add('active');
+                parentSubmenu.previousElementSibling.classList.add('expanded');
+            }
+        }
+    });
+}
+
+// Language Switching
+function initializeLanguage() {
+    const langButtons = document.querySelectorAll('.language-switch button');
+    
+    // Set active language button
+    langButtons.forEach(btn => {
+        if (btn.dataset.lang === currentLang) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            currentLang = this.dataset.lang;
+            localStorage.setItem('ctf-lang', currentLang);
+            
+            // Update active button
+            langButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update language display
+            updateLanguage();
+        });
+    });
+    
+    // Initial language update
+    updateLanguage();
+}
+
+function updateLanguage() {
+    console.log('Updating language to:', currentLang);
+    
+    // Update content sections with data-lang attribute
+    const langElements = document.querySelectorAll('div[data-lang]');
+    
+    langElements.forEach(el => {
+        if (el.dataset.lang === currentLang) {
+            el.style.display = '';  // Use empty string to restore default display
+        } else {
+            el.style.display = 'none';
+        }
+    });
+    
+    // Update navigation and UI text with data-i18n attribute
+    const i18nElements = document.querySelectorAll('[data-i18n]');
+    console.log('Found', i18nElements.length, 'elements with data-i18n');
+    
+    i18nElements.forEach(el => {
+        const key = el.dataset.i18n;
+        // Since our translations object uses flat keys like 'nav.home', we directly access them
+        const translation = translations[currentLang][key];
+        
+        console.log('Translating', key, ':', translation);
+        
+        if (translation) {
+            el.textContent = translation;
+        }
+    });
+}
+
+// Search Functionality
+function initializeSearch() {
+    const searchInput = document.querySelector('.search-input');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const sections = document.querySelectorAll('.content-section');
+        
+        sections.forEach(section => {
+            const text = section.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                section.style.display = '';
+                // Highlight search term
+                if (searchTerm) {
+                    highlightText(section, searchTerm);
+                } else {
+                    removeHighlight(section);
+                }
+            } else {
+                section.style.display = 'none';
+            }
+        });
+        
+        // Show no results message
+        const visibleSections = document.querySelectorAll('.content-section:not([style*="display: none"])');
+        const noResults = document.querySelector('.no-results');
+        if (visibleSections.length === 0 && searchTerm) {
+            if (!noResults) {
+                const msg = document.createElement('div');
+                msg.className = 'alert alert-info no-results';
+                msg.textContent = currentLang === 'ja' ? '検索結果が見つかりませんでした。' : 'No results found.';
+                document.querySelector('.main-content').appendChild(msg);
+            }
+        } else if (noResults) {
+            noResults.remove();
+        }
+    });
+}
+
+function highlightText(element, searchTerm) {
+    const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+        textNodes.push(node);
+    }
+    
+    textNodes.forEach(textNode => {
+        const text = textNode.textContent;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        if (regex.test(text)) {
+            const span = document.createElement('span');
+            span.innerHTML = text.replace(regex, '<mark>$1</mark>');
+            textNode.parentNode.replaceChild(span, textNode);
+        }
+    });
+}
+
+function removeHighlight(element) {
+    const marks = element.querySelectorAll('mark');
+    marks.forEach(mark => {
+        const parent = mark.parentNode;
+        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+        parent.normalize();
+    });
+}
+
+// Copy to Clipboard
+function initializeCopyButtons() {
+    const commandBoxes = document.querySelectorAll('.command-box');
+    
+    commandBoxes.forEach(box => {
+        const button = document.createElement('button');
+        button.className = 'copy-btn';
+        button.textContent = 'Copy';
+        button.addEventListener('click', function() {
+            const text = box.textContent.replace('$ ', '').replace('Copy', '').trim();
+            copyToClipboard(text);
+            
+            // Show feedback
+            button.textContent = 'Copied!';
+            button.style.background = '#27ae60';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+                button.style.background = '';
+            }, 2000);
+        });
+        box.appendChild(button);
+    });
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+    } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+}
+
+// Tooltips
+function initializeTooltips() {
+    const tooltips = document.querySelectorAll('[data-tooltip]');
+    
+    tooltips.forEach(element => {
+        const tooltipText = element.dataset.tooltip;
+        const tooltip = document.createElement('span');
+        tooltip.className = 'tooltiptext';
+        tooltip.textContent = tooltipText;
+        element.classList.add('tooltip');
+        element.appendChild(tooltip);
+    });
+}
+
+// Scroll Spy
+function initializeScrollSpy() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.sidebar nav a[href^="#"]');
+    
+    if (sections.length === 0 || navLinks.length === 0) return;
+    
+    window.addEventListener('scroll', () => {
+        let current = '';
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (window.pageYOffset >= sectionTop - 200) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+}
+
+// Theme Toggle (Light/Dark)
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('ctf-theme') || 'light';
+    document.body.dataset.theme = savedTheme;
+    
+    // Create theme toggle button if not exists
+    if (!document.querySelector('.theme-toggle')) {
+        const themeToggle = document.createElement('button');
+        themeToggle.className = 'theme-toggle';
+        themeToggle.innerHTML = savedTheme === 'light' ? '🌙' : '☀️';
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = document.body.dataset.theme;
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.dataset.theme = newTheme;
+            localStorage.setItem('ctf-theme', newTheme);
+            this.innerHTML = newTheme === 'light' ? '🌙' : '☀️';
+        });
+        document.querySelector('.header').appendChild(themeToggle);
+    }
+}
+
+// Smooth Scrolling
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
+    anchor.addEventListener('click', function(e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-            const offset = 80; // ナビゲーションの高さ分
-            const targetPosition = target.offsetTop - offset;
-            window.scrollTo({
-                top: targetPosition,
-                behavior: 'smooth'
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
             });
         }
     });
 });
 
-// コマンドコピー機能
-function setupCopyButtons() {
-    const copyButtons = document.querySelectorAll('.copy-btn');
+// Tab Functionality
+function initializeTabs() {
+    const tabContainers = document.querySelectorAll('.tab-container');
     
-    copyButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const commandBlock = this.closest('.command-block');
-            const command = commandBlock.querySelector('code').textContent;
-            
-            navigator.clipboard.writeText(command).then(() => {
-                const originalText = this.textContent;
-                this.textContent = 'コピーしました！';
-                this.style.backgroundColor = '#27ae60';
+    tabContainers.forEach(container => {
+        const tabs = container.querySelectorAll('.tab');
+        const contents = container.querySelectorAll('.tab-content');
+        
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
                 
-                setTimeout(() => {
-                    this.textContent = originalText;
-                    this.style.backgroundColor = '';
-                }, 2000);
-            }).catch(err => {
-                console.error('コピーに失敗しました:', err);
-            });
-        });
-    });
-}
-
-// ページ読み込み時のアニメーション
-function setupScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
-    
-    // アニメーション対象の要素を監視
-    const animateElements = document.querySelectorAll('.feature-card, .step, .phase, .tip-card');
-    animateElements.forEach(el => {
-        observer.observe(el);
-    });
-}
-
-// アコーディオン機能（FAQ用）
-function setupAccordions() {
-    const accordionHeaders = document.querySelectorAll('.accordion-header');
-    
-    accordionHeaders.forEach(header => {
-        header.addEventListener('click', function() {
-            const accordionItem = this.parentElement;
-            const accordionContent = accordionItem.querySelector('.accordion-content');
-            const isOpen = accordionItem.classList.contains('active');
-            
-            // 他のアコーディオンを閉じる
-            document.querySelectorAll('.accordion-item').forEach(item => {
-                item.classList.remove('active');
-                item.querySelector('.accordion-content').style.maxHeight = null;
-            });
-            
-            // クリックされたアコーディオンをトグル
-            if (!isOpen) {
-                accordionItem.classList.add('active');
-                accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
-            }
-        });
-    });
-}
-
-// テーブルのソート機能
-function setupTableSort() {
-    const sortableTables = document.querySelectorAll('.sortable');
-    
-    sortableTables.forEach(table => {
-        const headers = table.querySelectorAll('th');
-        
-        headers.forEach((header, index) => {
-            header.style.cursor = 'pointer';
-            header.addEventListener('click', function() {
-                sortTable(table, index);
-            });
-        });
-    });
-}
-
-function sortTable(table, columnIndex) {
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    const isNumeric = rows.every(row => {
-        const cell = row.cells[columnIndex];
-        return !isNaN(parseFloat(cell.textContent));
-    });
-    
-    rows.sort((a, b) => {
-        const aValue = a.cells[columnIndex].textContent;
-        const bValue = b.cells[columnIndex].textContent;
-        
-        if (isNumeric) {
-            return parseFloat(aValue) - parseFloat(bValue);
-        } else {
-            return aValue.localeCompare(bValue);
-        }
-    });
-    
-    // 現在の順序を反転
-    const currentOrder = table.dataset.sortOrder === 'asc' ? 'desc' : 'asc';
-    table.dataset.sortOrder = currentOrder;
-    
-    if (currentOrder === 'desc') {
-        rows.reverse();
-    }
-    
-    // テーブルに行を再追加
-    rows.forEach(row => tbody.appendChild(row));
-}
-
-// 検索機能
-function setupSearch() {
-    const searchInput = document.getElementById('search-input');
-    const searchResults = document.getElementById('search-results');
-    
-    if (!searchInput || !searchResults) return;
-    
-    searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        
-        if (query.length < 2) {
-            searchResults.innerHTML = '';
-            return;
-        }
-        
-        // 検索処理（実際の実装では、ページ内容から検索）
-        const results = searchContent(query);
-        displaySearchResults(results);
-    });
-}
-
-function searchContent(query) {
-    // この関数は実際のコンテンツ検索ロジックを実装
-    // ここでは仮の実装
-    const allContent = document.querySelectorAll('h1, h2, h3, p, li');
-    const results = [];
-    
-    allContent.forEach(element => {
-        if (element.textContent.toLowerCase().includes(query)) {
-            results.push({
-                title: element.tagName === 'P' || element.tagName === 'LI' 
-                    ? element.textContent.substring(0, 50) + '...' 
-                    : element.textContent,
-                element: element
-            });
-        }
-    });
-    
-    return results.slice(0, 10); // 最大10件
-}
-
-function displaySearchResults(results) {
-    const searchResults = document.getElementById('search-results');
-    
-    if (results.length === 0) {
-        searchResults.innerHTML = '<p>検索結果が見つかりませんでした。</p>';
-        return;
-    }
-    
-    const html = results.map(result => `
-        <div class="search-result-item" data-element-id="${result.element.id || ''}">
-            <h4>${result.title}</h4>
-        </div>
-    `).join('');
-    
-    searchResults.innerHTML = html;
-    
-    // 結果クリックでスクロール
-    searchResults.querySelectorAll('.search-result-item').forEach((item, index) => {
-        item.addEventListener('click', () => {
-            results[index].element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            results[index].element.style.backgroundColor = '#ffeb3b';
-            setTimeout(() => {
-                results[index].element.style.backgroundColor = '';
-            }, 2000);
-        });
-    });
-}
-
-// ダークモード切り替え
-function setupDarkMode() {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const body = document.body;
-    
-    // 保存された設定を読み込み
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (isDarkMode) {
-        body.classList.add('dark-mode');
-    }
-    
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            const isDark = body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDark);
-            
-            // アイコンを変更
-            const icon = darkModeToggle.querySelector('i');
-            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        });
-    }
-}
-
-// 言語切り替え機能
-function setupLanguageToggle() {
-    const currentLang = localStorage.getItem('language') || 'ja';
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    
-    // 上段ヘッダーを作成（ロゴ + 言語切り替え）
-    const topHeader = document.createElement('div');
-    topHeader.className = 'top-header';
-    topHeader.innerHTML = `
-        <a href="${currentLang === 'en' ? 'index-en.html' : 'index.html'}" class="top-brand">
-            <i class="fas fa-flag"></i> EasyCTF
-        </a>
-        <div class="language-toggle">
-            <button class="lang-btn ${currentLang === 'ja' ? 'active' : ''}" data-lang="ja">
-                <span class="lang-flag">🇯🇵</span> 日本語
-            </button>
-            <button class="lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">
-                <span class="lang-flag">🇺🇸</span> English
-            </button>
-        </div>
-    `;
-    
-    // ナビゲーションバーの上部に追加
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-        navbar.insertBefore(topHeader, navbar.firstChild);
-    }
-    
-    // 言語切り替えイベント
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const newLang = this.dataset.lang;
-            if (newLang !== currentLang) {
-                localStorage.setItem('language', newLang);
-                
-                // ページをリダイレクト
-                let newPage = currentPage;
-                if (currentLang === 'ja' && newLang === 'en') {
-                    // 日本語から英語へ
-                    newPage = currentPage.replace('.html', '-en.html');
-                } else if (currentLang === 'en' && newLang === 'ja') {
-                    // 英語から日本語へ
-                    newPage = currentPage.replace('-en.html', '.html');
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                if (contents[index]) {
+                    contents[index].classList.add('active');
                 }
-                
-                window.location.href = newPage;
-            }
+            });
         });
     });
-    
-    // 初回アクセス時の言語リダイレクト
-    if (currentLang === 'en' && !currentPage.includes('-en.html')) {
-        window.location.href = currentPage.replace('.html', '-en.html');
-    } else if (currentLang === 'ja' && currentPage.includes('-en.html')) {
-        window.location.href = currentPage.replace('-en.html', '.html');
-    }
 }
 
-// 初期化
-document.addEventListener('DOMContentLoaded', function() {
-    setupCopyButtons();
-    setupScrollAnimations();
-    setupAccordions();
-    setupTableSort();
-    setupSearch();
-    setupDarkMode();
-    setupLanguageToggle();
-});
-
-// ページトップへ戻るボタン
-const backToTopButton = document.createElement('button');
-backToTopButton.innerHTML = '<i class="fas fa-arrow-up"></i>';
-backToTopButton.className = 'back-to-top';
-backToTopButton.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
-    cursor: pointer;
-    display: none;
-    z-index: 999;
-    transition: all 0.3s ease;
-`;
-
-document.body.appendChild(backToTopButton);
-
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-        backToTopButton.style.display = 'block';
-    } else {
-        backToTopButton.style.display = 'none';
+// Export functions for use in HTML
+window.ctfDocs = {
+    switchLanguage: (lang) => {
+        currentLang = lang;
+        localStorage.setItem('ctf-lang', lang);
+        updateLanguage();
+    },
+    toggleSidebar: () => {
+        document.querySelector('.sidebar').classList.toggle('active');
+    },
+    copyCommand: (text) => {
+        copyToClipboard(text);
     }
-});
-
-backToTopButton.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+};

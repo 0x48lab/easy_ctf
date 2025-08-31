@@ -1,283 +1,251 @@
-# EasyCTF - Minecraft CTF Plugin
+# 🏳️ EasyCTF - Minecraft CTF Plugin
 
-English | [日本語](README.md)
+<div align="center">
+  
+[![Version](https://img.shields.io/badge/Version-2.0-blue.svg)](https://github.com/yourusername/easy_ctf)
+[![Paper](https://img.shields.io/badge/Paper-1.21.5+-green.svg)](https://papermc.io)
+[![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-[![Build and Test](https://github.com/0x48lab/easy_ctf/actions/workflows/build.yml/badge.svg)](https://github.com/0x48lab/easy_ctf/actions/workflows/build.yml)
-[![Build and Release](https://github.com/0x48lab/easy_ctf/actions/workflows/release.yml/badge.svg)](https://github.com/0x48lab/easy_ctf/actions/workflows/release.yml)
+**Strategic CTF Plugin for Minecraft Paper Servers**
 
-**🏆 Official hackCraft2 Plugin**
+[Japanese](README.md) | English
 
-A feature-rich Capture The Flag plugin for Minecraft Paper servers. Manage and run multiple CTF games simultaneously with an intuitive UI and guide system that provides an enjoyable competitive experience for beginners to advanced players.
+</div>
 
-📚 **[Documentation](https://0x48lab.github.io/easy_ctf/)** - Learn how to play and detailed feature explanations
+## 📖 Overview
 
-## Main Features
+EasyCTF is a feature-rich Capture The Flag plugin for Minecraft Paper servers. Two teams (Red and Blue) compete to capture each other's flags while defending their own.
 
-### 🎮 Game System
-- **Multiple Concurrent Games**: Manage multiple CTF games in parallel on one server
-- **3-Phase System**: Progressive gameplay through Build → Combat → Strategy Meeting phases
-- **Temporary Worlds**: Automatically generate and delete dedicated worlds for each game
-- **Map Save/Restore**: Save created maps with compression (GZIP + Base64), auto-restore at game start
-- **Multiple Spawn Points**: Set multiple respawn points per team (randomly selected)
-- **Spectator Mode**: Watch games without participating
+### ✨ Key Features
+- 🎮 **Multiple Concurrent Games** - Run multiple CTF games simultaneously on the same server
+- 🛡️ **Shield System** - Take damage in enemy territory, recover only in your own
+- 💎 **Shop System** - Team-shared currency for strategic item purchases  
+- 🏆 **Match System** - Multiple rounds to determine overall winner
+- 🌍 **Multi-language** - Full support for Japanese and English
+- 🎁 **Event Chests** - Special rewards during combat phase
 
-### 💰 Economy & Shop System
-- **Team-Shared Currency**: All team members share currency (G)
-- **Shop System**: Purchase weapons, armor, blocks, and consumables
-- **Dynamic Pricing**: Automatic discounts for losing teams (up to 40%)
-- **Death Behavior**: KEEP/DROP/DESTROY settings per item
+## 🎯 Game Phases
 
-### 🏆 Match System
-- **Fixed Rounds Mode**: Run a specified number of consecutive games
-- **Inventory Persistence**: Keep items during matches
-- **Detailed Statistics**: Track kills, captures, assists, building, etc.
-- **MVP Awards**: Announce top players in each category
+### 1️⃣ Build Phase (2 minutes)
+- Place blocks for defense and offense
+- No PvP (combat disabled)  
+- Shop available for purchases
+- Cannot enter enemy territory
+- Instant respawn (no delay)
 
-### 🏗️ Building System
-- **Block Connection Management**: Team blocks must connect to beacon or existing blocks
-- **Disconnected Block Neutralization**: Disconnected blocks turn white (Quartz blocks)
-- **Team-Exclusive Blocks**: Infinite colored concrete and glass
-- **Enemy Territory Damage System**: Take continuous damage on enemy team blocks
-- **Build from Multiple Points**: Build from all spawn points (multiple allowed)
-- **Spawn Decoration Protection**: 3x3 platform at spawn points cannot be destroyed
+### 2️⃣ Combat Phase (2 minutes)
+- Main CTF gameplay
+- PvP enabled
+- Capture enemy flags
+- Shop available anywhere (right-click emerald)
+- Instant respawn (no delay)
 
-### 🌍 Multi-Language Support
-- **Japanese & English Support**: All messages managed in language files
-- **Easy Switching**: Change language in config.yml
-- **Customizable**: Edit lang_ja.yml, lang_en.yml
-- **Color Code Support**: Automatic conversion of &c, &9, etc. color codes
+### 3️⃣ Strategy Phase (15 seconds)
+- View round results
+- Prepare for next round
+- Transitions immediately to next phase
 
-## Installation
+## 💎 Shop System
 
-### From Releases (Recommended)
+Right-click emerald to open shop (**usable anywhere**)
 
-**📦 Download pre-built files from [GitHub Releases](https://github.com/0x48lab/easy_ctf/releases)**
+### Categories
+- **Weapons** - Swords, axes, bows, etc.
+- **Armor** - Various armor sets
+- **Consumables** - Ender pearls, golden apples, arrows
+- **Building Blocks** - Various blocks, TNT
 
-**Installation Steps:**
-1. **[📥 Download Latest Release](https://github.com/0x48lab/easy_ctf/releases/latest)** and get `EasyCTF-x.x.x.jar`
-2. Place the JAR file in your server's `plugins` directory
-3. Restart the server
-4. Configure the plugin with `/ctf` commands
+### Currency Earning
+- Initial funds: 50G
+- Kill reward: 15G (Flag carrier: 25G)
+- Kill assist: 10G
+- Capture: 50G
+- Assist: 20G
+- Phase end bonus: 100G
+- Kill streak bonus: 5G-20G
 
-### From Source
+### Discount System
+Discounts for losing team based on score difference:
+- 1 point behind: 10% off
+- 2 points behind: 20% off
+- 3 points behind: 30% off
+- 4+ points behind: 40% off
 
-1. Clone this repository
-2. Run `./gradlew shadowJar`
-3. Copy `build/libs/EasyCTF-x.x.x-all.jar` to plugins directory
+## 🛡️ Special Systems
 
-## Requirements
+### Shield System
+- Maximum: 100
+- Decreases by 2/sec on enemy blocks/beacon area
+- 1.5 damage/sec when shield is 0
+- **Recovers 5/sec only in own territory** (important tactical element)
+- Warning: Below 40 warning, below 20 critical
 
-- **Minecraft Server**: Paper 1.21.5+ (or compatible forks)
-- **Java**: 21 or higher
-- **Permission Plugin**: Optional (uses Bukkit permissions)
+### Beacon Area Effects
+- 3x3 area is special zone
+- Enemy: Damage zone (shield decrease)
+- Ally: Hunger & shield recovery
 
-## Quick Start
+### Team Block System
+- **Red Team**: Red concrete only
+- **Blue Team**: Blue concrete only
+- Block connection required (neutralizes when disconnected)
+- Unlimited usage
 
-### Method 1: Automatic Map Detection (Recommended)
+### Event Chests
+- Appear once during combat phase
+- Obtain expensive shop items
+- Notification to all players
 
-1. **Set Map Area**
+## 🗺️ Map Creation
+
+### Auto-Detection Method (Recommended)
+
+1. **Build Map**
+   - Red concrete: Red team spawn (multiple allowed)
+   - Blue concrete: Blue team spawn (multiple allowed)
+   - Beacon + Red glass: Red team flag
+   - Beacon + Blue glass: Blue team flag
+
+2. **Set Region**
+   ```bash
+   /ctf setpos1 game1  # Set first corner
+   /ctf setpos2 game1  # Set second corner
    ```
-   /ctf setpos1  # Set start point at current location (temporary)
-   /ctf setpos2  # Set end point at current location (temporary)
-   ```
-   Or for existing game:
-   ```
-   /ctf setpos1 <game-name>  # Set start point for specific game
-   /ctf setpos2 <game-name>  # Set end point for specific game
+
+3. **Save**
+   ```bash
+   /ctf savemap game1  # Auto-detect and save
    ```
 
-2. **Place Required Blocks**
-   - Red Concrete: Red team spawn point (1 or more, multiple allowed)
-   - Blue Concrete: Blue team spawn point (1 or more, multiple allowed)
-   - Beacon + Red Glass: Red team flag location (only 1)
-   - Beacon + Blue Glass: Blue team flag location (only 1)
-   
-   **Note**: 
-   - Spawn points must be at least 4 blocks apart from each other
-   - Flags and spawn points must be at least 3 blocks apart
+### Temporary World System
+- Dedicated world generated at game start
+- Map automatically restored
+- Chest contents automatically cleared
+- World deleted at game end
 
-3. **Save the Map**
-   ```
-   /ctf savemap <game-name>
-   ```
+## 📊 Admin Commands
 
-### Method 2: Interactive Creation
+| Command | Description |
+|---------|-------------|
+| `/ctf create <game>` | Create new game (interactive) |
+| `/ctf update <game>` | Update game settings |
+| `/ctf delete <game>` | Delete game |
+| `/ctf list` | List all games |
+| `/ctf info <game>` | Game details |
+| `/ctf start <game> [match] [count]` | Start game/match |
+| `/ctf stop <game>` | Force stop |
+| `/ctf setflag <game> <team>` | Set flag position |
+| `/ctf setspawn <game> <team>` | Set spawn |
+| `/ctf addspawn <game> <team>` | Add spawn |
+| `/ctf removespawn <game> <team> <number>` | Remove spawn |
 
-1. Start game creation: `/ctf create <game-name>`
-2. Follow chat instructions to configure
-3. Players join: `/ctf join <game-name>`
-4. Start game: `/ctf start <game-name>`
+## 🎮 Player Commands
 
-### Starting Match Mode
+| Command | Description |
+|---------|-------------|
+| `/ctf join <game>` | Join game |
+| `/ctf leave` | Leave current game |
+| `/ctf team [red/blue]` | Check/change team |
+| `/ctf spectator <game>` | Join as spectator |
+| `/ctf status [game]` | Game status |
 
-To run multiple consecutive games:
-```
-/ctf start <game-name> match [number-of-games]
-```
-Example: `/ctf start arena1 match 5` (runs 5 games)
+## ⚙️ Configuration
 
-## Main Commands
-
-### For Players
-- `/ctf list` - Show all games
-- `/ctf join <game-name>` - Join specified game
-- `/ctf leave` - Leave current game
-- `/ctf team [red|blue]` - Check/change team (before start only)
-- `/ctf status [game-name]` - Check game status
-- `/ctf spectator [game-name]` - Join as spectator
-
-### For Admins
-- `/ctf create <game-name>` - Create new game (interactive)
-- `/ctf update <game-name>` - Update game settings (interactive)
-- `/ctf delete <game-name>` - Delete game
-- `/ctf start <game-name> [match] [number]` - Start game/match
-- `/ctf stop <game-name>` - Force stop game
-- `/ctf setflag <game-name> <red|blue>` - Manually set flag location
-- `/ctf setspawn <game-name> <red|blue>` - Manually set spawn location
-- `/ctf addspawn <game-name> <red|blue>` - Add spawn point
-- `/ctf removespawn <game-name> <red|blue> <number>` - Remove spawn point
-- `/ctf listspawns <game-name>` - List spawn points
-- `/ctf setpos1 [game-name]` - Set map start point (temporary if name omitted)
-- `/ctf setpos2 [game-name]` - Set map end point (temporary if name omitted)
-- `/ctf savemap <game-name>` - Save map (auto-detection)
-
-## Gameplay
-
-### Phases
-
-1. **Build Phase** 🏗️
-   - Default 2 minutes (configurable)
-   - Construct defensive structures (Game mode: ADVENTURE/SURVIVAL/CREATIVE selectable)
-   - PvP disabled
-   - Shop available
-   - Block connection system active
-
-2. **Combat Phase** ⚔️
-   - Default 2 minutes (configurable)
-   - Capture enemy flag and bring it back
-   - PvP force enabled (configurable)
-   - Shop available (near spawn points only)
-   - Block breaking: Only with specific tools (pickaxe, shovel, bucket)
-
-3. **Strategy Meeting Phase** 💭
-   - Default 15 seconds (configurable)
-   - View match results and MVP announcements
-   - Prepare for next game (in match mode)
-   - Different time settings available for final game vs intermediate games
-
-### Flag System
-
-- **Implementation**: Beacon (with 3x3 iron block base)
-- **Capture**: Get within 1.5 blocks of enemy flag (beacon)
-- **Carrier Effects**: Glowing, movement restriction (cannot use ender pearls/elytra)
-- **Scoring Condition**: Can only capture when your team's flag is at base
-- **Drop**: Drops on death (auto-returns after 30 seconds)
-
-### Respawn System
-
-- **Multiple Spawn Points**: Respawn at randomly selected spawn location
-- **Respawn Delay**: Base delay + penalty per death (up to maximum)
-- **Spawn Protection**: 3 seconds of invincibility and glowing after respawn
-- **Protection Removal**: Removed immediately on attack or flag pickup
-
-### Shop System
-
-- **How to Open**: Right-click emerald in inventory
-- **Usage Location**: Within 15 blocks of spawn point
-- **Categories**: Weapons, armor, consumables, blocks
-- **Special Features**: Death behavior settings (KEEP/DROP/DESTROY)
-
-## Configuration
-
-### config.yml (Main Settings)
+Main configuration file: `config.yml`
 
 ```yaml
-# Language settings
+# Language setting
 language: "en"  # "en" or "ja"
 
-# Default game settings
-default-game:
-  min-players: 2
-  max-players-per-team: 10
-  respawn-delay-base: 10        # Base respawn delay (seconds)
-  respawn-delay-per-death: 2    # Additional penalty per death (seconds)
-  respawn-delay-max: 20         # Maximum respawn delay (seconds)
-  force-pvp: true               # Force enable PvP in combat phase
-
-# Phase settings
+# Phase durations
 default-phases:
-  build-duration: 120           # Build phase (seconds)
-  build-phase-gamemode: "SURVIVAL"
-  combat-duration: 120          # Combat phase (seconds)
-  result-duration: 15           # Strategy meeting phase (seconds)
-  intermediate-result-duration: 15  # Time between match games
+  build-duration: 120      # Build phase (seconds)
+  combat-duration: 120     # Combat phase (seconds)
+  result-duration: 15      # Result display (seconds)
+  build-phase-gamemode: "SURVIVAL"  # ADVENTURE/SURVIVAL/CREATIVE
 
-# Match settings
-match:
-  default-target: 3             # Default number of games
-  interval-duration: 15         # Interval between games (seconds)
+# Respawn settings
+default-game:
+  respawn-delay-base: 0    # Instant respawn
+  respawn-delay-per-death: 0
+  respawn-delay-max: 0
 
 # Currency settings
 currency:
-  name: "G"
-  initial: 50                   # Initial currency
-  phase-end-bonus: 50           # Phase end bonus
-  kill-reward: 10               # Kill reward
-  carrier-kill-reward: 20       # Flag carrier kill reward
-  capture-reward: 30            # Capture reward
+  initial: 50              # Initial currency
+  kill-reward: 15          # Kill reward
+  kill-assist-reward: 10   # Kill assist reward
+  carrier-kill-reward: 25  # Flag carrier kill
+  carrier-kill-assist-reward: 10  # Flag carrier kill assist
+  capture-reward: 50       # Capture reward
+  capture-assist-reward: 20  # Capture assist reward
+  phase-end-bonus: 100     # Phase end bonus
+  kill-streak-bonus:       # Kill streak bonus
+    2-kills: 5
+    3-kills: 10
+    4-kills: 15
+    5-plus-kills: 20
 
-# Shop settings
-shop:
+# Shield settings
+shield:
   enabled: true
-  use-range: 15                 # Usable distance from spawn
-  discount:
-    1-point: 0.1               # 10% discount for 1 point difference
-    2-point: 0.2               # 20% discount for 2 point difference
-    3-point: 0.3               # 30% discount for 3 point difference
-    4-point-plus: 0.4          # 40% discount for 4+ point difference
+  max-shield: 100
+  decrease-rate: 2.0       # Decrease rate in enemy territory
+  recovery-rate: 5.0       # Recovery rate in own territory
+  damage-amount: 1.5       # Damage when shield is 0
+
+# Event chest
+event-chest:
+  enabled: true
+  spawn-count: 1           # Spawns during combat phase
 ```
 
-## Troubleshooting
+## 🔧 Build Instructions
 
-### Common Issues
-
-1. **Shop won't open**
-   - Use within 15 blocks of spawn point
-
-2. **Can't capture flag**
-   - Need to be within 1.5 blocks
-   - Check if you're already carrying a flag
-
-3. **Can't place blocks**
-   - Block placement disabled during combat phase
-   - In build phase, connect to team blocks
-
-4. **Language won't change**
-   - Server restart required after changing config.yml
-
-## Development
-
-### Build
 ```bash
-./gradlew clean build
+git clone https://github.com/yourusername/easy_ctf.git
+cd easy_ctf
+./gradlew shadowJar
 ```
 
-### Test
-```bash
-./gradlew test
-```
+Generated JAR file: `build/libs/easy_ctf-x.x.x-all.jar`
 
-### Development Server
-```bash
-./gradlew runServer
-```
+## 📝 Release Notes
 
-## Support
+### Latest Changes
+- ✅ Removed intervals between phases (instant transition)
+- ✅ Set respawn delay to 0 (instant respawn)
+- ✅ Adjusted currency rewards (Kill 15G, Flag carrier kill 25G, Capture 50G, Phase bonus 100G)
+- ✅ Limited shield recovery to own territory only
+- ✅ Removed shop usage range restriction (usable anywhere)
+- ✅ Unified team blocks to concrete only
+- ✅ Beacon area becomes damage zone
+- ✅ Event chest contents limited to shop items
+- ✅ Distance-based flag detection algorithm
 
-- **Issue Reports**: [GitHub Issues](https://github.com/0x48lab/easy_ctf/issues)
-- **Documentation**: [Online Documentation](https://0x48lab.github.io/easy_ctf/)
-- **Wiki**: [GitHub Wiki](https://github.com/0x48lab/easy_ctf/wiki)
+### Performance Optimizations
+- Batch teleport processing
+- Asynchronous chat processing
+- Efficient block connection checking
+- GZIP compression for map storage
 
-## License
+## 🤝 Contributing
 
-This project is licensed under the MIT License.
+Pull requests are welcome! Report bugs and suggest features in [Issues](https://github.com/yourusername/easy_ctf/issues).
+
+## 📞 Support
+
+- 📧 Email: support@example.com
+- 💬 Discord: [Join Link](https://discord.gg/example)
+- 📚 [Wiki](https://github.com/yourusername/easy_ctf/wiki)
+
+## 📄 License
+
+This project is released under the MIT License.
+
+---
+
+<div align="center">
+Made with ❤️ for Minecraft Community
+</div>

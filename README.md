@@ -1,283 +1,283 @@
-# EasyCTF - Minecraft CTF プラグイン
+# EasyCTF - Minecraft Capture The Flag Plugin
 
-[English](README_EN.md) | 日本語
+<div align="center">
 
-[![Build and Test](https://github.com/0x48lab/easy_ctf/actions/workflows/build.yml/badge.svg)](https://github.com/0x48lab/easy_ctf/actions/workflows/build.yml)
-[![Build and Release](https://github.com/0x48lab/easy_ctf/actions/workflows/release.yml/badge.svg)](https://github.com/0x48lab/easy_ctf/actions/workflows/release.yml)
+[![Paper](https://img.shields.io/badge/Paper-1.21.5-blue.svg)](https://papermc.io/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.22-purple.svg)](https://kotlinlang.org/)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**🏆 hackCraft2 公式プラグイン**
+**マインクラフトで本格的なCTF（Capture The Flag）を楽しもう！**
 
-Minecraft Paper サーバー向けの高機能な Capture The Flag プラグインです。複数のCTFゲームを同時に管理・実行でき、直感的なUIとガイドシステムにより、初心者から上級者まで楽しめる対戦体験を提供します。
+日本語 | [English](README_EN.md)
 
-📚 **[ドキュメント](https://0x48lab.github.io/easy_ctf/)** - ゲームの遊び方や詳細な機能説明
+</div>
 
-## 主な機能
+## 📋 概要
 
-### 🎮 ゲームシステム
-- **複数ゲーム同時実行**: 1つのサーバーで複数のCTFゲームを並行管理
-- **3フェーズシステム**: 建築→戦闘→作戦会議の段階的ゲーム進行
-- **テンポラリワールド**: 各ゲーム専用のワールドを自動生成・削除
-- **マップ保存・復元**: 作成したマップを圧縮保存（GZIP + Base64）、ゲーム開始時に自動復元
-- **複数スポーン地点**: チームごとに複数のリスポーン地点を設定可能（ランダム選択）
-- **観戦者モード**: 参加せずにゲームを観戦できるスペクテーターモード
+EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2つのチームに分かれて相手の旗を奪い合う、戦略性の高いPvPゲームモードを提供します。
 
-### 💰 経済・ショップシステム
-- **チーム共有通貨**: チーム全員で通貨（G）を共有
-- **ショップシステム**: 武器、防具、ブロック、消耗品を購入可能
-- **動的価格設定**: 負けているチームに自動割引（最大40%）
-- **死亡時挙動**: アイテムごとにKEEP/DROP/DESTROY設定
+### ✨ 主な特徴
 
-### 🏆 マッチシステム
-- **固定ラウンド方式**: 指定回数のゲームを連続実施
-- **インベントリ継続**: マッチ中はアイテムを保持
-- **詳細な統計**: キル、キャプチャー、アシスト、建築などを記録
-- **MVP表彰**: 各カテゴリーのトッププレイヤーを発表
+- 🎮 **複数ゲーム同時実行** - 同一サーバーで複数のCTFゲームを並行実行
+- 🏆 **マッチシステム** - 複数ラウンドで総合優勝を決定
+- 💰 **ショップシステム** - チーム共有通貨で戦略的な買い物
+- 🛡️ **シールドシステム** - 敵陣でのダメージ管理（自陣でのみ回復）
+- 🎁 **イベントチェスト** - 戦闘中に出現する特別な報酬
+- 🗺️ **マップ作成ツール** - 簡単にカスタムマップを作成
+- 🌏 **多言語対応** - 日本語・英語をサポート
 
-### 🏗️ 建築システム
-- **ブロック接続管理**: チームブロックはビーコンまたは既存ブロックに接続必須
-- **切断ブロックの中立化**: 接続が切れたブロックは白色（クォーツブロック）に変化
-- **チーム専用ブロック**: 無限に使える色付きコンクリート・ガラス
-- **敵陣ダメージシステム**: 敵チームブロック上で継続的にダメージを受ける
-- **複数拠点からの建築**: すべてのスポーン地点（複数可）から建築可能
-- **スポーン装飾保護**: スポーン地点の3x3足場は破壊不可
+## 🚀 クイックスタート
 
-### 🌍 多言語対応
-- **日本語・英語対応**: すべてのメッセージを言語ファイルで管理
-- **簡単切り替え**: config.ymlで言語設定を変更
-- **カスタマイズ可能**: lang_ja.yml, lang_en.ymlを編集可能
-- **カラーコード対応**: &c、&9などのカラーコードを自動変換
+### 必要環境
 
-## インストール
+- Paper Server 1.21.5以上
+- Java 21以上
+- 4GB以上のRAM推奨
 
-### リリースから（推奨）
+### インストール
 
-**📦 [GitHub Releases](https://github.com/0x48lab/easy_ctf/releases) でビルド済みファイルをダウンロード**
+1. [Releases](https://github.com/yourusername/easy_ctf/releases)から最新版をダウンロード
+2. `easy_ctf-x.x.x.jar`をサーバーの`plugins`フォルダに配置
+3. サーバーを起動
 
-**インストール手順：**
-1. **[📥 最新リリースをダウンロード](https://github.com/0x48lab/easy_ctf/releases/latest)** から `EasyCTF-x.x.x.jar` を取得
-2. サーバーの `plugins` ディレクトリにJARファイルを配置
-3. サーバーを再起動
-4. `/ctf` コマンドでプラグインを設定
+### 基本的な使い方
 
-### ソースから
+```bash
+# ゲーム作成（自動検出方式）
+/ctf setpos1 game1        # マップ領域の始点を設定
+/ctf setpos2 game1        # マップ領域の終点を設定
+/ctf savemap game1        # マップを保存（旗・スポーンを自動検出）
 
-1. このリポジトリをクローン
-2. `./gradlew shadowJar` を実行
-3. `build/libs/EasyCTF-x.x.x-all.jar` をpluginsディレクトリにコピー
+# ゲーム開始
+/ctf start game1          # 単一ゲーム開始
+/ctf start game1 match 5  # 5ラウンドマッチ開始
 
-## 動作要件
-
-- **Minecraftサーバー**: Paper 1.21.5+ (または互換フォーク)
-- **Java**: 21 以上
-- **権限プラグイン**: オプション (Bukkit権限を使用)
-
-## クイックスタート
-
-### 方法1: マップ自動検出方式（推奨）
-
-1. **マップ領域の設定**
-   ```
-   /ctf setpos1  # 始点を現在地に設定（一時保存）
-   /ctf setpos2  # 終点を現在地に設定（一時保存）
-   ```
-   または既存ゲーム用：
-   ```
-   /ctf setpos1 <ゲーム名>  # 特定ゲームの始点を設定
-   /ctf setpos2 <ゲーム名>  # 特定ゲームの終点を設定
-   ```
-
-2. **必須ブロックの配置**
-   - 赤のコンクリート: 赤チームのスポーン地点（1つ以上、複数可）
-   - 青のコンクリート: 青チームのスポーン地点（1つ以上、複数可）
-   - ビーコン + 赤のガラス: 赤チームの旗位置（1つのみ）
-   - ビーコン + 青のガラス: 青チームの旗位置（1つのみ）
-   
-   **注意**: 
-   - スポーン地点同士は最低4ブロック離して配置
-   - 旗とスポーン地点は最低3ブロック離して配置
-
-3. **マップの保存**
-   ```
-   /ctf savemap <ゲーム名>
-   ```
-
-### 方法2: 対話形式での作成
-
-1. ゲーム作成開始: `/ctf create <ゲーム名>`
-2. チャットの指示に従って設定
-3. プレイヤーが参加: `/ctf join <ゲーム名>`
-4. ゲーム開始: `/ctf start <ゲーム名>`
-
-### マッチモードの開始
-
-複数ゲームを連続で実施する場合：
+# プレイヤー参加
+/ctf join game1           # ゲームに参加（自動チーム割り当て）
 ```
-/ctf start <ゲーム名> match [ゲーム数]
-```
-例: `/ctf start arena1 match 5` （5ゲーム実施）
 
-## 主要コマンド
+## 🎯 ゲームの流れ
 
-### プレイヤー用
-- `/ctf list` - 全ゲーム一覧を表示
-- `/ctf join <ゲーム名>` - 指定ゲームに参加
-- `/ctf leave` - 現在のゲームから離脱
-- `/ctf team [red|blue]` - チーム確認・変更（開始前のみ）
-- `/ctf status [ゲーム名]` - ゲーム状況を確認
-- `/ctf spectator [ゲーム名]` - 観戦者として参加
+### 1️⃣ 建築フェーズ（2分）
+- 自チームの色のコンクリートブロックで防衛施設を建設
+- ブロックは自陣ビーコンまたは既存ブロックに接続必須
+- ショップでアイテムを購入して準備
+- 敵チーム領域に侵入不可
 
-### 管理者用
-- `/ctf create <ゲーム名>` - 新規ゲーム作成（対話形式）
-- `/ctf update <ゲーム名>` - ゲーム設定の更新（対話形式）
-- `/ctf delete <ゲーム名>` - ゲーム削除
-- `/ctf start <ゲーム名> [match] [数]` - ゲーム/マッチ開始
-- `/ctf stop <ゲーム名>` - ゲーム強制終了
-- `/ctf setflag <ゲーム名> <red|blue>` - 旗位置を手動設定
-- `/ctf setspawn <ゲーム名> <red|blue>` - スポーン地点を手動設定
-- `/ctf addspawn <ゲーム名> <red|blue>` - スポーン地点を追加
-- `/ctf removespawn <ゲーム名> <red|blue> <番号>` - スポーン地点を削除
-- `/ctf listspawns <ゲーム名>` - スポーン地点一覧を表示
-- `/ctf setpos1 [ゲーム名]` - マップ始点設定（省略時は一時保存）
-- `/ctf setpos2 [ゲーム名]` - マップ終点設定（省略時は一時保存）
-- `/ctf savemap <ゲーム名>` - マップ保存（自動検出）
+### 2️⃣ 戦闘フェーズ（2分）
+- 敵の旗（ビーコン）を奪取して自陣に持ち帰る
+- 旗キャリアは発光効果・移動制限あり
+- キル・キャプチャーで通貨獲得
+- 即座にリスポーン（遅延なし）
 
-## ゲームプレイ
+### 3️⃣ 作戦会議フェーズ（15秒）
+- ラウンド結果の確認
+- 次ラウンドへの準備
+- インターバルなしで次フェーズへ移行
 
-### フェーズ
+## 💎 ショップシステム
 
-1. **建築フェーズ** 🏗️
-   - デフォルト2分（設定可能）
-   - 防御設備の構築（ゲームモード：ADVENTURE/SURVIVAL/CREATIVE選択可）
-   - PvP無効
-   - ショップ利用可能
-   - ブロック接続システム有効
+エメラルドを右クリックしてショップを開く（**どこでも利用可能**）
 
-2. **戦闘フェーズ** ⚔️
-   - デフォルト2分（設定可能）
-   - 敵の旗を奪取して自陣に持ち帰る
-   - PvP強制有効（設定可能）
-   - ショップ利用可能（スポーン地点付近のみ）
-   - ブロック破壊：特定ツールでのみ可能（ピッケル、シャベル、バケツ）
+### カテゴリ
+- **武器** - 剣、斧、弓など
+- **防具** - 各種防具セット
+- **消耗品** - エンダーパール、金リンゴ、矢
+- **建築ブロック** - 各種ブロック、TNT
 
-3. **作戦会議フェーズ** 💭
-   - デフォルト15秒（設定可能）
-   - 試合結果の確認とMVP発表
-   - 次ゲームへの準備（マッチモード時）
-   - マッチ最終ゲームとマッチ中間で異なる時間設定可能
+### 通貨獲得方法
+- 初期資金: 50G
+- キル報酬: 15G（旗キャリア: 25G）
+- キルアシスト: 10G
+- キャプチャー: 50G
+- アシスト: 20G
+- フェーズ終了ボーナス: 100G
+- キルストリークボーナス: 5G〜20G
 
-### 旗システム
+### 割引システム
+スコア差による敗者チーム割引：
+- 1点差: 10%割引
+- 2点差: 20%割引
+- 3点差: 30%割引
+- 4点差以上: 40%割引
 
-- **実装**: ビーコン（3x3の鉄ブロックベース付き）
-- **取得**: 敵の旗（ビーコン）に1.5ブロック以内に接近
-- **キャリア効果**: 発光、移動制限（エンダーパール・エリトラ使用不可）
-- **得点条件**: 自チームの旗が自陣にある時のみキャプチャー可能
-- **ドロップ**: 死亡時にその場にドロップ（30秒で自動復帰）
+## 🛡️ 特殊システム
 
-### リスポーンシステム
+### シールドシステム
+- 最大値: 100
+- 敵陣ブロック/ビーコンエリアで毎秒2減少
+- シールド0で1.5ダメージ/秒
+- **自陣でのみ毎秒5回復**（重要な戦術要素）
+- 警告: 40以下で警告、20以下でクリティカル
 
-- **複数スポーン地点**: ランダムに選択されたスポーン地点で復活
-- **リスポーン遅延**: 基本遅延 + 死亡回数ごとのペナルティ（最大値まで）
-- **スポーン保護**: 復活後3秒間無敵・発光状態
-- **保護解除条件**: 攻撃または旗取得で即座に解除
+### ビーコンエリア効果
+- 3x3の範囲が特殊エリア
+- 敵: ダメージゾーン（シールド減少）
+- 味方: 空腹度・シールド回復
 
-### ショップシステム
+### チームブロックシステム
+- **赤チーム**: 赤のコンクリートのみ
+- **青チーム**: 青のコンクリートのみ
+- ブロック接続必須（切断時は中立化）
+- 無限に使用可能
 
-- **開き方**: インベントリのエメラルドを右クリック
-- **使用場所**: スポーン地点から15ブロック以内
-- **カテゴリー**: 武器、防具、消耗品、ブロック
-- **特殊機能**: 死亡時の挙動設定（KEEP/DROP/DESTROY）
+### イベントチェスト
+- 戦闘フェーズ中に1回出現
+- 高価なショップアイテムを獲得可能
+- 全プレイヤーに通知
 
-## 設定ファイル
+## 🗺️ マップ作成
 
-### config.yml（主要設定）
+### 自動検出方式（推奨）
+
+1. **マップを構築**
+   - 赤のコンクリート: 赤チームスポーン（複数可）
+   - 青のコンクリート: 青チームスポーン（複数可）
+   - ビーコン + 赤ガラス: 赤チームの旗
+   - ビーコン + 青ガラス: 青チームの旗
+
+2. **領域を設定**
+   ```bash
+   /ctf setpos1 game1  # 始点設定
+   /ctf setpos2 game1  # 終点設定
+   ```
+
+3. **保存**
+   ```bash
+   /ctf savemap game1  # 自動検出して保存
+   ```
+
+### テンポラリワールドシステム
+- ゲーム開始時に専用ワールド生成
+- マップを自動復元
+- チェスト内容物は自動クリア
+- ゲーム終了時にワールド削除
+
+## 📊 管理者コマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `/ctf create <game>` | 新規ゲーム作成（対話形式） |
+| `/ctf update <game>` | ゲーム設定更新 |
+| `/ctf delete <game>` | ゲーム削除 |
+| `/ctf list` | 全ゲーム一覧 |
+| `/ctf info <game>` | ゲーム詳細情報 |
+| `/ctf start <game> [match] [数]` | ゲーム/マッチ開始 |
+| `/ctf stop <game>` | 強制終了 |
+| `/ctf setflag <game> <team>` | 旗位置設定 |
+| `/ctf setspawn <game> <team>` | スポーン設定 |
+| `/ctf addspawn <game> <team>` | スポーン追加 |
+| `/ctf removespawn <game> <team> <番号>` | スポーン削除 |
+| `/ctf listspawns <game>` | スポーン一覧 |
+| `/ctf savemap <game>` | マップ保存 |
+
+## 🎮 プレイヤーコマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `/ctf join <game>` | ゲーム参加 |
+| `/ctf leave` | ゲーム離脱 |
+| `/ctf team [red\|blue]` | チーム確認/変更 |
+| `/ctf status [game]` | 状況確認 |
+| `/ctf spectator [game]` | 観戦モード |
+
+## ⚙️ 設定
+
+`plugins/EasyCTF/config.yml`で詳細設定可能：
 
 ```yaml
 # 言語設定
 language: "ja"  # "en" または "ja"
 
-# デフォルトゲーム設定
-default-game:
-  min-players: 2
-  max-players-per-team: 10
-  respawn-delay-base: 10        # 基本リスポーン遅延（秒）
-  respawn-delay-per-death: 2    # 死亡ごとの追加ペナルティ（秒）
-  respawn-delay-max: 20         # 最大リスポーン遅延（秒）
-  force-pvp: true               # 戦闘フェーズでPvP強制有効
-
-# フェーズ設定
+# フェーズ時間
 default-phases:
-  build-duration: 120           # 建築フェーズ（秒）
-  build-phase-gamemode: "SURVIVAL"
-  combat-duration: 120          # 戦闘フェーズ（秒）
-  result-duration: 15           # 作戦会議フェーズ（秒）
-  intermediate-result-duration: 15  # マッチ中間の時間
+  build-duration: 120      # 建築フェーズ（秒）
+  combat-duration: 120     # 戦闘フェーズ（秒）
+  result-duration: 15      # 結果表示（秒）
+  build-phase-gamemode: "SURVIVAL"  # ADVENTURE/SURVIVAL/CREATIVE
 
-# マッチ設定
-match:
-  default-target: 3             # デフォルトゲーム数
-  interval-duration: 15         # ゲーム間インターバル（秒）
+# リスポーン設定
+default-game:
+  respawn-delay-base: 0    # 即座にリスポーン
+  respawn-delay-per-death: 0
+  respawn-delay-max: 0
 
 # 通貨設定
 currency:
-  name: "G"
-  initial: 50                   # 初期通貨
-  phase-end-bonus: 50           # フェーズ終了ボーナス
-  kill-reward: 10               # キル報酬
-  carrier-kill-reward: 20       # 旗キャリアキル報酬
-  capture-reward: 30            # キャプチャー報酬
+  initial: 50              # 初期通貨
+  kill-reward: 15          # キル報酬
+  kill-assist-reward: 10   # キルアシスト報酬
+  carrier-kill-reward: 25  # 旗キャリアキル
+  carrier-kill-assist-reward: 10  # 旗キャリアキルアシスト
+  capture-reward: 50       # キャプチャー報酬
+  capture-assist-reward: 20  # キャプチャーアシスト報酬
+  phase-end-bonus: 100     # フェーズ終了ボーナス
+  kill-streak-bonus:       # キルストリークボーナス
+    2-kills: 5
+    3-kills: 10
+    4-kills: 15
+    5-plus-kills: 20
 
-# ショップ設定
-shop:
+# シールド設定
+shield:
   enabled: true
-  use-range: 15                 # スポーンからの使用可能距離
-  discount:
-    1-point: 0.1               # 1点差で10%割引
-    2-point: 0.2               # 2点差で20%割引
-    3-point: 0.3               # 3点差で30%割引
-    4-point-plus: 0.4          # 4点差以上で40%割引
+  max-shield: 100
+  decrease-rate: 2.0       # 敵陣での減少速度
+  recovery-rate: 5.0       # 自陣での回復速度
+  damage-amount: 1.5       # シールド0時のダメージ
+
+# イベントチェスト
+event-chest:
+  enabled: true
+  spawn-count: 1           # 戦闘フェーズ中の出現回数
 ```
 
-## トラブルシューティング
+## 🔧 ビルド方法
 
-### よくある問題
-
-1. **ショップが開かない**
-   - スポーン地点から15ブロック以内で使用してください
-
-2. **旗が取れない**
-   - 1.5ブロック以内に近づく必要があります
-   - 既に旗を持っていないか確認してください
-
-3. **ブロックが設置できない**
-   - 戦闘フェーズ中は設置不可です
-   - 建築フェーズでチームブロックに接続して設置してください
-
-4. **言語が変わらない**
-   - config.ymlを変更後、サーバー再起動が必要です
-
-## 開発
-
-### ビルド
 ```bash
-./gradlew clean build
+git clone https://github.com/yourusername/easy_ctf.git
+cd easy_ctf
+./gradlew shadowJar
 ```
 
-### テスト
-```bash
-./gradlew test
-```
+生成されたJARファイル: `build/libs/easy_ctf-x.x.x-all.jar`
 
-### 開発サーバー
-```bash
-./gradlew runServer
-```
+## 📝 特記事項
 
-## サポート
+### 最新の変更点
+- ✅ フェーズ間のインターバル削除（即座に移行）
+- ✅ リスポーン遅延を0に設定（即座に復活）
+- ✅ 通貨報酬を調整（キル15G、旗キャリアキル25G、キャプチャ50G、フェーズボーナス100G）
+- ✅ シールド回復を自陣のみに制限
+- ✅ ショップ使用範囲制限を削除（どこでも利用可能）
+- ✅ チームブロックをコンクリートのみに統一
+- ✅ ビーコン周囲がダメージゾーンに
+- ✅ イベントチェストの中身をショップアイテムに限定
+- ✅ 距離ベースの旗検出アルゴリズム実装
 
-- **問題報告**: [GitHub Issues](https://github.com/0x48lab/easy_ctf/issues)
-- **ドキュメント**: [オンラインドキュメント](https://0x48lab.github.io/easy_ctf/)
-- **Wiki**: [GitHub Wiki](https://github.com/0x48lab/easy_ctf/wiki)
+### パフォーマンス最適化
+- バッチ処理によるテレポート最適化
+- 非同期チャット処理
+- 効率的なブロック接続チェック
+- GZIP圧縮によるマップ保存
 
-## ライセンス
+## 🤝 貢献
 
-このプロジェクトは MIT ライセンスの下でライセンスされています。
+プルリクエストを歓迎します！バグ報告や機能提案は[Issues](https://github.com/yourusername/easy_ctf/issues)へ。
+
+## 📞 サポート
+
+- 📧 Email: support@example.com
+- 💬 Discord: [参加リンク](https://discord.gg/example)
+- 📚 [Wiki](https://github.com/yourusername/easy_ctf/wiki)
+
+## 📄 ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。
+
+---
+
+<div align="center">
+Made with ❤️ for Minecraft Community
+</div>

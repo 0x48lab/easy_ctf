@@ -3,433 +3,822 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ショップシステム - EasyCTF</title>
+    <title>EasyCTF - Shop System</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <ul class="nav-menu">
-                <li><a href="index.html">ホーム</a></li>
-                <li><a href="gameplay.html">遊び方</a></li>
-                <li><a href="commands.html">コマンド</a></li>
-                <li><a href="shop.html" class="active">ショップ</a></li>
-                <li><a href="match.html">マッチ</a></li>
-                <li><a href="map-creation.html">マップ作成</a></li>
-                <li><a href="admin.html">管理者</a></li>
-                <li><a href="faq.html">FAQ</a></li>
-            </ul>
-            <div class="nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <header class="page-header">
-        <div class="container">
-            <h1>ショップシステム</h1>
-            <p>チーム共有通貨でアイテムを購入して戦力を強化</p>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🎮 EasyCTF</span>
+            <span class="version">v2.0</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="content-section">
-            <h2>概要</h2>
-            <p>EasyCTFのショップシステムでは、チーム共有通貨「G」を使用してアイテムを購入できます。戦闘中に獲得した通貨で装備を強化し、有利に戦いを進めましょう。</p>
-            
-            <div class="shop-features">
-                <div class="shop-feature">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h3>使い方</h3>
-                    <p>エメラルドを右クリック<br>スポーン地点から15ブロック以内</p>
-                </div>
-                <div class="shop-feature">
-                    <i class="fas fa-users"></i>
-                    <h3>チーム共有</h3>
-                    <p>同じチームのメンバー全員で通貨を共有</p>
-                </div>
-                <div class="shop-feature">
-                    <i class="fas fa-percentage"></i>
-                    <h3>割引システム</h3>
-                    <p>負けているチームには最大40%割引</p>
-                </div>
-            </div>
-        </section>
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
 
-        <section class="content-section">
-            <h2><i class="fas fa-coins"></i> 通貨システム</h2>
-            
-            <h3>通貨の獲得方法</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>アクション</th>
-                        <th>獲得G</th>
-                        <th>備考</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>初期通貨</td>
-                        <td>50G</td>
-                        <td>各ゲーム開始時</td>
-                    </tr>
-                    <tr>
-                        <td>通常キル</td>
-                        <td>10G</td>
-                        <td>敵プレイヤーを倒す</td>
-                    </tr>
-                    <tr>
-                        <td>旗キャリアキル</td>
-                        <td>20G</td>
-                        <td>旗を持った敵を倒す</td>
-                    </tr>
-                    <tr>
-                        <td>キルアシスト</td>
-                        <td>5G</td>
-                        <td>5秒以内にダメージを与えた敵が倒された</td>
-                    </tr>
-                    <tr>
-                        <td>旗キャリアアシスト</td>
-                        <td>10G</td>
-                        <td>旗持ちへのアシスト</td>
-                    </tr>
-                    <tr>
-                        <td>旗キャプチャ</td>
-                        <td>30G</td>
-                        <td>旗を自陣に持ち帰る</td>
-                    </tr>
-                    <tr>
-                        <td>フェーズ終了ボーナス</td>
-                        <td>50G</td>
-                        <td>建築/戦闘フェーズ終了時</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <h3>キルストリークボーナス</h3>
-            <div class="streak-bonus">
-                <span class="streak-item">2連続キル: <strong>+5G</strong></span>
-                <span class="streak-item">3連続キル: <strong>+10G</strong></span>
-                <span class="streak-item">4連続キル: <strong>+15G</strong></span>
-                <span class="streak-item">5連続以上: <strong>+20G</strong></span>
-            </div>
-        </section>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html" class="active"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
+            </ul>
+        </nav>
+    </aside>
 
-        <section class="content-section">
-            <h2><i class="fas fa-percentage"></i> 割引システム</h2>
-            <p>スコアで負けているチームには自動的に割引が適用されます（建築資材を除く）。</p>
-            
-            <div class="discount-table">
-                <div class="discount-item">
-                    <div class="discount-header">1点差</div>
-                    <div class="discount-value">10%割引</div>
-                </div>
-                <div class="discount-item">
-                    <div class="discount-header">2点差</div>
-                    <div class="discount-value">20%割引</div>
-                </div>
-                <div class="discount-item">
-                    <div class="discount-header">3点差</div>
-                    <div class="discount-value">30%割引</div>
-                </div>
-                <div class="discount-item">
-                    <div class="discount-header">4点差以上</div>
-                    <div class="discount-value">40%割引</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-list"></i> ショップアイテム一覧</h2>
-            
-            <div class="shop-category">
-                <h3><i class="fas fa-sword"></i> 武器カテゴリ</h3>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>💎 ショップシステム</h2>
+                <p>EasyCTFのショップシステムでは、チーム共有通貨を使用して戦略的なアイテム購入が可能です。
+                エメラルドを右クリックすることで、どこでもショップを開くことができます。</p>
                 
-                <h4>剣</h4>
-                <table class="shop-table">
+                <div class="alert alert-info">
+                    <strong>重要:</strong> 通貨はチーム全体で共有されます。チームメイトと相談して戦略的に使用しましょう！
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>💰 通貨システム</h2>
+                
+                <h3>通貨の獲得方法</h3>
+                <table>
                     <thead>
                         <tr>
-                            <th>アイテム</th>
-                            <th>価格</th>
+                            <th>アクション</th>
+                            <th>獲得額</th>
                             <th>説明</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>木の剣</td>
-                            <td>10G</td>
-                            <td>基本的な剣</td>
+                            <td>ゲーム開始</td>
+                            <td>50G</td>
+                            <td>各ゲーム開始時の初期通貨</td>
                         </tr>
                         <tr>
-                            <td>石の剣</td>
+                            <td>通常キル</td>
                             <td>15G</td>
-                            <td>初期装備</td>
+                            <td>敵プレイヤーを倒す</td>
                         </tr>
+                        <tr>
+                            <td>旗キャリアキル</td>
+                            <td>25G</td>
+                            <td>旗を持っている敵を倒す</td>
+                        </tr>
+                        <tr>
+                            <td>旗キャプチャ</td>
+                            <td>50G</td>
+                            <td>敵の旗を自陣に持ち帰る</td>
+                        </tr>
+                        <tr>
+                            <td>フェーズ終了ボーナス</td>
+                            <td>100G</td>
+                            <td>建築フェーズ終了時</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>割引システム</h3>
+                <div class="alert alert-success">
+                    スコア差に応じて負けているチームに自動で割引が適用されます：
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>スコア差</th>
+                            <th>割引率</th>
+                            <th>例（100Gのアイテム）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1点差</td>
+                            <td>10%</td>
+                            <td>90G</td>
+                        </tr>
+                        <tr>
+                            <td>2点差</td>
+                            <td>20%</td>
+                            <td>80G</td>
+                        </tr>
+                        <tr>
+                            <td>3点差</td>
+                            <td>30%</td>
+                            <td>70G</td>
+                        </tr>
+                        <tr>
+                            <td>4点差以上</td>
+                            <td>40%</td>
+                            <td>60G</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>🛍️ ショップアイテム</h2>
+                
+                <h3>⚔️ 武器</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>アイテム</th>
+                            <th>価格</th>
+                            <th>死亡時</th>
+                            <th>説明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <tr>
                             <td>鉄の剣</td>
-                            <td>25G</td>
-                            <td>中級武器</td>
+                            <td>10G</td>
+                            <td>ドロップ</td>
+                            <td>基本的な武器のアップグレード</td>
                         </tr>
                         <tr>
-                            <td>ダイヤモンドの剣</td>
-                            <td>60G</td>
-                            <td>高級武器</td>
+                            <td>ダイヤの剣</td>
+                            <td>20G</td>
+                            <td>ドロップ</td>
+                            <td>高威力の剣</td>
                         </tr>
                         <tr>
                             <td>ネザライトの剣</td>
-                            <td>100G</td>
-                            <td>最強の剣</td>
-                        </tr>
-                        <tr class="special-item">
-                            <td>エンチャント剣</td>
-                            <td>100G</td>
-                            <td>ダメージ増加III、ノックバックI</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <h4>その他の武器</h4>
-                <table class="shop-table">
-                    <thead>
-                        <tr>
-                            <th>アイテム</th>
-                            <th>価格</th>
-                            <th>説明</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>盾</td>
-                            <td>20G</td>
-                            <td>防御用装備</td>
+                            <td>50G</td>
+                            <td>保持</td>
+                            <td>最強の剣、死亡しても失わない</td>
                         </tr>
                         <tr>
                             <td>弓</td>
-                            <td>20G</td>
-                            <td>遠距離武器</td>
-                        </tr>
-                        <tr class="special-item">
-                            <td>エンチャント弓</td>
-                            <td>50G</td>
-                            <td>パワーII、無限I</td>
-                        </tr>
-                        <tr>
-                            <td>矢 x8</td>
                             <td>10G</td>
-                            <td>弓の弾薬（死亡時ドロップ）</td>
+                            <td>ドロップ</td>
+                            <td>遠距離攻撃用</td>
                         </tr>
                         <tr>
-                            <td>ハサミ</td>
+                            <td>矢 ×16</td>
+                            <td>5G</td>
+                            <td>ドロップ</td>
+                            <td>弓用の矢</td>
+                        </tr>
+                        <tr>
+                            <td>盾</td>
                             <td>15G</td>
-                            <td>建築フェーズ限定</td>
+                            <td>ドロップ</td>
+                            <td>防御用装備</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-            
-            <div class="shop-category">
-                <h3><i class="fas fa-apple-alt"></i> 消耗品カテゴリ</h3>
-                <table class="shop-table">
+
+                <h3>🛡️ 防具</h3>
+                <table>
                     <thead>
                         <tr>
                             <th>アイテム</th>
                             <th>価格</th>
-                            <th>説明</th>
                             <th>死亡時</th>
+                            <th>説明</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>パン x8</td>
-                            <td>5G</td>
-                            <td>基本的な食料</td>
-                            <td><span class="badge badge-warning">ドロップ</span></td>
+                            <td>鉄のヘルメット</td>
+                            <td>10G</td>
+                            <td>ドロップ</td>
+                            <td>頭部保護</td>
                         </tr>
                         <tr>
-                            <td>焼き牛肉 x8</td>
-                            <td>10G</td>
-                            <td>高級食料</td>
-                            <td><span class="badge badge-warning">ドロップ</span></td>
+                            <td>鉄のチェストプレート</td>
+                            <td>15G</td>
+                            <td>ドロップ</td>
+                            <td>胴体保護</td>
+                        </tr>
+                        <tr>
+                            <td>鉄のレギンス</td>
+                            <td>12G</td>
+                            <td>ドロップ</td>
+                            <td>脚部保護</td>
+                        </tr>
+                        <tr>
+                            <td>鉄のブーツ</td>
+                            <td>8G</td>
+                            <td>ドロップ</td>
+                            <td>足部保護</td>
+                        </tr>
+                        <tr>
+                            <td>ダイヤ防具セット</td>
+                            <td>60G</td>
+                            <td>保持</td>
+                            <td>フルセット、死亡しても失わない</td>
+                        </tr>
+                        <tr>
+                            <td>ネザライト防具セット</td>
+                            <td>120G</td>
+                            <td>保持</td>
+                            <td>最強防具セット</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🍎 消耗品</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>アイテム</th>
+                            <th>価格</th>
+                            <th>死亡時</th>
+                            <th>説明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>エンダーパール</td>
+                            <td>20G</td>
+                            <td>ドロップ</td>
+                            <td>瞬間移動（旗所持時は使用不可）</td>
                         </tr>
                         <tr>
                             <td>金のリンゴ</td>
-                            <td>30G</td>
-                            <td>回復+一時的強化</td>
-                            <td><span class="badge badge-warning">ドロップ</span></td>
-                        </tr>
-                        <tr class="special-item">
-                            <td>エンチャント金リンゴ</td>
-                            <td>100G</td>
-                            <td>強力な回復効果（1人2個まで）</td>
-                            <td><span class="badge badge-warning">ドロップ</span></td>
+                            <td>15G</td>
+                            <td>ドロップ</td>
+                            <td>即座に回復と一時的な体力増加</td>
                         </tr>
                         <tr>
-                            <td>エンダーパール</td>
+                            <td>エンチャント金リンゴ</td>
                             <td>50G</td>
-                            <td>瞬間移動（旗保持中は使用不可）</td>
-                            <td><span class="badge badge-warning">ドロップ</span></td>
+                            <td>ドロップ</td>
+                            <td>強力な回復効果</td>
+                        </tr>
+                        <tr>
+                            <td>ステーキ ×8</td>
+                            <td>5G</td>
+                            <td>ドロップ</td>
+                            <td>高品質な食料</td>
+                        </tr>
+                        <tr>
+                            <td>スピードポーション</td>
+                            <td>10G</td>
+                            <td>消失</td>
+                            <td>移動速度上昇（3分）</td>
+                        </tr>
+                        <tr>
+                            <td>力のポーション</td>
+                            <td>15G</td>
+                            <td>消失</td>
+                            <td>攻撃力上昇（3分）</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-            
-            <div class="shop-category">
-                <h3><i class="fas fa-cube"></i> 建築ブロックカテゴリ</h3>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    建築ブロックには割引が適用されません
-                </div>
-                
-                <h4>建築用アイテム</h4>
-                <table class="shop-table">
+
+                <h3>🧱 建築ブロック</h3>
+                <table>
                     <thead>
                         <tr>
                             <th>アイテム</th>
                             <th>価格</th>
+                            <th>個数</th>
                             <th>説明</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>TNT x1</td>
-                            <td>100G</td>
-                            <td>爆破物</td>
+                            <td>石</td>
+                            <td>5G</td>
+                            <td>64個</td>
+                            <td>基本的な建築ブロック</td>
                         </tr>
                         <tr>
-                            <td>木のフェンス x16</td>
+                            <td>木材</td>
+                            <td>5G</td>
+                            <td>64個</td>
+                            <td>汎用建築材</td>
+                        </tr>
+                        <tr>
+                            <td>土</td>
+                            <td>3G</td>
+                            <td>64個</td>
+                            <td>安価な建築材</td>
+                        </tr>
+                        <tr>
+                            <td>砂</td>
+                            <td>3G</td>
+                            <td>64個</td>
+                            <td>落下ブロック</td>
+                        </tr>
+                        <tr>
+                            <td>ガラス</td>
                             <td>8G</td>
-                            <td>簡易障害物</td>
+                            <td>32個</td>
+                            <td>透明ブロック</td>
                         </tr>
                         <tr>
-                            <td>鉄格子 x16</td>
-                            <td>12G</td>
-                            <td>強固な障害物</td>
+                            <td>黒曜石</td>
+                            <td>30G</td>
+                            <td>16個</td>
+                            <td>高耐久ブロック</td>
                         </tr>
                         <tr>
-                            <td>ガラス板 x16</td>
-                            <td>6G</td>
-                            <td>透明障害物</td>
+                            <td>TNT</td>
+                            <td>25G</td>
+                            <td>4個</td>
+                            <td>爆発物</td>
                         </tr>
                         <tr>
-                            <td>はしご x16</td>
+                            <td>水バケツ</td>
                             <td>10G</td>
-                            <td>垂直移動用</td>
+                            <td>1個</td>
+                            <td>水源設置用</td>
                         </tr>
                         <tr>
-                            <td>木のドア x2</td>
-                            <td>10G</td>
-                            <td>出入り口</td>
-                        </tr>
-                        <tr>
-                            <td>鉄のドア x1</td>
-                            <td>20G</td>
-                            <td>強固なドア</td>
-                        </tr>
-                        <tr>
-                            <td>レッドストーン装置類</td>
-                            <td>5G～30G</td>
-                            <td>機械装置用</td>
+                            <td>溶岩バケツ</td>
+                            <td>15G</td>
+                            <td>1個</td>
+                            <td>溶岩源設置用</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </section>
+            </section>
 
-        <section class="content-section">
-            <h2><i class="fas fa-skull"></i> 死亡時のアイテム処理</h2>
-            <div class="death-behavior">
-                <div class="behavior-item">
-                    <span class="badge badge-success">保持（KEEP）</span>
-                    <p>死亡しても失わない</p>
-                    <p class="item-list">武器、ツール、チーム色革防具</p>
+            <section class="content-section">
+                <h2>📦 死亡時のアイテム処理</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4><span class="icon">💾</span> KEEP（保持）</h4>
+                        <p>死亡しても失わないアイテム。高価なアイテムに設定されています。</p>
+                        <ul>
+                            <li>ネザライト装備</li>
+                            <li>ダイヤ防具セット</li>
+                            <li>一部の高級アイテム</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">📍</span> DROP（ドロップ）</h4>
+                        <p>死亡時にその場にドロップ。他のプレイヤーが拾うことができます。</p>
+                        <ul>
+                            <li>通常の武器・防具</li>
+                            <li>消耗品</li>
+                            <li>建築ブロック</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">💨</span> DESTROY（消失）</h4>
+                        <p>死亡時に完全に消失。主にポーション効果に適用されます。</p>
+                        <ul>
+                            <li>ポーション効果</li>
+                            <li>一時的なバフアイテム</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="behavior-item">
-                    <span class="badge badge-warning">ドロップ（DROP）</span>
-                    <p>その場に落とす</p>
-                    <p class="item-list">消耗品、一部の建築材</p>
-                </div>
-                <div class="behavior-item">
-                    <span class="badge badge-danger">消失（DESTROY）</span>
-                    <p>完全に失う</p>
-                    <p class="item-list">（現在なし）</p>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="content-section">
-            <h2><i class="fas fa-lightbulb"></i> ショップ戦略ガイド</h2>
-            
-            <div class="strategy-timeline">
-                <div class="strategy-phase">
-                    <h3>序盤（0-50G）</h3>
-                    <ol>
-                        <li>基本的な食料を確保</li>
-                        <li>石の剣から鉄の剣へアップグレード</li>
-                        <li>建築用の基本ブロックを購入</li>
-                    </ol>
+            <section class="content-section">
+                <h2>🎁 イベントチェスト</h2>
+                <p>戦闘フェーズ中に出現する特別なチェストです。高価なショップアイテムを無料で獲得できるチャンスです！</p>
+                
+                <div class="alert alert-warning">
+                    <strong>注意:</strong> イベントチェストの中身はショップアイテムのみです。出現位置と時間はランダムです。
                 </div>
                 
-                <div class="strategy-phase">
-                    <h3>中盤（50-150G）</h3>
-                    <ol>
-                        <li>ダイヤモンドの剣で攻撃力アップ</li>
-                        <li>エンダーパールで機動力確保</li>
-                        <li>金のリンゴで緊急回復手段</li>
-                    </ol>
-                </div>
+                <h3>出現可能アイテム例</h3>
+                <ul>
+                    <li>ダイヤの剣</li>
+                    <li>エンダーパール</li>
+                    <li>金のリンゴ</li>
+                    <li>鉄の防具</li>
+                    <li>その他のショップアイテム</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>💡 戦略的なヒント</h2>
                 
-                <div class="strategy-phase">
-                    <h3>終盤（150G以上）</h3>
-                    <ol>
-                        <li>ネザライトの剣・斧で最強装備</li>
-                        <li>エンチャント武器で火力強化</li>
-                        <li>エンチャント金リンゴで決戦に備える</li>
-                    </ol>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>序盤の投資</h4>
+                        <p>建築フェーズでは防御的な建築ブロックに投資し、戦闘フェーズ前に武器をアップグレードすると効果的です。</p>
+                    </div>
+                    <div class="card">
+                        <h4>チーム連携</h4>
+                        <p>通貨は共有なので、役割分担を決めて効率的に使用しましょう。</p>
+                    </div>
+                    <div class="card">
+                        <h4>割引の活用</h4>
+                        <p>負けているときは割引を活用して、コストパフォーマンスの良い買い物をしましょう。</p>
+                    </div>
+                    <div class="card">
+                        <h4>死亡時の考慮</h4>
+                        <p>KEEPアイテムは高価ですが、長期的には有利になることがあります。</p>
+                    </div>
                 </div>
-            </div>
-        </section>
-
-        <nav class="page-nav">
-            <a href="commands.html" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> コマンド一覧
-            </a>
-            <a href="match.html" class="btn btn-primary">
-                マッチモード <i class="fas fa-arrow-right"></i>
-            </a>
-        </nav>
-    </main>
-
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>EasyCTF</h4>
-                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
-                </div>
-                <div class="footer-section">
-                    <h4>リンク</h4>
-                    <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>ドキュメント</h4>
-                    <ul>
-                        <li><a href="gameplay.html">遊び方</a></li>
-                        <li><a href="admin.html">管理者ガイド</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
-            </div>
+            </section>
         </div>
-    </footer>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>💎 Shop System</h2>
+                <p>The EasyCTF shop system allows strategic item purchases using team-shared currency.
+                Right-click an emerald to open the shop from anywhere.</p>
+                
+                <div class="alert alert-info">
+                    <strong>Important:</strong> Currency is shared across your entire team. Coordinate with teammates for strategic purchases!
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>💰 Currency System</h2>
+                
+                <h3>Earning Currency</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Game Start</td>
+                            <td>50G</td>
+                            <td>Initial currency at game start</td>
+                        </tr>
+                        <tr>
+                            <td>Normal Kill</td>
+                            <td>15G</td>
+                            <td>Eliminating an enemy player</td>
+                        </tr>
+                        <tr>
+                            <td>Flag Carrier Kill</td>
+                            <td>25G</td>
+                            <td>Eliminating enemy with flag</td>
+                        </tr>
+                        <tr>
+                            <td>Flag Capture</td>
+                            <td>50G</td>
+                            <td>Bringing enemy flag to base</td>
+                        </tr>
+                        <tr>
+                            <td>Phase End Bonus</td>
+                            <td>100G</td>
+                            <td>At end of build phase</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Discount System</h3>
+                <div class="alert alert-success">
+                    Automatic discounts for losing teams based on score difference:
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Score Difference</th>
+                            <th>Discount</th>
+                            <th>Example (100G item)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1 point behind</td>
+                            <td>10%</td>
+                            <td>90G</td>
+                        </tr>
+                        <tr>
+                            <td>2 points behind</td>
+                            <td>20%</td>
+                            <td>80G</td>
+                        </tr>
+                        <tr>
+                            <td>3 points behind</td>
+                            <td>30%</td>
+                            <td>70G</td>
+                        </tr>
+                        <tr>
+                            <td>4+ points behind</td>
+                            <td>40%</td>
+                            <td>60G</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>🛍️ Shop Items</h2>
+                
+                <h3>⚔️ Weapons</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>On Death</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Iron Sword</td>
+                            <td>10G</td>
+                            <td>Drop</td>
+                            <td>Basic weapon upgrade</td>
+                        </tr>
+                        <tr>
+                            <td>Diamond Sword</td>
+                            <td>20G</td>
+                            <td>Drop</td>
+                            <td>High damage sword</td>
+                        </tr>
+                        <tr>
+                            <td>Netherite Sword</td>
+                            <td>50G</td>
+                            <td>Keep</td>
+                            <td>Best sword, kept on death</td>
+                        </tr>
+                        <tr>
+                            <td>Bow</td>
+                            <td>10G</td>
+                            <td>Drop</td>
+                            <td>Ranged weapon</td>
+                        </tr>
+                        <tr>
+                            <td>Arrows ×16</td>
+                            <td>5G</td>
+                            <td>Drop</td>
+                            <td>Ammunition for bow</td>
+                        </tr>
+                        <tr>
+                            <td>Shield</td>
+                            <td>15G</td>
+                            <td>Drop</td>
+                            <td>Defensive equipment</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🛡️ Armor</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>On Death</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Iron Helmet</td>
+                            <td>10G</td>
+                            <td>Drop</td>
+                            <td>Head protection</td>
+                        </tr>
+                        <tr>
+                            <td>Iron Chestplate</td>
+                            <td>15G</td>
+                            <td>Drop</td>
+                            <td>Body protection</td>
+                        </tr>
+                        <tr>
+                            <td>Iron Leggings</td>
+                            <td>12G</td>
+                            <td>Drop</td>
+                            <td>Leg protection</td>
+                        </tr>
+                        <tr>
+                            <td>Iron Boots</td>
+                            <td>8G</td>
+                            <td>Drop</td>
+                            <td>Foot protection</td>
+                        </tr>
+                        <tr>
+                            <td>Diamond Armor Set</td>
+                            <td>60G</td>
+                            <td>Keep</td>
+                            <td>Full set, kept on death</td>
+                        </tr>
+                        <tr>
+                            <td>Netherite Armor Set</td>
+                            <td>120G</td>
+                            <td>Keep</td>
+                            <td>Ultimate armor set</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🍎 Consumables</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>On Death</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Ender Pearl</td>
+                            <td>20G</td>
+                            <td>Drop</td>
+                            <td>Teleportation (disabled with flag)</td>
+                        </tr>
+                        <tr>
+                            <td>Golden Apple</td>
+                            <td>15G</td>
+                            <td>Drop</td>
+                            <td>Instant heal with temporary health boost</td>
+                        </tr>
+                        <tr>
+                            <td>Enchanted Golden Apple</td>
+                            <td>50G</td>
+                            <td>Drop</td>
+                            <td>Powerful regeneration</td>
+                        </tr>
+                        <tr>
+                            <td>Steak ×8</td>
+                            <td>5G</td>
+                            <td>Drop</td>
+                            <td>Quality food</td>
+                        </tr>
+                        <tr>
+                            <td>Speed Potion</td>
+                            <td>10G</td>
+                            <td>Destroy</td>
+                            <td>Speed boost (3 min)</td>
+                        </tr>
+                        <tr>
+                            <td>Strength Potion</td>
+                            <td>15G</td>
+                            <td>Destroy</td>
+                            <td>Damage boost (3 min)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🧱 Building Blocks</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Stone</td>
+                            <td>5G</td>
+                            <td>64</td>
+                            <td>Basic building block</td>
+                        </tr>
+                        <tr>
+                            <td>Wood</td>
+                            <td>5G</td>
+                            <td>64</td>
+                            <td>Versatile building material</td>
+                        </tr>
+                        <tr>
+                            <td>Dirt</td>
+                            <td>3G</td>
+                            <td>64</td>
+                            <td>Cheap building material</td>
+                        </tr>
+                        <tr>
+                            <td>Sand</td>
+                            <td>3G</td>
+                            <td>64</td>
+                            <td>Falling block</td>
+                        </tr>
+                        <tr>
+                            <td>Glass</td>
+                            <td>8G</td>
+                            <td>32</td>
+                            <td>Transparent block</td>
+                        </tr>
+                        <tr>
+                            <td>Obsidian</td>
+                            <td>30G</td>
+                            <td>16</td>
+                            <td>High durability block</td>
+                        </tr>
+                        <tr>
+                            <td>TNT</td>
+                            <td>25G</td>
+                            <td>4</td>
+                            <td>Explosive</td>
+                        </tr>
+                        <tr>
+                            <td>Water Bucket</td>
+                            <td>10G</td>
+                            <td>1</td>
+                            <td>Water source placement</td>
+                        </tr>
+                        <tr>
+                            <td>Lava Bucket</td>
+                            <td>15G</td>
+                            <td>1</td>
+                            <td>Lava source placement</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>📦 Item Death Behavior</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4><span class="icon">💾</span> KEEP</h4>
+                        <p>Items retained on death. Applied to expensive items.</p>
+                        <ul>
+                            <li>Netherite equipment</li>
+                            <li>Diamond armor sets</li>
+                            <li>Premium items</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">📍</span> DROP</h4>
+                        <p>Items dropped on death. Other players can pick them up.</p>
+                        <ul>
+                            <li>Regular weapons & armor</li>
+                            <li>Consumables</li>
+                            <li>Building blocks</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">💨</span> DESTROY</h4>
+                        <p>Items completely destroyed on death. Mainly potion effects.</p>
+                        <ul>
+                            <li>Potion effects</li>
+                            <li>Temporary buffs</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🎁 Event Chests</h2>
+                <p>Special chests that appear during combat phase. A chance to get expensive shop items for free!</p>
+                
+                <div class="alert alert-warning">
+                    <strong>Note:</strong> Event chests contain only shop items. Spawn locations and timing are random.
+                </div>
+                
+                <h3>Possible Items</h3>
+                <ul>
+                    <li>Diamond Sword</li>
+                    <li>Ender Pearls</li>
+                    <li>Golden Apples</li>
+                    <li>Iron Armor</li>
+                    <li>Other shop items</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>💡 Strategic Tips</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>Early Investment</h4>
+                        <p>Invest in defensive blocks during build phase, then upgrade weapons before combat.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Team Coordination</h4>
+                        <p>Since currency is shared, assign roles for efficient spending.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Using Discounts</h4>
+                        <p>When losing, leverage discounts for cost-effective purchases.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Death Consideration</h4>
+                        <p>KEEP items are expensive but can provide long-term advantages.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.0 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/yourusername/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
 
     <script src="script.js"></script>
 </body>

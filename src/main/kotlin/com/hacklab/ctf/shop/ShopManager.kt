@@ -279,14 +279,6 @@ class ShopManager(private val plugin: Main) {
                     }
                     itemStack.type = teamMaterial
                 }
-                Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
-                    val teamMaterial = when (team) {
-                        Team.RED -> Material.RED_STAINED_GLASS
-                        Team.BLUE -> Material.BLUE_STAINED_GLASS
-                        else -> item.material
-                    }
-                    itemStack.type = teamMaterial
-                }
                 else -> {}
             }
         }

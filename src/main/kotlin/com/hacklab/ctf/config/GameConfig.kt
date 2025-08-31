@@ -46,7 +46,6 @@ data class GameConfig(
     // マッチ設定
     var matchMode: MatchMode = MatchMode.FIXED_ROUNDS,
     var matchTarget: Int = 3,
-    var matchIntervalDuration: Int = 30,
     
     // その他
     val createdAt: Long = System.currentTimeMillis()
@@ -150,7 +149,6 @@ data class GameConfig(
         combatPhaseBlocks = combatPhaseBlocks,
         matchMode = matchMode,
         matchTarget = matchTarget,
-        matchIntervalDuration = matchIntervalDuration,
         createdAt = createdAt
     )
 }

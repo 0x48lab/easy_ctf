@@ -42,7 +42,7 @@ class MatchWrapper(
         }
         
         // フェーズ終了ボーナス
-        val bonus = plugin.config.getInt("currency.phase-end-bonus", 50)
+        val bonus = plugin.config.getInt("currency.phase-end-bonus", 100)
         Team.values().forEach { team ->
             teamCurrency[team] = (teamCurrency[team] ?: 0) + bonus
         }

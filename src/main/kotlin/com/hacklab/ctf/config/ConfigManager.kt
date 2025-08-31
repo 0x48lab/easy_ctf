@@ -89,7 +89,7 @@ class ConfigManager(private val plugin: Main) {
         // マッチ設定
         yaml.set("settings.match.mode", config.matchMode.name)
         yaml.set("settings.match.target", config.matchTarget)
-        yaml.set("settings.match.interval-duration", config.matchIntervalDuration)
+        // interval-duration removed - games start immediately
         
         yaml.save(file)
     }
@@ -193,7 +193,7 @@ class ConfigManager(private val plugin: Main) {
         // マッチ設定の読み込み
         config.matchMode = MatchMode.FIXED_ROUNDS
         config.matchTarget = yaml.getInt("settings.match.target", config.matchTarget)
-        config.matchIntervalDuration = yaml.getInt("settings.match.interval-duration", config.matchIntervalDuration)
+        // interval-duration removed - games start immediately
         
         return config
     }
@@ -240,9 +240,9 @@ class ConfigManager(private val plugin: Main) {
             autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false),
             minPlayers = plugin.config.getInt("default-game.min-players", 2),
             maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10),
-            respawnDelayBase = plugin.config.getInt("default-game.respawn-delay-base", 10),
-            respawnDelayPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 2),
-            respawnDelayMax = plugin.config.getInt("default-game.respawn-delay-max", 20),
+            respawnDelayBase = plugin.config.getInt("default-game.respawn-delay-base", 0),
+            respawnDelayPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 0),
+            respawnDelayMax = plugin.config.getInt("default-game.respawn-delay-max", 0),
             buildDuration = plugin.config.getInt("default-phases.build-duration", 120),
             buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!.also {
                 plugin.logger.info("[ConfigManager] buildPhaseGameMode from config: $it")
@@ -250,8 +250,7 @@ class ConfigManager(private val plugin: Main) {
             combatDuration = plugin.config.getInt("default-phases.combat-duration", 120),
             resultDuration = plugin.config.getInt("default-phases.result-duration", 15),
             matchMode = MatchMode.FIXED_ROUNDS,
-            matchTarget = plugin.config.getInt("match.default-target", 3),
-            matchIntervalDuration = plugin.config.getInt("match.interval-duration", 30)
+            matchTarget = plugin.config.getInt("match.default-target", 3)
         )
     }
 }

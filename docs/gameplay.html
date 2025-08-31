@@ -3,571 +3,514 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遊び方ガイド - EasyCTF</title>
+    <title>ゲームプレイ - EasyCTF Documentation</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <ul class="nav-menu">
-                <li><a href="index.html">ホーム</a></li>
-                <li><a href="gameplay.html" class="active">遊び方</a></li>
-                <li><a href="commands.html">コマンド</a></li>
-                <li><a href="shop.html">ショップ</a></li>
-                <li><a href="match.html">マッチ</a></li>
-                <li><a href="map-creation.html">マップ作成</a></li>
-                <li><a href="admin.html">管理者</a></li>
-                <li><a href="faq.html">FAQ</a></li>
-            </ul>
-            <div class="nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <header class="page-header">
-        <div class="container">
-            <h1>遊び方ガイド</h1>
-            <p>EasyCTFの詳しい遊び方を解説します</p>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🎮 EasyCTF</span>
+            <span class="version">v2.0</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="content-section">
-            <h2>🎮 基本的な遊び方</h2>
-            <p>EasyCTFは、<span class="team-red">赤チーム</span>と<span class="team-blue">青チーム</span>に分かれて戦うキャプチャー・ザ・フラッグゲームです。相手チームの旗を奪い、自陣に持ち帰ることで得点を競います。</p>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <strong>基本ルール:</strong> 敵の旗（ビーコン）を取得し、自陣の旗がある状態で持ち帰ると1点獲得。先に設定スコアに到達したチームの勝利！
-            </div>
-        </section>
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
 
-        <section class="content-section">
-            <h2>🚀 ゲーム参加の流れ</h2>
-            
-            <div class="step-list">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>ゲーム一覧を確認</h3>
-                        <div class="command-block">
-                            <code>/ctf list</code>
-                            <button class="copy-btn">コピー</button>
-                        </div>
-                        <p>現在実行可能なゲームの一覧が表示されます。状態（待機中/進行中）も確認できます。</p>
-                    </div>
-                </div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html" class="active"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
+            </ul>
+        </nav>
+    </aside>
 
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>ゲームに参加</h3>
-                        <div class="command-block">
-                            <code>/ctf join &lt;ゲーム名&gt;</code>
-                            <button class="copy-btn">コピー</button>
-                        </div>
-                        <p>自動的に人数の少ないチームに配属されます。友達と同じチームになりたい場合は、事前に相談しておきましょう。</p>
-                        <div class="alert alert-info">
-                            <i class="fas fa-eye"></i>
-                            <strong>観戦者モード:</strong> <code>/ctf spectator &lt;ゲーム名&gt;</code> でゲームに影響を与えずに観戦できます
-                        </div>
-                        <div class="alert alert-secondary">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>観戦者の便利機能:</strong>
-                            <ul>
-                                <li>詳細なスコアボード（両チームの状態を一度に確認）</li>
-                                <li>ホットバーメニュー（統計・プレイヤー追跡・旗位置確認）</li>
-                                <li>重要イベントの通知（旗の奪取、キルストリークなど）</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>🎯 ゲームプレイガイド</h2>
+                <p>EasyCTFの基本的なゲームプレイ方法と戦術について説明します。</p>
+            </section>
 
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>ゲーム開始を待つ</h3>
-                        <p>最小人数（デフォルト2名）が揃うと30秒のカウントダウンが始まります。この間に準備を整えましょう。</p>
-                        <div class="alert alert-secondary">
-                            <i class="fas fa-lightbulb"></i>
-                            管理者は <code>/ctf start &lt;ゲーム名&gt;</code> で即座に開始できます
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>⚡ ゲームの2つのフェーズ</h2>
-            
-            <div class="phase-detail">
-                <h3><i class="fas fa-hammer"></i> フェーズ1: 建築フェーズ（デフォルト2分、設定可能）</h3>
-                <p>戦闘の準備をする重要な時間です。</p>
+            <section class="content-section">
+                <h2>基本ルール</h2>
                 
-                <div class="phase-features">
-                    <div class="feature-item">
-                        <h4>基本情報</h4>
-                        <ul>
-                            <li><strong>目的:</strong> 防御施設の建築、戦略的な配置</li>
-                            <li><strong>PvP:</strong> 無効（攻撃できません）</li>
-                            <li><strong>死亡:</strong> 即座にリスポーン、アイテム保持</li>
-                            <li><strong>建築材料:</strong> 無限のチームカラーブロック（コンクリート・ガラス）</li>
-                            <li><strong>ゲームモード:</strong> ADVENTURE/SURVIVAL/CREATIVE（サーバー設定による）</li>
-                        </ul>
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            旗とスポーン地点の3×3エリア（高さ無制限）は建築禁止！
-                        </div>
-                        <div class="alert alert-info">
-                            <i class="fas fa-link"></i>
-                            <strong>チームブロック接続システム:</strong> チームカラーブロック（赤/青のコンクリート・ステンドグラス）のみ接続制限があります。これらは自チームのビーコン、既存のチームブロック、またはいずれかのスポーン地点に接続している必要があります。接続が切れたチームブロックは自動的に白色（クォーツブロック）に変化し、どちらのチームでも利用可能になります。ショップで購入したブロック（石、木材、土など）は自由に設置可能です。
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="phase-detail">
-                <h3><i class="fas fa-sword"></i> フェーズ2: 戦闘フェーズ（デフォルト2分、設定可能）</h3>
-                <p>いよいよ本番！敵の旗を奪い、自陣に持ち帰りましょう。</p>
-                
-                <div class="phase-features">
-                    <div class="feature-item">
-                        <h4>基本情報</h4>
-                        <ul>
-                            <li><strong>目的:</strong> 旗の奪取と防衛</li>
-                            <li><strong>PvP:</strong> 有効（戦闘可能）</li>
-                            <li><strong>死亡:</strong> 基本10秒後にリスポーン（死亡回数×2秒追加、最大20秒）</li>
-                            <li><strong>旗の取得:</strong> 敵のビーコンに1.5ブロック以内に接近</li>
-                            <li><strong>得点条件:</strong> 自陣の旗がある状態で敵の旗を持ち帰る</li>
-                        </ul>
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle"></i>
-                            旗を持っている間は発光し、エンダーパールなどの移動アイテムが使用不可に！
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="phase-detail">
-                <h3><i class="fas fa-trophy"></i> ゲーム終了後</h3>
-                <p>戦闘フェーズ終了後、結果が表示されます。</p>
-                <p class="small">※ マッチモードでは次のゲームが自動的に開始されます。</p>
-                
-                <div class="phase-features">
-                    <div class="feature-item">
-                        <h4>結果表示</h4>
-                        <ul>
-                            <li><strong>単独ゲーム:</strong> ゲーム結果と統計の表示（1分）</li>
-                            <li><strong>マッチモード:</strong> 次のゲームへの準備（15秒）</li>
-                            <li><strong>表示内容:</strong> スコア、キル数、MVP等</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>🚩 旗（フラッグ）システム</h2>
-            
-            <div class="subsection">
-                <h3>旗の取得方法</h3>
-                    <li>敵チームのビーコン（旗）に1.5ブロック以内に接近</li>
-                    <li>自動的に旗を取得し、プレイヤーが発光</li>
-                    <li>ビーコンとその上の色付きガラスが消える</li>
-                </ol>
-            </div>
-            
-            <div class="subsection">
-                <h3>得点する方法</h3>
-                <ol>
-                    <li>敵の旗を持った状態で自陣へ向かう</li>
-                    <li>自陣の旗が設置されていることを確認</li>
-                    <li>自陣の旗の3ブロック以内に近づくと自動的に得点</li>
-                </ol>
-            </div>
-            
-            <div class="subsection">
-                <h3>旗のドロップと回収</h3>
-                <ul>
-                    <li>旗を持ったまま死亡すると、その場に旗がドロップ</li>
-                    <li>味方が触れると即座に自陣に旗が戻る</li>
-                    <li>敵が触れると旗を奪取</li>
-                    <li>30秒間誰も触れないと自動的に元の位置に戻る</li>
-                </ul>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    奈落に落ちて死亡した場合、旗は即座に元の位置に戻ります
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>💰 ショップシステム</h2>
-            
-            <div class="subsection">
-                <h3>基本的な使い方</h3>
-                <ol>
-                    <li>インベントリ内のエメラルドを右クリック</li>
-                    <li>スポーン地点から15ブロック以内でのみ使用可能</li>
-                    <li>チームメンバー全員で通貨（G）を共有</li>
-                </ol>
-            </div>
-            
-            <div class="subsection">
-                <h3>通貨の獲得方法</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>アクション</th>
-                            <th>獲得G</th>
-                            <th>備考</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>ゲーム開始時</td>
-                            <td>50G</td>
-                            <td>初期資金</td>
-                        </tr>
-                        <tr>
-                            <td>敵をキル</td>
-                            <td>10G</td>
-                            <td>基本報酬</td>
-                        </tr>
-                        <tr>
-                            <td>旗持ちをキル</td>
-                            <td>20G</td>
-                            <td>防衛ボーナス</td>
-                        </tr>
-                        <tr>
-                            <td>キルアシスト</td>
-                            <td>5G</td>
-                            <td>5秒以内にダメージを与えた敵が死亡</td>
-                        </tr>
-                        <tr>
-                            <td>旗をキャプチャ</td>
-                            <td>30G</td>
-                            <td>得点時のボーナス</td>
-                        </tr>
-                        <tr>
-                            <td>フェーズ終了</td>
-                            <td>50G</td>
-                            <td>各フェーズ終了時</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="subsection">
-                <h3>割引システム</h3>
-                <p>スコアで負けているチームには自動的に割引が適用されます：</p>
-                <ul>
-                    <li>1点差: 10%割引</li>
-                    <li>2点差: 20%割引</li>
-                    <li>3点差: 30%割引</li>
-                    <li>4点差以上: 40%割引</li>
-                </ul>
-            </div>
-            
-            <div class="subsection">
-                <h3>購入可能なアイテム</h3>
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <h4>武器</h4>
-                        <ul>
-                            <li>剣（鉄/ダイヤ/ネザライト）</li>
-                            <li>斧（鉄/ダイヤ/ネザライト）</li>
-                            <li>弓・クロスボウ</li>
-                            <li>盾</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
-                        <h4>消耗品</h4>
-                        <ul>
-                            <li>エンダーパール</li>
-                            <li>金のリンゴ</li>
-                            <li>矢</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
-                        <h4>建築ブロック</h4>
-                        <ul>
-                            <li>石・木材・土</li>
-                            <li>ガラス・黒曜石</li>
-                            <li>TNT・レッドストーン</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    アイテムには死亡時の扱いが設定されています：<br>
-                    • KEEP: 死亡しても保持<br>
-                    • DROP: 死亡時にドロップ<br>
-                    • DESTROY: 死亡時に消失
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>🔗 チームブロック接続システム</h2>
-            
-            <div class="subsection">
-                <h3>基本ルール</h3>
-                <p>建築フェーズでチームカラーブロックを設置する際の重要なシステムです：</p>
-                <ul>
-                    <li><strong>対象ブロック</strong>: 赤/青のコンクリートとステンドグラスのみに適用</li>
-                    <li><strong>接続必須</strong>: チームカラーブロックは自チームのビーコン（旗）、既存のチームブロック、またはスポーン地点に接続している必要があります</li>
-                    <li><strong>接続の定義</strong>: 上下左右前後の6方向のいずれかで隣接していること（旗・スポーンからは3ブロック以内）</li>
-                    <li><strong>斜め接続は無効</strong>: 対角線上の接続では有効な接続とみなされません</li>
-                    <li><strong>その他のブロック</strong>: ショップで購入した石、木材、土などは自由に設置可能（接続制限なし）</li>
-                </ul>
-            </div>
-            
-            <div class="subsection">
-                <h3>切断と中立化</h3>
-                <ul>
-                    <li><strong>接続チェック</strong>: チームカラーブロックが破壊されると、周囲のチームブロックの接続状態が自動的にチェックされます</li>
-                    <li><strong>孤立ブロックの中立化</strong>: ビーコンへの接続経路がなくなったチームカラーブロックは自動的に白色（クォーツブロック）に変化</li>
-                    <li><strong>再利用可能</strong>: 中立化されたブロックは、どちらのチームも新たな接続基点として利用可能</li>
-                    <li><strong>その他のブロックは影響なし</strong>: 通常のブロック（石、木材など）は切断チェックの対象外</li>
-                </ul>
-            </div>
-            
-            <div class="subsection">
-                <h3>戦略的な活用</h3>
-                <div class="strategy-tips">
-                    <div class="tip-card">
-                        <h4>防御建築</h4>
-                        <p>重要な接続ポイントを複数経路で補強し、1箇所破壊されても全体が崩壊しないように</p>
-                    </div>
-                    <div class="tip-card">
-                        <h4>攻撃戦術</h4>
-                        <p>敵の建築物の「要」となる接続ポイントを狙い、大規模な中立化を引き起こす</p>
-                    </div>
-                    <div class="tip-card">
-                        <h4>橋の建設</h4>
-                        <p>長い橋を作る際は、複数の支柱で接続を維持し、切断リスクを分散</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>⚔️ 戦闘のコツ</h2>
-            
-            <div class="subsection">
-                <h3>リスポーンシステム</h3>
-                <ul>
-                    <li><strong>複数スポーン地点:</strong> チームごとに複数のスポーン地点を設定可能</li>
-                    <li><strong>ランダム選択:</strong> 復活時にランダムに選ばれたスポーン地点でリスポーン</li>
-                    <li><strong>基本リスポーン時間:</strong> 10秒（ゲームごとに設定可能）</li>
-                    <li><strong>死亡ペナルティ:</strong> +2秒/死亡（ゲームごとに設定可能）</li>
-                    <li><strong>最大遅延:</strong> 20秒（ゲームごとに設定可能）</li>
-                    <li><strong>スポーン保護:</strong> リスポーン後3秒間の無敵時間（発光状態）</li>
-                    <li><strong>保護解除:</strong> 攻撃または旗取得で即座に解除</li>
-                </ul>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    フェーズ変更時にリスポーン待ちのプレイヤーは即座に復活します
-                </div>
-            </div>
-            
-            <div class="subsection">
-                <h3>敵陣シールドシステム</h3>
-                <p>敵チームの色付きブロック（コンクリート・ガラス）の上にいると：</p>
-                <ol>
-                    <li>シールドが徐々に減少（25秒で枯渇）</li>
-                    <li>シールドが0になるとダメージを受ける</li>
-                    <li>自陣に戻るとシールドが回復（10秒で全回復）</li>
-                </ol>
-                <div class="alert alert-secondary">
-                    <i class="fas fa-lightbulb"></i>
-                    敵陣での長期戦は避け、素早く行動しましょう！
-                </div>
-            </div>
-            
-            <div class="subsection">
-                <h3>革防具について</h3>
-                <ul>
-                    <li>チーム識別用の革防具は死亡しても失われません</li>
-                    <li>色は変更できないので、チームの識別に使用</li>
-                    <li>防御力は低いので、ショップで強化を検討</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>🏆 マッチモード</h2>
-            <p>複数のゲームを連続して行い、最多勝利チームを決めるモードです。</p>
-
-            <div class="subsection">
-                <h3>マッチの開始方法</h3>
-                <div class="command-block">
-                    <code>/ctf start &lt;ゲーム名&gt; match &lt;ゲーム数&gt;</code>
-                    <button class="copy-btn">コピー</button>
-                </div>
-                <p>例: <code>/ctf start arena1 match 5</code> → 5ゲームのマッチを開始</p>
-            </div>
-
-            <div class="subsection">
-                <h3>マッチの特徴</h3>
-                <ul>
-                    <li>プレイヤーとチーム編成はゲーム間で維持</li>
-                    <li>通貨（G）はゲーム間で引き継ぎ</li>
-                    <li>各ゲーム後に次のゲームが自動開始</li>
-                    <li>途中参加・離脱は不可</li>
-                </ul>
-            </div>
-
-            <div class="subsection">
                 <h3>勝利条件</h3>
                 <ul>
-                    <li>設定したゲーム数を完走</li>
-                    <li>最多勝利チームが優勝</li>
-                    <li>同点の場合: 総ブロック設置数で判定</li>
+                    <li>敵の旗（ビーコン）を奪って自陣に持ち帰る</li>
+                    <li>制限時間内により多く得点したチームが勝利</li>
+                    <li>自陣の旗がある状態でのみキャプチャー可能</li>
                 </ul>
-            </div>
-        </section>
 
-        <section class="content-section">
-            <h2>📊 画面表示の見方</h2>
-            
-            <div class="subsection">
-                <h3>ボスバー（画面上部）</h3>
-                <ul>
-                    <li>現在のフェーズと残り時間</li>
-                    <li>緑色: 建築フェーズ</li>
-                    <li>赤色: 戦闘フェーズ</li>
-                    <li>黄色: ゲーム終了/結果表示</li>
-                </ul>
-            </div>
-
-            <div class="subsection">
-                <h3>サイドバー（画面右）</h3>
-                <p>ゲーム中の重要情報を常時表示：</p>
-                <ul>
-                    <li><strong>ゲーム名:</strong> 現在のゲーム</li>
-                    <li><strong>スコア:</strong> 赤●青● （マッチ時）</li>
-                    <li><strong>チーム人数:</strong> 赤N 青N</li>
-                    <li><strong>マッチ状況:</strong> 第Nゲーム（マッチ時）</li>
-                    <li><strong>通貨:</strong> NG（チーム共有）</li>
-                </ul>
-            </div>
-
-            <div class="subsection">
-                <h3>アクションバー（画面下部中央）</h3>
-                <p>状況に応じたガイドメッセージ：</p>
-                <ul>
-                    <li>「建築して防御を固めよう！」（建築フェーズ）</li>
-                    <li>「敵の旗を奪取せよ！」（戦闘フェーズ）</li>
-                    <li>「自陣に戻れ！」（旗所持時）</li>
-                    <li>「[ショップ使用可能]」（スポーン付近）</li>
-                    <li>シールド残量（敵陣ブロック上）</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>🎯 戦略のヒント</h2>
-            
-            <div class="tip-cards">
-                <div class="tip-card">
-                    <h3>建築フェーズの戦略</h3>
-                    <ul>
-                        <li>旗の周りに迷路や高い壁を作って防御</li>
-                        <li>偽の通路で敵を混乱させる</li>
-                        <li>味方の脱出ルートも確保</li>
-                        <li>敵を混乱させる迷路構造</li>
-                    </ul>
+                <h3>チーム構成</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4 style="color: #e74c3c;">🔴 赤チーム</h4>
+                        <ul>
+                            <li>最大10名</li>
+                            <li>赤のコンクリートブロック使用</li>
+                            <li>赤のビーコンを防衛</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #3498db;">🔵 青チーム</h4>
+                        <ul>
+                            <li>最大10名</li>
+                            <li>青のコンクリートブロック使用</li>
+                            <li>青のビーコンを防衛</li>
+                        </ul>
+                    </div>
                 </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🏗️ 建築フェーズ（2分）</h2>
                 
-                <div class="tip-card">
-                    <h3>戦闘フェーズの戦略</h3>
-                    <ul>
-                        <li>攻撃組と防御組で役割分担</li>
-                        <li>旗持ちは単独行動を避ける</li>
-                        <li>敵の旗持ちを優先的に狙う</li>
-                        <li>通貨を稼いで装備を強化</li>
-                    </ul>
+                <div class="alert alert-info">
+                    <strong>目的:</strong> 防衛施設の建設と戦闘準備
                 </div>
+
+                <h3>できること</h3>
+                <ul>
+                    <li>自チーム色のコンクリートブロックで防衛施設を建設</li>
+                    <li>ショップでアイテムを購入（エメラルド右クリック）</li>
+                    <li>マップの偵察（敵陣には侵入不可）</li>
+                    <li>チームメンバーとの作戦会議</li>
+                </ul>
+
+                <h3>ブロック接続システム</h3>
+                <div class="alert alert-warning">
+                    <strong>重要:</strong> すべてのブロックは自陣ビーコンまたは既存のチームブロックに接続必須！
+                </div>
+                <ul>
+                    <li>接続が切れたブロックは自動的に白色（中立）に変化</li>
+                    <li>敵の建築物の接続を切ることで無効化可能</li>
+                    <li>戦略的な建築配置が重要</li>
+                </ul>
+
+                <h3>建築のコツ</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🏰 旗の防衛</h4>
+                        <ul>
+                            <li>ビーコン周りを多層構造で囲む</li>
+                            <li>入口を限定して防衛しやすく</li>
+                            <li>高所からの侵入にも注意</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>🛤️ 進入路制限</h4>
+                        <ul>
+                            <li>迷路状の構造で時間稼ぎ</li>
+                            <li>罠を設置して敵を妨害</li>
+                            <li>複数の防衛ラインを構築</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>🏹 高所確保</h4>
+                        <ul>
+                            <li>弓での攻撃に有利</li>
+                            <li>全体の戦況把握</li>
+                            <li>旗キャリアの支援</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>⚔️ 戦闘フェーズ（2分）</h2>
                 
-                <div class="tip-card">
-                    <h3>チームワークのコツ</h3>
-                    <ul>
-                        <li>チャットで情報共有</li>
-                        <li>ショップ購入は相談して</li>
-                        <li>死亡中は敵の動きを報告</li>
-                        <li>旗の護衛と攻撃のバランス</li>
-                    </ul>
+                <div class="alert alert-danger">
+                    <strong>目的:</strong> 敵の旗を奪って自陣に持ち帰る
                 </div>
-            </div>
-        </section>
 
-        <section class="content-section">
-            <h2>❓ よくある質問</h2>
-            
-            <div class="faq-item">
-                <h4>Q: 途中参加はできますか？</h4>
-                <p>A: 建築フェーズまでなら可能です。戦闘フェーズ以降は参加できません。</p>
-            </div>
-            
-            <div class="faq-item">
-                <h4>Q: チームを変更できますか？</h4>
-                <p>A: ゲーム開始前なら <code>/ctf team [red/blue]</code> で変更可能です（人数差2名以内）。</p>
-            </div>
-            
-            <div class="faq-item">
-                <h4>Q: 旗が見つからない場合は？</h4>
-                <p>A: ビーコンの光を探しましょう。また、サイドバーに旗の状態が表示されます。</p>
-            </div>
-            
-            <div class="faq-item">
-                <h4>Q: ゲームから抜けたい場合は？</h4>
-                <p>A: <code>/ctf leave</code> で離脱できます。ただし、マッチモード中は離脱できません。</p>
-            </div>
-        </section>
+                <h3>旗システム</h3>
+                <table>
+                    <tr>
+                        <th>項目</th>
+                        <th>説明</th>
+                    </tr>
+                    <tr>
+                        <td>取得方法</td>
+                        <td>敵ビーコンに1.5ブロック以内で接近</td>
+                    </tr>
+                    <tr>
+                        <td>キャリア効果</td>
+                        <td>発光（全員から見える）、移動制限（エンダーパール使用不可）</td>
+                    </tr>
+                    <tr>
+                        <td>ドロップ</td>
+                        <td>死亡時にその場にドロップ（30秒で自動復帰）</td>
+                    </tr>
+                    <tr>
+                        <td>キャプチャー条件</td>
+                        <td>自陣の旗がある状態で自陣ビーコンに接近</td>
+                    </tr>
+                </table>
 
-        <nav class="page-nav">
-            <a href="index.html" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> トップページ
-            </a>
-            <a href="commands.html" class="btn btn-primary">
-                コマンド一覧 <i class="fas fa-arrow-right"></i>
-            </a>
-        </nav>
-    </main>
+                <h3>戦闘戦術</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h4>攻撃班</h4>
+                            <p>2-3名で敵旗の奪取を目指す。エンダーパールで素早く侵入。</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h4>防衛班</h4>
+                            <p>2-3名で自陣の旗を守る。高所から弓で狙撃。</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h4>支援班</h4>
+                            <p>状況に応じて攻撃・防衛を支援。旗キャリアの護衛。</p>
+                        </div>
+                    </div>
+                </div>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>EasyCTF</h4>
-                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+                <h3>リスポーンシステム</h3>
+                <div class="alert alert-success">
+                    <strong>即座にリスポーン！</strong> 死亡後の待機時間はありません。すぐに戦線復帰できます。
+                    <p>リスポーン後3秒間のスポーン保護（攻撃または旗取得で解除）</p>
                 </div>
-                <div class="footer-section">
-                    <h4>リンク</h4>
-                    <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
-                    </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>🛡️ シールドシステム</h2>
+                
+                <div class="alert alert-warning">
+                    <strong>重要:</strong> シールドは自陣でのみ回復します！
                 </div>
-                <div class="footer-section">
-                    <h4>ドキュメント</h4>
-                    <ul>
-                        <li><a href="gameplay.html">遊び方</a></li>
-                        <li><a href="admin.html">管理者ガイド</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                    </ul>
+
+                <h3>シールドの仕組み</h3>
+                <table>
+                    <tr>
+                        <th>状態</th>
+                        <th>効果</th>
+                        <th>説明</th>
+                    </tr>
+                    <tr>
+                        <td>敵陣ブロック上</td>
+                        <td>毎秒2減少</td>
+                        <td>敵の色のコンクリート上</td>
+                    </tr>
+                    <tr>
+                        <td>敵ビーコンエリア</td>
+                        <td>毎秒2減少</td>
+                        <td>敵ビーコン周囲3x3範囲</td>
+                    </tr>
+                    <tr>
+                        <td>シールド0</td>
+                        <td>1.5ダメージ/秒</td>
+                        <td>防具で軽減可能</td>
+                    </tr>
+                    <tr>
+                        <td>自陣ブロック上</td>
+                        <td>毎秒5回復</td>
+                        <td>自チームの色のコンクリート上</td>
+                    </tr>
+                    <tr>
+                        <td>自陣ビーコンエリア</td>
+                        <td>毎秒5回復 + 空腹度回復</td>
+                        <td>自陣ビーコン周囲3x3範囲</td>
+                    </tr>
+                </table>
+
+                <h3>警告レベル</h3>
+                <ul>
+                    <li>シールド40以下: 警告メッセージ表示</li>
+                    <li>シールド20以下: クリティカル警告</li>
+                    <li>シールド0: 継続ダメージ開始</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>🎁 イベントチェスト</h2>
+                
+                <div class="alert alert-info">
+                    戦闘フェーズ中に1回、特別なチェストが出現します！
                 </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
-            </div>
+
+                <h3>特徴</h3>
+                <ul>
+                    <li>高価なショップアイテムがランダムに入っている</li>
+                    <li>全プレイヤーに出現通知</li>
+                    <li>早い者勝ちで獲得</li>
+                    <li>武器、防具、消耗品がバランスよく出現</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>💭 作戦会議フェーズ（15秒）</h2>
+                
+                <ul>
+                    <li>ラウンド結果の確認</li>
+                    <li>次ラウンドへの準備</li>
+                    <li>装備の整理</li>
+                    <li>チーム戦略の見直し</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>インターバルなし！</strong> 作戦会議後、すぐに次のフェーズが開始されます。
+                </div>
+            </section>
         </div>
-    </footer>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>🎯 Gameplay Guide</h2>
+                <p>Learn the basics of EasyCTF gameplay and tactics.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Basic Rules</h2>
+                
+                <h3>Victory Conditions</h3>
+                <ul>
+                    <li>Capture the enemy flag (beacon) and bring it back to your base</li>
+                    <li>Team with more points within time limit wins</li>
+                    <li>Can only capture when your own flag is present</li>
+                </ul>
+
+                <h3>Team Composition</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4 style="color: #e74c3c;">🔴 Red Team</h4>
+                        <ul>
+                            <li>Maximum 10 players</li>
+                            <li>Uses red concrete blocks</li>
+                            <li>Defends red beacon</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #3498db;">🔵 Blue Team</h4>
+                        <ul>
+                            <li>Maximum 10 players</li>
+                            <li>Uses blue concrete blocks</li>
+                            <li>Defends blue beacon</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🏗️ Build Phase (2 minutes)</h2>
+                
+                <div class="alert alert-info">
+                    <strong>Objective:</strong> Build defenses and prepare for combat
+                </div>
+
+                <h3>What You Can Do</h3>
+                <ul>
+                    <li>Build defensive structures with team-colored concrete blocks</li>
+                    <li>Purchase items from shop (right-click emerald)</li>
+                    <li>Scout the map (cannot enter enemy territory)</li>
+                    <li>Plan strategies with team members</li>
+                </ul>
+
+                <h3>Block Connection System</h3>
+                <div class="alert alert-warning">
+                    <strong>Important:</strong> All blocks must connect to team beacon or existing team blocks!
+                </div>
+                <ul>
+                    <li>Disconnected blocks automatically turn white (neutral)</li>
+                    <li>Can disable enemy structures by cutting connections</li>
+                    <li>Strategic building placement is crucial</li>
+                </ul>
+
+                <h3>Building Tips</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🏰 Flag Defense</h4>
+                        <ul>
+                            <li>Surround beacon with multiple layers</li>
+                            <li>Limit entrances for easier defense</li>
+                            <li>Watch for aerial invasions</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>🛤️ Path Restriction</h4>
+                        <ul>
+                            <li>Create maze structures to buy time</li>
+                            <li>Set traps to hinder enemies</li>
+                            <li>Build multiple defense lines</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>🏹 High Ground</h4>
+                        <ul>
+                            <li>Advantageous for bow attacks</li>
+                            <li>Overview of battlefield</li>
+                            <li>Support flag carriers</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>⚔️ Combat Phase (2 minutes)</h2>
+                
+                <div class="alert alert-danger">
+                    <strong>Objective:</strong> Capture enemy flag and bring it back
+                </div>
+
+                <h3>Flag System</h3>
+                <table>
+                    <tr>
+                        <th>Item</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>Capture Method</td>
+                        <td>Approach within 1.5 blocks of enemy beacon</td>
+                    </tr>
+                    <tr>
+                        <td>Carrier Effects</td>
+                        <td>Glowing (visible to all), movement restrictions (no ender pearls)</td>
+                    </tr>
+                    <tr>
+                        <td>Drop</td>
+                        <td>Drops on death (auto-returns after 30 seconds)</td>
+                    </tr>
+                    <tr>
+                        <td>Capture Condition</td>
+                        <td>Approach own beacon while own flag is present</td>
+                    </tr>
+                </table>
+
+                <h3>Combat Tactics</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h4>Attack Squad</h4>
+                            <p>2-3 players aim to capture enemy flag. Quick entry with ender pearls.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h4>Defense Squad</h4>
+                            <p>2-3 players defend own flag. Snipe from high ground with bows.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h4>Support Squad</h4>
+                            <p>Support attack/defense as needed. Escort flag carriers.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Respawn System</h3>
+                <div class="alert alert-success">
+                    <strong>Instant Respawn!</strong> No waiting time after death. Return to battle immediately.
+                    <p>3 seconds of spawn protection after respawn (canceled by attacking or flag pickup).</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🛡️ Shield System</h2>
+                
+                <div class="alert alert-warning">
+                    <strong>Important:</strong> Shield only recovers in your own territory!
+                </div>
+
+                <h3>Shield Mechanics</h3>
+                <table>
+                    <tr>
+                        <th>State</th>
+                        <th>Effect</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>On Enemy Blocks</td>
+                        <td>-2 per second</td>
+                        <td>On enemy-colored concrete</td>
+                    </tr>
+                    <tr>
+                        <td>Enemy Beacon Area</td>
+                        <td>-2 per second</td>
+                        <td>3x3 area around enemy beacon</td>
+                    </tr>
+                    <tr>
+                        <td>Shield at 0</td>
+                        <td>1.5 damage/sec</td>
+                        <td>Can be reduced by armor</td>
+                    </tr>
+                    <tr>
+                        <td>On Own Blocks</td>
+                        <td>+5 per second</td>
+                        <td>On team-colored concrete</td>
+                    </tr>
+                    <tr>
+                        <td>Own Beacon Area</td>
+                        <td>+5/sec + hunger recovery</td>
+                        <td>3x3 area around own beacon</td>
+                    </tr>
+                </table>
+
+                <h3>Warning Levels</h3>
+                <ul>
+                    <li>Shield below 40: Warning message</li>
+                    <li>Shield below 20: Critical warning</li>
+                    <li>Shield at 0: Continuous damage starts</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>🎁 Event Chest</h2>
+                
+                <div class="alert alert-info">
+                    A special chest appears once during combat phase!
+                </div>
+
+                <h3>Features</h3>
+                <ul>
+                    <li>Contains random expensive shop items</li>
+                    <li>All players are notified</li>
+                    <li>First come, first served</li>
+                    <li>Balanced mix of weapons, armor, and consumables</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>💭 Strategy Phase (15 seconds)</h2>
+                
+                <ul>
+                    <li>Check round results</li>
+                    <li>Prepare for next round</li>
+                    <li>Organize equipment</li>
+                    <li>Review team strategy</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>No Intervals!</strong> Next phase starts immediately after strategy meeting.
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.0 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/yourusername/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
 
     <script src="script.js"></script>
 </body>

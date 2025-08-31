@@ -46,7 +46,7 @@ import org.bukkit.scheduler.BukkitRunnable
 
 class GameListenerNew(private val plugin: Main) : Listener {
     
-    private val gameManager = plugin.gameManager as GameManager
+    private val gameManager = plugin.gameManager
     private val shopManager = plugin.shopManager
 
     @EventHandler
@@ -124,7 +124,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 
                     // ビーコンと色付きガラスを削除
                     enemyFlagLocation.block.type = Material.AIR
-                    enemyFlagLocation.clone().add(0.0, 1.0, 0.0).block.type = Material.AIR
+                    val glassLoc = enemyFlagLocation.clone().add(0.0, 1.0, 0.0)
+                    glassLoc.block.type = Material.AIR
                     
                     // スポーン保護を解除（旗を取った時点で保護解除）
                     game.removeSpawnProtection(player)
@@ -176,32 +177,6 @@ class GameListenerNew(private val plugin: Main) : Listener {
         if (playerLoc.world == ownFlagLocation.world && playerLoc.distance(ownFlagLocation) < 3.0) {
             game.captureFlag(player)
         }
-        
-        // ショップ使用可能範囲の通知（建築・戦闘フェーズ中のみ）
-        if (game.phase == GamePhase.BUILD || game.phase == GamePhase.COMBAT) {
-            val spawnLocation = when (playerTeam) {
-                Team.RED -> game.getRedSpawnLocation() ?: game.getRedFlagLocation()
-                Team.BLUE -> game.getBlueSpawnLocation() ?: game.getBlueFlagLocation()
-                Team.SPECTATOR -> return  // Spectators don't have shop access
-            } ?: return
-            
-            val useRange = plugin.config.getDouble("shop.use-range", 15.0)
-            val distance = if (player.location.world == spawnLocation.world) {
-                player.location.distance(spawnLocation)
-            } else {
-                Double.MAX_VALUE  // 異なるワールドの場合は非常に大きな距離とする
-            }
-            
-            val wasInRange = player.hasMetadata("shop_in_range")
-            val isInRange = distance <= useRange
-            
-            if (isInRange && !wasInRange) {
-                player.setMetadata("shop_in_range", org.bukkit.metadata.FixedMetadataValue(plugin, true))
-                player.sendActionBar(Component.text(plugin.languageManager.getMessage("game_events.shop.available")).color(NamedTextColor.GREEN).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
-            } else if (!isInRange && wasInRange) {
-                player.removeMetadata("shop_in_range", plugin)
-            }
-        }
     }
 
     @EventHandler
@@ -227,14 +202,6 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     when (team) {
                         Team.RED -> Material.RED_CONCRETE
                         Team.BLUE -> Material.BLUE_CONCRETE
-                        Team.SPECTATOR -> return
-                    }
-                }
-                // ガラスブロック
-                Material.WHITE_STAINED_GLASS, Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
-                    when (team) {
-                        Team.RED -> Material.RED_STAINED_GLASS
-                        Team.BLUE -> Material.BLUE_STAINED_GLASS
                         Team.SPECTATOR -> return
                     }
                 }
@@ -300,7 +267,6 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 戦闘フェーズでの死亡処理
             if (game.phase == GamePhase.COMBAT) {
                 val team = game.getPlayerTeam(player.uniqueId) ?: return
-                val match = gameManager.getMatch(game.name)
             
             // 死亡回数を増やす
             val deaths = (game.playerDeaths[player.uniqueId] ?: 0) + 1
@@ -327,9 +293,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val baseReward = if (isCarrier) {
                         // 旗キャリアキル（防衛）の統計を記録
                         game.playerFlagDefends[killer.uniqueId] = (game.playerFlagDefends[killer.uniqueId] ?: 0) + 1
-                        plugin.config.getInt("currency.carrier-kill-reward", 20)
+                        plugin.config.getInt("currency.carrier-kill-reward", 25)
                     } else {
-                        plugin.config.getInt("currency.kill-reward", 10)
+                        plugin.config.getInt("currency.kill-reward", 15)
                     }
                     
                     // キルストリークボーナス
@@ -403,7 +369,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 val assistReward = if (isCarrierAssist) {
                                     plugin.config.getInt("currency.carrier-kill-assist-reward", 10)
                                 } else {
-                                    plugin.config.getInt("currency.kill-assist-reward", 5)
+                                    plugin.config.getInt("currency.kill-assist-reward", 10)
                                 }
                                 
                                 val lang = plugin.languageManager
@@ -442,7 +408,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             } else if (game.phase == GamePhase.COMBAT) {
                 // 戦闘フェーズ：ショップアイテムと革装備以外をドロップ
                 var shopItemFound = false
-                for ((index, item) in player.inventory.contents.withIndex()) {
+                for ((_, item) in player.inventory.contents.withIndex()) {
                     if (item != null) {
                         when {
                             isLeatherArmor(item.type) -> {
@@ -738,19 +704,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             val blockType = event.block.type
                             val playerTeam = game.getPlayerTeam(player.uniqueId)
                             
-                            // チームカラーブロック（コンクリート、ガラス）と白いブロックの処理
+                            // チームカラーブロック（コンクリート）と白いブロックの処理
                             val isTeamColorBlock = blockType in listOf(
                                 Material.RED_CONCRETE, Material.BLUE_CONCRETE,
-                                Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS,
-                                Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS
+                                Material.WHITE_CONCRETE
                             )
                             
                             // 敵チームのブロック破壊には自陣ブロックの隣接が必要
                             if (isTeamColorBlock) {
                                 val isEnemyBlock = when (blockType) {
-                                    Material.RED_CONCRETE, Material.RED_STAINED_GLASS -> playerTeam != Team.RED
-                                    Material.BLUE_CONCRETE, Material.BLUE_STAINED_GLASS -> playerTeam != Team.BLUE
-                                    Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS -> false // 白は中立なので破壊可能
+                                    Material.RED_CONCRETE -> playerTeam != Team.RED
+                                    Material.BLUE_CONCRETE -> playerTeam != Team.BLUE
+                                    Material.WHITE_CONCRETE -> false // 白は中立なので破壊可能
                                     else -> false
                                 }
                                 
@@ -811,14 +776,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                         Material.RED_CONCRETE, Material.BLUE_CONCRETE -> {
                                             if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
                                         }
-                                        Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
-                                            if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
-                                        }
                                         Material.WHITE_CONCRETE -> {
                                             if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
-                                        }
-                                        Material.WHITE_STAINED_GLASS -> {
-                                            if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
                                         }
                                         else -> blockType
                                     }
@@ -850,19 +809,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val blockType = event.block.type
                     val playerTeam = game.getPlayerTeam(player.uniqueId)
                     
-                    // チームカラーブロック（コンクリート、ガラス）と白いブロックの処理
+                    // チームカラーブロック（コンクリート）と白いブロックの処理
                     val isTeamColorBlock = blockType in listOf(
                         Material.RED_CONCRETE, Material.BLUE_CONCRETE,
-                        Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS,
-                        Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS
+                        Material.WHITE_CONCRETE
                     )
                     
                     // 戦闘フェーズでも敵チームのブロック破壊には自陣ブロックの隣接が必要
                     if (isTeamColorBlock) {
                         val isEnemyBlock = when (blockType) {
-                            Material.RED_CONCRETE, Material.RED_STAINED_GLASS -> playerTeam != Team.RED
-                            Material.BLUE_CONCRETE, Material.BLUE_STAINED_GLASS -> playerTeam != Team.BLUE
-                            Material.WHITE_CONCRETE, Material.WHITE_STAINED_GLASS -> false // 白は中立なので破壊可能
+                            Material.RED_CONCRETE -> playerTeam != Team.RED
+                            Material.BLUE_CONCRETE -> playerTeam != Team.BLUE
+                            Material.WHITE_CONCRETE -> false // 白は中立なので破壊可能
                             else -> false
                         }
                         
@@ -917,14 +875,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             Material.RED_CONCRETE, Material.BLUE_CONCRETE -> {
                                 if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
                             }
-                            Material.RED_STAINED_GLASS, Material.BLUE_STAINED_GLASS -> {
-                                if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
-                            }
                             Material.WHITE_CONCRETE -> {
                                 if (playerTeam == Team.RED) Material.RED_CONCRETE else Material.BLUE_CONCRETE
-                            }
-                            Material.WHITE_STAINED_GLASS -> {
-                                if (playerTeam == Team.RED) Material.RED_STAINED_GLASS else Material.BLUE_STAINED_GLASS
                             }
                             else -> blockType
                         }
@@ -1035,8 +987,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 
                 // チームカラーブロック（戦略的建築）は敵スポーン近くでも許可
                 val isTeamColorBlock = when (team) {
-                    Team.RED -> itemInHand.type == Material.RED_CONCRETE || itemInHand.type == Material.RED_STAINED_GLASS
-                    Team.BLUE -> itemInHand.type == Material.BLUE_CONCRETE || itemInHand.type == Material.BLUE_STAINED_GLASS
+                    Team.RED -> itemInHand.type == Material.RED_CONCRETE
+                    Team.BLUE -> itemInHand.type == Material.BLUE_CONCRETE
                     Team.SPECTATOR -> false
                 }
                 
@@ -1208,7 +1160,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 val displayNameComponent = meta.displayName() ?: return
                 val displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayNameComponent)
                 
-                val page = when {
+                // Page calculation removed - not used
+                /*val page = when {
                     displayName.contains(lang.getMessage("shop.category_menu.weapons.title")) || 
                     displayName.contains("武器") -> 0
                     displayName.contains(lang.getMessage("shop.category_menu.consumables.title")) || 
@@ -1216,7 +1169,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     displayName.contains(lang.getMessage("shop.category_menu.blocks.title")) || 
                     displayName.contains("ブロック") -> 2
                     else -> return
-                }
+                }*/
                 
                 shopManager.handleInventoryClick(event, game)
                 return
@@ -1229,7 +1182,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 return
             }
             
-            val displayName = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayNameComponent)
+            // val displayName = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayNameComponent) // Unused
             
             // すべてのショップ関連処理をShopManagerに委譲
             shopManager.handleInventoryClick(event, game)
@@ -1441,7 +1394,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
     
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onInventoryCreative(event: InventoryCreativeEvent) {
-        val player = event.whoClicked as? Player ?: return
+        // val player = event.whoClicked as? Player ?: return // Unused
         
         // ショップUIでのクリエイティブアイテム生成を防止
         val title = event.view.title()
@@ -1839,7 +1792,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
     @EventHandler
     fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
         val player = event.player
-        val command = event.message.toLowerCase()
+        val command = event.message.lowercase()
         
         // /clearコマンドを検出
         if (command.startsWith("/clear") || command.startsWith("/minecraft:clear")) {

@@ -17,7 +17,7 @@ import org.bukkit.scheduler.BukkitRunnable
 
 class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
     
-    private val gameManager = plugin.gameManager as GameManager
+    private val gameManager = plugin.gameManager
     private val confirmations = mutableMapOf<Player, ConfirmationData>()
     
     data class ConfirmationData(
@@ -746,9 +746,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         // その他
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-other-settings")).color(NamedTextColor.YELLOW))
-        val respawnBase = plugin.config.getInt("default-game.respawn-delay-base", 10)
-        val respawnPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 2)
-        val respawnMax = plugin.config.getInt("default-game.respawn-delay-max", 20)
+        val respawnBase = plugin.config.getInt("default-game.respawn-delay-base", 0)
+        val respawnPerDeath = plugin.config.getInt("default-game.respawn-delay-per-death", 0)
+        val respawnMax = plugin.config.getInt("default-game.respawn-delay-max", 0)
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-respawn-time", "base" to respawnBase.toString(), "perDeath" to respawnPerDeath.toString(), "max" to respawnMax.toString()), NamedTextColor.WHITE))
         
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-footer")).color(NamedTextColor.GOLD).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))

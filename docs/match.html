@@ -3,291 +3,458 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>マッチモード - EasyCTF</title>
+    <title>EasyCTF - Match System</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <ul class="nav-menu">
-                <li><a href="index.html">ホーム</a></li>
-                <li><a href="gameplay.html">遊び方</a></li>
-                <li><a href="commands.html">コマンド</a></li>
-                <li><a href="shop.html">ショップ</a></li>
-                <li><a href="match.html" class="active">マッチ</a></li>
-                <li><a href="map-creation.html">マップ作成</a></li>
-                <li><a href="admin.html">管理者</a></li>
-                <li><a href="faq.html">FAQ</a></li>
-            </ul>
-            <div class="nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <header class="page-header">
-        <div class="container">
-            <h1>マッチモード</h1>
-            <p>複数ゲームを連続実施して総合優勝を決定</p>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🎮 EasyCTF</span>
+            <span class="version">v2.0</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="content-section">
-            <h2>概要</h2>
-            <p>マッチモードでは、複数のゲームを連続して実施し、総合的な勝者を決定します。固定ラウンド方式で公平性を保ちながら、戦略性の高い戦いが楽しめます。</p>
-        </section>
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
 
-        <section class="content-section">
-            <h2><i class="fas fa-trophy"></i> マッチシステム</h2>
-            
-            <div class="match-types">
-                <div class="match-type full-width">
-                    <div class="match-icon">
-                        <i class="fas fa-list-ol"></i>
-                    </div>
-                    <h3>固定ラウンドモード</h3>
-                    <p>指定した回数のゲームを実施し、最多勝利チームが優勝する公平なシステムです。</p>
-                    <div class="match-example">
-                        <h4>特徴</h4>
-                        <ul>
-                            <li>すべてのゲームを最後まで実施</li>
-                            <li>最終的な勝利数で優勝を決定</li>
-                            <li>途中で負けていても逆転のチャンス</li>
-                            <li>同数の場合は引き分け</li>
-                        </ul>
-                    </div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html" class="active"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>🏆 マッチシステム</h2>
+                <p>マッチシステムは、複数のゲームを連続して実行し、総合的な勝者を決定する機能です。
+                トーナメントや大会の開催に最適で、より戦略的なゲーム展開が楽しめます。</p>
+                
+                <div class="alert alert-success">
+                    <strong>特徴:</strong> ゲーム間でアイテムは引き継がれず、各ゲームは完全に独立しています。
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="content-section">
-            <h2><i class="fas fa-play-circle"></i> マッチの開始方法</h2>
-            
-            <div class="command-format">
+            <section class="content-section">
+                <h2>🎯 マッチの開始方法</h2>
+                
                 <h3>コマンド形式</h3>
-                <div class="command-block">
-                    <code>/ctf start &lt;ゲーム名&gt; match &lt;ゲーム数&gt;</code>
-                    <button class="copy-btn">コピー</button>
-                </div>
-            </div>
-            
-            <div class="command-examples">
-                <h3>使用例</h3>
-                <div class="example-grid">
-                    <div class="example-card">
-                        <h4>3ゲームマッチ</h4>
-                        <pre><code>/ctf start arena1 match 3</code></pre>
-                        <p>3ゲーム実施して最多勝利チームが優勝</p>
-                    </div>
-                    
-                    <div class="example-card">
-                        <h4>5ゲームマッチ</h4>
-                        <pre><code>/ctf start arena1 match 5</code></pre>
-                        <p>5ゲーム実施して最多勝利チームが優勝</p>
-                    </div>
-                    
-                    <div class="example-card">
-                        <h4>デフォルト設定</h4>
-                        <pre><code>/ctf start arena1 match</code></pre>
-                        <p>config.ymlの設定値（デフォルト3）を使用</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-cogs"></i> マッチの仕組み</h2>
-            
-            <div class="process-flow">
-                <div class="process-step">
-                    <div class="step-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>1. マッチ開始</h3>
-                    <p>参加プレイヤーは自動的に次のゲームに引き継がれます。途中参加・離脱も可能。</p>
-                </div>
+                <div class="command-box">/ctf start <ゲーム名> match <ゲーム数></div>
                 
-                <div class="process-arrow">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-                
-                <div class="process-step">
-                    <div class="step-icon">
-                        <i class="fas fa-gamepad"></i>
-                    </div>
-                    <h3>2. ゲーム実施</h3>
-                    <p>通常のCTFゲームを実施。各ゲームの勝敗をカウント。</p>
-                </div>
-                
-                <div class="process-arrow">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-                
-                <div class="process-step">
-                    <div class="step-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>3. インターバル</h3>
-                    <p>5秒間の休憩。次ゲームの準備時間。</p>
-                </div>
-                
-                <div class="process-arrow">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-                
-                <div class="process-step">
-                    <div class="step-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <h3>4. 最終結果</h3>
-                    <p>全ゲーム終了後、最多勝利チームがマッチ優勝！</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-chart-line"></i> スコア表示</h2>
-            
-            <div class="info-card">
-                <h3>BossBarでの表示</h3>
-                <p>マッチ中は画面上部のBossBarで進行状況を確認できます。</p>
+                <h3>例</h3>
                 <ul>
-                    <li><strong>ゲーム番号</strong>: 現在のゲーム / 総ゲーム数</li>
-                    <li><strong>現在のスコア</strong>: 赤X勝 青Y勝</li>
-                    <li><strong>進行状況</strong>: プログレスバーで視覚的に表示</li>
+                    <li><code>/ctf start arena1 match 3</code> - 3ゲームのマッチを開始</li>
+                    <li><code>/ctf start arena1 match 5</code> - 5ゲームのマッチを開始</li>
+                    <li><code>/ctf start arena1 match 7</code> - 7ゲームのマッチを開始</li>
                 </ul>
-            </div>
-            
-            <div class="info-card">
-                <h3>チャット通知</h3>
-                <p>各ゲーム終了時に以下の情報が表示されます：</p>
+
+                <div class="alert alert-info">
+                    <strong>ヒント:</strong> 奇数ゲーム数にすると引き分けを避けられます。
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📊 マッチの進行</h2>
+                
+                <div class="phase-display">
+                    <div class="phase-item">
+                        <div class="icon">1️⃣</div>
+                        <div>ゲーム1</div>
+                        <div class="time">4分</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">2️⃣</div>
+                        <div>ゲーム2</div>
+                        <div class="time">4分</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">3️⃣</div>
+                        <div>ゲーム3</div>
+                        <div class="time">4分</div>
+                    </div>
+                    <div class="phase-item active">
+                        <div class="icon">🏆</div>
+                        <div>結果</div>
+                        <div class="time">15秒</div>
+                    </div>
+                </div>
+
+                <h3>進行の流れ</h3>
+                <ol>
+                    <li><strong>マッチ開始:</strong> 全プレイヤーがテンポラリワールドに転送</li>
+                    <li><strong>各ゲーム実行:</strong> 建築→戦闘フェーズの繰り返し</li>
+                    <li><strong>ゲーム間移行:</strong> 即座に次のゲームへ（インターバルなし）</li>
+                    <li><strong>マッチ終了:</strong> 最多勝利チームの発表</li>
+                </ol>
+
+                <h3>スコア表示</h3>
+                <p>BossBarに以下の情報が表示されます：</p>
                 <ul>
-                    <li>ゲームの勝敗結果</li>
-                    <li>現在のマッチスコア</li>
-                    <li>次ゲーム開始までのカウントダウン</li>
-                    <li>マッチ終了時は総合結果</li>
+                    <li>現在のゲーム番号（例: ゲーム 2/5）</li>
+                    <li>各チームの勝利数（例: 赤: 1勝 青: 1勝）</li>
+                    <li>残り時間</li>
                 </ul>
-            </div>
-        </section>
+            </section>
 
-        <section class="content-section">
-            <h2><i class="fas fa-coins"></i> マッチ中の通貨システム</h2>
-            
-            <div class="currency-info">
-                <div class="currency-card">
-                    <h3>通貨の引き継ぎ</h3>
-                    <p>マッチ中はチーム通貨が次のゲームに引き継がれます。</p>
-                    <ul>
-                        <li>ゲーム間で通貨はリセットされません</li>
-                        <li>フェーズ終了ボーナス（50G）は各ゲームで獲得</li>
-                        <li>長期戦略で通貨を管理しよう</li>
-                    </ul>
-                </div>
+            <section class="content-section">
+                <h2>⚙️ マッチ設定</h2>
                 
-                <div class="currency-card">
-                    <h3>逆転のチャンス</h3>
-                    <p>スコア差による割引システムで負けているチームも逆転可能！</p>
-                    <ul>
-                        <li>1点差: 10%割引</li>
-                        <li>2点差: 20%割引</li>
-                        <li>3点差: 30%割引</li>
-                        <li>4点差以上: 40%割引</li>
-                    </ul>
+                <h3>config.yml の設定項目</h3>
+                <div class="code-block">
+                    <pre>match:
+  default-target: 3          # デフォルトのゲーム数
+  intermediate-result-duration: 15  # ゲーム間の結果表示時間（秒）
+  result-duration: 15        # 最終結果の表示時間（秒）</pre>
                 </div>
-            </div>
-        </section>
 
-        <section class="content-section">
-            <h2><i class="fas fa-lightbulb"></i> マッチ戦略のヒント</h2>
-            
-            <div class="tip-cards">
-                <div class="tip-card">
-                    <h3>通貨管理</h3>
-                    <p>序盤は通貨を節約し、重要な局面で大きな投資をする戦略も有効。</p>
-                </div>
-                
-                <div class="tip-card">
-                    <h3>メンバー固定</h3>
-                    <p>マッチ中はメンバーを固定して、チームワークを高めよう。</p>
-                </div>
-                
-                <div class="tip-card">
-                    <h3>戦術変更</h3>
-                    <p>相手の戦術を分析し、ゲームごとに対策を変える柔軟性が重要。</p>
-                </div>
-                
-                <div class="tip-card">
-                    <h3>割引活用</h3>
-                    <p>負けている時こそチャンス！割引を活用して装備を強化し逆転を狙おう。</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-cog"></i> 設定項目</h2>
-            
-            <div class="config-table">
+                <h3>設定の説明</h3>
                 <table>
                     <thead>
                         <tr>
-                            <th>設定項目</th>
+                            <th>項目</th>
                             <th>説明</th>
                             <th>デフォルト値</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><code>match.default-target</code></td>
-                            <td>デフォルトのゲーム数</td>
+                            <td>default-target</td>
+                            <td>マッチコマンドでゲーム数を省略した場合の値</td>
                             <td>3</td>
                         </tr>
                         <tr>
-                            <td><code>match.interval-duration</code></td>
-                            <td>ゲーム間のインターバル（秒）</td>
-                            <td>5</td>
+                            <td>intermediate-result-duration</td>
+                            <td>各ゲーム後の結果表示時間</td>
+                            <td>15秒</td>
                         </tr>
                         <tr>
-                            <td><code>currency.phase-end-bonus</code></td>
-                            <td>フェーズ終了ボーナス</td>
-                            <td>50G</td>
+                            <td>result-duration</td>
+                            <td>マッチ終了後の最終結果表示時間</td>
+                            <td>15秒</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </section>
-    </main>
+            </section>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>EasyCTF</h4>
-                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+            <section class="content-section">
+                <h2>🎮 戦略的な要素</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4><span class="icon">💰</span> 通貨管理</h4>
+                        <p>各ゲームで通貨がリセットされるため、積極的に使用することが重要です。</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🛡️</span> 防御重視</h4>
+                        <p>勝利数が重要なため、リスクを避けて確実な勝利を狙う戦略も有効です。</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">⚔️</span> 攻撃的戦術</h4>
+                        <p>早期決着を狙い、相手チームの士気を下げる心理戦も効果的です。</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🔄</span> 適応力</h4>
+                        <p>相手の戦術を読み、ゲームごとに戦略を変更する柔軟性が勝利の鍵です。</p>
+                    </div>
                 </div>
-                <div class="footer-section">
-                    <h4>リンク</h4>
+            </section>
+
+            <section class="content-section">
+                <h2>📈 マッチ統計</h2>
+                
+                <h3>記録される情報</h3>
+                <ul>
+                    <li>各ゲームの勝者</li>
+                    <li>各ゲームのスコア</li>
+                    <li>プレイヤーのキル/デス</li>
+                    <li>旗キャプチャ数</li>
+                    <li>最終的な勝利チーム</li>
+                </ul>
+
+                <h3>結果発表</h3>
+                <p>マッチ終了時に以下が表示されます：</p>
+                <ul>
+                    <li>🏆 優勝チーム</li>
+                    <li>📊 最終スコア（例: 赤 3-2 青）</li>
+                    <li>⭐ MVP（最多キル/キャプチャ）</li>
+                    <li>🎯 各種統計</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>🏅 大会運営のヒント</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>推奨設定</h4>
                     <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                        <li>参加者数: 4-20名（チームバランスを考慮）</li>
+                        <li>ゲーム数: 3-7ゲーム（時間と集中力を考慮）</li>
+                        <li>フェーズ時間: 建築2分、戦闘2分（テンポ良く進行）</li>
                     </ul>
                 </div>
-                <div class="footer-section">
-                    <h4>ドキュメント</h4>
-                    <ul>
-                        <li><a href="gameplay.html">遊び方</a></li>
-                        <li><a href="admin.html">管理者ガイド</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                    </ul>
+
+                <h3>トーナメント形式</h3>
+                <ol>
+                    <li><strong>予選:</strong> 複数グループで3ゲームマッチ</li>
+                    <li><strong>準決勝:</strong> 上位チームで5ゲームマッチ</li>
+                    <li><strong>決勝:</strong> 最終2チームで7ゲームマッチ</li>
+                </ol>
+
+                <h3>配信・観戦向け設定</h3>
+                <ul>
+                    <li>観戦者モードを活用（<code>/ctf spectator</code>）</li>
+                    <li>結果表示時間を長めに設定（解説時間確保）</li>
+                    <li>BossBarとスコアボードで情報を可視化</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>❓ よくある質問</h2>
+                
+                <div class="alert alert-info">
+                    <h4>Q: マッチ途中でプレイヤーが抜けた場合は？</h4>
+                    <p>A: チームは続行されますが、人数不利になります。可能であれば代理プレイヤーの参加を推奨します。</p>
                 </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
-            </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: マッチを中断できますか？</h4>
+                    <p>A: 管理者は <code>/ctf stop <ゲーム名></code> で強制停止できますが、再開はできません。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: 引き分けの場合は？</h4>
+                    <p>A: 延長戦として追加ゲームを手動で開始してください。</p>
+                </div>
+            </section>
         </div>
-    </footer>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>🏆 Match System</h2>
+                <p>The match system runs multiple games consecutively to determine an overall winner.
+                Perfect for tournaments and competitions, enabling more strategic gameplay.</p>
+                
+                <div class="alert alert-success">
+                    <strong>Feature:</strong> Items are not carried between games; each game is completely independent.
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🎯 How to Start a Match</h2>
+                
+                <h3>Command Format</h3>
+                <div class="command-box">/ctf start <game name> match <number of games></div>
+                
+                <h3>Examples</h3>
+                <ul>
+                    <li><code>/ctf start arena1 match 3</code> - Start a 3-game match</li>
+                    <li><code>/ctf start arena1 match 5</code> - Start a 5-game match</li>
+                    <li><code>/ctf start arena1 match 7</code> - Start a 7-game match</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>Tip:</strong> Use odd numbers to avoid ties.
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📊 Match Progression</h2>
+                
+                <div class="phase-display">
+                    <div class="phase-item">
+                        <div class="icon">1️⃣</div>
+                        <div>Game 1</div>
+                        <div class="time">4 min</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">2️⃣</div>
+                        <div>Game 2</div>
+                        <div class="time">4 min</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="icon">3️⃣</div>
+                        <div>Game 3</div>
+                        <div class="time">4 min</div>
+                    </div>
+                    <div class="phase-item active">
+                        <div class="icon">🏆</div>
+                        <div>Results</div>
+                        <div class="time">15 sec</div>
+                    </div>
+                </div>
+
+                <h3>Flow</h3>
+                <ol>
+                    <li><strong>Match Start:</strong> All players teleported to temporary world</li>
+                    <li><strong>Game Execution:</strong> Build → Combat phase cycles</li>
+                    <li><strong>Game Transition:</strong> Immediate transition to next game (no interval)</li>
+                    <li><strong>Match End:</strong> Announcement of winning team</li>
+                </ol>
+
+                <h3>Score Display</h3>
+                <p>BossBar shows the following information:</p>
+                <ul>
+                    <li>Current game number (e.g., Game 2/5)</li>
+                    <li>Team wins (e.g., Red: 1 win, Blue: 1 win)</li>
+                    <li>Time remaining</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>⚙️ Match Configuration</h2>
+                
+                <h3>config.yml Settings</h3>
+                <div class="code-block">
+                    <pre>match:
+  default-target: 3          # Default number of games
+  intermediate-result-duration: 15  # Result display between games (seconds)
+  result-duration: 15        # Final result display time (seconds)</pre>
+                </div>
+
+                <h3>Setting Descriptions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Setting</th>
+                            <th>Description</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>default-target</td>
+                            <td>Games when number omitted in command</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td>intermediate-result-duration</td>
+                            <td>Result display after each game</td>
+                            <td>15 sec</td>
+                        </tr>
+                        <tr>
+                            <td>result-duration</td>
+                            <td>Final result display after match</td>
+                            <td>15 sec</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>🎮 Strategic Elements</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4><span class="icon">💰</span> Currency Management</h4>
+                        <p>Currency resets each game, so aggressive spending is important.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🛡️</span> Defensive Focus</h4>
+                        <p>Win count matters, so avoiding risks for certain victories can be effective.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">⚔️</span> Aggressive Tactics</h4>
+                        <p>Early victories can demoralize opponents psychologically.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="icon">🔄</span> Adaptability</h4>
+                        <p>Reading opponent tactics and changing strategy each game is key to victory.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📈 Match Statistics</h2>
+                
+                <h3>Recorded Information</h3>
+                <ul>
+                    <li>Winner of each game</li>
+                    <li>Score of each game</li>
+                    <li>Player kills/deaths</li>
+                    <li>Flag captures</li>
+                    <li>Final winning team</li>
+                </ul>
+
+                <h3>Results Announcement</h3>
+                <p>Displayed at match end:</p>
+                <ul>
+                    <li>🏆 Champion team</li>
+                    <li>📊 Final score (e.g., Red 3-2 Blue)</li>
+                    <li>⭐ MVP (most kills/captures)</li>
+                    <li>🎯 Various statistics</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>🏅 Tournament Operation Tips</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>Recommended Settings</h4>
+                    <ul>
+                        <li>Participants: 4-20 players (consider team balance)</li>
+                        <li>Games: 3-7 games (consider time and concentration)</li>
+                        <li>Phase times: 2 min build, 2 min combat (good pacing)</li>
+                    </ul>
+                </div>
+
+                <h3>Tournament Format</h3>
+                <ol>
+                    <li><strong>Qualifiers:</strong> Multiple groups with 3-game matches</li>
+                    <li><strong>Semifinals:</strong> Top teams with 5-game matches</li>
+                    <li><strong>Finals:</strong> Final 2 teams with 7-game match</li>
+                </ol>
+
+                <h3>Streaming/Spectator Settings</h3>
+                <ul>
+                    <li>Use spectator mode (<code>/ctf spectator</code>)</li>
+                    <li>Extend result display time (for commentary)</li>
+                    <li>Visualize info with BossBar and scoreboard</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>❓ Frequently Asked Questions</h2>
+                
+                <div class="alert alert-info">
+                    <h4>Q: What if a player leaves mid-match?</h4>
+                    <p>A: The team continues but at a disadvantage. Substitute players are recommended if possible.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: Can a match be paused?</h4>
+                    <p>A: Admins can force stop with <code>/ctf stop <game name></code> but cannot resume.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: What about ties?</h4>
+                    <p>A: Manually start an additional game as overtime.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.0 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/yourusername/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
 
     <script src="script.js"></script>
 </body>

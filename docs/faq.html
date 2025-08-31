@@ -3,366 +3,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>よくある質問 - EasyCTF</title>
+    <title>EasyCTF - FAQ</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <ul class="nav-menu">
-                <li><a href="index.html">ホーム</a></li>
-                <li><a href="gameplay.html">遊び方</a></li>
-                <li><a href="commands.html">コマンド</a></li>
-                <li><a href="shop.html">ショップ</a></li>
-                <li><a href="match.html">マッチ</a></li>
-                <li><a href="map-creation.html">マップ作成</a></li>
-                <li><a href="admin.html">管理者</a></li>
-                <li><a href="faq.html" class="active">FAQ</a></li>
-            </ul>
-            <div class="nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <header class="page-header">
-        <div class="container">
-            <h1>よくある質問（FAQ）</h1>
-            <p>EasyCTFに関するよくある質問と回答</p>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🎮 EasyCTF</span>
+            <span class="version">v2.0</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="content-section">
-            <h2><i class="fas fa-gamepad"></i> ゲームプレイ関連</h2>
-            
-            <div class="accordion">
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>旗を取ったのに得点できません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>自陣の旗が敵に奪われている場合、得点できません。まず自陣の旗を取り戻してから、敵の旗を持ち帰る必要があります。</p>
-                        <div class="alert alert-info">
-                            <i class="fas fa-lightbulb"></i>
-                            スコアボードで自陣の旗の状態を確認しましょう。
-                        </div>
-                    </div>
-                </div>
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
 
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>ショップが開けません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>以下を確認してください：</p>
-                        <ul>
-                            <li>エメラルドを右クリックしていますか？</li>
-                            <li>スポーン地点から15ブロック以内にいますか？</li>
-                            <li>ゲームが実行中（建築/戦闘フェーズ）ですか？</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>チームを変更できません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>チーム変更はゲーム開始前（WAITINGフェーズ）のみ可能です。ゲームが始まってしまうと変更できません。</p>
-                        <p>コマンド: <code>/ctf team red</code> または <code>/ctf team blue</code></p>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>死んでもアイテムが消えません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>ショップで購入した装備品（武器・防具）は死亡時も保持されます。消耗品（食料・エンダーパール等）はドロップします。</p>
-                        <table>
-                            <tr>
-                                <td><span class="badge badge-success">保持</span></td>
-                                <td>武器、防具、ツール</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-warning">ドロップ</span></td>
-                                <td>消耗品、食料</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>エンダーパールが使えません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>旗を持っている間はエンダーパールを使用できません。これは旗キャリアの移動を制限するための仕様です。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-wrench"></i> 技術的な問題</h2>
-            
-            <div class="accordion">
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>ゲームに参加できません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>以下を確認してください：</p>
-                        <ul>
-                            <li>既に別のゲームに参加していませんか？（<code>/ctf leave</code>で離脱）</li>
-                            <li>ゲームが満員ではありませんか？（各チーム最大10人）</li>
-                            <li>ゲーム名を正しく入力していますか？</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>ラグがひどいです</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>管理者に以下の対処を依頼してください：</p>
-                        <ul>
-                            <li>同時実行ゲーム数を減らす</li>
-                            <li>サーバーのRAMを増やす</li>
-                            <li>不要なプラグインを無効化する</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>日本語が文字化けします</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>サーバーの文字コード設定を確認してください。lang_ja.ymlファイルはUTF-8で保存されている必要があります。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-user-shield"></i> 管理者向けFAQ</h2>
-            
-            <div class="accordion">
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>ゲームが自動的に開始しません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>最小プレイヤー数（デフォルト2人）を満たしているか確認してください。config.ymlで<code>min-players</code>を調整できます。</p>
-                        <pre><code>default-game:
-  min-players: 2</code></pre>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>旗が設置できません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>以下を確認してください：</p>
-                        <ul>
-                            <li>対象のブロックを見ていますか？（最大100ブロック先まで）</li>
-                            <li>ワールドの保護設定が影響していませんか？</li>
-                            <li>権限（ctf.admin）を持っていますか？</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>設定が反映されません</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>多くの設定はサーバー再起動が必要です。また、実行中のゲームには影響しません。</p>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>マッチが途中で止まりました</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p><code>/ctf stop &lt;ゲーム名&gt;</code>で強制終了し、再度開始してください。ログにエラーが出ている場合は、GitHubのIssuesで報告してください。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-palette"></i> ゲーム設計のFAQ</h2>
-            
-            <div class="accordion">
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>おすすめのアリーナサイズは？</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>プレイヤー数によって以下を推奨：</p>
-                        <ul>
-                            <li>2v2～4v4: 50×50ブロック</li>
-                            <li>5v5～7v7: 100×100ブロック</li>
-                            <li>8v8～10v10: 150×150ブロック</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>建築フェーズで何を作るべき？</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>優先順位：</p>
-                        <ol>
-                            <li>旗の周りの壁（最重要）</li>
-                            <li>狙撃ポイント（高所）</li>
-                            <li>侵入防止の堀や障害物</li>
-                            <li>おとりの構造物</li>
-                        </ol>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>バランスの良いショップ価格設定は？</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>デフォルト設定がバランス調整済みです。変更する場合：</p>
-                        <ul>
-                            <li>初期通貨の2-3倍で基本装備が揃う</li>
-                            <li>最高級装備は3-4キル分の報酬が必要</li>
-                            <li>消耗品は気軽に買える価格に</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2><i class="fas fa-question-circle"></i> その他の質問</h2>
-            
-            <div class="accordion">
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>新機能の要望があります</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>GitHubのIssuesで要望を投稿してください。実装可能性を検討します。</p>
-                        <a href="https://github.com/yourusername/easy_ctf/issues" class="btn btn-primary">
-                            <i class="fab fa-github"></i> Issues
-                        </a>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>バグを見つけました</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>GitHubのIssuesで以下の情報と共に報告してください：</p>
-                        <ul>
-                            <li>サーバーバージョン</li>
-                            <li>プラグインバージョン</li>
-                            <li>エラーログ（あれば）</li>
-                            <li>再現手順</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>他のプラグインと競合します</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>以下のプラグインとの競合が報告されています：</p>
-                        <ul>
-                            <li>ワールド保護系プラグイン → CTFワールドを除外設定</li>
-                            <li>PvP管理系プラグイン → CTF中は無効化</li>
-                            <li>インベントリ管理系 → 互換性パッチを検討中</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <h3>ソースコードは公開されていますか？</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p>はい、GitHubで公開されています。プルリクエストも歓迎します。</p>
-                        <a href="https://github.com/yourusername/easy_ctf" class="btn btn-secondary">
-                            <i class="fab fa-github"></i> ソースコード
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <nav class="page-nav">
-            <a href="admin.html" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> 管理者ガイド
-            </a>
-            <a href="index.html" class="btn btn-primary">
-                トップページ <i class="fas fa-home"></i>
-            </a>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html" class="active"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
+            </ul>
         </nav>
-    </main>
+    </aside>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>EasyCTF</h4>
-                    <p>Minecraft Paper Server用の本格的なCTFプラグイン</p>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>❓ よくある質問</h2>
+                <p>EasyCTFに関するよくある質問とその回答をまとめました。</p>
+            </section>
+
+            <section class="content-section">
+                <h2>🎮 ゲームプレイについて</h2>
+                
+                <div class="alert alert-info">
+                    <h4>Q: ゲームに参加するにはどうすればいいですか？</h4>
+                    <p>A: <code>/ctf join <ゲーム名></code> コマンドを使用してください。自動的に人数の少ないチームに割り当てられます。</p>
                 </div>
-                <div class="footer-section">
-                    <h4>リンク</h4>
+
+                <div class="alert alert-info">
+                    <h4>Q: チームを変更できますか？</h4>
+                    <p>A: ゲーム開始前なら <code>/ctf team red</code> または <code>/ctf team blue</code> で変更できます。ただし、チームバランスが崩れる場合は変更できません。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: 旗を取るにはどうすればいいですか？</h4>
+                    <p>A: 敵チームのビーコンに1.5ブロック以内に近づくと自動的に旗を取得します。自陣の旗がある状態で持ち帰ると得点になります。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: 旗を持っているときにエンダーパールが使えません。</h4>
+                    <p>A: 仕様です。旗キャリアは瞬間移動系のアイテムが使用できなくなります。これはゲームバランスのための制限です。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: 死んだ旗はどうなりますか？</h4>
+                    <p>A: その場にドロップし、30秒後に自動的に元の位置に戻ります。味方が拾うことも可能です。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: シールドが回復しません。</h4>
+                    <p>A: シールドは自陣（自チームのブロック上またはビーコン周辺）でのみ回復します。敵陣では回復しません。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: 敵陣でダメージを受けるのはなぜですか？</h4>
+                    <p>A: 敵チームのブロック上やビーコン周辺（3x3エリア）では継続的にダメージを受けます。戦略的な進軍が必要です。</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>💎 ショップシステムについて</h2>
+                
+                <div class="alert alert-success">
+                    <h4>Q: ショップはどこで開けますか？</h4>
+                    <p>A: エメラルドを右クリックすることで、どこでもショップを開くことができます。使用範囲制限はありません。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: 通貨はチームで共有ですか？</h4>
+                    <p>A: はい、チーム全体で通貨を共有します。チームメイトと相談して使用してください。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: 割引はどのように適用されますか？</h4>
+                    <p>A: スコアで負けているチームに自動的に割引が適用されます。差が大きいほど割引率も高くなります（最大40%）。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: 死亡してもアイテムを失わないものはありますか？</h4>
+                    <p>A: はい、KEEP属性のアイテム（ネザライト装備、ダイヤ防具セットなど）は死亡しても保持されます。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: イベントチェストとは何ですか？</h4>
+                    <p>A: 戦闘フェーズ中にランダムに出現する特別なチェストです。ショップアイテムが無料で入手できます。</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🏗️ 建築について</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>Q: 建築フェーズで置いたブロックが白くなりました。</h4>
+                    <p>A: ビーコンまたは既存のチームブロックに接続していないブロックは自動的に中立化（白色）されます。必ず接続を保ってください。</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h4>Q: どんなブロックでも置けますか？</h4>
+                    <p>A: 建築フェーズでは、色付きブロック（コンクリート）以外のブロックは自由に配置できます。</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h4>Q: 戦闘フェーズでブロックを破壊できますか？</h4>
+                    <p>A: ピッケル、シャベル、バケツなど特定のツールでのみ可能です。ただし、旗やスポーン装飾は破壊できません。</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h4>Q: 建築フェーズでの飛行は可能ですか？</h4>
+                    <p>A: ゲームモードがCREATIVEに設定されている場合のみ可能です。デフォルトはADVENTUREモードです。</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>⚙️ 技術的な問題</h2>
+                
+                <div class="alert alert-danger">
+                    <h4>Q: ゲームに参加できません。</h4>
+                    <p>A: 以下を確認してください：</p>
                     <ul>
-                        <li><a href="https://github.com/yourusername/easy_ctf">GitHub</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/releases">ダウンロード</a></li>
-                        <li><a href="https://github.com/yourusername/easy_ctf/issues">Issues</a></li>
+                        <li><code>ctf.use</code> 権限があるか</li>
+                        <li>既に別のゲームに参加していないか</li>
+                        <li>ゲームが満員でないか</li>
+                        <li>ゲームが既に進行中でないか</li>
                     </ul>
                 </div>
-                <div class="footer-section">
-                    <h4>ドキュメント</h4>
-                    <ul>
-                        <li><a href="gameplay.html">遊び方</a></li>
-                        <li><a href="admin.html">管理者ガイド</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                    </ul>
+
+                <div class="alert alert-danger">
+                    <h4>Q: コマンドが使えません。</h4>
+                    <p>A: 権限を確認してください。基本コマンドには <code>ctf.use</code>、管理者コマンドには <code>ctf.admin</code> が必要です。</p>
                 </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 EasyCTF. Easy to play, Hard to master!</p>
-            </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: ゲームが開始しません。</h4>
+                    <p>A: 最小プレイヤー数（デフォルト2名）に達しているか確認してください。また、マップ設定が完了している必要があります。</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: ラグが発生します。</h4>
+                    <p>A: サーバーのメモリ割り当てを確認してください。推奨は4GB以上です。同時実行ゲーム数を減らすことも検討してください。</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: 言語が変更されません。</h4>
+                    <p>A: <code>config.yml</code> の <code>language</code> 設定を変更後、サーバーを再起動する必要があります。</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🏆 マッチシステムについて</h2>
+                
+                <div class="alert alert-info">
+                    <h4>Q: マッチモードとは何ですか？</h4>
+                    <p>A: 複数のゲームを連続して行い、最多勝利チームを決定するモードです。アイテムは各ゲーム間で引き継がれません。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: マッチを途中でやめることはできますか？</h4>
+                    <p>A: 管理者が <code>/ctf stop <ゲーム名></code> で強制停止できます。プレイヤーは個別に <code>/ctf leave</code> で離脱できます。</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: マッチの進行状況はどこで確認できますか？</h4>
+                    <p>A: BossBarに現在のゲーム数と各チームの勝利数が表示されます。</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 その他</h2>
+                
+                <div class="alert alert-success">
+                    <h4>Q: 観戦モードはありますか？</h4>
+                    <p>A: はい、<code>/ctf spectator <ゲーム名></code> で観戦者として参加できます。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: 複数のゲームを同時に実行できますか？</h4>
+                    <p>A: はい、サーバーリソースの範囲内で無制限に実行できます。各ゲームは独立したテンポラリワールドで動作します。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: マップはどのように保存されますか？</h4>
+                    <p>A: GZIP圧縮とBase64エンコードで効率的に保存されます。チェストの中身は自動的にクリアされます。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: カスタマイズは可能ですか？</h4>
+                    <p>A: <code>config.yml</code> で多くの設定をカスタマイズできます。フェーズ時間、通貨、報酬などを調整可能です。</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: バグを見つけたらどうすればいいですか？</h4>
+                    <p>A: GitHubのIssueページで報告してください。詳細な再現手順があると助かります。</p>
+                </div>
+            </section>
         </div>
-    </footer>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>❓ Frequently Asked Questions</h2>
+                <p>Common questions and answers about EasyCTF.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>🎮 About Gameplay</h2>
+                
+                <div class="alert alert-info">
+                    <h4>Q: How do I join a game?</h4>
+                    <p>A: Use the <code>/ctf join <game name></code> command. You'll be automatically assigned to the team with fewer players.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: Can I change teams?</h4>
+                    <p>A: Before the game starts, you can use <code>/ctf team red</code> or <code>/ctf team blue</code>. Changes are blocked if they would unbalance teams.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: How do I capture the flag?</h4>
+                    <p>A: Get within 1.5 blocks of the enemy beacon to automatically pick up the flag. Return it to your base while your flag is present to score.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: I can't use ender pearls while carrying the flag.</h4>
+                    <p>A: This is intentional. Flag carriers cannot use teleportation items for game balance.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: What happens to a dropped flag?</h4>
+                    <p>A: It drops in place and automatically returns to base after 30 seconds. Teammates can pick it up.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: My shield isn't recovering.</h4>
+                    <p>A: Shields only recover in your own territory (on team blocks or near your beacon). They don't recover in enemy territory.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: Why do I take damage in enemy territory?</h4>
+                    <p>A: You take continuous damage on enemy team blocks and near their beacon (3x3 area). Strategic advancement is necessary.</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>💎 About Shop System</h2>
+                
+                <div class="alert alert-success">
+                    <h4>Q: Where can I open the shop?</h4>
+                    <p>A: Right-click an emerald to open the shop from anywhere. There are no range restrictions.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: Is currency shared with the team?</h4>
+                    <p>A: Yes, currency is shared across the entire team. Coordinate with teammates for purchases.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: How are discounts applied?</h4>
+                    <p>A: Teams losing in score automatically receive discounts. Larger score differences mean higher discounts (up to 40%).</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: Are there items I keep after death?</h4>
+                    <p>A: Yes, KEEP items (Netherite equipment, Diamond armor sets, etc.) are retained after death.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: What are event chests?</h4>
+                    <p>A: Special chests that randomly appear during combat phase. They contain free shop items.</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🏗️ About Building</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>Q: My blocks turned white during build phase.</h4>
+                    <p>A: Blocks not connected to beacons or existing team blocks automatically neutralize (turn white). Always maintain connections.</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h4>Q: Can I place any blocks?</h4>
+                    <p>A: During build phase, you can freely place any blocks except colored blocks (concrete).</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h4>Q: Can I break blocks during combat phase?</h4>
+                    <p>A: Only with specific tools like pickaxes, shovels, and buckets. Flags and spawn decorations cannot be destroyed.</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h4>Q: Can I fly during build phase?</h4>
+                    <p>A: Only if game mode is set to CREATIVE. Default is ADVENTURE mode.</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>⚙️ Technical Issues</h2>
+                
+                <div class="alert alert-danger">
+                    <h4>Q: I can't join a game.</h4>
+                    <p>A: Check the following:</p>
+                    <ul>
+                        <li>You have <code>ctf.use</code> permission</li>
+                        <li>You're not in another game</li>
+                        <li>The game isn't full</li>
+                        <li>The game hasn't already started</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: Commands don't work.</h4>
+                    <p>A: Check permissions. Basic commands need <code>ctf.use</code>, admin commands need <code>ctf.admin</code>.</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: The game won't start.</h4>
+                    <p>A: Check if minimum players (default 2) are present. Map configuration must also be complete.</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: I'm experiencing lag.</h4>
+                    <p>A: Check server memory allocation. 4GB+ is recommended. Consider reducing concurrent games.</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h4>Q: Language won't change.</h4>
+                    <p>A: After changing <code>language</code> in <code>config.yml</code>, server restart is required.</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🏆 About Match System</h2>
+                
+                <div class="alert alert-info">
+                    <h4>Q: What is match mode?</h4>
+                    <p>A: Multiple consecutive games to determine the overall winner. Items are not carried between games.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: Can I quit a match midway?</h4>
+                    <p>A: Admins can force stop with <code>/ctf stop <game name></code>. Players can leave individually with <code>/ctf leave</code>.</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4>Q: Where can I check match progress?</h4>
+                    <p>A: The BossBar displays current game number and each team's wins.</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 Others</h2>
+                
+                <div class="alert alert-success">
+                    <h4>Q: Is there a spectator mode?</h4>
+                    <p>A: Yes, use <code>/ctf spectator <game name></code> to join as a spectator.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: Can multiple games run simultaneously?</h4>
+                    <p>A: Yes, unlimited within server resources. Each game runs in an independent temporary world.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: How are maps saved?</h4>
+                    <p>A: Efficiently saved with GZIP compression and Base64 encoding. Chest contents are automatically cleared.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: Is customization possible?</h4>
+                    <p>A: Many settings can be customized in <code>config.yml</code>. Adjust phase times, currency, rewards, etc.</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>Q: What if I find a bug?</h4>
+                    <p>A: Please report on the GitHub Issues page. Detailed reproduction steps are helpful.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.0 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/yourusername/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
 
     <script src="script.js"></script>
 </body>

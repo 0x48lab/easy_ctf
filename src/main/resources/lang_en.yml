@@ -575,6 +575,7 @@ setup:
 shield:
   critical: Shield at critical level!
   decreasing: Shield decreasing on enemy blocks!
+  beacon-area: Shield decreasing near enemy beacon!
   status: 'Shield: [{bar}] {percent}%'
   weakening: Shield weakening!
 shop:
