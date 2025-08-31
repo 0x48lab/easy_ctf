@@ -2,14 +2,12 @@
 
 <div align="center">
   
-[![Version](https://img.shields.io/badge/Version-2.0-blue.svg)](https://github.com/yourusername/easy_ctf)
+[![Version](https://img.shields.io/badge/Version-2.0-blue.svg)](https://github.com/0x48lab/easy_ctf)
 [![Paper](https://img.shields.io/badge/Paper-1.21.5+-green.svg)](https://papermc.io)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
 **Strategic CTF Plugin for Minecraft Paper Servers**
-
-[Japanese](README.md) | English
 
 </div>
 
@@ -204,7 +202,7 @@ event-chest:
 ## 🔧 Build Instructions
 
 ```bash
-git clone https://github.com/yourusername/easy_ctf.git
+git clone https://github.com/0x48lab/easy_ctf.git
 cd easy_ctf
 ./gradlew shadowJar
 ```
@@ -232,13 +230,12 @@ Generated JAR file: `build/libs/easy_ctf-x.x.x-all.jar`
 
 ## 🤝 Contributing
 
-Pull requests are welcome! Report bugs and suggest features in [Issues](https://github.com/yourusername/easy_ctf/issues).
+Pull requests are welcome! Report bugs and suggest features in [Issues](https://github.com/0x48lab/easy_ctf/issues).
 
 ## 📞 Support
 
-- 📧 Email: support@example.com
-- 💬 Discord: [Join Link](https://discord.gg/example)
-- 📚 [Wiki](https://github.com/yourusername/easy_ctf/wiki)
+- 📚 [docs](https://0x48lab.github.io/easy_ctf/)
+- 📚 [wiki](https://github.com/0x48lab/easy_ctf/wiki)
 
 ## 📄 License
 

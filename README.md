@@ -1,13 +1,13 @@
-# EasyCTF - Minecraft Capture The Flag Plugin
+# 🏳️ EasyCTF - Minecraft CTFプラグイン
 
 <div align="center">
+  
+[![Version](https://img.shields.io/badge/Version-2.0-blue.svg)](https://github.com/0x48lab/easy_ctf)
+[![Paper](https://img.shields.io/badge/Paper-1.21.5+-green.svg)](https://papermc.io)
+[![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-[![Paper](https://img.shields.io/badge/Paper-1.21.5-blue.svg)](https://papermc.io/)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.22-purple.svg)](https://kotlinlang.org/)
-[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-**マインクラフトで本格的なCTF（Capture The Flag）を楽しもう！**
+**Minecraft Paper サーバー用の戦略的CTFプラグイン**
 
 日本語 | [English](README_EN.md)
 
@@ -37,7 +37,7 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 
 ### インストール
 
-1. [Releases](https://github.com/yourusername/easy_ctf/releases)から最新版をダウンロード
+1. [Releases](https://github.com/0x48lab/easy_ctf/releases)から最新版をダウンロード
 2. `easy_ctf-x.x.x.jar`をサーバーの`plugins`フォルダに配置
 3. サーバーを起動
 
@@ -236,14 +236,14 @@ event-chest:
 ## 🔧 ビルド方法
 
 ```bash
-git clone https://github.com/yourusername/easy_ctf.git
+git clone https://github.com/0x48lab/easy_ctf.git
 cd easy_ctf
 ./gradlew shadowJar
 ```
 
 生成されたJARファイル: `build/libs/easy_ctf-x.x.x-all.jar`
 
-## 📝 特記事項
+## 📝 リリースノート
 
 ### 最新の変更点
 - ✅ フェーズ間のインターバル削除（即座に移行）
@@ -264,13 +264,12 @@ cd easy_ctf
 
 ## 🤝 貢献
 
-プルリクエストを歓迎します！バグ報告や機能提案は[Issues](https://github.com/yourusername/easy_ctf/issues)へ。
+プルリクエストを歓迎します！バグ報告や機能提案は[Issues](https://github.com/0x48lab/easy_ctf/issues)へ。
 
 ## 📞 サポート
 
-- 📧 Email: support@example.com
-- 💬 Discord: [参加リンク](https://discord.gg/example)
-- 📚 [Wiki](https://github.com/yourusername/easy_ctf/wiki)
+- 📚 [ドキュメント](https://0x48lab.github.io/easy_ctf/)
+- 📚 [Wiki](https://github.com/0x48lab/easy_ctf/wiki)
 
 ## 📄 ライセンス
 
