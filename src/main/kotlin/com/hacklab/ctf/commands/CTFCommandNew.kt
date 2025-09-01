@@ -53,6 +53,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "setpos1" -> return handleSetPos1Command(sender, args)
             "setpos2" -> return handleSetPos2Command(sender, args)
             "savemap" -> return handleSaveMapCommand(sender, args)
+            // 管理者向けプレイヤー管理コマンド
+            "addplayer" -> return handleAddPlayerCommand(sender, args)
+            "changeteam" -> return handleChangeTeamCommand(sender, args)
             else -> {
                 sendHelpMessage(sender)
                 return true
@@ -1119,6 +1122,144 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         }
         if (config.blueSpawnLocations.isEmpty() && config.blueSpawnLocation == null) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-not-set"), NamedTextColor.GRAY))
+        }
+        
+        return true
+    }
+
+    private fun handleAddPlayerCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.no-permission"))
+            return true
+        }
+        
+        if (args.size < 3) {
+            sender.sendMessage(Component.text("Usage: /ctf addplayer <game> <player> [red|blue]", NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val gameName = args[1]
+        val targetPlayerName = args[2]
+        val targetPlayer = plugin.server.getPlayer(targetPlayerName)
+        
+        if (targetPlayer == null) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.player-not-found", "player" to targetPlayerName))
+            return true
+        }
+        
+        val game = gameManager.getGame(gameName)
+        if (game == null) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.game-not-found", "name" to gameName))
+            return true
+        }
+        
+        // チーム指定があれば取得
+        val team = if (args.size >= 4) {
+            when (args[3].lowercase()) {
+                "red" -> com.hacklab.ctf.utils.Team.RED
+                "blue" -> com.hacklab.ctf.utils.Team.BLUE
+                else -> null
+            }
+        } else null
+        
+        // 既存のゲームから削除
+        val currentGame = gameManager.getPlayerGame(targetPlayer)
+        if (currentGame != null) {
+            gameManager.removePlayerFromGame(targetPlayer)
+        }
+        
+        // 管理者権限でゲームに追加
+        if (gameManager.addPlayerToGameAsAdmin(targetPlayer, gameName, team)) {
+            // 成功メッセージ
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.player-added", 
+                "player" to targetPlayer.name, 
+                "game" to gameName))
+            
+            // 対象プレイヤーに通知
+            targetPlayer.sendMessage(plugin.languageManager.getMessageAsComponent("admin.force-joined", 
+                "admin" to sender.name,
+                "game" to gameName))
+            
+            // ゲーム内の他のプレイヤーに通知
+            game.getAllPlayers().forEach { player ->
+                if (player != targetPlayer) {
+                    player.sendMessage(plugin.languageManager.getMessageAsComponent("admin.player-joined-by-admin",
+                        "player" to targetPlayer.name,
+                        "admin" to sender.name))
+                }
+            }
+        } else {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.add-player-failed"))
+        }
+        
+        return true
+    }
+    
+    private fun handleChangeTeamCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.no-permission"))
+            return true
+        }
+        
+        if (args.size < 3) {
+            sender.sendMessage(Component.text("Usage: /ctf changeteam <player> <red|blue>", NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val targetPlayerName = args[1]
+        val targetPlayer = plugin.server.getPlayer(targetPlayerName)
+        
+        if (targetPlayer == null) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.player-not-found", "player" to targetPlayerName))
+            return true
+        }
+        
+        val game = gameManager.getPlayerGame(targetPlayer)
+        if (game == null) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.player-not-in-game", "player" to targetPlayerName))
+            return true
+        }
+        
+        val newTeam = when (args[2].lowercase()) {
+            "red" -> com.hacklab.ctf.utils.Team.RED
+            "blue" -> com.hacklab.ctf.utils.Team.BLUE
+            else -> {
+                sender.sendMessage(Component.text("Invalid team. Use 'red' or 'blue'", NamedTextColor.RED))
+                return true
+            }
+        }
+        
+        val currentTeam = game.getPlayerTeam(targetPlayer.uniqueId)
+        if (currentTeam == newTeam) {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.already-in-team", 
+                "player" to targetPlayer.name,
+                "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")))
+            return true
+        }
+        
+        // チーム変更を実行
+        if (game.changePlayerTeam(targetPlayer, newTeam, isAdminAction = true)) {
+            // 成功メッセージ
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.team-changed",
+                "player" to targetPlayer.name,
+                "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")))
+            
+            // 対象プレイヤーに通知
+            targetPlayer.sendMessage(plugin.languageManager.getMessageAsComponent("admin.force-team-changed",
+                "admin" to sender.name,
+                "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")))
+            
+            // ゲーム内の他のプレイヤーに通知
+            game.getAllPlayers().forEach { player ->
+                if (player != targetPlayer) {
+                    player.sendMessage(plugin.languageManager.getMessageAsComponent("admin.player-team-changed-by-admin",
+                        "player" to targetPlayer.name,
+                        "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}"),
+                        "admin" to sender.name))
+                }
+            }
+        } else {
+            sender.sendMessage(plugin.languageManager.getMessageAsComponent("admin.change-team-failed"))
         }
         
         return true

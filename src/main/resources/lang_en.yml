@@ -196,6 +196,7 @@ flag:
   returned-fire: '{team} flag was returned due to fire'
   returned-void: '{team} flag was returned due to void'
   already-carrying: Already carrying a flag
+  dropped-admin-team-change: '{flag} flag was dropped due to {player} team change'
   captured-by: '{player} captured the flag'
   concrete-name: '{team} concrete'
   current-score: 'Current score: Red {red} - Blue {blue}'
@@ -310,6 +311,19 @@ log:
   shop-purchase-called: Shop purchase called
   skip-map-restore: Skip map restore
   temp-world-failed: Temp World Failed failed
+  explosion-protected: '&cImportant areas are protected from explosions!'
+admin:
+  player-not-found: 'Player {player} not found'
+  player-added: 'Added {player} to game {game}'
+  force-joined: 'You were added to game {game} by admin {admin}'
+  player-joined-by-admin: '{player} was added by admin {admin}'
+  add-player-failed: 'Failed to add player'
+  player-not-in-game: '{player} is not in a game'
+  already-in-team: '{player} is already in {team} team'
+  team-changed: 'Changed {player} to {team} team'
+  force-team-changed: 'You were moved to {team} team by admin {admin}'
+  player-team-changed-by-admin: '{player} was moved to {team} team by admin {admin}'
+  change-team-failed: 'Failed to change team'
 manager:
   auto-detect-failed: Auto Detect Failed failed
   cannot-save-running: Cannot save running

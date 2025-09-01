@@ -196,6 +196,7 @@ flag:
   returned-fire: '{team}の旗が炎により返却されました'
   returned-void: '{team}の旗が奈落により返却されました'
   already-carrying: 既に旗を持っています
+  dropped-admin-team-change: '{player}のチーム変更により{flag}の旗がドロップしました'
   captured-by: '{player}が旗をキャプチャしました'
   concrete-name: '{team}のコンクリート'
   current-score: '現在のスコア: 赤{red} - 青{blue}'
@@ -310,6 +311,19 @@ log:
   shop-purchase-called: Shop purchase called
   skip-map-restore: '[skip map restore]'
   temp-world-failed: Temp World Failed 失敗しました
+  explosion-protected: '&c重要なエリアは爆発から保護されています！'
+admin:
+  player-not-found: 'プレイヤー {player} が見つかりません'
+  player-added: '{player} をゲーム {game} に追加しました'
+  force-joined: '管理者 {admin} によってゲーム {game} に追加されました'
+  player-joined-by-admin: '{player} が管理者 {admin} によって追加されました'
+  add-player-failed: 'プレイヤーの追加に失敗しました'
+  player-not-in-game: '{player} はゲームに参加していません'
+  already-in-team: '{player} は既に {team} チームです'
+  team-changed: '{player} を {team} チームに変更しました'
+  force-team-changed: '管理者 {admin} によって {team} チームに変更されました'
+  player-team-changed-by-admin: '{player} が管理者 {admin} によって {team} チームに変更されました'
+  change-team-failed: 'チーム変更に失敗しました'
 manager:
   auto-detect-failed: Auto Detect Failed 失敗しました
   cannot-save-running: '実行中のゲームは保存できません'

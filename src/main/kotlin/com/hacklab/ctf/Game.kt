@@ -248,8 +248,9 @@ class Game(
         calculateMapCenter()
     }
     
-    fun addPlayer(player: Player, team: Team? = null): Boolean {
-        if (state != GameState.WAITING) {
+    fun addPlayer(player: Player, team: Team? = null, isAdminAction: Boolean = false): Boolean {
+        // 管理者権限の場合はゲーム状態チェックをスキップ
+        if (!isAdminAction && state != GameState.WAITING) {
             plugin.logger.warning(plugin.languageManager.getMessage("log.player-cannot-join", "player" to player.name, "game" to name, "state" to state.toString()))
             when (state) {
                 GameState.STARTING, GameState.RUNNING -> {
@@ -304,10 +305,169 @@ class Game(
         // マッチに追加
         matchWrapper?.players?.put(player.uniqueId, player)
         
-        // 自動開始チェック
-        checkAutoStart()
+        // ゲーム実行中の場合の処理（管理者による追加時）
+        if (isAdminAction && (state == GameState.RUNNING || state == GameState.STARTING)) {
+            // 現在のフェーズに応じて装備を付与
+            if (phase == GamePhase.BUILD) {
+                plugin.equipmentManager.giveBuildPhaseEquipment(player)
+            } else {
+                plugin.equipmentManager.giveCombatPhaseEquipment(player, selectedTeam)
+            }
+            
+            // スポーン地点にテレポート
+            when (selectedTeam) {
+                Team.RED -> {
+                    redSpawnLocation?.let { spawn ->
+                        player.teleport(spawn)
+                    }
+                }
+                Team.BLUE -> {
+                    blueSpawnLocation?.let { spawn ->
+                        player.teleport(spawn)
+                    }
+                }
+                else -> {}
+            }
+            
+            // ゲームモードを設定
+            player.gameMode = if (phase == GamePhase.BUILD) {
+                GameMode.valueOf(buildPhaseGameMode)
+            } else {
+                org.bukkit.GameMode.ADVENTURE
+            }
+        }
+        
+        // 自動開始チェック（管理者による追加時はスキップ）
+        if (!isAdminAction) {
+            checkAutoStart()
+        }
         
         // スコアボードを更新（人数表示のため）
+        updateScoreboard()
+        
+        return true
+    }
+
+    
+    /**
+     * プレイヤーのチームを変更する（管理者用）
+     */
+    fun changePlayerTeam(player: Player, newTeam: Team, isAdminAction: Boolean = false): Boolean {
+        // プレイヤーが現在ゲームに参加しているか確認
+        val currentTeam = getPlayerTeam(player.uniqueId)
+        if (currentTeam == null) {
+            return false
+        }
+        
+        // 同じチームへの変更は無視
+        if (currentTeam == newTeam) {
+            return false
+        }
+        
+        // 管理者権限でない場合、ゲーム実行中はチーム変更不可
+        if (!isAdminAction && state != GameState.WAITING) {
+            return false
+        }
+        
+        // 新チームの人数チェック
+        val targetTeamSize = when (newTeam) {
+            Team.RED -> redTeam.size
+            Team.BLUE -> blueTeam.size
+            Team.SPECTATOR -> 0 // 観戦者は人数制限なし
+        }
+        
+        if (newTeam != Team.SPECTATOR && targetTeamSize >= maxPlayersPerTeam) {
+            return false
+        }
+        
+        // 旗を持っている場合はドロップ
+        if (redFlagCarrier == player.uniqueId || blueFlagCarrier == player.uniqueId) {
+            val carrierTeam = if (redFlagCarrier == player.uniqueId) Team.RED else Team.BLUE
+            dropFlag(player, carrierTeam, player.location)
+            if (carrierTeam == Team.RED) {
+                redFlagCarrier = null
+            } else {
+                blueFlagCarrier = null
+            }
+            
+            // 旗ドロップメッセージ
+            getAllPlayers().forEach { p ->
+                p.sendMessage(plugin.languageManager.getMessageAsComponent("flags.dropped-admin-team-change",
+                    "player" to player.name,
+                    "flag" to plugin.languageManager.getMessage("teams.${carrierTeam.name.lowercase()}")
+                ))
+            }
+        }
+        
+        // 現在のチームから削除
+        when (currentTeam) {
+            Team.RED -> redTeam.remove(player.uniqueId)
+            Team.BLUE -> blueTeam.remove(player.uniqueId)
+            Team.SPECTATOR -> spectators.remove(player.uniqueId)
+        }
+        
+        // 新しいチームに追加
+        when (newTeam) {
+            Team.RED -> redTeam.add(player.uniqueId)
+            Team.BLUE -> blueTeam.add(player.uniqueId)
+            Team.SPECTATOR -> spectators.add(player.uniqueId)
+        }
+        
+        // ゲーム実行中の場合の処理
+        if (state == GameState.RUNNING || state == GameState.STARTING) {
+            // 死亡時と同様の処理（インベントリクリア、新装備付与）
+            player.inventory.clear()
+            
+            // 新チームの装備を付与
+            if (newTeam != Team.SPECTATOR) {
+                if (phase == GamePhase.BUILD) {
+                    plugin.equipmentManager.giveBuildPhaseEquipment(player)
+                } else {
+                    plugin.equipmentManager.giveCombatPhaseEquipment(player, newTeam)
+                }
+            } else {
+                // 観戦者モードの設定
+                player.gameMode = org.bukkit.GameMode.SPECTATOR
+            }
+            
+            // 新チームのスポーン地点にテレポート
+            when (newTeam) {
+                Team.RED -> {
+                    redSpawnLocation?.let { spawn ->
+                        player.teleport(spawn)
+                    }
+                }
+                Team.BLUE -> {
+                    blueSpawnLocation?.let { spawn ->
+                        player.teleport(spawn)
+                    }
+                }
+                Team.SPECTATOR -> {
+                    // 観戦者はマップの中心へ
+                    val spawnLoc = redSpawnLocation ?: blueSpawnLocation ?: mapCenterLocation
+                    spawnLoc?.let { loc ->
+                        player.teleport(findSafeSpectatorLocation(loc))
+                    }
+                }
+            }
+            
+            // ゲームモードを設定
+            if (newTeam != Team.SPECTATOR) {
+                player.gameMode = if (phase == GamePhase.BUILD) {
+                    GameMode.valueOf(buildPhaseGameMode)
+                } else {
+                    org.bukkit.GameMode.ADVENTURE
+                }
+            }
+            
+            // ショップ購入履歴をリセット（オプション）
+            // shopManager.resetPlayerPurchases(player)
+        }
+        
+        // タブリストの色を更新
+        updatePlayerTabColor(player)
+        
+        // スコアボードを更新
         updateScoreboard()
         
         return true

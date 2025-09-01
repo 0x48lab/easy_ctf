@@ -41,8 +41,11 @@ import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.ItemDespawnEvent
 import org.bukkit.event.entity.EntityCombustEvent
+import org.bukkit.event.entity.EntityExplodeEvent
+import org.bukkit.event.block.BlockExplodeEvent
 import org.bukkit.entity.Item
 import org.bukkit.scheduler.BukkitRunnable
+import org.bukkit.block.Block
 
 class GameListenerNew(private val plugin: Main) : Listener {
     
@@ -1776,6 +1779,83 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         plugin.logger.info("[Flag] Flag returned due to combustion")
                     }
                 }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onEntityExplode(event: EntityExplodeEvent) {
+        val entity = event.entity
+        val world = entity.world
+        
+        // テンポラリワールド内でのみ処理
+        if (!world.name.startsWith("ctf_temp_")) return
+        
+        // ワールド名からゲーム名を抽出
+        val gameName = world.name.removePrefix("ctf_temp_")
+        val game = gameManager.getGame(gameName) ?: return
+        
+        // ゲームが実行中でない場合は何もしない
+        if (game.state != GameState.RUNNING) return
+        
+        // 保護されたブロックを爆発から除外
+        val blocksToRemove = mutableListOf<org.bukkit.block.Block>()
+        for (block in event.blockList()) {
+            if (isProtectedBlock(game, block.location)) {
+                blocksToRemove.add(block)
+            }
+        }
+        
+        // 保護されたブロックを破壊リストから除外
+        event.blockList().removeAll(blocksToRemove)
+        
+        // 除外したブロックがある場合はメッセージを表示
+        if (blocksToRemove.isNotEmpty()) {
+            // TNTを設置したプレイヤーを特定（難しいため、近くのプレイヤーに通知）
+            val nearbyPlayers = entity.getNearbyEntities(10.0, 10.0, 10.0)
+                .filterIsInstance<Player>()
+                .filter { game.getAllPlayers().contains(it) }
+            
+            for (player in nearbyPlayers) {
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("game.explosion_protected"))
+            }
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onBlockExplode(event: BlockExplodeEvent) {
+        val block = event.block
+        val world = block.world
+        
+        // テンポラリワールド内でのみ処理
+        if (!world.name.startsWith("ctf_temp_")) return
+        
+        // ワールド名からゲーム名を抽出
+        val gameName = world.name.removePrefix("ctf_temp_")
+        val game = gameManager.getGame(gameName) ?: return
+        
+        // ゲームが実行中でない場合は何もしない
+        if (game.state != GameState.RUNNING) return
+        
+        // 保護されたブロックを爆発から除外
+        val blocksToRemove = mutableListOf<org.bukkit.block.Block>()
+        for (explodedBlock in event.blockList()) {
+            if (isProtectedBlock(game, explodedBlock.location)) {
+                blocksToRemove.add(explodedBlock)
+            }
+        }
+        
+        // 保護されたブロックを破壊リストから除外
+        event.blockList().removeAll(blocksToRemove)
+        
+        // 除外したブロックがある場合はメッセージを表示
+        if (blocksToRemove.isNotEmpty()) {
+            // 近くのプレイヤーに通知
+            val nearbyPlayers = block.location.getNearbyEntitiesByType(Player::class.java, 10.0)
+                .filter { game.getAllPlayers().contains(it) }
+            
+            for (player in nearbyPlayers) {
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("game.explosion_protected"))
             }
         }
     }

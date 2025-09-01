@@ -258,6 +258,27 @@ class GameManager(private val plugin: Main) {
         
         return false
     }
+
+    
+    /**
+     * 管理者権限でプレイヤーをゲームに追加
+     */
+    fun addPlayerToGameAsAdmin(player: Player, gameName: String, team: com.hacklab.ctf.utils.Team? = null): Boolean {
+        val game = games[gameName.lowercase()] ?: return false
+        
+        // 既存ゲームから削除
+        val currentGame = getPlayerGame(player)
+        currentGame?.let { removePlayerFromGame(player) }
+        
+        // 管理者権限で追加
+        if (game.addPlayer(player, team, isAdminAction = true)) {
+            playerGames[player.uniqueId] = gameName.lowercase()
+            matches[gameName.lowercase()]?.players?.put(player.uniqueId, player)
+            return true
+        }
+        
+        return false
+    }
     
     /**
      * プレイヤーを観戦者として追加
