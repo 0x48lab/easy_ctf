@@ -18,7 +18,7 @@ command:
   already-in-game: 'すでにゲームに参加しています'
   already-in-team: 'すでにチームに所属しています'
   auto-param-hint: '引数は自動で設定されます'
-  blue-flag-detected: Blue 旗 detected
+  blue-flag-detected: '青チームの旗を検出しました: {location}'
   blue-flag-set: 青 旗 設定されました
   blue-spawn-added: '青チームのスポーン地点を追加しました'
   blue-spawn-detected: '青チームのスポーン地点を検出しました'
@@ -28,7 +28,7 @@ command:
   cannot-change-team-after-start: 'ゲーム開始後はチームを変更できません'
   current-team: '現在のチーム'
   detection-result: '検出結果: {result}'
-  flags-not-set-warning: 旗s not warning 設定されました
+  flags-not-set-warning: '警告: 旗が設定されていません'
   game-count-min: '最小ゲーム数'
   game-created: 'ゲームを作成しました'
   game-deleted: 'ゲームを削除しました'
@@ -49,8 +49,8 @@ command:
   help-list: '全ゲームの一覧を表示します'
   help-listspawns: 'スポーン地点の一覧を表示します'
   help-removespawn: 'スポーン地点を削除します'
-  help-setflag: help旗 設定されました
-  help-setspawn: helpスポーン 設定されました
+  help-setflag: '旗の位置を設定します'
+  help-setspawn: 'スポーン地点を設定します'
   help-spectator: '観戦者として参加します'
   help-start: 'ゲームまたはマッチを開始します'
   help-start-note1: '単一ゲーム: /ctf start <ゲーム名>'
@@ -59,24 +59,30 @@ command:
   help-stop: 'ゲームまたはマッチを停止します'
   help-team: 'チームを変更します'
   help-update: 'ゲーム設定を更新します'
-  info-basic-settings: info basictings 設定されました
-  info-blue-flag: Info 青 旗
-  info-blue-flag-not-set: info 青 旗 not 設定されました
+  help-addplayer: '/ctf addplayer <ゲーム> <プレイヤー> [red|blue] - プレイヤーを強制的にゲームに参加させる'
+  help-changeteam: '/ctf changeteam <プレイヤー> <red|blue> - プレイヤーを強制的にチーム移動'
+  help-stats: '/ctf stats [プレイヤー] - プレイヤーの統計を表示'
+  help-leaderboard: '/ctf leaderboard [カテゴリ] - ランキングを表示'
+  help-resetstats: '/ctf resetstats <プレイヤー> - プレイヤーの統計をリセット'
+  help-balance: '/ctf balance <ゲーム> [apply] - チームバランスを確認・適用'
+  info-basic-settings: '基本設定:'
+  info-blue-flag: '青チームの旗: {location}'
+  info-blue-flag-not-set: '青チームの旗: 未設定'
   info-blue-spawn: '青チームスポーン: {location}'
   info-blue-spawn-multiple: '青チームスポーン（複数）: {count}箇所'
   info-blue-spawn-same: '青チームスポーン（旗と同じ位置）'
-  info-build-mode: Info 建築 mode
+  info-build-mode: '建築モード: {mode}'
   info-build-phase: '建築フェーズ: {duration}秒'
   info-capture-reward: 'キャプチャ報酬: {amount}G'
-  info-combat-phase: Info 戦闘 フェーズ
-  info-currency-settings: info 通貨tings 設定されました
+  info-combat-phase: '戦闘フェーズ: {duration}秒'
+  info-currency-settings: '通貨設定:'
   info-footer: '========================'
   info-header: '===== ゲーム情報: {game} ====='
-  info-initial-currency: Info initial 通貨
+  info-initial-currency: '初期通貨: {amount}G'
   info-kill-reward: 'キル報酬: {amount}G'
-  info-max-players: Info max プレイヤーs
-  info-min-players: Info min プレイヤーs
-  info-other-settings: info othertings 設定されました
+  info-max-players: '最大プレイヤー数: チームあたり{max}人'
+  info-min-players: '最小プレイヤー数: {min}人'
+  info-other-settings: 'その他の設定:'
   info-phase-settings: info フェーズtings 設定されました
   info-position-settings: info positiontings 設定されました
   info-red-flag: Info 赤 旗
@@ -93,7 +99,7 @@ command:
   invalid-usage: '使用方法が間違っています'
   join-confirm: 'ゲーム{game}に参加しました'
   join-confirm-time: 'ゲーム{game}に参加しました（{seconds}秒後に開始）'
-  join-failed: Join Failed 失敗しました
+  join-failed: 'ゲームへの参加に失敗しました'
   list-blue-count: List 青 count
   list-item: List アイテム
   list-red-count: List 赤 count
@@ -118,51 +124,51 @@ command:
   not-in-game: 'ゲームに参加していません'
   player-changed-team: '{player}がチームを変更しました'
   player-only: 'プレイヤーのみ実行可能です'
-  red-flag-detected: Red 旗 detected
+  red-flag-detected: '赤チームの旗を検出しました: {location}'
   red-flag-set: 赤 旗 設定されました
-  red-spawn-added: Red スポーン added
-  red-spawn-detected: Red スポーン detected
-  red-spawn-removed: Red スポーン removed
+  red-spawn-added: 赤チームのスポーン地点を追加しました
+  red-spawn-detected: '赤チームのスポーン地点を検出しました: {location}'
+  red-spawn-removed: 赤チームのスポーン地点を削除しました
   red-spawn-set: 赤 スポーン 設定されました
-  red-team-label: Red チーム label
-  single-game-start: Single ゲーム start
+  red-team-label: 赤チーム
+  single-game-start: 'シングルゲームを開始しました'
   spawn-legacy: 'レガシースポーン地点'
   spawn-list-header: === Spawn List ===
   spawn-location: 'スポーン地点'
-  spawn-not-found: Spawn Not Found 見つかりません
+  spawn-not-found: 'スポーン地点が見つかりません'
   spawn-not-set: スポーン not 設定されました
   start-mode-hint: 'マッチモードで開始するには: /ctf start <ゲーム名> match <ゲーム数>'
-  status-blue-team: Status 青 チーム
+  status-blue-team: '青チーム: {count}人'
   status-configuring: '設定中'
   status-ending: '終了処理中'
   status-header: '===== ゲーム状態: {game} ====='
-  status-phase: Status フェーズ
-  status-red-team: Status 赤 チーム
+  status-phase: 'フェーズ: {phase}'
+  status-red-team: '赤チーム: {count}人'
   status-running: '実行中'
   status-score: 'スコア: 赤 {red} - 青 {blue}'
   status-state: '状態: {state}'
   status-waiting: '待機中'
-  team-change-usage: Team change usage
+  team-change-usage: '使用法: /ctf team [red|blue]'
   team-changed: 'チームを変更しました'
   team-full: 'チームが満員です'
-  usage-addspawn: Usage addスポーン
+  usage-addspawn: '使用法: /ctf addspawn <ゲーム名> <red|blue>'
   usage-create: '使用法: /ctf create <ゲーム名>'
-  usage-delete: '[usage delete]'
-  usage-info: '[usage info]'
-  usage-join: '[usage join]'
-  usage-listspawns: Usage listスポーンs
-  usage-removespawn: Usage removeスポーン
-  usage-savemap: '[usage savemap]'
-  usage-setflag: usage旗 設定されました
-  usage-setpos1: usagepos1 設定されました
-  usage-setpos2: usagepos2 設定されました
-  usage-setspawn: usageスポーン 設定されました
-  usage-start: '[usage start]'
-  usage-status: '[usage status]'
-  usage-stop: '[usage stop]'
-  usage-update: '[usage update]'
-  using-temp-region: '[using temp region]'
-  using-worldedit: '[using worldedit]'
+  usage-delete: '使用法: /ctf delete <ゲーム名>'
+  usage-info: '使用法: /ctf info <ゲーム名>'
+  usage-join: '使用法: /ctf join <ゲーム名>'
+  usage-listspawns: '使用法: /ctf listspawns <ゲーム名>'
+  usage-removespawn: '使用法: /ctf removespawn <ゲーム名> <red|blue> <番号>'
+  usage-savemap: '使用法: /ctf savemap <ゲーム名>'
+  usage-setflag: '使用法: /ctf setflag <ゲーム名> <red|blue>'
+  usage-setpos1: '使用法: /ctf setpos1 <ゲーム名>'
+  usage-setpos2: '使用法: /ctf setpos2 <ゲーム名>'
+  usage-setspawn: '使用法: /ctf setspawn <ゲーム名> <red|blue>'
+  usage-start: '使用法: /ctf start <ゲーム名> [match <数>]'
+  usage-status: '使用法: /ctf status [ゲーム名]'
+  usage-stop: '使用法: /ctf stop <ゲーム名>'
+  usage-update: '使用法: /ctf update <ゲーム名>'
+  using-temp-region: '一時領域を使用中'
+  using-worldedit: 'WorldEdit領域を使用中'
   cannot-join-state: 現在の状態ではゲームに参加できません
   game-full: このゲームは満員です
 command-extended:
@@ -174,18 +180,18 @@ countdown:
   two: '2'
   seconds: '{seconds}'
 currency:
-  capture-assist: '[capture assist]'
+  capture-assist: 'キャプチャーアシスト'
   capture-currency: Capture 通貨
   balance-notification: 'チーム残高: {amount}G'
   capture-assist-message: キャプチャアシスト +{amount}G
   purchase-notification: '{player}が{item}を購入しました'
   team-notification: チーム全体で{amount}G獲得しました
 death:
-  cause-damage: '[cause damage]'
-  cause-fire: '[cause fire]'
-  cause-lava: '[cause lava]'
-  cause-void: '[cause void]'
-  kill-streak-notification: '[kill streak notification]'
+  cause-damage: 'ダメージが原因'
+  cause-fire: '炎上ダメージが原因'
+  cause-lava: '溶岩ダメージが原因'
+  cause-void: '奈落ダメージが原因'
+  kill-streak-notification: '連続キル通知'
 flag:
   scored-title: 得点！
   score-subtitle: '{team}が得点しました (赤 {red} - {blue} 青)'
@@ -232,7 +238,7 @@ game_events:
     triple: トリプルキル！
     ultra: ウルトラキル！
   shop:
-    available: '[ショップ使用可能]'
+    available: 'ショップ使用可能'
   spectator_menu:
     captures: 'キャプチャー: {count}'
     click_teleport: クリックでテレポート
@@ -268,7 +274,7 @@ gameplay:
   cannot-place-adventure: 'アドベンチャーモードではブロックを設置できません'
   cannot-place-near-spawn: '敵のスポーン地点の近くには設置できません'
   cannot-place-on-beacon: 'ビーコンの上には設置できません'
-  clear-command-disabled: '[clear command disabled]'
+  clear-command-disabled: 'clearコマンドは無効化されています'
   flag-info: '旗情報'
   need-adjacent-block: '隣接する自チームのブロックが必要です'
   player-has-spawn-protection: 'プレイヤーはスポーン保護中です'
@@ -309,7 +315,7 @@ log:
   shop-item-list: Shop アイテム list
   shop-item-not-found: Shop Item Not Found 見つかりません
   shop-purchase-called: Shop purchase called
-  skip-map-restore: '[skip map restore]'
+  skip-map-restore: 'マップ復元をスキップ'
   temp-world-failed: Temp World Failed 失敗しました
   explosion-protected: '&c重要なエリアは爆発から保護されています！'
 admin:
@@ -340,8 +346,8 @@ manager:
   pos1-not-set: pos1 not 設定されました
   pos2-not-set: pos2 not 設定されました
   set-range-methods: set range methods 設定されました
-  using-existing-map: '[using existing map]'
-  using-worldedit: '[using worldedit]'
+  using-existing-map: '既存のマップを使用中'
+  using-worldedit: 'WorldEdit領域を使用中'
   required-blocks: 必要なブロック
   required-blocks-detail:
     blue-beacon: 青のビーコン (青の旗位置)
@@ -433,16 +439,16 @@ report:
 result:
   $action: '[$action]'
 scanner:
-  blue-flag-multiple: Blue 旗 multiple
+  blue-flag-multiple: 青チームの旗が複数検出されました
   blue-flag-not-found: Blue Flag Not Found 見つかりません
-  blue-flag-spawn-too-close: Blue 旗 スポーン too close
-  blue-spawn-not-found: Blue Spawn Not Found 見つかりません
-  blue-spawns-too-close: Blue スポーンs too close
-  red-flag-multiple: Red 旗 multiple
+  blue-flag-spawn-too-close: 青チームの旗とスポーン地点が近すぎます
+  blue-spawn-not-found: '青チームのスポーン地点が見つかりません'
+  blue-spawns-too-close: 青チームのスポーン地点が近すぎます
+  red-flag-multiple: 赤チームの旗が複数検出されました
   red-flag-not-found: Red Flag Not Found 見つかりません
-  red-flag-spawn-too-close: Red 旗 スポーン too close
-  red-spawn-not-found: Red Spawn Not Found 見つかりません
-  red-spawns-too-close: Red スポーンs too close
+  red-flag-spawn-too-close: 赤チームの旗とスポーン地点が近すぎます
+  red-spawn-not-found: '赤チームのスポーン地点が見つかりません'
+  red-spawns-too-close: 赤チームのスポーン地点が近すぎます
 scoreboard:
   title-ctf: 'CTF - {game}'
   blue-flag-carried: '青旗: {carrier}'
@@ -471,14 +477,14 @@ scoreboard:
   both-currency: '§6所持金: §c赤 {red}G §7| §9青 {blue}G'
 setup:
   all_update_menu: 15. すべて更新
-  block-not-found: Block Not Found 見つかりません
+  block-not-found: 'ブロックが見つかりません'
   blocks_range_error: ブロック数は0〜64の範囲で入力してください
-  blue-flag-location: Blue 旗 location
-  blue-flag-menu: Blue 旗 menu
+  blue-flag-location: 青チームの旗の位置
+  blue-flag-menu: 青チームの旗メニュー
   blue-flag-prompt: Please 青 旗
   blue-flag-set: 青 旗 設定されました
-  blue-spawn-location: Blue スポーン location
-  blue-spawn-menu: Blue スポーン menu
+  blue-spawn-location: 青チームのスポーン地点
+  blue-spawn-menu: 青チームのスポーンメニュー
   blue-spawn-prompt: Please 青 スポーン
   blue-spawn-set: 青 スポーン 設定されました
   build-mode-menu: '建築モードメニュー'
@@ -526,14 +532,14 @@ setup:
   map-auto-detect-prompt: Please map auto detect
   match-mode-prompt: Please マッチ mode
   match-mode-set: マッチ mode 設定されました
-  match-range-error: Match Range Error 失敗しました
+  match-range-error: 'マッチ数の範囲エラー'
   match-target-set: マッチ target 設定されました
-  red-flag-location: Red 旗 location
-  red-flag-menu: Red 旗 menu
+  red-flag-location: 赤チームの旗の位置
+  red-flag-menu: 赤チームの旗メニュー
   red-flag-prompt: Please 赤 旗
   red-flag-set: 赤 旗 設定されました
-  red-spawn-location: Red スポーン location
-  red-spawn-menu: Red スポーン menu
+  red-spawn-location: 赤チームのスポーン地点
+  red-spawn-menu: 赤チームのスポーンメニュー
   red-spawn-prompt: Please 赤 スポーン
   red-spawn-set: 赤 スポーン 設定されました
   respawn_base_menu: '12. 基本リスポーン時間を更新 (現在: {time}秒)'
@@ -564,16 +570,16 @@ setup:
   result_time_skip: '''skip'' でデフォルト値 (60秒) を使用'
   result_time_update_prompt: '結果表示時間を秒単位で入力してください (現在: {current}秒)'
   result_time_updated: 結果表示時間を更新しました
-  setting-prompt: Please setting
-  skip-3: '[skip 3]'
-  skip-300: '[skip 300]'
-  skip-600: '[skip 600]'
-  skip-adventure: '[skip adventure]'
-  skip-first-to-x: '[skip first to x]'
+  setting-prompt: '設定を入力してください'
+  skip-3: '「skip」でデフォルト値(3点)を使用'
+  skip-300: '「skip」でデフォルト値(300秒)を使用'
+  skip-600: '「skip」でデフォルト値(600秒)を使用'
+  skip-adventure: '「skip」でアドベンチャーモードを使用'
+  skip-first-to-x: '「skip」で先取り形式を使用'
   skip-to-flag: '旗設定にスキップ'
-  time-range-error: Time Range Error 失敗しました
+  time-range-error: '時間の範囲エラー'
   timeout: タイムアウトしました
-  update-header-formatted: '[update header formatted]'
+  update-header-formatted: '===== ゲーム設定更新: {game} ====='
   updated: 更新しました
 shield:
   critical: シールドが危険レベルです！
@@ -708,12 +714,12 @@ shop:
     next_page: 次のページ →
     previous_page: ← 前のページ
 spectator:
-  blue-flag: Blue 旗
+  blue-flag: 青チームの旗
   hint: ゲームに参加していない場合はゲーム名を指定してください
-  join-failed: Join Failed 失敗しました
+  join-failed: 'ゲームへの参加に失敗しました'
   joined: 観戦者として参加しました
-  mode-label: '[mode label]'
-  red-flag: Red 旗
+  mode-label: '観戦モード'
+  red-flag: 赤チームの旗
   switched: 観戦者モードに切り替わりました
   usage: '使用方法: /ctf spectator [ゲーム名]'
   player-tracker: プレイヤー追跡
@@ -781,4 +787,43 @@ stats:
   top-players-header: ===== トッププレイヤー =====
   top-spent-label: 最多使用金額
   top-spent-value: '{player}: {amount}G'
+  # プレイヤー統計システム
+  header: '===== {player}の統計 ====='
+  rank: 'ランク: #{rank}'
+  skill-score: 'スキルスコア: {score}点'
+  kills: 'キル数: {kills}'
+  deaths: '死亡数: {deaths}'
+  kd-ratio: 'K/Dレシオ: {ratio}'
+  captures: 'キャプチャ数: {captures}'
+  games-played: 'プレイしたゲーム数: {games}'
+  games-won: '勝利したゲーム数: {games}'
+  win-rate: '勝率: {rate}'
+  player-not-found: 'プレイヤー"{player}"が見つかりません'
+  reset-usage: '使用方法: /ctf resetstats <プレイヤー名>'
+  reset-success: '{player}の統計をリセットしました'
+
+leaderboard:
+  score-header: '===== スキルスコアランキング ====='
+  score-entry: '{rank}位: {player} - {score}点'
+  kills-header: '===== キル数ランキング ====='
+  kills-entry: '{rank}位: {player} - {kills}キル'
+  captures-header: '===== キャプチャ数ランキング ====='
+  captures-entry: '{rank}位: {player} - {captures}キャプチャ'
+  winrate-header: '===== 勝率ランキング ====='
+  winrate-entry: '{rank}位: {player} - {rate} ({games}ゲーム)'
+  usage: '使用方法: /ctf leaderboard [score|kills|captures|winrate] [表示数]'
+  categories: 'カテゴリ: score(スキル), kills(キル), captures(キャプチャ), winrate(勝率)'
+
+balance:
+  usage: '使用方法: /ctf balance <ゲーム名> [apply]'
+  cannot-balance-running: 'ゲーム実行中はチームバランスを変更できません'
+  insufficient-players: 'チームバランスには最低2人のプレイヤーが必要です'
+  current-balance: '現在のチームバランス:'
+  proposed-balance: '提案されるチームバランス:'
+  red-team: '赤チーム: {size}人 (スコア: {score})'
+  blue-team: '青チーム: {size}人 (スコア: {score})'
+  score-difference: 'スコア差: {diff}'
+  apply-hint: '実際に適用するには "/ctf balance <ゲーム名> apply" を実行してください'
+  applied: 'チームバランスを適用しました'
+  team-assigned: 'あなたは{team}に配属されました'
 

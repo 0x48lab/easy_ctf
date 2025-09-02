@@ -31,6 +31,7 @@
                 <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
                 <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
                 <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="map-creation.html"><span class="icon">🗺️</span><span data-i18n="nav.map-creation">マップ作成</span></a></li>
                 <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
                 <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
             </ul>
@@ -100,36 +101,17 @@
                 </ol>
 
                 <h3>最初のゲーム作成</h3>
+                <div class="alert alert-warning">
+                    <strong>重要:</strong> まずマップを作成してください！
+                    <ul>
+                        <li>🔴 赤コンクリート = 赤チームスポーン</li>
+                        <li>🔵 青コンクリート = 青チームスポーン</li>
+                        <li>ビーコン = 各チームの旗（スポーンの近くに配置）</li>
+                    </ul>
+                </div>
                 <div class="command-box">/ctf setpos1 game1</div>
                 <div class="command-box">/ctf setpos2 game1</div>
-                <div class="command-box">/ctf savemap game1</div>
-                
-                <div class="alert alert-info">
-                    <strong>ヒント:</strong> マップには赤と青のコンクリート（スポーン）、ビーコン+色付きガラス（旗）を配置してください。
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>🎯 ゲームフェーズ</h2>
-                <div class="phase-display">
-                    <div class="phase-item active">
-                        <div class="icon">🏗️</div>
-                        <div>建築</div>
-                        <div class="time">2分</div>
-                    </div>
-                    <div class="phase-item">
-                        <div class="icon">⚔️</div>
-                        <div>戦闘</div>
-                        <div class="time">2分</div>
-                    </div>
-                    <div class="phase-item">
-                        <div class="icon">💭</div>
-                        <div>作戦会議</div>
-                        <div class="time">15秒</div>
-                    </div>
-                </div>
-                
-                <p>各フェーズは自動的に移行し、インターバルはありません。スムーズなゲーム進行を実現しています。</p>
+                <div class="command-box">/ctf create game1</div>
             </section>
 
             <section class="content-section">
@@ -211,36 +193,17 @@
                 </ol>
 
                 <h3>Creating Your First Game</h3>
+                <div class="alert alert-warning">
+                    <strong>Important:</strong> First, build your map!
+                    <ul>
+                        <li>🔴 Red Concrete = Red team spawn</li>
+                        <li>🔵 Blue Concrete = Blue team spawn</li>
+                        <li>Beacon = Team flag (place near spawns)</li>
+                    </ul>
+                </div>
                 <div class="command-box">/ctf setpos1 game1</div>
                 <div class="command-box">/ctf setpos2 game1</div>
-                <div class="command-box">/ctf savemap game1</div>
-                
-                <div class="alert alert-info">
-                    <strong>Tip:</strong> Place red and blue concrete (spawns) and beacons with colored glass (flags) on your map.
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>🎯 Game Phases</h2>
-                <div class="phase-display">
-                    <div class="phase-item active">
-                        <div class="icon">🏗️</div>
-                        <div>Build</div>
-                        <div class="time">2 min</div>
-                    </div>
-                    <div class="phase-item">
-                        <div class="icon">⚔️</div>
-                        <div>Combat</div>
-                        <div class="time">2 min</div>
-                    </div>
-                    <div class="phase-item">
-                        <div class="icon">💭</div>
-                        <div>Strategy</div>
-                        <div class="time">15 sec</div>
-                    </div>
-                </div>
-                
-                <p>Each phase transitions automatically with no intervals. Ensures smooth game progression.</p>
+                <div class="command-box">/ctf create game1</div>
             </section>
 
             <section class="content-section">

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyCTF - Map Creation Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span>🗺️ Map Creation Guide</span>
+            <span class="version">v2.1</span>
+        </h1>
+        <div class="language-switch">
+            <button data-lang="ja" class="active">日本語</button>
+            <button data-lang="en">English</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="sidebar-toggle">☰ <span data-i18n="sidebar.menu">メニュー</span></button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><span class="icon">🏠</span><span data-i18n="nav.home">ホーム</span></a></li>
+                <li><a href="gameplay.html"><span class="icon">🎯</span><span data-i18n="nav.gameplay">ゲームプレイ</span></a></li>
+                <li><a href="commands.html"><span class="icon">📝</span><span data-i18n="nav.commands">コマンド</span></a></li>
+                <li><a href="shop.html"><span class="icon">💎</span><span data-i18n="nav.shop">ショップ</span></a></li>
+                <li><a href="match.html"><span class="icon">🏆</span><span data-i18n="nav.match">マッチ</span></a></li>
+                <li><a href="map-creation.html" class="active"><span class="icon">🗺️</span><span data-i18n="nav.map-creation">マップ作成</span></a></li>
+                <li><a href="admin.html"><span class="icon">⚙️</span><span data-i18n="nav.admin">管理者ガイド</span></a></li>
+                <li><a href="faq.html"><span class="icon">❓</span><span data-i18n="nav.faq">FAQ</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Japanese Content -->
+        <div data-lang="ja">
+            <section class="content-section">
+                <h2>🗺️ マップ作成ガイド</h2>
+                <p>EasyCTFでゲームを作成するには、まず適切なマップを構築する必要があります。このガイドでは、マップ作成の詳細な手順を説明します。</p>
+                
+                <div class="alert alert-error">
+                    <strong>⚠️ 重要</strong>
+                    <p>ゲームを作成する前に、必ずマップを構築してください！</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📋 必須要素</h2>
+                <p>マップには以下の要素が<strong>必ず</strong>必要です：</p>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🔴 赤チームスポーン</h4>
+                        <p><strong>赤コンクリートブロック</strong>を配置</p>
+                        <ul>
+                            <li>複数配置可能（推奨: 3-5箇所）</li>
+                            <li>チームベース付近に配置</li>
+                            <li>プレイヤーがランダムにスポーン</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🔵 青チームスポーン</h4>
+                        <p><strong>青コンクリートブロック</strong>を配置</p>
+                        <ul>
+                            <li>複数配置可能（推奨: 3-5箇所）</li>
+                            <li>チームベース付近に配置</li>
+                            <li>プレイヤーがランダムにスポーン</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🏳️ チームの旗</h4>
+                        <p><strong>ビーコン</strong>を配置</p>
+                        <ul>
+                            <li>各チーム1つずつ必須</li>
+                            <li>スポーン地点の近くに配置</li>
+                            <li>自動的にチームを判定</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🔧 マップ作成手順</h2>
+                
+                <h3>ステップ1: マップの構築</h3>
+                <div class="alert alert-info">
+                    <p>まず、通常のMinecraftワールドでマップを構築します。</p>
+                </div>
+                
+                <ol>
+                    <li>
+                        <strong>地形を作成</strong>
+                        <ul>
+                            <li>推奨サイズ: 100x100 ～ 200x200ブロック</li>
+                            <li>両チームのベースを対称的に配置</li>
+                            <li>中央エリアを戦闘ゾーンとして設計</li>
+                        </ul>
+                    </li>
+                    
+                    <li>
+                        <strong>スポーン地点を配置</strong>
+                        <div class="command-box">
+                            赤チーム: 赤コンクリートブロックを配置
+                            青チーム: 青コンクリートブロックを配置
+                        </div>
+                        <p>💡 ヒント: スポーン地点は複数配置することで、リスポーン時の混雑を防げます。</p>
+                    </li>
+                    
+                    <li>
+                        <strong>旗（ビーコン）を配置</strong>
+                        <ul>
+                            <li>各チームのスポーン地点の近くに配置</li>
+                            <li>防衛しやすい位置に設置</li>
+                            <li>システムが自動的に最も近いスポーンからチームを判定</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>ステップ2: ゲーム領域の設定</h3>
+                <ol>
+                    <li>
+                        <strong>領域の始点を設定</strong>
+                        <div class="command-box">/ctf setpos1 &lt;ゲーム名&gt;</div>
+                        <p>マップの一角に立って実行します。</p>
+                    </li>
+                    
+                    <li>
+                        <strong>領域の終点を設定</strong>
+                        <div class="command-box">/ctf setpos2 &lt;ゲーム名&gt;</div>
+                        <p>対角の位置に移動して実行します。</p>
+                    </li>
+                </ol>
+
+                <h3>ステップ3: ゲームの作成</h3>
+                <div class="command-box">/ctf create &lt;ゲーム名&gt;</div>
+                <p>対話形式でゲーム設定を行います：</p>
+                <ul>
+                    <li>最小プレイヤー数</li>
+                    <li>各フェーズの時間</li>
+                    <li>建築フェーズのゲームモード</li>
+                    <li>その他の設定</li>
+                </ul>
+
+                <h3>ステップ4: 自動検出の確認</h3>
+                <p>ゲーム作成時に、システムが自動的に：</p>
+                <ul>
+                    <li>✅ スポーン地点を検出（赤/青コンクリート）</li>
+                    <li>✅ 旗の位置を検出（ビーコン）</li>
+                    <li>✅ チームを割り当て（距離ベース）</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>💡 マップ設計のヒント</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>⚖️ バランス</h4>
+                        <ul>
+                            <li>両チームのベースは対称的に</li>
+                            <li>リソースへのアクセスを均等に</li>
+                            <li>高低差を戦略的に配置</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🛡️ 防衛要素</h4>
+                        <ul>
+                            <li>自然な障害物を配置</li>
+                            <li>複数の侵入経路を用意</li>
+                            <li>狙撃ポイントと隠れ場所</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🎯 戦略性</h4>
+                        <ul>
+                            <li>中央に戦闘エリアを設定</li>
+                            <li>迂回ルートを複数用意</li>
+                            <li>高所の利点を活用</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🔄 マップの保存と復元</h2>
+                
+                <h3>マップの保存</h3>
+                <div class="command-box">/ctf savemap &lt;ゲーム名&gt;</div>
+                <p>現在の領域内のマップを保存します。</p>
+                
+                <div class="alert alert-success">
+                    <strong>自動処理機能</strong>
+                    <ul>
+                        <li>チェストなどの中身を自動クリア</li>
+                        <li>ビーコンにチーム色のガラスを自動設置</li>
+                        <li>GZIP圧縮で効率的に保存</li>
+                    </ul>
+                </div>
+                
+                <h3>テンポラリワールド</h3>
+                <p>ゲーム開始時：</p>
+                <ul>
+                    <li>専用のテンポラリワールドを生成</li>
+                    <li>保存されたマップを自動復元</li>
+                    <li>ゲーム終了時にワールドを削除</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>⚠️ よくある問題と対処法</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>問題: スポーン/旗が検出されない</h4>
+                    <p><strong>解決策:</strong></p>
+                    <ul>
+                        <li>赤/青コンクリートブロックが領域内にあるか確認</li>
+                        <li>ビーコンが領域内にあるか確認</li>
+                        <li>領域設定（pos1/pos2）が正しいか確認</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h4>問題: チームが正しく割り当てられない</h4>
+                    <p><strong>解決策:</strong></p>
+                    <ul>
+                        <li>ビーコンとスポーン地点の距離を確認</li>
+                        <li>各ビーコンが対応するスポーンの近くにあるか確認</li>
+                        <li>手動で設定: <code>/ctf setflag &lt;game&gt; &lt;team&gt;</code></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 コマンドリファレンス</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>コマンド</th>
+                            <th>説明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/ctf setpos1 &lt;game&gt;</code></td>
+                            <td>マップ領域の始点を設定</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf setpos2 &lt;game&gt;</code></td>
+                            <td>マップ領域の終点を設定</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf create &lt;game&gt;</code></td>
+                            <td>ゲームを作成（対話形式）</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf savemap &lt;game&gt;</code></td>
+                            <td>マップを保存</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf setflag &lt;game&gt; &lt;team&gt;</code></td>
+                            <td>旗位置を手動設定</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf setspawn &lt;game&gt; &lt;team&gt;</code></td>
+                            <td>スポーン地点を手動設定</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf addspawn &lt;game&gt; &lt;team&gt;</code></td>
+                            <td>スポーン地点を追加</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf listspawns &lt;game&gt;</code></td>
+                            <td>スポーン地点一覧を表示</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- English Content -->
+        <div data-lang="en" style="display: none;">
+            <section class="content-section">
+                <h2>🗺️ Map Creation Guide</h2>
+                <p>To create a game in EasyCTF, you must first build a proper map. This guide explains the detailed steps for map creation.</p>
+                
+                <div class="alert alert-error">
+                    <strong>⚠️ Important</strong>
+                    <p>You must build the map before creating the game!</p>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📋 Required Elements</h2>
+                <p>Your map <strong>must</strong> include the following elements:</p>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🔴 Red Team Spawns</h4>
+                        <p>Place <strong>Red Concrete Blocks</strong></p>
+                        <ul>
+                            <li>Multiple spawns allowed (recommended: 3-5)</li>
+                            <li>Place near team base</li>
+                            <li>Players spawn randomly</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🔵 Blue Team Spawns</h4>
+                        <p>Place <strong>Blue Concrete Blocks</strong></p>
+                        <ul>
+                            <li>Multiple spawns allowed (recommended: 3-5)</li>
+                            <li>Place near team base</li>
+                            <li>Players spawn randomly</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🏳️ Team Flags</h4>
+                        <p>Place <strong>Beacons</strong></p>
+                        <ul>
+                            <li>One required per team</li>
+                            <li>Place near spawn points</li>
+                            <li>Automatically detects team</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🔧 Map Creation Steps</h2>
+                
+                <h3>Step 1: Build the Map</h3>
+                <div class="alert alert-info">
+                    <p>First, build your map in a regular Minecraft world.</p>
+                </div>
+                
+                <ol>
+                    <li>
+                        <strong>Create the terrain</strong>
+                        <ul>
+                            <li>Recommended size: 100x100 to 200x200 blocks</li>
+                            <li>Place team bases symmetrically</li>
+                            <li>Design central area as combat zone</li>
+                        </ul>
+                    </li>
+                    
+                    <li>
+                        <strong>Place spawn points</strong>
+                        <div class="command-box">
+                            Red Team: Place Red Concrete blocks
+                            Blue Team: Place Blue Concrete blocks
+                        </div>
+                        <p>💡 Tip: Multiple spawn points prevent respawn congestion.</p>
+                    </li>
+                    
+                    <li>
+                        <strong>Place flags (Beacons)</strong>
+                        <ul>
+                            <li>Place near each team's spawn points</li>
+                            <li>Position for easy defense</li>
+                            <li>System automatically determines team by nearest spawn</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>Step 2: Set Game Region</h3>
+                <ol>
+                    <li>
+                        <strong>Set region start point</strong>
+                        <div class="command-box">/ctf setpos1 &lt;game_name&gt;</div>
+                        <p>Stand at one corner of the map and execute.</p>
+                    </li>
+                    
+                    <li>
+                        <strong>Set region end point</strong>
+                        <div class="command-box">/ctf setpos2 &lt;game_name&gt;</div>
+                        <p>Move to the opposite corner and execute.</p>
+                    </li>
+                </ol>
+
+                <h3>Step 3: Create the Game</h3>
+                <div class="command-box">/ctf create &lt;game_name&gt;</div>
+                <p>Configure game settings interactively:</p>
+                <ul>
+                    <li>Minimum players</li>
+                    <li>Phase durations</li>
+                    <li>Build phase game mode</li>
+                    <li>Other settings</li>
+                </ul>
+
+                <h3>Step 4: Verify Auto-Detection</h3>
+                <p>During game creation, the system automatically:</p>
+                <ul>
+                    <li>✅ Detects spawn points (red/blue concrete)</li>
+                    <li>✅ Detects flag positions (beacons)</li>
+                    <li>✅ Assigns teams (distance-based)</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>💡 Map Design Tips</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>⚖️ Balance</h4>
+                        <ul>
+                            <li>Make team bases symmetrical</li>
+                            <li>Equal access to resources</li>
+                            <li>Strategic elevation changes</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🛡️ Defense Elements</h4>
+                        <ul>
+                            <li>Place natural obstacles</li>
+                            <li>Multiple entry routes</li>
+                            <li>Sniper points and hiding spots</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🎯 Strategy</h4>
+                        <ul>
+                            <li>Central combat area</li>
+                            <li>Multiple flanking routes</li>
+                            <li>Utilize height advantages</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>🔄 Map Saving and Restoration</h2>
+                
+                <h3>Saving Maps</h3>
+                <div class="command-box">/ctf savemap &lt;game_name&gt;</div>
+                <p>Saves the map within the current region.</p>
+                
+                <div class="alert alert-success">
+                    <strong>Automatic Processing</strong>
+                    <ul>
+                        <li>Auto-clears chest contents</li>
+                        <li>Auto-places team-colored glass on beacons</li>
+                        <li>Efficient GZIP compression</li>
+                    </ul>
+                </div>
+                
+                <h3>Temporary Worlds</h3>
+                <p>At game start:</p>
+                <ul>
+                    <li>Generates dedicated temporary world</li>
+                    <li>Auto-restores saved map</li>
+                    <li>Deletes world at game end</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>⚠️ Common Issues and Solutions</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>Issue: Spawns/Flags not detected</h4>
+                    <p><strong>Solution:</strong></p>
+                    <ul>
+                        <li>Verify red/blue concrete blocks are within region</li>
+                        <li>Verify beacons are within region</li>
+                        <li>Check region settings (pos1/pos2) are correct</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h4>Issue: Teams not assigned correctly</h4>
+                    <p><strong>Solution:</strong></p>
+                    <ul>
+                        <li>Check distance between beacons and spawn points</li>
+                        <li>Verify each beacon is near corresponding spawns</li>
+                        <li>Manual setting: <code>/ctf setflag &lt;game&gt; &lt;team&gt;</code></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>📝 Command Reference</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/ctf setpos1 &lt;game&gt;</code></td>
+                            <td>Set map region start point</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf setpos2 &lt;game&gt;</code></td>
+                            <td>Set map region end point</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf create &lt;game&gt;</code></td>
+                            <td>Create game (interactive)</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf savemap &lt;game&gt;</code></td>
+                            <td>Save map</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf setflag &lt;game&gt; &lt;team&gt;</code></td>
+                            <td>Manually set flag position</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf setspawn &lt;game&gt; &lt;team&gt;</code></td>
+                            <td>Manually set spawn point</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf addspawn &lt;game&gt; &lt;team&gt;</code></td>
+                            <td>Add spawn point</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ctf listspawns &lt;game&gt;</code></td>
+                            <td>List spawn points</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>EasyCTF v2.1 - Made with ❤️ for Minecraft Community</p>
+            <p>© 2025 EasyCTF Project | <a href="https://github.com/0x48lab/easy_ctf">GitHub</a></p>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

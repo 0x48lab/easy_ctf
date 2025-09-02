@@ -2,51 +2,108 @@
 
 <div align="center">
   
-[![Version](https://img.shields.io/badge/Version-2.0-blue.svg)](https://github.com/0x48lab/easy_ctf)
+[![Version](https://img.shields.io/badge/Version-2.1-blue.svg)](https://github.com/0x48lab/easy_ctf)
 [![Paper](https://img.shields.io/badge/Paper-1.21.5+-green.svg)](https://papermc.io)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-**Strategic CTF Plugin for Minecraft Paper Servers**
+**Strategic CTF Plugin for Minecraft Paper Server**
+
+[日本語](README.md) | English
 
 </div>
 
-## 📖 Overview
+## 📋 Overview
 
-EasyCTF is a feature-rich Capture The Flag plugin for Minecraft Paper servers. Two teams (Red and Blue) compete to capture each other's flags while defending their own.
+EasyCTF is a feature-rich CTF plugin for Minecraft Paper Server. It provides a strategic PvP game mode where two teams compete to capture each other's flags.
 
 ### ✨ Key Features
+
 - 🎮 **Multiple Concurrent Games** - Run multiple CTF games simultaneously on the same server
-- 🛡️ **Shield System** - Take damage in enemy territory, recover only in your own
-- 💎 **Shop System** - Team-shared currency for strategic item purchases  
-- 🏆 **Match System** - Multiple rounds to determine overall winner
-- 🌍 **Multi-language** - Full support for Japanese and English
-- 🎁 **Event Chests** - Special rewards during combat phase
+- 🏆 **Match System** - Determine the overall winner through multiple rounds
+- 💰 **Shop System** - Strategic shopping with team-shared currency
+- 🛡️ **Shield System** - Damage management in enemy territory (recovery only in home base)
+- 🎁 **Event Chests** - Special rewards that appear during combat
+- 📊 **Skill-Based Matchmaking** - Automatic team balancing based on player skills
+- 🗺️ **Map Creation Tools** - Easily create custom maps
+- 🌏 **Multi-language Support** - Full support for Japanese and English
 
-## 🎯 Game Phases
+## 🚀 Quick Start
 
-### 1️⃣ Build Phase (2 minutes)
-- Place blocks for defense and offense
-- No PvP (combat disabled)  
-- Shop available for purchases
+### Requirements
+
+- Paper Server 1.21.5 or higher
+- Java 21 or higher
+- 4GB+ RAM recommended
+
+### Installation
+
+1. Download the latest version from [Releases](https://github.com/0x48lab/easy_ctf/releases)
+2. Place `easy_ctf-x.x.x.jar` in your server's `plugins` folder
+3. Start the server
+
+### Basic Usage
+
+#### 1. First, Build Your Map
+**Important: Place the following in your map**
+- 🔴 Red Concrete = Red team spawn
+- 🔵 Blue Concrete = Blue team spawn
+- Beacon = Team flag (place near spawns)
+
+#### 2. Create Game
+```bash
+/ctf setpos1 game1        # Set map region start point
+/ctf setpos2 game1        # Set map region end point
+/ctf create game1         # Create game (interactive setup)
+
+# Start game
+/ctf start game1          # Start single game
+/ctf start game1 match 5  # Start 5-round match
+
+# Player participation
+/ctf join game1           # Join game (skill-based auto team assignment)
+```
+
+## 🎯 Game Flow
+
+### 1️⃣ Build Phase (Default 2 minutes)
+- Build defensive structures with your team's colored concrete blocks
+- Blocks must connect to your beacon or existing blocks
+- Purchase items from the shop to prepare
 - Cannot enter enemy territory
+- Items are kept on death (keepInventory)
+
+### 2️⃣ Combat Phase (Default 2 minutes)
+- Capture the enemy flag (beacon) and bring it back to your base
+- Flag carriers have glowing effect and movement restrictions
+- Earn currency through kills and captures
 - Instant respawn (no delay)
 
-### 2️⃣ Combat Phase (2 minutes)
-- Main CTF gameplay
-- PvP enabled
-- Capture enemy flags
-- Shop available anywhere (right-click emerald)
-- Instant respawn (no delay)
+### 3️⃣ Result Display (15 seconds)
+- Review game results
+- Auto-transition to next game in match mode
 
-### 3️⃣ Strategy Phase (15 seconds)
-- View round results
-- Prepare for next round
-- Transitions immediately to next phase
+## 📊 Player Statistics System
+
+### Skill Score Calculation
+```
+Skill Score = (Kills × 10) + (Captures × 30) - (Deaths × 5)
+```
+
+### Statistics Commands
+- `/ctf stats [player]` - Display personal statistics
+- `/ctf leaderboard [category]` - Display rankings
+  - Categories: skill, kills, captures, wins, kd
+- `/ctf balance <game>` - Check team balance
+- `/ctf balance <game> apply` - Apply balance adjustment
+
+### Automatic Team Balancing
+- New participants are automatically assigned to balance team skill totals
+- Administrators can manually adjust balance
 
 ## 💎 Shop System
 
-Right-click emerald to open shop (**usable anywhere**)
+Right-click emerald to open shop (**available anywhere**)
 
 ### Categories
 - **Weapons** - Swords, axes, bows, etc.
@@ -54,7 +111,7 @@ Right-click emerald to open shop (**usable anywhere**)
 - **Consumables** - Ender pearls, golden apples, arrows
 - **Building Blocks** - Various blocks, TNT
 
-### Currency Earning
+### Currency Acquisition
 - Initial funds: 50G
 - Kill reward: 15G (Flag carrier: 25G)
 - Kill assist: 10G
@@ -64,62 +121,71 @@ Right-click emerald to open shop (**usable anywhere**)
 - Kill streak bonus: 5G-20G
 
 ### Discount System
-Discounts for losing team based on score difference:
-- 1 point behind: 10% off
-- 2 points behind: 20% off
-- 3 points behind: 30% off
-- 4+ points behind: 40% off
+Losing team discount based on score difference:
+- 1 point difference: 10% discount
+- 2 point difference: 20% discount
+- 3 point difference: 30% discount
+- 4+ point difference: 40% discount
 
 ## 🛡️ Special Systems
 
 ### Shield System
 - Maximum: 100
-- Decreases by 2/sec on enemy blocks/beacon area
-- 1.5 damage/sec when shield is 0
-- **Recovers 5/sec only in own territory** (important tactical element)
-- Warning: Below 40 warning, below 20 critical
+- Decreases by 2/second in enemy blocks/beacon area
+- 1.5 damage/second at 0 shield
+- **Recovers 5/second only in home base** (important tactical element)
+- Warning: Alert at 40 or below, critical at 20 or below
 
 ### Beacon Area Effects
-- 3x3 area is special zone
+- 3x3 range special area
 - Enemy: Damage zone (shield decrease)
-- Ally: Hunger & shield recovery
+- Ally: Hunger & shield recovery (1 point/second)
 
 ### Team Block System
 - **Red Team**: Red concrete only
 - **Blue Team**: Blue concrete only
-- Block connection required (neutralizes when disconnected)
+- Connection required (neutralizes when disconnected)
 - Unlimited usage
 
 ### Event Chests
 - Appear once during combat phase
-- Obtain expensive shop items
-- Notification to all players
+- Can obtain 1 rare item
+- Notifies all players
+
+### Kill Streak System
+- Special notifications and bonuses for consecutive kills
+- Title display only for killer
+- Chat notification for other players
 
 ## 🗺️ Map Creation
 
-### Auto-Detection Method (Recommended)
+### Map Creation Method
 
-1. **Build Map**
-   - Red concrete: Red team spawn (multiple allowed)
-   - Blue concrete: Blue team spawn (multiple allowed)
-   - Beacon + Red glass: Red team flag
-   - Beacon + Blue glass: Blue team flag
+1. **Place Required Elements**
+   - 🔴 **Red Concrete**: Red team spawn (multiple allowed)
+   - 🔵 **Blue Concrete**: Blue team spawn (multiple allowed)
+   - **Beacon**: Team flag (place near spawns)
 
 2. **Set Region**
    ```bash
-   /ctf setpos1 game1  # Set first corner
-   /ctf setpos2 game1  # Set second corner
+   /ctf setpos1 game1  # Set start point
+   /ctf setpos2 game1  # Set end point
    ```
 
-3. **Save**
+3. **Create Game**
+   ```bash
+   /ctf create game1   # Create game with interactive setup
+   ```
+
+   After creating the game, save the map:
    ```bash
    /ctf savemap game1  # Auto-detect and save
    ```
 
 ### Temporary World System
-- Dedicated world generated at game start
-- Map automatically restored
-- Chest contents automatically cleared
+- Generates dedicated world at game start
+- Automatically restores map
+- Container contents are automatically cleared
 - World deleted at game end
 
 ## 📊 Admin Commands
@@ -133,27 +199,37 @@ Discounts for losing team based on score difference:
 | `/ctf info <game>` | Game details |
 | `/ctf start <game> [match] [count]` | Start game/match |
 | `/ctf stop <game>` | Force stop |
-| `/ctf setflag <game> <team>` | Set flag position |
+| `/ctf setpos1 <game>` | Set map region start point |
+| `/ctf setpos2 <game>` | Set map region end point |
+| `/ctf savemap <game>` | Save map (auto-detection) |
+| `/ctf setflag <game> <team>` | Manually set flag position |
 | `/ctf setspawn <game> <team>` | Set spawn |
 | `/ctf addspawn <game> <team>` | Add spawn |
 | `/ctf removespawn <game> <team> <number>` | Remove spawn |
+| `/ctf listspawns <game>` | List spawns |
+| `/ctf addplayer <game> <player> [team]` | Force player join |
+| `/ctf changeteam <game> <player> <team>` | Change team |
+| `/ctf balance <game> [apply]` | Check/apply team balance |
+| `/ctf resetstats [player]` | Reset statistics |
 
 ## 🎮 Player Commands
 
 | Command | Description |
 |---------|-------------|
 | `/ctf join <game>` | Join game |
-| `/ctf leave` | Leave current game |
-| `/ctf team [red/blue]` | Check/change team |
-| `/ctf spectator <game>` | Join as spectator |
-| `/ctf status [game]` | Game status |
+| `/ctf leave` | Leave game |
+| `/ctf team [red\|blue]` | Check/change team |
+| `/ctf status [game]` | Check status |
+| `/ctf spectator [game]` | Spectator mode |
+| `/ctf stats [player]` | Display statistics |
+| `/ctf leaderboard [category]` | Display rankings |
 
 ## ⚙️ Configuration
 
-Main configuration file: `config.yml`
+Detailed configuration available in `plugins/EasyCTF/config.yml`:
 
 ```yaml
-# Language setting
+# Language settings
 language: "en"  # "en" or "ja"
 
 # Phase durations
@@ -190,13 +266,13 @@ shield:
   enabled: true
   max-shield: 100
   decrease-rate: 2.0       # Decrease rate in enemy territory
-  recovery-rate: 5.0       # Recovery rate in own territory
-  damage-amount: 1.5       # Damage when shield is 0
+  recovery-rate: 5.0       # Recovery rate in home base
+  damage-amount: 1.5       # Damage at 0 shield
 
 # Event chest
 event-chest:
   enabled: true
-  spawn-count: 1           # Spawns during combat phase
+  spawn-count: 1           # Spawn count during combat phase
 ```
 
 ## 🔧 Build Instructions
@@ -211,22 +287,25 @@ Generated JAR file: `build/libs/easy_ctf-x.x.x-all.jar`
 
 ## 📝 Release Notes
 
-### Latest Changes
+### v2.1.0 - Skill-Based Matchmaking
+- ✨ Implemented player statistics persistence system
+- ✨ Skill-based automatic team balancing
+- ✨ Ranking/leaderboard functionality
+- ✨ Admin commands for force join and team change
+- 🐛 Fixed block duplication bug when dying in build phase
+- 🌏 Complete Japanese resource file translation (53 fixes)
+- 🎯 Limited kill streak notifications to killer only
+- 🎁 Simplified event chests to 1 rare item
+
+### v2.0.0 - Performance Optimization
 - ✅ Removed intervals between phases (instant transition)
-- ✅ Set respawn delay to 0 (instant respawn)
+- ✅ Set respawn delay to 0 (instant revival)
 - ✅ Adjusted currency rewards (Kill 15G, Flag carrier kill 25G, Capture 50G, Phase bonus 100G)
-- ✅ Limited shield recovery to own territory only
-- ✅ Removed shop usage range restriction (usable anywhere)
+- ✅ Limited shield recovery to home base only
+- ✅ Removed shop usage range restriction (available anywhere)
 - ✅ Unified team blocks to concrete only
 - ✅ Beacon area becomes damage zone
-- ✅ Event chest contents limited to shop items
-- ✅ Distance-based flag detection algorithm
-
-### Performance Optimizations
-- Batch teleport processing
-- Asynchronous chat processing
-- Efficient block connection checking
-- GZIP compression for map storage
+- ✅ Implemented distance-based flag detection algorithm
 
 ## 🤝 Contributing
 
@@ -234,8 +313,11 @@ Pull requests are welcome! Report bugs and suggest features in [Issues](https://
 
 ## 📞 Support
 
-- 📚 [docs](https://0x48lab.github.io/easy_ctf/)
-- 📚 [wiki](https://github.com/0x48lab/easy_ctf/wiki)
+- 📚 [Documentation](DOCUMENTATION_EN.md)
+- 📚 [日本語ドキュメント](DOCUMENTATION_JA.md)
+- 🌐 [Official Site](https://0x48lab.github.io/easy_ctf/)
+- 💬 [Discord Server](https://discord.gg/yourdiscord)
+- 🐛 [Bug Reports](https://github.com/0x48lab/easy_ctf/issues)
 
 ## 📄 License
 

@@ -11,6 +11,7 @@ import com.hacklab.ctf.utils.GamePhase
 import com.hacklab.ctf.utils.Team
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.title.Title
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
@@ -339,13 +340,21 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         }
                         val streakSubtitle = Component.text(killer.name, killerTeam.color)
                         
-                        game.sendEventNotification(
+                        // キラーにはタイトル表示
+                        killer.showTitle(Title.title(
                             streakTitle,
                             streakSubtitle,
-                            sound = org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER,
-                            soundPitch = 1.0f + (streak * 0.1f)
-                        )
+                            Title.Times.times(
+                                java.time.Duration.ofMillis(500), // fade in 0.5秒
+                                java.time.Duration.ofSeconds(2),  // stay 2秒
+                                java.time.Duration.ofMillis(1000) // fade out 1秒
+                            )
+                        ))
                         
+                        // キラーにサウンド再生
+                        killer.playSound(killer.location, org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 1.0f + (streak * 0.1f))
+                        
+                        // 全プレイヤーにチャットメッセージ
                         game.getAllPlayers().forEach { p ->
                             p.sendMessage(Component.text(plugin.languageManager.getMessage("death.kill-streak-notification",
                                 "player" to killer.name,
@@ -1664,8 +1673,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 player.allowFlight = true
                 player.isFlying = false
                 
-                // 建築フェーズのアイテムを再付与
-                game.giveBuildPhaseItems(player, team)
+                // 建築フェーズ中はkeepInventory=trueなのでアイテムは保持されている
+                // 追加でアイテムを配布する必要はない
             }, 1L)
         }
     }

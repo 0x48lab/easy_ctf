@@ -39,26 +39,32 @@ command:
   game-start-failed: Game Start Failed failed
   game-started: Game started
   game-stopped: Game stopped
-  help-addspawn: Help addspawn
-  help-create: Help create
-  help-delete: Help delete
-  help-header: === Help ===
-  help-info: Help info
-  help-join: Help join
-  help-leave: Help leave
-  help-list: Help list
-  help-listspawns: Help listspawns
-  help-removespawn: Help removespawn
-  help-setflag: helpflag has been set
-  help-setspawn: helpspawn has been set
-  help-spectator: Help spectator
-  help-start: Help start
-  help-start-note1: Help start note1
-  help-start-note2: Help start note2
-  help-status: Help status
-  help-stop: Help stop
-  help-team: Help team
-  help-update: Help update
+  help-addspawn: 'Add a spawn point'
+  help-create: 'Create a new CTF game'
+  help-delete: 'Delete a CTF game'
+  help-header: '===== CTF Command Help ====='
+  help-info: 'Show detailed game information'
+  help-join: 'Join a CTF game'
+  help-leave: 'Leave the current game'
+  help-list: 'List all games'
+  help-listspawns: 'List spawn points'
+  help-removespawn: 'Remove a spawn point'
+  help-setflag: 'Set flag position'
+  help-setspawn: 'Set spawn point'
+  help-spectator: 'Join as spectator'
+  help-start: 'Start a game or match'
+  help-start-note1: 'Single game: /ctf start <game>'
+  help-start-note2: 'Match mode: /ctf start <game> match <rounds>'
+  help-status: 'Check game status'
+  help-stop: 'Stop a game or match'
+  help-team: 'Change team'
+  help-update: 'Update game settings'
+  help-addplayer: '/ctf addplayer <game> <player> [red|blue] - Force a player to join a game'
+  help-changeteam: '/ctf changeteam <player> <red|blue> - Force a player to change team'
+  help-stats: '/ctf stats [player] - Show player statistics'
+  help-leaderboard: '/ctf leaderboard [category] - Show leaderboard'
+  help-resetstats: '/ctf resetstats <player> - Reset player statistics'
+  help-balance: '/ctf balance <game> [apply] - Check or apply team balance'
   info-basic-settings: info basictings has been set
   info-blue-flag: Info blue flag
   info-blue-flag-not-set: info blue flag not has been set
@@ -792,4 +798,43 @@ stats:
   top-players-header: ===== Top Players =====
   top-spent-label: Top money spent
   top-spent-value: '{player}: {amount}G'
+  # Player Statistics System
+  header: '===== {player}''s Statistics ====='
+  rank: 'Rank: #{rank}'
+  skill-score: 'Skill Score: {score} points'
+  kills: 'Kills: {kills}'
+  deaths: 'Deaths: {deaths}'
+  kd-ratio: 'K/D Ratio: {ratio}'
+  captures: 'Captures: {captures}'
+  games-played: 'Games Played: {games}'
+  games-won: 'Games Won: {games}'
+  win-rate: 'Win Rate: {rate}'
+  player-not-found: 'Player "{player}" not found'
+  reset-usage: 'Usage: /ctf resetstats <player>'
+  reset-success: 'Reset statistics for {player}'
+
+leaderboard:
+  score-header: '===== Skill Score Leaderboard ====='
+  score-entry: '{rank}. {player} - {score} points'
+  kills-header: '===== Kills Leaderboard ====='
+  kills-entry: '{rank}. {player} - {kills} kills'
+  captures-header: '===== Captures Leaderboard ====='
+  captures-entry: '{rank}. {player} - {captures} captures'
+  winrate-header: '===== Win Rate Leaderboard ====='
+  winrate-entry: '{rank}. {player} - {rate} ({games} games)'
+  usage: 'Usage: /ctf leaderboard [score|kills|captures|winrate] [limit]'
+  categories: 'Categories: score, kills, captures, winrate'
+
+balance:
+  usage: 'Usage: /ctf balance <game> [apply]'
+  cannot-balance-running: 'Cannot balance teams while game is running'
+  insufficient-players: 'Team balancing requires at least 2 players'
+  current-balance: 'Current Team Balance:'
+  proposed-balance: 'Proposed Team Balance:'
+  red-team: 'Red Team: {size} players (Score: {score})'
+  blue-team: 'Blue Team: {size} players (Score: {score})'
+  score-difference: 'Score Difference: {diff}'
+  apply-hint: 'To apply the balance, run "/ctf balance <game> apply"'
+  applied: 'Team balance has been applied'
+  team-assigned: 'You have been assigned to {team}'
 

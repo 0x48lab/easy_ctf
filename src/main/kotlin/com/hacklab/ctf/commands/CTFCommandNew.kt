@@ -56,6 +56,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             // 管理者向けプレイヤー管理コマンド
             "addplayer" -> return handleAddPlayerCommand(sender, args)
             "changeteam" -> return handleChangeTeamCommand(sender, args)
+            // 統計関連コマンド
+            "stats" -> return handleStatsCommand(sender, args)
+            "leaderboard" -> return handleLeaderboardCommand(sender, args)
+            "resetstats" -> return handleResetStatsCommand(sender, args)
+            "balance" -> return handleBalanceCommand(sender, args)
             else -> {
                 sendHelpMessage(sender)
                 return true
@@ -778,6 +783,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-setpos1"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-setpos2"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-savemap"), NamedTextColor.YELLOW))
+            // 管理者用プレイヤー管理コマンド
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-addplayer"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-changeteam"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-resetstats"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-balance"), NamedTextColor.YELLOW))
         }
         
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-list"), NamedTextColor.YELLOW))
@@ -787,6 +797,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-spectator"), NamedTextColor.YELLOW))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-status"), NamedTextColor.YELLOW))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-info"), NamedTextColor.YELLOW))
+        // 統計コマンド
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-stats"), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-leaderboard"), NamedTextColor.YELLOW))
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<String>): List<String> {
@@ -794,29 +807,49 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args.size) {
             1 -> {
-                val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info")
+                val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info", "stats", "leaderboard")
                 if (sender.hasPermission("ctf.admin")) {
-                    subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap"))
+                    subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap", 
+                        "addspawn", "removespawn", "listspawns", "addplayer", "changeteam", "resetstats", "balance"))
                 }
                 completions.addAll(subcommands.filter { it.startsWith(args[0].lowercase()) })
             }
             2 -> {
                 when (args[0].lowercase()) {
-                    "update", "delete", "start", "stop", "join", "spectator", "status", "info", "setflag", "setspawn", "setpos1", "setpos2", "savemap" -> {
+                    "update", "delete", "start", "stop", "join", "spectator", "status", "info", "setflag", "setspawn", 
+                    "setpos1", "setpos2", "savemap", "balance", "addspawn", "removespawn", "listspawns", "addplayer" -> {
                         completions.addAll(gameManager.getAllGames().keys.filter { it.startsWith(args[1].lowercase()) })
                     }
                     "team" -> {
                         completions.addAll(listOf("red", "blue").filter { it.startsWith(args[1].lowercase()) })
                     }
+                    "stats", "resetstats", "changeteam" -> {
+                        completions.addAll(plugin.server.onlinePlayers.map { it.name }.filter { it.startsWith(args[1], ignoreCase = true) })
+                    }
+                    "leaderboard" -> {
+                        completions.addAll(listOf("score", "kills", "captures", "winrate").filter { it.startsWith(args[1].lowercase()) })
+                    }
                 }
             }
             3 -> {
                 when (args[0].lowercase()) {
-                    "setflag", "setspawn" -> {
+                    "setflag", "setspawn", "addspawn" -> {
+                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
+                    }
+                    "addplayer" -> {
+                        completions.addAll(plugin.server.onlinePlayers.map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) })
+                    }
+                    "changeteam" -> {
+                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
+                    }
+                    "removespawn" -> {
                         completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
                     }
                     "start" -> {
                         completions.addAll(listOf("single", "match").filter { it.startsWith(args[2].lowercase()) })
+                    }
+                    "balance" -> {
+                        completions.addAll(listOf("apply").filter { it.startsWith(args[2].lowercase()) })
                     }
                 }
             }
@@ -826,6 +859,13 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                         if (args[2].equals("match", ignoreCase = true)) {
                             completions.addAll(listOf("3", "5", "7", "10").filter { it.startsWith(args[3]) })
                         }
+                    }
+                    "addplayer" -> {
+                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[3].lowercase()) })
+                    }
+                    "removespawn" -> {
+                        // 番号の補完（1-10）
+                        completions.addAll((1..10).map { it.toString() }.filter { it.startsWith(args[3]) })
                     }
                 }
             }
@@ -1265,6 +1305,203 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         return true
     }
     
+    private fun handleStatsCommand(sender: CommandSender, args: Array<String>): Boolean {
+        val targetPlayerName = if (args.size >= 2) args[1] else sender.name
+        val targetPlayer = plugin.server.getOfflinePlayer(targetPlayerName)
+        
+        if (!targetPlayer.hasPlayedBefore() && targetPlayer.name != sender.name) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.player-not-found", "player" to targetPlayerName), NamedTextColor.RED))
+            return true
+        }
+        
+        val stats = plugin.playerStatisticsManager.getPlayerStats(targetPlayer.uniqueId)
+        val rank = plugin.playerStatisticsManager.getPlayerRank(targetPlayer.uniqueId)
+        
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.header", "player" to (targetPlayer.name ?: targetPlayerName)), NamedTextColor.GOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.rank", "rank" to rank.toString()), NamedTextColor.YELLOW))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.skill-score", "score" to String.format("%.1f", stats.calculateSkillScore())), NamedTextColor.AQUA))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.kills", "kills" to stats.totalKills.toString()), NamedTextColor.GREEN))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.deaths", "deaths" to stats.totalDeaths.toString()), NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.kd-ratio", "ratio" to String.format("%.2f", stats.getKDRatio())), NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.captures", "captures" to stats.totalCaptures.toString()), NamedTextColor.BLUE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.games-played", "games" to stats.gamesPlayed.toString()), NamedTextColor.GRAY))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.games-won", "games" to stats.gamesWon.toString()), NamedTextColor.GREEN))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.win-rate", "rate" to String.format("%.1f%%", stats.getWinRate())), NamedTextColor.YELLOW))
+        
+        return true
+    }
+    
+    private fun handleLeaderboardCommand(sender: CommandSender, args: Array<String>): Boolean {
+        val category = if (args.size >= 2) args[1].lowercase() else "score"
+        val limit = if (args.size >= 3) args[2].toIntOrNull() ?: 10 else 10
+        
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        
+        when (category) {
+            "score", "skill" -> {
+                val topPlayers = plugin.playerStatisticsManager.getTopPlayersByScore(limit)
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.score-header"), NamedTextColor.GOLD))
+                topPlayers.forEachIndexed { index, (uuid, score) ->
+                    val playerName = plugin.server.getOfflinePlayer(uuid).name ?: "Unknown"
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.score-entry", 
+                        "rank" to (index + 1).toString(),
+                        "player" to playerName,
+                        "score" to String.format("%.1f", score)), NamedTextColor.WHITE))
+                }
+            }
+            "kills" -> {
+                val topPlayers = plugin.playerStatisticsManager.getTopPlayersByKills(limit)
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.kills-header"), NamedTextColor.GOLD))
+                topPlayers.forEachIndexed { index, (uuid, kills) ->
+                    val playerName = plugin.server.getOfflinePlayer(uuid).name ?: "Unknown"
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.kills-entry",
+                        "rank" to (index + 1).toString(),
+                        "player" to playerName,
+                        "kills" to kills.toString()), NamedTextColor.WHITE))
+                }
+            }
+            "captures" -> {
+                val topPlayers = plugin.playerStatisticsManager.getTopPlayersByCaptures(limit)
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.captures-header"), NamedTextColor.GOLD))
+                topPlayers.forEachIndexed { index, (uuid, captures) ->
+                    val playerName = plugin.server.getOfflinePlayer(uuid).name ?: "Unknown"
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.captures-entry",
+                        "rank" to (index + 1).toString(),
+                        "player" to playerName,
+                        "captures" to captures.toString()), NamedTextColor.WHITE))
+                }
+            }
+            "winrate", "wins" -> {
+                val topPlayers = plugin.playerStatisticsManager.getTopPlayersByWinRate(limit, 5)
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.winrate-header"), NamedTextColor.GOLD))
+                topPlayers.forEachIndexed { index, (uuid, winRate) ->
+                    val playerName = plugin.server.getOfflinePlayer(uuid).name ?: "Unknown"
+                    val stats = plugin.playerStatisticsManager.getPlayerStats(uuid)
+                    sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.winrate-entry",
+                        "rank" to (index + 1).toString(),
+                        "player" to playerName,
+                        "rate" to String.format("%.1f%%", winRate),
+                        "games" to stats.gamesPlayed.toString()), NamedTextColor.WHITE))
+                }
+            }
+            else -> {
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.usage"), NamedTextColor.YELLOW))
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("leaderboard.categories"), NamedTextColor.GRAY))
+                return true
+            }
+        }
+        
+        return true
+    }
+    
+    private fun handleResetStatsCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
+            return true
+        }
+        
+        if (args.size < 2) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.reset-usage"), NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val targetPlayerName = args[1]
+        val targetPlayer = plugin.server.getOfflinePlayer(targetPlayerName)
+        
+        if (!targetPlayer.hasPlayedBefore()) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.player-not-found", "player" to targetPlayerName), NamedTextColor.RED))
+            return true
+        }
+        
+        plugin.playerStatisticsManager.resetPlayerStats(targetPlayer.uniqueId)
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("stats.reset-success", "player" to (targetPlayer.name ?: targetPlayerName)), NamedTextColor.GREEN))
+        
+        return true
+    }
+    
+    private fun handleBalanceCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
+            return true
+        }
+        
+        if (args.size < 2) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.usage"), NamedTextColor.YELLOW))
+            return true
+        }
+        
+        val gameName = args[1]
+        val game = gameManager.getGame(gameName)
+        
+        if (game == null) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-not-found", "name" to gameName), NamedTextColor.RED))
+            return true
+        }
+        
+        if (game.state != com.hacklab.ctf.utils.GameState.WAITING) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.cannot-balance-running"), NamedTextColor.RED))
+            return true
+        }
+        
+        val allPlayers = game.getAllPlayers().toList()
+        if (allPlayers.size < 2) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.insufficient-players"), NamedTextColor.RED))
+            return true
+        }
+        
+        // 現在のバランス情報を表示
+        val currentBalance = plugin.teamBalancer.getTeamBalanceInfo(game.redTeam.mapNotNull { plugin.server.getPlayer(it) }, game.blueTeam.mapNotNull { plugin.server.getPlayer(it) })
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.current-balance"), NamedTextColor.GOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.red-team", 
+            "size" to currentBalance["redTeamSize"].toString(),
+            "score" to String.format("%.1f", currentBalance["redTeamScore"] as Double)), NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.blue-team",
+            "size" to currentBalance["blueTeamSize"].toString(), 
+            "score" to String.format("%.1f", currentBalance["blueTeamScore"] as Double)), NamedTextColor.BLUE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.score-difference",
+            "diff" to String.format("%.1f", currentBalance["scoreDifference"] as Double)), NamedTextColor.YELLOW))
+        
+        // 新しいバランスを計算
+        val balancedTeams = plugin.teamBalancer.balanceTeams(allPlayers)
+        sender.sendMessage(Component.text("", NamedTextColor.WHITE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.proposed-balance"), NamedTextColor.GOLD))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.red-team",
+            "size" to balancedTeams.redTeam.size.toString(),
+            "score" to String.format("%.1f", balancedTeams.redTeamTotalScore)), NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.blue-team",
+            "size" to balancedTeams.blueTeam.size.toString(),
+            "score" to String.format("%.1f", balancedTeams.blueTeamTotalScore)), NamedTextColor.BLUE))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.score-difference",
+            "diff" to String.format("%.1f", balancedTeams.getScoreDifference())), NamedTextColor.YELLOW))
+        
+        // 実際にチーム再配置を実行するかどうかの確認
+        if (args.size >= 3 && args[2].equals("apply", ignoreCase = true)) {
+            // チームを再配置
+            game.redTeam.clear()
+            game.blueTeam.clear()
+            
+            balancedTeams.redTeam.forEach { player -> game.redTeam.add(player.uniqueId) }
+            balancedTeams.blueTeam.forEach { player -> game.blueTeam.add(player.uniqueId) }
+            
+            // プレイヤーに通知
+            game.getAllPlayers().forEach { player ->
+                val newTeam = if (player.uniqueId in game.redTeam) "red" else "blue"
+                player.sendMessage(Component.text(plugin.languageManager.getMessage("balance.team-assigned",
+                    "team" to plugin.languageManager.getMessage("teams.$newTeam")), if (newTeam == "red") NamedTextColor.RED else NamedTextColor.BLUE))
+                game.updatePlayerTabColor(player)
+            }
+            
+            game.updateScoreboard()
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.applied"), NamedTextColor.GREEN))
+        } else {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.apply-hint"), NamedTextColor.GRAY))
+        }
+        
+        return true
+    }
+
     private fun validateGameName(name: String): Boolean {
         return name.matches(Regex("[a-zA-Z0-9_]+")) && name.length <= 32 && name.lowercase() !in listOf("all", "list", "help")
     }

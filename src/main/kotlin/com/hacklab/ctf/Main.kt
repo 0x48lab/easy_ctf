@@ -6,6 +6,8 @@ import com.hacklab.ctf.listeners.ChatListener
 import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.managers.LanguageManager
 import com.hacklab.ctf.managers.EquipmentManager
+import com.hacklab.ctf.managers.PlayerStatisticsManager
+import com.hacklab.ctf.managers.TeamBalancer
 import com.hacklab.ctf.shop.ShopManager
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -24,6 +26,10 @@ class Main : JavaPlugin() {
         private set
     lateinit var shopManager: ShopManager
         private set
+    lateinit var playerStatisticsManager: PlayerStatisticsManager
+        private set
+    lateinit var teamBalancer: TeamBalancer
+        private set
 
     override fun onEnable() {
         instance = this
@@ -37,6 +43,8 @@ class Main : JavaPlugin() {
         languageManager = LanguageManager(this)
         equipmentManager = EquipmentManager(this)
         shopManager = ShopManager(this)
+        playerStatisticsManager = PlayerStatisticsManager(this)
+        teamBalancer = TeamBalancer(this)
         gameManager = GameManager(this)
         
         getCommand("ctf")?.setExecutor(CTFCommandNew(this))
@@ -55,6 +63,11 @@ class Main : JavaPlugin() {
                     game.stop()
                 }
             }
+        }
+        
+        // プレイヤー統計を保存
+        if (::playerStatisticsManager.isInitialized) {
+            playerStatisticsManager.saveStats()
         }
         
         // 全てのテンポラリワールドをクリーンアップ

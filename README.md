@@ -2,7 +2,7 @@
 
 <div align="center">
   
-[![Version](https://img.shields.io/badge/Version-2.0-blue.svg)](https://github.com/0x48lab/easy_ctf)
+[![Version](https://img.shields.io/badge/Version-2.1-blue.svg)](https://github.com/0x48lab/easy_ctf)
 [![Paper](https://img.shields.io/badge/Paper-1.21.5+-green.svg)](https://papermc.io)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
@@ -24,8 +24,9 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 - 💰 **ショップシステム** - チーム共有通貨で戦略的な買い物
 - 🛡️ **シールドシステム** - 敵陣でのダメージ管理（自陣でのみ回復）
 - 🎁 **イベントチェスト** - 戦闘中に出現する特別な報酬
+- 📊 **スキルベースマッチメイキング** - プレイヤースキルに基づく自動チームバランス
 - 🗺️ **マップ作成ツール** - 簡単にカスタムマップを作成
-- 🌏 **多言語対応** - 日本語・英語をサポート
+- 🌏 **多言語対応** - 日本語・英語を完全サポート
 
 ## 🚀 クイックスタート
 
@@ -43,38 +44,62 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 
 ### 基本的な使い方
 
+#### 1. まずマップを作成
+**重要：マップ内に以下を配置**
+- 🔴 赤コンクリート = 赤チームスポーン
+- 🔵 青コンクリート = 青チームスポーン
+- ビーコン = 各チームの旗（スポーンの近くに配置）
+
+#### 2. ゲーム作成
 ```bash
-# ゲーム作成（自動検出方式）
 /ctf setpos1 game1        # マップ領域の始点を設定
 /ctf setpos2 game1        # マップ領域の終点を設定
-/ctf savemap game1        # マップを保存（旗・スポーンを自動検出）
+/ctf create game1         # ゲームを作成（対話形式で設定）
 
 # ゲーム開始
 /ctf start game1          # 単一ゲーム開始
 /ctf start game1 match 5  # 5ラウンドマッチ開始
 
 # プレイヤー参加
-/ctf join game1           # ゲームに参加（自動チーム割り当て）
+/ctf join game1           # ゲームに参加（スキルベースの自動チーム割り当て）
 ```
 
 ## 🎯 ゲームの流れ
 
-### 1️⃣ 建築フェーズ（2分）
+### 1️⃣ 建築フェーズ（デフォルト2分）
 - 自チームの色のコンクリートブロックで防衛施設を建設
 - ブロックは自陣ビーコンまたは既存ブロックに接続必須
 - ショップでアイテムを購入して準備
 - 敵チーム領域に侵入不可
+- 死亡してもアイテムは保持（keepInventory）
 
-### 2️⃣ 戦闘フェーズ（2分）
+### 2️⃣ 戦闘フェーズ（デフォルト2分）
 - 敵の旗（ビーコン）を奪取して自陣に持ち帰る
 - 旗キャリアは発光効果・移動制限あり
 - キル・キャプチャーで通貨獲得
 - 即座にリスポーン（遅延なし）
 
-### 3️⃣ 作戦会議フェーズ（15秒）
-- ラウンド結果の確認
-- 次ラウンドへの準備
-- インターバルなしで次フェーズへ移行
+### 3️⃣ 結果表示（15秒）
+- ゲーム結果の確認
+- マッチモード時は次ゲームへ自動移行
+
+## 📊 プレイヤー統計システム
+
+### スキルスコア計算
+```
+スキルスコア = (キル数 × 10) + (旗獲得数 × 30) - (死亡数 × 5)
+```
+
+### 統計コマンド
+- `/ctf stats [プレイヤー]` - 個人統計を表示
+- `/ctf leaderboard [カテゴリ]` - ランキング表示
+  - カテゴリ: skill, kills, captures, wins, kd
+- `/ctf balance <ゲーム>` - チームバランス確認
+- `/ctf balance <ゲーム> apply` - バランス調整を適用
+
+### 自動チームバランシング
+- 新規参加者は両チームのスキル合計が均等になるよう自動配置
+- 管理者は手動でバランス調整も可能
 
 ## 💎 ショップシステム
 
@@ -114,7 +139,7 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 ### ビーコンエリア効果
 - 3x3の範囲が特殊エリア
 - 敵: ダメージゾーン（シールド減少）
-- 味方: 空腹度・シールド回復
+- 味方: 空腹度・シールド回復（1ポイント/秒）
 
 ### チームブロックシステム
 - **赤チーム**: 赤のコンクリートのみ
@@ -124,18 +149,22 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 
 ### イベントチェスト
 - 戦闘フェーズ中に1回出現
-- 高価なショップアイテムを獲得可能
+- レアアイテム1個を獲得可能
 - 全プレイヤーに通知
+
+### キルストリークシステム
+- 連続キルで特別な通知とボーナス
+- キラーのみにタイトル表示
+- 他プレイヤーにはチャット通知
 
 ## 🗺️ マップ作成
 
-### 自動検出方式（推奨）
+### マップ作成方法
 
-1. **マップを構築**
-   - 赤のコンクリート: 赤チームスポーン（複数可）
-   - 青のコンクリート: 青チームスポーン（複数可）
-   - ビーコン + 赤ガラス: 赤チームの旗
-   - ビーコン + 青ガラス: 青チームの旗
+1. **必須要素を配置**
+   - 🔴 **赤コンクリート**: 赤チームスポーン（複数可）
+   - 🔵 **青コンクリート**: 青チームスポーン（複数可）
+   - **ビーコン**: 各チームの旗（スポーンの近くに配置）
 
 2. **領域を設定**
    ```bash
@@ -143,7 +172,12 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
    /ctf setpos2 game1  # 終点設定
    ```
 
-3. **保存**
+3. **ゲーム作成**
+   ```bash
+   /ctf create game1   # 対話形式でゲーム作成
+   ```
+
+   ゲーム作成後、マップを保存：
    ```bash
    /ctf savemap game1  # 自動検出して保存
    ```
@@ -165,12 +199,18 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 | `/ctf info <game>` | ゲーム詳細情報 |
 | `/ctf start <game> [match] [数]` | ゲーム/マッチ開始 |
 | `/ctf stop <game>` | 強制終了 |
-| `/ctf setflag <game> <team>` | 旗位置設定 |
+| `/ctf setpos1 <game>` | マップ領域始点設定 |
+| `/ctf setpos2 <game>` | マップ領域終点設定 |
+| `/ctf savemap <game>` | マップ保存（自動検出） |
+| `/ctf setflag <game> <team>` | 旗位置手動設定 |
 | `/ctf setspawn <game> <team>` | スポーン設定 |
 | `/ctf addspawn <game> <team>` | スポーン追加 |
 | `/ctf removespawn <game> <team> <番号>` | スポーン削除 |
 | `/ctf listspawns <game>` | スポーン一覧 |
-| `/ctf savemap <game>` | マップ保存 |
+| `/ctf addplayer <game> <player> [team]` | プレイヤー強制参加 |
+| `/ctf changeteam <game> <player> <team>` | チーム変更 |
+| `/ctf balance <game> [apply]` | チームバランス確認/適用 |
+| `/ctf resetstats [player]` | 統計リセット |
 
 ## 🎮 プレイヤーコマンド
 
@@ -181,6 +221,8 @@ EasyCTFは、Minecraft Paper Server用の高機能CTFプラグインです。2�
 | `/ctf team [red\|blue]` | チーム確認/変更 |
 | `/ctf status [game]` | 状況確認 |
 | `/ctf spectator [game]` | 観戦モード |
+| `/ctf stats [player]` | 統計表示 |
+| `/ctf leaderboard [category]` | ランキング表示 |
 
 ## ⚙️ 設定
 
@@ -245,7 +287,17 @@ cd easy_ctf
 
 ## 📝 リリースノート
 
-### 最新の変更点
+### v2.1.0 - スキルベースマッチメイキング
+- ✨ プレイヤー統計の永続化システム実装
+- ✨ スキルベースの自動チームバランシング
+- ✨ ランキング/リーダーボード機能
+- ✨ 管理者用の強制参加・チーム変更コマンド
+- 🐛 建築フェーズでの死亡時ブロック増殖バグ修正
+- 🌏 日本語リソースファイルの完全翻訳（53箇所修正）
+- 🎯 キルストリーク通知をキラーのみに制限
+- 🎁 イベントチェストをレアアイテム1個に簡素化
+
+### v2.0.0 - パフォーマンス最適化
 - ✅ フェーズ間のインターバル削除（即座に移行）
 - ✅ リスポーン遅延を0に設定（即座に復活）
 - ✅ 通貨報酬を調整（キル15G、旗キャリアキル25G、キャプチャ50G、フェーズボーナス100G）
@@ -253,14 +305,7 @@ cd easy_ctf
 - ✅ ショップ使用範囲制限を削除（どこでも利用可能）
 - ✅ チームブロックをコンクリートのみに統一
 - ✅ ビーコン周囲がダメージゾーンに
-- ✅ イベントチェストの中身をショップアイテムに限定
 - ✅ 距離ベースの旗検出アルゴリズム実装
-
-### パフォーマンス最適化
-- バッチ処理によるテレポート最適化
-- 非同期チャット処理
-- 効率的なブロック接続チェック
-- GZIP圧縮によるマップ保存
 
 ## 🤝 貢献
 
@@ -268,8 +313,11 @@ cd easy_ctf
 
 ## 📞 サポート
 
-- 📚 [ドキュメント](https://0x48lab.github.io/easy_ctf/)
-- 📚 [Wiki](https://github.com/0x48lab/easy_ctf/wiki)
+- 📚 [詳細ドキュメント](DOCUMENTATION_JA.md)
+- 📚 [English Documentation](DOCUMENTATION_EN.md)
+- 🌐 [公式サイト](https://0x48lab.github.io/easy_ctf/)
+- 💬 [Discord サーバー](https://discord.gg/yourdiscord)
+- 🐛 [バグ報告](https://github.com/0x48lab/easy_ctf/issues)
 
 ## 📄 ライセンス
 

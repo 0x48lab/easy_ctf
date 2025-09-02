@@ -266,7 +266,7 @@ class Game(
             return false
         }
         
-        val selectedTeam = team ?: selectTeamForPlayer()
+        val selectedTeam = team ?: selectTeamForPlayer(player)
         
         if (selectedTeam == Team.RED) {
             if (redTeam.size >= maxPlayersPerTeam) {
@@ -645,12 +645,10 @@ class Game(
         teleportToSpawn(player, team)
     }
     
-    private fun selectTeamForPlayer(): Team {
-        return when {
-            redTeam.size < blueTeam.size -> Team.RED
-            blueTeam.size < redTeam.size -> Team.BLUE
-            else -> if (Random().nextBoolean()) Team.RED else Team.BLUE
-        }
+    private fun selectTeamForPlayer(player: Player): Team {
+        val redPlayers = redTeam.mapNotNull { plugin.server.getPlayer(it) }
+        val bluePlayers = blueTeam.mapNotNull { plugin.server.getPlayer(it) }
+        return plugin.teamBalancer.selectTeamForPlayer(player, redPlayers, bluePlayers)
     }
     
     fun getPlayerTeam(uuid: UUID): Team? {
@@ -1579,6 +1577,9 @@ class Game(
             plugin.logger.info("No match callback, stopping game")
             stop()
         }
+        
+        // プレイヤー統計を更新
+        updatePlayerStatistics()
         
         // GameManagerから削除はしない（再利用可能）
     }
@@ -4859,7 +4860,7 @@ class Game(
     }
     
     /**
-     * レアアイテムを選択（ショップアイテムから）
+     * レアアイテムを選択（ショップアイテムから1つだけ）
      */
     private fun selectRareItems(): List<ItemStack> {
         val items = mutableListOf<ItemStack>()
@@ -4877,7 +4878,7 @@ class Game(
         val sortedByPrice = allShopItems.sortedByDescending { it.basePrice }
         
         // 上位の高価なアイテムから選択
-        val expensiveItems = sortedByPrice.take(sortedByPrice.size / 3) // 上位1/3のアイテム
+        val expensiveItems = sortedByPrice.take(kotlin.math.max(10, sortedByPrice.size / 3)) // 上位1/3または最低10個
         
         // カテゴリごとに分類
         val weaponItems = expensiveItems.filter { it.category == ShopCategory.WEAPONS }
@@ -4885,61 +4886,70 @@ class Game(
         val consumableItems = expensiveItems.filter { it.category == ShopCategory.CONSUMABLES }
         val blockItems = expensiveItems.filter { it.category == ShopCategory.BLOCKS }
         
-        val selectedItems = mutableListOf<ShopItem>()
+        // 重み付きでカテゴリを選択
+        val categoryWeights = mutableListOf<Pair<List<ShopItem>, Int>>()
+        if (weaponItems.isNotEmpty()) categoryWeights.add(weaponItems to 30)  // 30%
+        if (armorItems.isNotEmpty()) categoryWeights.add(armorItems to 25)    // 25%
+        if (consumableItems.isNotEmpty()) categoryWeights.add(consumableItems to 30) // 30%
+        if (blockItems.isNotEmpty()) categoryWeights.add(blockItems to 15)    // 15%
         
-        // 各カテゴリから1つずつ選択（存在する場合）
-        weaponItems.randomOrNull()?.let { selectedItems.add(it) }
-        armorItems.randomOrNull()?.let { selectedItems.add(it) }
-        consumableItems.randomOrNull()?.let { selectedItems.add(it) }
-        
-        // ブロックは確率で追加（30%）
-        if (Random().nextDouble() < 0.3) {
-            blockItems.randomOrNull()?.let { selectedItems.add(it) }
+        // 重み付き選択
+        var selectedItem: ShopItem? = null
+        if (categoryWeights.isNotEmpty()) {
+            val totalWeight = categoryWeights.sumOf { it.second }
+            var randomValue = Random().nextInt(totalWeight)
+            
+            for ((categoryItems, weight) in categoryWeights) {
+                randomValue -= weight
+                if (randomValue < 0) {
+                    selectedItem = categoryItems.random()
+                    break
+                }
+            }
         }
         
-        // 選択されたアイテムが少ない場合は、追加でランダムに選択
-        if (selectedItems.size < 3) {
-            val remaining = expensiveItems.filter { it !in selectedItems }
-            val additionalCount = kotlin.math.min(3 - selectedItems.size, remaining.size)
-            selectedItems.addAll(remaining.shuffled().take(additionalCount))
+        // 選択されたアイテムがない場合は、全体からランダムに選択
+        if (selectedItem == null && expensiveItems.isNotEmpty()) {
+            selectedItem = expensiveItems.random()
         }
         
-        // ShopItemをItemStackに変換
-        for (shopItem in selectedItems) {
-            val itemStack = ItemStack(shopItem.material, shopItem.amount)
+        // それでもない場合は、全アイテムからランダムに選択
+        if (selectedItem == null && allShopItems.isNotEmpty()) {
+            selectedItem = allShopItems.random()
+        }
+        
+        // ShopItemをItemStackに変換（1つだけ）
+        if (selectedItem != null) {
+            val itemStack = ItemStack(selectedItem.material, selectedItem.amount)
             
             // エンチャントを追加
-            for ((enchantment, level) in shopItem.enchantments) {
+            for ((enchantment, level) in selectedItem.enchantments) {
                 itemStack.addUnsafeEnchantment(enchantment, level)
             }
             
             // アイテムメタを設定
             val meta = itemStack.itemMeta
             if (meta != null) {
-                // 表示名を設定
-                meta.displayName(Component.text(shopItem.displayName))
+                // 表示名を設定（イベントチェスト特別仕様）
+                meta.displayName(Component.text("★ ", NamedTextColor.GOLD)
+                    .append(Component.text(selectedItem.displayName, NamedTextColor.YELLOW)))
                 
                 // 説明文を設定
-                if (shopItem.lore.isNotEmpty()) {
-                    meta.lore(shopItem.lore.map { Component.text(it) })
+                val loreList = mutableListOf<Component>()
+                loreList.add(Component.text("Event Chest Item", NamedTextColor.LIGHT_PURPLE))
+                if (selectedItem.lore.isNotEmpty()) {
+                    loreList.addAll(selectedItem.lore.map { Component.text(it, NamedTextColor.GRAY) })
                 }
+                meta.lore(loreList)
                 
                 // 耐久無限を設定
-                if (shopItem.unbreakable) {
+                if (selectedItem.unbreakable) {
                     meta.isUnbreakable = true
                 }
                 
                 itemStack.itemMeta = meta
             }
             
-            items.add(itemStack)
-        }
-        
-        // 最低1つはアイテムを保証
-        if (items.isEmpty() && allShopItems.isNotEmpty()) {
-            // ランダムに1つ選択
-            val randomItem = allShopItems.random()
-            val itemStack = ItemStack(randomItem.material, randomItem.amount)
             items.add(itemStack)
         }
         
@@ -5086,5 +5096,30 @@ class Game(
         player.inventory.setItem(4, flagItem)
         player.inventory.setItem(6, redSpawnItem)
         player.inventory.setItem(8, blueSpawnItem)
+    }
+    
+    /**
+     * ゲーム終了時にプレイヤー統計を更新
+     */
+    private fun updatePlayerStatistics() {
+        val winner = getWinner()
+        
+        getAllPlayers().forEach { player ->
+            val uuid = player.uniqueId
+            val kills = playerKills[uuid] ?: 0
+            val deaths = playerDeaths[uuid] ?: 0
+            val captures = playerCaptures[uuid] ?: 0
+            val playerTeam = getPlayerTeam(uuid)
+            val gameWon = playerTeam == winner
+            
+            plugin.playerStatisticsManager.updatePlayerStats(
+                uuid = uuid,
+                kills = kills,
+                deaths = deaths,
+                captures = captures,
+                gamePlayed = true,
+                gameWon = gameWon
+            )
+        }
     }
 }
