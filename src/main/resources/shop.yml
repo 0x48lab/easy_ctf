@@ -124,37 +124,20 @@ items:
     death-behavior: DROP
     display-name: "lang:shop.items.shield"
     
-  bow:
-    material: BOW
-    amount: 1
+  knockback_snowball:
+    material: SNOWBALL
+    amount: 4
     price: 20
     category: WEAPONS
     death-behavior: DROP
-    display-name: "lang:shop.items.bow"
-    
-  enchanted_bow:
-    material: BOW
-    amount: 1
-    price: 50
-    category: WEAPONS
-    death-behavior: DROP
-    display-name: "lang:shop.items.enchanted_bow"
+    display-name: "lang:shop.items.knockback_snowball"
     enchantments:
-      POWER: 2
-      INFINITY: 1
+      KNOCKBACK: 2
     lore:
-      - "lang:shop.items.enchanted_bow_lore.lore1"
-      - "lang:shop.items.enchanted_bow_lore.lore2"
+      - "lang:shop.items.knockback_snowball_lore.lore1"
+      - "lang:shop.items.knockback_snowball_lore.lore2"
 
   # ===== 消耗品 (CONSUMABLES) =====
-  arrows:
-    material: ARROW
-    amount: 8
-    price: 10
-    category: CONSUMABLES
-    death-behavior: DROP
-    display-name: "lang:shop.items.arrows"
-    
   bread:
     material: BREAD
     amount: 8

@@ -626,7 +626,7 @@ shop:
       description: Ender pearls, golden apples, etc.
       title: Consumables
     weapons:
-      description: Swords, axes, bows, etc.
+      description: Swords, axes, snowballs, etc.
       title: Weapons
   item:
     emerald:
@@ -646,8 +646,7 @@ shop:
       drop: Drop
       keep: Keep
   items:
-    arrows: Arrows x8
-    bow: Bow
+    knockback_snowball: Knockback Snowball x4
     bread: Bread x8
     cobblestone: Cobblestone x16
     cobweb: Cobweb x4
@@ -708,10 +707,9 @@ shop:
     wood_planks: Wood Planks x16
     wooden_axe: Wooden Axe
     wooden_sword: Wooden Sword
-    enchanted_bow: Enchanted Bow
-    enchanted_bow_lore:
-      lore1: Power II
-      lore2: Infinity I
+    knockback_snowball_lore:
+      lore1: Knockback II
+      lore2: Throwable item to knock enemies away
     enchanted_golden_apple: Enchanted Golden Apple
     enchanted_golden_apple_lore:
       lore: Max 2 per player
