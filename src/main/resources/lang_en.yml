@@ -647,6 +647,16 @@ shop:
       keep: Keep
   items:
     knockback_snowball: Knockback Snowball x4
+    knockback_snowball_lore:
+      lore1: Powerful knockback effect
+      lore2: Blow enemies away!
+    bow: Bow
+    bow_lore:
+      lore1: Requires arrows (no Infinity)
+      lore2: Tactical ranged weapon
+    arrows: Arrows x4
+    arrows_lore:
+      lore1: Ammunition for bow (high cost)
     bread: Bread x8
     cobblestone: Cobblestone x16
     cobweb: Cobweb x4

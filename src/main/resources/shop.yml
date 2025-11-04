@@ -137,7 +137,30 @@ items:
       - "lang:shop.items.knockback_snowball_lore.lore1"
       - "lang:shop.items.knockback_snowball_lore.lore2"
 
+  bow:
+    material: BOW
+    amount: 1
+    price: 40
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.bow"
+    lore:
+      - "lang:shop.items.bow_lore.lore1"
+      - "lang:shop.items.bow_lore.lore2"
+    available-phases: [BUILD, COMBAT]
+
   # ===== 消耗品 (CONSUMABLES) =====
+  arrows:
+    material: ARROW
+    amount: 4
+    price: 20
+    category: CONSUMABLES
+    death-behavior: DROP
+    display-name: "lang:shop.items.arrows"
+    lore:
+      - "lang:shop.items.arrows_lore.lore1"
+    available-phases: [BUILD, COMBAT]
+
   bread:
     material: BREAD
     amount: 8

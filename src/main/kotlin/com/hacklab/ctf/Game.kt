@@ -307,6 +307,9 @@ class Game(
         
         // ゲーム実行中の場合の処理（管理者による追加時）
         if (isAdminAction && (state == GameState.RUNNING || state == GameState.STARTING)) {
+            // インベントリをクリア（重要：途中参加時のアイテム持ち込みを防ぐ）
+            player.inventory.clear()
+            
             // 現在のフェーズに応じて装備を付与
             if (phase == GamePhase.BUILD) {
                 plugin.equipmentManager.giveBuildPhaseEquipment(player)
@@ -901,12 +904,18 @@ class Game(
         
         // プレイヤーの準備（バッチ処理で安全にテレポート）
         val allPlayers = getAllPlayers().toList()
-        
-        // 新しいゲーム開始時（またはマッチの最初のゲーム）のみインベントリをクリア
-        if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
-            allPlayers.forEach { player ->
-                player.inventory.clear()
+
+        // 全プレイヤーのインベントリをクリア（アイテム持ち込みを防ぐ）
+        allPlayers.forEach { player ->
+            player.inventory.clear()
+            // エフェクトもクリア
+            player.activePotionEffects.forEach { effect ->
+                player.removePotionEffect(effect.type)
             }
+            // 体力と満腹度をリセット
+            player.health = player.maxHealth
+            player.foodLevel = 20
+            player.saturation = 5.0f
         }
         
         val redPlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.RED }
@@ -2026,6 +2035,157 @@ class Game(
         }
         
         player.inventory.addItem(teamConcrete)
+        
+        // 建築用ブロックをランダムに2種類配布（各64個）
+        // 基本的な素材ブロックのみ（加工品は除外）
+        val buildingBlockCandidates = listOf(
+            // 石系
+            Material.STONE,
+            Material.COBBLESTONE,
+            Material.ANDESITE,
+            Material.DIORITE,
+            Material.GRANITE,
+            Material.DEEPSLATE,
+            Material.TUFF,
+            Material.CALCITE,
+            Material.SANDSTONE,
+            Material.RED_SANDSTONE,
+            
+            // 木材系
+            Material.OAK_PLANKS,
+            Material.SPRUCE_PLANKS,
+            Material.BIRCH_PLANKS,
+            Material.JUNGLE_PLANKS,
+            Material.ACACIA_PLANKS,
+            Material.DARK_OAK_PLANKS,
+            Material.MANGROVE_PLANKS,
+            Material.CHERRY_PLANKS,
+            
+            // 自然ブロック
+            Material.DIRT,
+            Material.GRASS_BLOCK,
+            Material.SAND,
+            Material.RED_SAND,
+            Material.GRAVEL,
+            Material.CLAY,
+            Material.MOSS_BLOCK,
+            Material.MUD,
+            
+            // ガラス系
+            Material.GLASS,
+            Material.WHITE_STAINED_GLASS,
+            Material.ORANGE_STAINED_GLASS,
+            Material.MAGENTA_STAINED_GLASS,
+            Material.LIGHT_BLUE_STAINED_GLASS,
+            Material.YELLOW_STAINED_GLASS,
+            Material.LIME_STAINED_GLASS,
+            Material.PINK_STAINED_GLASS,
+            Material.GRAY_STAINED_GLASS,
+            Material.LIGHT_GRAY_STAINED_GLASS,
+            Material.CYAN_STAINED_GLASS,
+            Material.PURPLE_STAINED_GLASS,
+            Material.BLUE_STAINED_GLASS,
+            Material.BROWN_STAINED_GLASS,
+            Material.GREEN_STAINED_GLASS,
+            Material.RED_STAINED_GLASS,
+            Material.BLACK_STAINED_GLASS,
+            
+            // 羊毛系
+            Material.WHITE_WOOL,
+            Material.ORANGE_WOOL,
+            Material.MAGENTA_WOOL,
+            Material.LIGHT_BLUE_WOOL,
+            Material.YELLOW_WOOL,
+            Material.LIME_WOOL,
+            Material.PINK_WOOL,
+            Material.GRAY_WOOL,
+            Material.LIGHT_GRAY_WOOL,
+            Material.CYAN_WOOL,
+            Material.PURPLE_WOOL,
+            Material.BLUE_WOOL,
+            Material.BROWN_WOOL,
+            Material.GREEN_WOOL,
+            Material.RED_WOOL,
+            Material.BLACK_WOOL,
+            
+            // テラコッタ系
+            Material.TERRACOTTA,
+            Material.WHITE_TERRACOTTA,
+            Material.ORANGE_TERRACOTTA,
+            Material.MAGENTA_TERRACOTTA,
+            Material.LIGHT_BLUE_TERRACOTTA,
+            Material.YELLOW_TERRACOTTA,
+            Material.LIME_TERRACOTTA,
+            Material.PINK_TERRACOTTA,
+            Material.GRAY_TERRACOTTA,
+            Material.LIGHT_GRAY_TERRACOTTA,
+            Material.CYAN_TERRACOTTA,
+            Material.PURPLE_TERRACOTTA,
+            Material.BLUE_TERRACOTTA,
+            Material.BROWN_TERRACOTTA,
+            Material.GREEN_TERRACOTTA,
+            Material.RED_TERRACOTTA,
+            Material.BLACK_TERRACOTTA,
+
+            // その他建築ブロック
+            Material.BRICKS,
+            Material.STONE_BRICKS,
+            Material.PRISMARINE,
+            Material.PRISMARINE_BRICKS,
+            Material.DARK_PRISMARINE,
+            Material.NETHERRACK,
+            Material.NETHER_BRICKS,
+            Material.RED_NETHER_BRICKS,
+            Material.BASALT,
+            Material.BLACKSTONE,
+            Material.END_STONE,
+            Material.END_STONE_BRICKS,
+            Material.PURPUR_BLOCK,
+            Material.OBSIDIAN,
+            Material.CRYING_OBSIDIAN,
+            Material.QUARTZ_BLOCK,
+            Material.GLOWSTONE,
+            Material.SEA_LANTERN,
+            Material.SPONGE,
+            Material.SNOW_BLOCK,
+            Material.ICE,
+            Material.PACKED_ICE,
+            Material.BLUE_ICE,
+            Material.SLIME_BLOCK,
+            Material.HONEY_BLOCK,
+            Material.HAY_BLOCK,
+            Material.DRIED_KELP_BLOCK,
+            Material.BONE_BLOCK
+        )
+        
+        // ランダムに2種類を選択（重複なし）
+        val selectedBlocks = buildingBlockCandidates.shuffled().take(2)
+        
+        selectedBlocks.forEach { material ->
+            val blockStack = ItemStack(material, 64).apply {
+                itemMeta = itemMeta?.apply {
+                    val blockName = material.name.lowercase()
+                        .replace('_', ' ')
+                        .split(' ')
+                        .joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+
+                    displayName(Component.text("$blockName (無料配布)", NamedTextColor.GREEN))
+                    lore(listOf(
+                        Component.text("建築用ブロック", NamedTextColor.GRAY),
+                        Component.text("創造的な建築を楽しもう！", NamedTextColor.YELLOW),
+                        Component.text("死亡時もドロップしません", NamedTextColor.DARK_GRAY)
+                    ))
+
+                    // ドロップ不可フラグを設定（死亡時に保持される）
+                    persistentDataContainer.set(
+                        NamespacedKey(plugin, "no_drop"),
+                        PersistentDataType.BOOLEAN,
+                        true
+                    )
+                }
+            }
+            inv.addItem(blockStack)
+        }
         
         // ショップアイテムをホットバー9番目に配置（既にない場合のみ）
         if (!hasInitialItem(player, InitialItemType.SHOP_EMERALD, Material.EMERALD)) {
@@ -4860,7 +5020,7 @@ class Game(
     }
     
     /**
-     * レアアイテムを選択（ショップアイテムから1つだけ）
+     * レアアイテムを選択（ショップアイテムから5〜10個ランダムに）
      */
     private fun selectRareItems(): List<ItemStack> {
         val items = mutableListOf<ItemStack>()
@@ -4886,71 +5046,77 @@ class Game(
         val consumableItems = expensiveItems.filter { it.category == ShopCategory.CONSUMABLES }
         val blockItems = expensiveItems.filter { it.category == ShopCategory.BLOCKS }
         
-        // 重み付きでカテゴリを選択
-        val categoryWeights = mutableListOf<Pair<List<ShopItem>, Int>>()
-        if (weaponItems.isNotEmpty()) categoryWeights.add(weaponItems to 30)  // 30%
-        if (armorItems.isNotEmpty()) categoryWeights.add(armorItems to 25)    // 25%
-        if (consumableItems.isNotEmpty()) categoryWeights.add(consumableItems to 30) // 30%
-        if (blockItems.isNotEmpty()) categoryWeights.add(blockItems to 15)    // 15%
+        // 5〜10個のランダムな個数を決定
+        val itemCount = Random().nextInt(6) + 5 // 5〜10個
         
-        // 重み付き選択
-        var selectedItem: ShopItem? = null
-        if (categoryWeights.isNotEmpty()) {
-            val totalWeight = categoryWeights.sumOf { it.second }
-            var randomValue = Random().nextInt(totalWeight)
+        // アイテムを選択
+        repeat(itemCount) {
+            // 重み付きでカテゴリを選択
+            val categoryWeights = mutableListOf<Pair<List<ShopItem>, Int>>()
+            if (weaponItems.isNotEmpty()) categoryWeights.add(weaponItems to 30)  // 30%
+            if (armorItems.isNotEmpty()) categoryWeights.add(armorItems to 25)    // 25%
+            if (consumableItems.isNotEmpty()) categoryWeights.add(consumableItems to 30) // 30%
+            if (blockItems.isNotEmpty()) categoryWeights.add(blockItems to 15)    // 15%
             
-            for ((categoryItems, weight) in categoryWeights) {
-                randomValue -= weight
-                if (randomValue < 0) {
-                    selectedItem = categoryItems.random()
-                    break
+            // 重み付き選択
+            var selectedItem: ShopItem? = null
+            if (categoryWeights.isNotEmpty()) {
+                val totalWeight = categoryWeights.sumOf { it.second }
+                var randomValue = Random().nextInt(totalWeight)
+                
+                for ((categoryItems, weight) in categoryWeights) {
+                    randomValue -= weight
+                    if (randomValue < 0) {
+                        selectedItem = categoryItems.random()
+                        break
+                    }
                 }
             }
-        }
-        
-        // 選択されたアイテムがない場合は、全体からランダムに選択
-        if (selectedItem == null && expensiveItems.isNotEmpty()) {
-            selectedItem = expensiveItems.random()
-        }
-        
-        // それでもない場合は、全アイテムからランダムに選択
-        if (selectedItem == null && allShopItems.isNotEmpty()) {
-            selectedItem = allShopItems.random()
-        }
-        
-        // ShopItemをItemStackに変換（1つだけ）
-        if (selectedItem != null) {
-            val itemStack = ItemStack(selectedItem.material, selectedItem.amount)
             
-            // エンチャントを追加
-            for ((enchantment, level) in selectedItem.enchantments) {
-                itemStack.addUnsafeEnchantment(enchantment, level)
+            // 選択されたアイテムがない場合は、全体からランダムに選択
+            if (selectedItem == null && expensiveItems.isNotEmpty()) {
+                selectedItem = expensiveItems.random()
             }
             
-            // アイテムメタを設定
-            val meta = itemStack.itemMeta
-            if (meta != null) {
-                // 表示名を設定（イベントチェスト特別仕様）
-                meta.displayName(Component.text("★ ", NamedTextColor.GOLD)
-                    .append(Component.text(selectedItem.displayName, NamedTextColor.YELLOW)))
-                
-                // 説明文を設定
-                val loreList = mutableListOf<Component>()
-                loreList.add(Component.text("Event Chest Item", NamedTextColor.LIGHT_PURPLE))
-                if (selectedItem.lore.isNotEmpty()) {
-                    loreList.addAll(selectedItem.lore.map { Component.text(it, NamedTextColor.GRAY) })
-                }
-                meta.lore(loreList)
-                
-                // 耐久無限を設定
-                if (selectedItem.unbreakable) {
-                    meta.isUnbreakable = true
-                }
-                
-                itemStack.itemMeta = meta
+            // それでもない場合は、全アイテムからランダムに選択
+            if (selectedItem == null && allShopItems.isNotEmpty()) {
+                selectedItem = allShopItems.random()
             }
             
-            items.add(itemStack)
+            // ShopItemをItemStackに変換
+            if (selectedItem != null) {
+                val itemStack = ItemStack(selectedItem.material, selectedItem.amount)
+                
+                // エンチャントを追加
+                for ((enchantment, level) in selectedItem.enchantments) {
+                    itemStack.addUnsafeEnchantment(enchantment, level)
+                }
+                
+                // アイテムメタを設定
+                val meta = itemStack.itemMeta
+                if (meta != null) {
+                    // 表示名を設定（イベントチェスト特別仕様）
+                    meta.displayName(Component.text("★ ", NamedTextColor.GOLD)
+                        .append(Component.text(selectedItem.displayName, NamedTextColor.YELLOW)))
+                    
+                    // 説明文を設定
+                    val loreList = mutableListOf<Component>()
+                    loreList.add(Component.text("Event Chest Item", NamedTextColor.LIGHT_PURPLE))
+                    if (selectedItem.lore.isNotEmpty()) {
+                        loreList.addAll(selectedItem.lore.map { Component.text(it, NamedTextColor.GRAY) })
+                    }
+                    meta.lore(loreList)
+                    
+                    // 耐久無限を設定
+                    if (selectedItem.unbreakable) {
+                        meta.isUnbreakable = true
+                    }
+                    
+                    itemStack.itemMeta = meta
+                }
+                
+                items.add(itemStack)
+            }
         }
         
         return items
