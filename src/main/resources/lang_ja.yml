@@ -615,7 +615,7 @@ shop:
       description: エンダーパール、金リンゴなど
       title: 消耗品
     weapons:
-      description: 剣、斧、弓など
+      description: 剣、斧、雪玉など
       title: 武器
   item:
     emerald:
@@ -635,8 +635,17 @@ shop:
       drop: ドロップ
       keep: 保持
   items:
-    arrows: 矢 x8
+    knockback_snowball: ノックバック雪玉 x4
+    knockback_snowball_lore:
+      lore1: 強力なノックバック効果
+      lore2: 敵を吹き飛ばす！
     bow: 弓
+    bow_lore:
+      lore1: 矢が必要です（無限なし）
+      lore2: 遠距離攻撃用の戦術的武器
+    arrows: 矢 x4
+    arrows_lore:
+      lore1: 弓の弾薬 (高コスト)
     bread: パン x8
     cobblestone: 丸石 x16
     cobweb: クモの巣 x4
@@ -697,10 +706,9 @@ shop:
     wood_planks: 木材 x16
     wooden_axe: 木の斧
     wooden_sword: 木の剣
-    enchanted_bow: エンチャント弓
-    enchanted_bow_lore:
-      lore1: パワー II
-      lore2: 無限 I
+    knockback_snowball_lore:
+      lore1: ノックバック II
+      lore2: 敵を吹き飛ばす投擲アイテム
     enchanted_golden_apple: エンチャント金リンゴ
     enchanted_golden_apple_lore:
       lore: 一人2個まで

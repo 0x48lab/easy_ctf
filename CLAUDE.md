@@ -360,3 +360,10 @@ shop:
 ## ライセンス
 
 このプロジェクトは学習・研究目的で作成されています。
+
+## Active Technologies
+- Kotlin 1.9.22 + Minecraft Paper API 1.21.5, Gradle with Kotlin DSL (001-balance-bow-shop)
+- YAML configuration files (shop.yml, lang_ja.yml, lang_en.yml) (001-balance-bow-shop)
+
+## Recent Changes
+- 001-balance-bow-shop: Added Kotlin 1.9.22 + Minecraft Paper API 1.21.5, Gradle with Kotlin DSL
