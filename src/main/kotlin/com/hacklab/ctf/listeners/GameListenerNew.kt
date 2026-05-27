@@ -541,24 +541,24 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     // ゲームが終了している場合はリスポーンしない
                     if (game.state != GameState.RUNNING) {
                         plugin.logger.info("[Respawn] Game not running, cancelling respawn for ${player.name}")
-                        game.respawnTasks.remove(player.uniqueId)
+                        game.taskScheduler.removePlayerTask(com.hacklab.ctf.managers.GameTaskScheduler.RESPAWN, player.uniqueId)
                         return
                     }
-                    
+
                     // プレイヤーがまだゲームに参加しているか確認
                     if (game.getPlayerTeam(player.uniqueId) == null) {
                         plugin.logger.info("[Respawn] Player not in game, cancelling respawn for ${player.name}")
-                        game.respawnTasks.remove(player.uniqueId)
+                        game.taskScheduler.removePlayerTask(com.hacklab.ctf.managers.GameTaskScheduler.RESPAWN, player.uniqueId)
                         return
                     }
-                    
+
                     game.handleRespawn(player)
                     player.gameMode = GameMode.SURVIVAL
-                    
+
                     // 保持アイテムを再配布
                     val keptItems = player.getMetadata("ctf_items_to_keep")
                         .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
-                    
+
                     // ショップアイテムはスロット8に、その他はaddItemで追加
                     for (item in keptItems) {
                         if (plugin.shopManager.isShopItem(item)) {
@@ -574,17 +574,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             player.inventory.addItem(item)
                         }
                     }
-                    
+
                     player.removeMetadata("ctf_items_to_keep", plugin)
-                    
+
                     // タスクをマップから削除
-                    game.respawnTasks.remove(player.uniqueId)
+                    game.taskScheduler.removePlayerTask(com.hacklab.ctf.managers.GameTaskScheduler.RESPAWN, player.uniqueId)
                 }
             }
-            
+
             // リスポーンタスクを記録
-            game.respawnTasks[player.uniqueId] = respawnTask
-            respawnTask.runTaskLater(plugin, 1L) // 即座にリスポーン（1tick後）
+            game.taskScheduler.schedulePlayerTask(com.hacklab.ctf.managers.GameTaskScheduler.RESPAWN, player.uniqueId, 1L, respawnTask)
             }
         }
     }

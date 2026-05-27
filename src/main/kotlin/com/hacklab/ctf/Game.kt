@@ -23,6 +23,8 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
+import com.hacklab.ctf.managers.GameTaskScheduler
+import com.hacklab.ctf.managers.GameScoreboardManager
 import org.bukkit.scoreboard.DisplaySlot
 import org.bukkit.scoreboard.Objective
 import org.bukkit.scoreboard.Scoreboard
@@ -91,11 +93,8 @@ class Game(
     val isBlueFlagDropped: Boolean
         get() = droppedFlags.any { it.value.first == Team.BLUE }
     
-    // UI要素
-    var scoreboard: Scoreboard? = null
-    var objective: Objective? = null
-    var bossBar: BossBar? = null
-    private var lastScoreboardUpdate: Long = 0
+    // UI要素は scoreboardManager に委譲
+    val bossBar: BossBar? get() = scoreboardManager.bossBar
     
     // スポーン保護
     val spawnProtection = mutableMapOf<UUID, Long>() // プレイヤー -> 保護終了時刻
@@ -115,10 +114,7 @@ class Game(
     val damageTracking = mutableMapOf<UUID, MutableMap<UUID, Long>>() // 被害者 -> (攻撃者 -> 最終ダメージ時刻)
     val captureAssists = mutableMapOf<Team, MutableSet<UUID>>() // チーム -> キャプチャーに貢献したプレイヤー
     
-    // ActionBarメッセージのクールダウン管理
-    private val actionBarCooldown = mutableMapOf<UUID, Long>() // プレイヤー -> 次回表示可能時刻
-    private val actionBarErrorDisplay = mutableMapOf<UUID, Pair<String, Long>>() // プレイヤー -> (エラーメッセージ, 表示終了時刻)
-    private val actionBarPriority = mutableMapOf<UUID, Int>() // プレイヤー -> 優先度（高いほど優先）
+    // ActionBar 管理は scoreboardManager に委譲
     
     // ブロック設置制限管理
     val teamPlacedBlocks = mutableMapOf<Team, MutableSet<Location>>() // チーム -> 設置したブロックの座標
@@ -131,18 +127,15 @@ class Game(
     )
     val teamBlockTrees = mutableMapOf<Team, MutableMap<Location, BlockNode>>() // チーム -> (座標 -> ノード)
     
-    // タスク
-    private var gameTask: BukkitRunnable? = null
-    private var suffocationTask: BukkitRunnable? = null
-    private var scoreboardUpdateTask: BukkitRunnable? = null
-    private var actionBarTask: BukkitRunnable? = null
-    private var autoStartTask: BukkitRunnable? = null  // 自動開始タスクの参照を追加
-    private val spawnProtectionTasks = mutableMapOf<UUID, BukkitRunnable>()
-    val respawnTasks = mutableMapOf<UUID, BukkitRunnable>()
+    // タスク管理（一元化）
+    val taskScheduler = GameTaskScheduler(plugin)
+
+    // UI管理（スコアボード、BossBar、ActionBar）
+    val scoreboardManager = GameScoreboardManager(this, plugin)
     
     // イベントチェスト関連
     private val eventChestLocations = mutableListOf<Location>()
-    private val eventChestTasks = mutableListOf<BukkitRunnable>()
+    // イベントチェスト関連の位置データ（タスクは taskScheduler で管理）
     private var eventChestSpawnCount = 0
     
     // ゲッター
@@ -528,7 +521,7 @@ class Game(
         player.sendMessage(plugin.languageManager.getMessageAsComponent("spectator.switched"))
         
         // タブリストの色を更新
-        updatePlayerTeamColor(player, player.scoreboard)
+        scoreboardManager.updatePlayerTeamColor(player, player.scoreboard)
         
         // スコアボードを更新
         updateScoreboard()
@@ -553,8 +546,8 @@ class Game(
         }
         
         // UI削除
-        player.scoreboard = Bukkit.getScoreboardManager().mainScoreboard
-        bossBar?.removePlayer(player)
+        scoreboardManager.resetScoreboard(player)
+        scoreboardManager.removePlayerFromBossBar(player)
         
         // 旗を持っていた場合
         if (redFlagCarrier == player.uniqueId) {
@@ -575,41 +568,39 @@ class Game(
         if (state == GameState.WAITING && autoStartEnabled) {
             if (redTeam.size + blueTeam.size < minPlayers && autoStartCountdown > 0) {
                 autoStartCountdown = -1
-                autoStartTask?.cancel()
-                autoStartTask = null
+                taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                 getAllPlayers().forEach {
                     it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
                 }
             }
         }
     }
-    
+
     fun handleDisconnect(player: Player) {
         val team = getPlayerTeam(player.uniqueId) ?: return
-        
+
         // 切断中のプレイヤーとして記録（チーム情報を保持）
         disconnectedPlayers[player.uniqueId] = team
-        
+
         // チームから一時的に除外（スコアボードの人数に含まれないように）
         redTeam.remove(player.uniqueId)
         blueTeam.remove(player.uniqueId)
-        
+
         // 旗を持っていた場合
         if (redFlagCarrier == player.uniqueId) {
             dropFlag(player, Team.RED)
         } else if (blueFlagCarrier == player.uniqueId) {
             dropFlag(player, Team.BLUE)
         }
-        
+
         // スコアボードを更新
         updateScoreboard()
-        
+
         // 自動開始のチェック（プレイヤー数が減った場合、カウントダウンをキャンセル）
         if (state == GameState.WAITING && autoStartEnabled) {
             if (redTeam.size + blueTeam.size < minPlayers && autoStartCountdown > 0) {
                 autoStartCountdown = -1
-                autoStartTask?.cancel()
-                autoStartTask = null
+                taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                 getAllPlayers().forEach {
                     it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
                 }
@@ -632,7 +623,7 @@ class Game(
         
         // UIの再設定
         setupScoreboard(player)
-        bossBar?.addPlayer(player)
+        scoreboardManager.addPlayerToBossBar(player)
         
         // 現在のフェーズに応じた装備を配布
         when (phase) {
@@ -675,58 +666,56 @@ class Game(
     private fun checkAutoStart() {
         // 自動開始が無効な場合は何もしない
         if (!autoStartEnabled) return
-        
+
         if (state != GameState.WAITING) return
         if (redTeam.size + blueTeam.size < minPlayers) {
             if (autoStartCountdown > 0) {
                 autoStartCountdown = -1
-                // 既存の自動開始タスクをキャンセル
-                autoStartTask?.cancel()
-                autoStartTask = null
+                taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                 getAllPlayers().forEach {
                     it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
                 }
             }
             return
         }
-        
-        if (autoStartCountdown < 0 && autoStartTask == null) {
+
+        if (autoStartCountdown < 0 && taskScheduler.getNamed(GameTaskScheduler.AUTO_START) == null) {
             autoStartCountdown = 30
-            autoStartTask = object : BukkitRunnable() {
+            val task = object : BukkitRunnable() {
                 override fun run() {
                     if (autoStartCountdown <= 0 || state != GameState.WAITING) {
                         cancel()
-                        autoStartTask = null
+                        taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                         // プレイヤー数を再チェックしてから開始
                         if (autoStartCountdown == 0 && redTeam.size + blueTeam.size >= minPlayers) {
                             start()
                         }
                         return
                     }
-                    
+
                     if (redTeam.size + blueTeam.size < minPlayers) {
                         autoStartCountdown = -1
                         cancel()
-                        autoStartTask = null
+                        taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                         getAllPlayers().forEach {
                             it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.auto-start-cancelled"))
                         }
                         return
                     }
-                    
+
                     if (autoStartCountdown % 10 == 0 || autoStartCountdown <= 5) {
                         getAllPlayers().forEach {
                             it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.countdown-message", "seconds" to autoStartCountdown.toString()))
                         }
                     }
-                    
+
                     autoStartCountdown--
-                    
+
                     // スコアボード更新（カウントダウン表示のため）
                     updateScoreboard()
                 }
             }
-            autoStartTask?.runTaskTimer(plugin, 0L, 20L)
+            taskScheduler.scheduleRepeating(GameTaskScheduler.AUTO_START, 0L, 20L, task)
         }
     }
     
@@ -734,8 +723,7 @@ class Game(
         plugin.logger.info(plugin.languageManager.getMessage("log.game-starting", "game" to name, "state" to state.toString(), "phase" to phase.toString()))
         
         // 自動開始タスクをキャンセル（手動開始の場合も含む）
-        autoStartTask?.cancel()
-        autoStartTask = null
+        taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
         autoStartCountdown = -1
         
         if (state != GameState.WAITING) {
@@ -882,11 +870,9 @@ class Game(
         initializeCurrency()
         
         // BossBar作成
-        bossBar = Bukkit.createBossBar(
-            plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to formatTime(currentPhaseTime)),
-            BarColor.GREEN,
-            BarStyle.SOLID
-        )
+        scoreboardManager.createBossBar()
+        scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to formatTime(currentPhaseTime)))
+        scoreboardManager.bossBar?.color = BarColor.GREEN
         
         // プレイヤー統計をリセット
         playerDeaths.clear()
@@ -935,7 +921,7 @@ class Game(
             player.allowFlight = true
             player.isFlying = false
             giveBuildPhaseItems(player, Team.RED)
-            bossBar?.addPlayer(player)
+            scoreboardManager.addPlayerToBossBar(player)
         }
         
         plugin.logger.info("[Game] Starting immediate teleportation for ${bluePlayers.size} blue players")
@@ -947,7 +933,7 @@ class Game(
             player.allowFlight = true
             player.isFlying = false
             giveBuildPhaseItems(player, Team.BLUE)
-            bossBar?.addPlayer(player)
+            scoreboardManager.addPlayerToBossBar(player)
         }
         
         plugin.logger.info("[Game] Starting immediate teleportation for ${spectatorPlayers.size} spectator players")
@@ -956,7 +942,7 @@ class Game(
             plugin.logger.info("[Game] Teleporting spectator ${player.name} immediately to ${centerLocation}")
             player.teleport(centerLocation)
             player.gameMode = GameMode.SPECTATOR
-            bossBar?.addPlayer(player)
+            scoreboardManager.addPlayerToBossBar(player)
         }
         
         // 全プレイヤーの初期化処理（テレポート後に実行）
@@ -1008,56 +994,52 @@ class Game(
     }
     
     private fun startGameLoop() {
-        // 既存のタスクをキャンセル
-        gameTask?.cancel()
-        gameTask = null
-        
-        gameTask = object : BukkitRunnable() {
+        // メインゲームループ
+        val gameLoopTask = object : BukkitRunnable() {
             override fun run() {
                 if (state != GameState.RUNNING) {
                     cancel()
                     return
                 }
-                
+
                 // 時間更新
                 currentPhaseTime--
-                
+
                 // ドロップした旗のチェック
                 checkDroppedFlags()
-                
+
                 // ドロップした旗への接触チェック（戦闘フェーズのみ）
                 if (phase == GamePhase.COMBAT) {
                     checkDroppedFlagTouch()
                 }
-                
+
                 // フェーズ遷移チェック
                 if (currentPhaseTime <= 0) {
                     when (phase) {
                         GamePhase.BUILD -> transitionToCombatPhase()
-                        GamePhase.COMBAT -> handleCombatPhaseEnd()  // 戦闘フェーズ終了処理
+                        GamePhase.COMBAT -> handleCombatPhaseEnd()
                     }
                 }
-                
+
                 // UI更新
                 updateBossBar()
                 updateScoreboard()
             }
         }
-        gameTask?.runTaskTimer(plugin, 0L, 20L)
-        
-        // アクションバー更新タスクを別で管理（5ティックごと）
-        actionBarTask?.cancel()
-        actionBarTask = object : BukkitRunnable() {
+        taskScheduler.scheduleRepeating(GameTaskScheduler.GAME_LOOP, 0L, 20L, gameLoopTask)
+
+        // アクションバー更新タスク（1秒ごと）
+        val actionBarLoopTask = object : BukkitRunnable() {
             override fun run() {
                 if (state != GameState.RUNNING) {
                     cancel()
-                    actionBarTask = null
+                    taskScheduler.cancelNamed(GameTaskScheduler.ACTION_BAR)
                     return
                 }
                 updateActionBarGuides()
             }
         }
-        actionBarTask?.runTaskTimer(plugin, 0L, 20L) // 1秒ごとに更新（頻度を下げる）
+        taskScheduler.scheduleRepeating(GameTaskScheduler.ACTION_BAR, 0L, 20L, actionBarLoopTask)
     }
     
     private fun transitionToCombatPhase() {
@@ -1065,21 +1047,21 @@ class Game(
         currentPhaseTime = combatDuration
         
         // リスポーンタスクをクリア（建築フェーズからの移行時）
-        respawnTasks.forEach { (playerUuid, task) ->
+        taskScheduler.getPlayerTasks(GameTaskScheduler.RESPAWN).forEach { (playerUuid, task) ->
             plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-combat"))
             task.cancel()
-            
+
             // リスポーン待ちのプレイヤーを即座に復活させる
             Bukkit.getPlayer(playerUuid)?.let { player ->
                 if (player.gameMode == GameMode.SPECTATOR) {
                     val team = getPlayerTeam(player.uniqueId) ?: return@let
-                    
+
                     // スポーン地点に転送
                     teleportToSpawn(player, team)
-                    
+
                     // ゲームモードを設定
                     player.gameMode = GameMode.SURVIVAL
-                    
+
                     // 保持アイテムがあれば復元
                     val keptItems = player.getMetadata("ctf_items_to_keep")
                         .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
@@ -1087,19 +1069,19 @@ class Game(
                         player.inventory.addItem(item)
                     }
                     player.removeMetadata("ctf_items_to_keep", plugin)
-                    
+
                     // 建築フェーズアイテムを削除
                     removeTeamColoredBlocks(player)
-                    
+
                     // 戦闘フェーズアイテムを配布
                     giveCombatPhaseItems(player, team)
                 }
             }
         }
-        respawnTasks.clear()
+        taskScheduler.cancelAllPlayerTasks(GameTaskScheduler.RESPAWN)
         
-        bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.combat-time-format", "time" to formatTime(currentPhaseTime)))
-        bossBar?.color = BarColor.RED
+        scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.combat-time-format", "time" to formatTime(currentPhaseTime)))
+        scoreboardManager.bossBar?.color = BarColor.RED
         
         // フェーズ変更通知
         sendEventNotification(
@@ -1132,20 +1114,18 @@ class Game(
      */
     private fun handleCombatPhaseEnd() {
         // ゲームタスクを一時停止
-        gameTask?.cancel()
-        gameTask = null
-        
+        taskScheduler.cancelNamed(GameTaskScheduler.GAME_LOOP)
+
         // リスポーンタスクをキャンセル
-        respawnTasks.forEach { (playerUuid, task) ->
+        taskScheduler.getPlayerTasks(GameTaskScheduler.RESPAWN).forEach { (playerUuid, _) ->
             plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-phase"))
-            task.cancel()
-            
+
             // リスポーン待ちのプレイヤーを即座に復活させる
             Bukkit.getPlayer(playerUuid)?.let { player ->
                 if (player.gameMode == GameMode.SPECTATOR) {
                     handleRespawn(player)
                     player.gameMode = GameMode.ADVENTURE
-                    
+
                     // 保持アイテムがあれば復元
                     val keptItems = player.getMetadata("ctf_items_to_keep")
                         .firstOrNull()?.value() as? List<ItemStack> ?: emptyList()
@@ -1156,7 +1136,7 @@ class Game(
                 }
             }
         }
-        respawnTasks.clear()
+        taskScheduler.cancelAllPlayerTasks(GameTaskScheduler.RESPAWN)
         
         // 戦闘フェーズ終了ボーナス
         val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 100)
@@ -1297,13 +1277,7 @@ class Game(
     /**
      * BossBarを作成（マッチインターバル用）
      */
-    fun createBossBar() {
-        bossBar = Bukkit.createBossBar(
-            "",
-            BarColor.YELLOW,
-            BarStyle.SOLID
-        )
-    }
+    fun createBossBar() = scoreboardManager.createBossBar()
     
     /**
      * マッチの次のゲームのために状態をリセット
@@ -1312,29 +1286,11 @@ class Game(
         plugin.logger.info("[Game] Resetting for next match game")
         
         // 全てのタスクをキャンセル
-        gameTask?.cancel()
-        suffocationTask?.cancel()
-        scoreboardUpdateTask?.cancel()
-        spawnProtectionTasks.values.forEach { it.cancel() }
-        actionBarTask?.cancel()
-        
-        // リスポーンタスクをキャンセル
-        respawnTasks.values.forEach { task ->
-            plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-match"))
-            task.cancel()
-        }
-        
-        // タスク参照をクリア
-        gameTask = null
-        suffocationTask = null
-        scoreboardUpdateTask = null
-        spawnProtectionTasks.clear()
-        actionBarTask = null
-        respawnTasks.clear()
-        
+        plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-match"))
+        taskScheduler.cancelAll()
+
         // ボスバーをリセット
-        bossBar?.removeAll()
-        bossBar = null
+        scoreboardManager.destroyBossBar()
         
         // 状態をリセット
         state = GameState.WAITING
@@ -1348,12 +1304,10 @@ class Game(
         score[Team.BLUE] = 0
         droppedFlags.clear()
         spawnProtection.clear()
-        actionBarCooldown.clear()
-        actionBarErrorDisplay.clear()
-        actionBarPriority.clear()
+        scoreboardManager.clearState()
         redFlagCarrier = null
         blueFlagCarrier = null
-        
+
         // マッチモードの場合は旗とスポーン装飾の再設置をスキップ（start()で行う）
         // 通常モードの場合のみ再設置
         if (matchWrapper == null || !matchWrapper!!.isActive) {
@@ -1369,27 +1323,8 @@ class Game(
         state = GameState.ENDING
         
         // 全てのタスクをキャンセル
-        gameTask?.cancel()
-        suffocationTask?.cancel()
-        scoreboardUpdateTask?.cancel()
-        spawnProtectionTasks.values.forEach { it.cancel() }
-        actionBarTask?.cancel()
-        autoStartTask?.cancel()  // 自動開始タスクもキャンセル
-        
-        // リスポーンタスクをキャンセル
-        respawnTasks.values.forEach { task ->
-            plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-stop"))
-            task.cancel()
-        }
-        
-        // タスク参照をクリア
-        gameTask = null
-        suffocationTask = null
-        scoreboardUpdateTask = null
-        spawnProtectionTasks.clear()
-        actionBarTask = null
-        autoStartTask = null  // 自動開始タスクの参照もクリア
-        respawnTasks.clear()
+        plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-stop"))
+        taskScheduler.cancelAll()
         
         // マッチモードかどうかチェック（強制終了の場合はマッチモードを無視）
         val isMatchMode = !forceStop && matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()
@@ -1406,8 +1341,8 @@ class Game(
             player.removeMetadata("on_enemy_block", plugin)
             
             // UIを必ず削除（強制終了時も含む）
-            player.scoreboard = Bukkit.getScoreboardManager().mainScoreboard
-            bossBar?.removePlayer(player)
+            scoreboardManager.resetScoreboard(player)
+            scoreboardManager.removePlayerFromBossBar(player)
             
             if (!isMatchMode || forceStop) {
                 // マッチモードでない場合、または強制終了の場合
@@ -1457,12 +1392,10 @@ class Game(
         }
         
         // BossBar削除
-        bossBar?.removeAll()
-        bossBar = null
+        scoreboardManager.destroyBossBar()
         
-        // スコアボード削除
-        scoreboard = null
-        objective = null
+        // スコアボード状態クリア
+        scoreboardManager.clearState()
         
         // 旗とスポーン装飾を削除（マッチモードでもクリアする）
         // ただし、マッチ継続中はプレイヤーが設置したブロックは保持
@@ -1491,12 +1424,10 @@ class Game(
         score[Team.BLUE] = 0
         droppedFlags.clear()
         spawnProtection.clear()
-        actionBarCooldown.clear()
-        actionBarErrorDisplay.clear()
-        actionBarPriority.clear()
+        scoreboardManager.clearState()
         redFlagCarrier = null
         blueFlagCarrier = null
-        
+
         // テンポラリワールドをクリーンアップ（マッチモードでは削除しない、ただし強制終了時は削除）
         if ((!isMatchMode || forceStop) && tempWorld != null) {
             val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
@@ -1689,7 +1620,7 @@ class Game(
                         }
                         
                         // BossBar追加
-                        bossBar?.addPlayer(player)
+                        scoreboardManager.addPlayerToBossBar(player)
                     }, playerIndex.toLong()) // 各プレイヤーに0.05秒の遅延
                 }
             }, currentDelay)
@@ -2568,348 +2499,23 @@ class Game(
         }
     }
     
-    private fun setupScoreboard(player: Player) {
-        try {
-            // プレイヤーごとに個別のスコアボードを作成
-            val playerScoreboard = Bukkit.getScoreboardManager().newScoreboard
-            val playerObjective = playerScoreboard.registerNewObjective("ctf_game", "dummy", 
-                plugin.languageManager.getMessageAsComponent("scoreboard.title-ctf", "game" to gameName).color(NamedTextColor.GOLD))
-            playerObjective.displaySlot = DisplaySlot.SIDEBAR
-            
-            // チームを作成（タブリスト色分け用）
-            setupScoreboardTeams(playerScoreboard)
-            
-            // プレイヤーに設定
-            player.scoreboard = playerScoreboard
-            
-            // プレイヤーを適切なチームに追加
-            updatePlayerTeamColor(player, playerScoreboard)
-            
-            // 初回更新
-            updatePlayerScoreboard(player)
-            
-        } catch (e: Exception) {
-            plugin.logger.warning("Failed to setup scoreboard for player ${player.name}: ${e.message}")
-        }
-    }
-    
-    private fun setupScoreboardTeams(scoreboard: Scoreboard) {
-        // 赤チーム
-        if (scoreboard.getTeam("ctf_red") == null) {
-            val redTeam = scoreboard.registerNewTeam("ctf_red")
-            redTeam.color(NamedTextColor.RED)
-            redTeam.prefix(Component.text("[${plugin.languageManager.getMessage("teams.red")}] ", NamedTextColor.RED))
-        }
-        
-        // 青チーム
-        if (scoreboard.getTeam("ctf_blue") == null) {
-            val blueTeam = scoreboard.registerNewTeam("ctf_blue")
-            blueTeam.color(NamedTextColor.BLUE)
-            blueTeam.prefix(Component.text("[${plugin.languageManager.getMessage("teams.blue")}] ", NamedTextColor.BLUE))
-        }
-        
-        // 観戦者チーム
-        if (scoreboard.getTeam("ctf_spectator") == null) {
-            val spectatorTeam = scoreboard.registerNewTeam("ctf_spectator")
-            spectatorTeam.color(NamedTextColor.GRAY)
-            spectatorTeam.prefix(Component.text("[${plugin.languageManager.getMessage("teams.spectator")}] ", NamedTextColor.GRAY))
-        }
-    }
-    
-    private fun updatePlayerTeamColor(player: Player, scoreboard: Scoreboard) {
-        val playerTeam = getPlayerTeam(player.uniqueId)
-        
-        // 既存のチームから削除
-        scoreboard.teams.forEach { team ->
-            if (team.hasEntry(player.name)) {
-                team.removeEntry(player.name)
-            }
-        }
-        
-        // 新しいチームに追加
-        when (playerTeam) {
-            Team.RED -> scoreboard.getTeam("ctf_red")?.addEntry(player.name)
-            Team.BLUE -> scoreboard.getTeam("ctf_blue")?.addEntry(player.name)
-            Team.SPECTATOR -> scoreboard.getTeam("ctf_spectator")?.addEntry(player.name)
-            else -> {} // チーム未所属
-        }
-        
-        // 他のプレイヤーのタブリストも更新
-        getAllPlayers().forEach { otherPlayer ->
-            if (otherPlayer != player) {
-                val otherScoreboard = otherPlayer.scoreboard
-                if (otherScoreboard != Bukkit.getScoreboardManager().mainScoreboard) {
-                    setupScoreboardTeams(otherScoreboard)
-                    
-                    // このプレイヤーを他のプレイヤーのスコアボードにも追加
-                    otherScoreboard.teams.forEach { team ->
-                        if (team.hasEntry(player.name)) {
-                            team.removeEntry(player.name)
-                        }
-                    }
-                    
-                    when (playerTeam) {
-                        Team.RED -> otherScoreboard.getTeam("ctf_red")?.addEntry(player.name)
-                        Team.BLUE -> otherScoreboard.getTeam("ctf_blue")?.addEntry(player.name)
-                        Team.SPECTATOR -> otherScoreboard.getTeam("ctf_spectator")?.addEntry(player.name)
-                        else -> {}
-                    }
-                    
-                    // 逆に、他のプレイヤーも現在のプレイヤーのスコアボードに追加
-                    val otherTeam = getPlayerTeam(otherPlayer.uniqueId)
-                    when (otherTeam) {
-                        Team.RED -> scoreboard.getTeam("ctf_red")?.addEntry(otherPlayer.name)
-                        Team.BLUE -> scoreboard.getTeam("ctf_blue")?.addEntry(otherPlayer.name)
-                        Team.SPECTATOR -> scoreboard.getTeam("ctf_spectator")?.addEntry(otherPlayer.name)
-                        else -> {}
-                    }
-                }
-            }
-        }
-    }
-    
-    fun updateScoreboard() {
-        // スコアボードの更新を1秒に1回に制限（ゲームループと同期）
-        if (System.currentTimeMillis() - lastScoreboardUpdate < 1000) {
-            return
-        }
-        lastScoreboardUpdate = System.currentTimeMillis()
-        
-        // 全プレイヤーのスコアボードを更新
-        getAllPlayers().forEach { player ->
-            updatePlayerScoreboard(player)
-        }
-    }
+    // --- UI 委譲メソッド（scoreboardManager に委譲） ---
 
-    /**
-     * スコアボードを強制的に即座に更新する（スコア獲得時など）
-     */
-    fun forceUpdateScoreboard() {
-        // レート制限を回避して即座に更新
-        lastScoreboardUpdate = 0
-        updateScoreboard()
-    }
-    
-    fun updatePlayerTabColor(player: Player) {
-        // プレイヤーのタブリスト色を更新
-        val scoreboard = player.scoreboard
-        if (scoreboard != Bukkit.getScoreboardManager().mainScoreboard) {
-            updatePlayerTeamColor(player, scoreboard)
-        }
-    }
-    
-    // イベント通知用のヘルパーメソッド
+    private fun setupScoreboard(player: Player) = scoreboardManager.setupScoreboard(player)
+    fun updateScoreboard() = scoreboardManager.updateScoreboard()
+    fun forceUpdateScoreboard() = scoreboardManager.forceUpdateScoreboard()
+    fun updatePlayerTabColor(player: Player) = scoreboardManager.updatePlayerTabColor(player)
+
     fun sendEventNotification(
         title: Component,
         subtitle: Component? = null,
         targetPlayers: List<Player> = getAllPlayers().toList(),
         sound: org.bukkit.Sound? = null,
         soundPitch: Float = 1.0f
-    ) {
-        targetPlayers.forEach { player ->
-            player.showTitle(Title.title(
-                title,
-                subtitle ?: Component.empty(),
-                Title.Times.times(
-                    Duration.ofMillis(500),   // フェードイン
-                    Duration.ofMillis(2000),  // 表示時間
-                    Duration.ofMillis(500)    // フェードアウト
-                )
-            ))
-            
-            sound?.let {
-                player.playSound(player.location, it, 1.0f, soundPitch)
-            }
-        }
-    }
+    ) = scoreboardManager.sendEventNotification(title, subtitle, targetPlayers, sound, soundPitch)
     
-    private fun updatePlayerScoreboard(player: Player) {
-        val playerScoreboard = player.scoreboard
-        val obj = playerScoreboard.getObjective("ctf_game") ?: return
-        
-        // 既存のエントリをクリア
-        playerScoreboard.entries.forEach { entry ->
-            playerScoreboard.resetScores(entry)
-        }
-        
-        var line = 15
-        
-        // ゲーム開始前の表示
-        if (state == GameState.WAITING || state == GameState.STARTING) {
-            // 参加人数
-            val redCount = redTeam.size
-            val blueCount = blueTeam.size
-            val spectatorCount = spectators.size
-            
-            // 観戦者がいる場合は表示
-            if (spectatorCount > 0) {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.team-players-spectator", 
-                    "red" to redCount.toString(), "blue" to blueCount.toString(), "spectator" to spectatorCount.toString())).score = line--
-            } else {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.team-players", 
-                    "red" to redCount.toString(), "blue" to blueCount.toString())).score = line--
-            }
-            
-            // マッチモードの場合、ゲーム番号と先行勝利数を表示
-            val match = matchWrapper
-            if (match != null) {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.match-game-number", 
-                    "current" to match.currentGameNumber.toString(), 
-                    "total" to match.config.matchTarget.toString())).score = line--
-                
-                // 現在の勝利数
-                val redWins = match.matchWins[Team.RED] ?: 0
-                val blueWins = match.matchWins[Team.BLUE] ?: 0
-                if (redWins > 0 || blueWins > 0) {
-                    obj.getScore(plugin.languageManager.getMessage("scoreboard.match-wins", 
-                        "red" to redWins.toString(), 
-                        "blue" to blueWins.toString())).score = line--
-                }
-            }
-            
-            // ゲーム設定
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.build-combat-time", 
-                "build" to (buildDuration / 60).toString(), "combat" to (combatDuration / 60).toString())).score = line--
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.min-players", "min" to minPlayers.toString())).score = line--
-            
-            // カウントダウン表示
-            if (state == GameState.STARTING && autoStartCountdown > 0) {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.start-countdown", "seconds" to autoStartCountdown.toString())).score = line--
-            }
-            
-            return
-        }
-        
-        // ゲーム中の表示
-        val playerTeam = getPlayerTeam(player.uniqueId)
-        val isSpectator = playerTeam == Team.SPECTATOR
-        
-        if (matchWrapper != null) {
-            // マッチモードの場合：現在のゲーム番号を表示
-            val currentGame = matchWrapper!!.currentGameNumber
-            val totalGames = matchWrapper!!.config.matchTarget
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.match-game-number", 
-                "current" to currentGame.toString(), 
-                "total" to totalGames.toString())).score = line--
-            
-            // 全体の勝利数
-            val redWins = matchWrapper!!.matchWins[Team.RED] ?: 0
-            val blueWins = matchWrapper!!.matchWins[Team.BLUE] ?: 0
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.match-wins-compact", 
-                "red" to redWins.toString(), 
-                "blue" to blueWins.toString())).score = line--
-            
-        } else {
-            // 通常ゲームの場合：現在のスコアのみ
-            val redScore = score[Team.RED] ?: 0
-            val blueScore = score[Team.BLUE] ?: 0
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.game-score", 
-                "red" to redScore.toString(), 
-                "blue" to blueScore.toString())).score = line--
-        }
-
-        // === プレイヤー数 ===
-        val redCount = redTeam.size
-        val blueCount = blueTeam.size
-        val spectatorCount = spectators.size
-        if (spectatorCount > 0) {
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.players-count-spectator", 
-                "red" to redCount.toString(), 
-                "blue" to blueCount.toString(), 
-                "spectator" to spectatorCount.toString())).score = line--
-        } else {
-            obj.getScore(plugin.languageManager.getMessage("scoreboard.players-count", 
-                "red" to redCount.toString(), 
-                "blue" to blueCount.toString())).score = line--
-        }
-
-        obj.getScore("  ").score = line-- // 空行
-
-        // === チームのお金 ===
-        if (phase == GamePhase.COMBAT || phase == GamePhase.BUILD) {
-            if (isSpectator) {
-                // 観戦者は両チームの通貨を表示
-                val redCurrency = if (matchWrapper != null) {
-                    matchWrapper!!.getTeamCurrency(Team.RED)
-                } else {
-                    getTeamCurrency(Team.RED)
-                }
-                val blueCurrency = if (matchWrapper != null) {
-                    matchWrapper!!.getTeamCurrency(Team.BLUE)
-                } else {
-                    getTeamCurrency(Team.BLUE)
-                }
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.both-currency", 
-                    "red" to redCurrency.toString(), 
-                    "blue" to blueCurrency.toString())).score = line--
-            } else if (playerTeam != null) {
-                // プレイヤーは自チームの通貨のみ表示
-                val currency = if (matchWrapper != null) {
-                    matchWrapper!!.getTeamCurrency(playerTeam)
-                } else {
-                    getTeamCurrency(playerTeam)
-                }
-                val teamColor = if (playerTeam == Team.RED) "§c" else "§9"
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.team-currency", 
-                    "color" to teamColor, 
-                    "amount" to currency.toString())).score = line--
-            }
-        }
-    }
-    
-    private fun updateBossBar() {
-        val bar = bossBar ?: return
-        
-        // 時間情報
-        val timeText = formatTime(currentPhaseTime)
-        
-        // フェーズごとに異なる表示
-        val barTitle = when (phase) {
-            GamePhase.BUILD -> {
-                // 建築フェーズ: シンプルに時間のみ
-                plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to timeText)
-            }
-            GamePhase.COMBAT -> {
-                // 戦闘フェーズ: 旗の取得数を表示
-                val redScore = score[Team.RED] ?: 0
-                val blueScore = score[Team.BLUE] ?: 0
-                // マッチモードの場合はゲーム番号も表示
-                if (matchWrapper != null) {
-                    plugin.languageManager.getMessage("phase-extended.combat-score-format-match", 
-                        "current" to matchWrapper!!.currentGameNumber.toString(),
-                        "total" to matchWrapper!!.config.matchTarget.toString(),
-                        "red" to redScore.toString(), 
-                        "blue" to blueScore.toString(), 
-                        "time" to timeText)
-                } else {
-                    plugin.languageManager.getMessage("phase-extended.combat-score-format", 
-                        "red" to redScore.toString(), 
-                        "blue" to blueScore.toString(), 
-                        "time" to timeText)
-                }
-            }
-
-        }
-        
-        bar.setTitle(barTitle)
-        
-        // フェーズに応じて色を変更
-        bar.color = when (phase) {
-            GamePhase.BUILD -> BarColor.GREEN
-            GamePhase.COMBAT -> BarColor.RED
-
-        }
-        
-        // 進行度を更新
-        val totalTime = when (phase) {
-            GamePhase.BUILD -> buildDuration
-            GamePhase.COMBAT -> combatDuration
-
-        }
-        
-        val progress = currentPhaseTime.toDouble() / totalTime.toDouble()
-        bar.progress = progress.coerceIn(0.0, 1.0)
-    }
+    // updatePlayerScoreboard, updateBossBar は scoreboardManager に移行済み
+    private fun updateBossBar() = scoreboardManager.updateBossBar()
     
     fun dropFlag(player: Player, team: Team, deathLocation: Location? = null) {
         // 観戦者は旗を持つことができない
@@ -3236,16 +2842,7 @@ class Game(
         }
         
         if (!ownFlagIsAtBase) {
-            // エラーメッセージを5秒間表示するように設定
-            val now = System.currentTimeMillis()
-            val lastShown = actionBarCooldown[player.uniqueId] ?: 0
-            
-            if (now - lastShown > 10000) { // 10秒に1回新規エラーを設定可能
-                val errorMessage = plugin.languageManager.getMessage("flag.cannot-capture-no-flag")
-                actionBarErrorDisplay[player.uniqueId] = Pair(errorMessage, now + 5000) // 5秒間表示
-                actionBarCooldown[player.uniqueId] = now
-            }
-            
+            showActionBarError(player, plugin.languageManager.getMessage("flag.cannot-capture-no-flag"), 5000L)
             return false
         }
         
@@ -3346,22 +2943,18 @@ class Game(
         // 保護中は光る
         player.isGlowing = true
         
-        // 既存のスポーン保護タスクをキャンセル
-        spawnProtectionTasks[player.uniqueId]?.cancel()
-        
         // 3秒後に保護を解除
-        val task = object : BukkitRunnable() {
+        val protectionDuration = plugin.config.getInt("mechanics.spawn-protection-duration", 3) * 20L
+        val protectionTask = object : BukkitRunnable() {
             override fun run() {
                 if (spawnProtection.remove(player.uniqueId) != null) {
                     player.isGlowing = false
                     player.sendMessage(plugin.languageManager.getMessageAsComponent("spawn.protection-ended"))
                 }
-                spawnProtectionTasks.remove(player.uniqueId)
+                taskScheduler.removePlayerTask(GameTaskScheduler.SPAWN_PROTECTION, player.uniqueId)
             }
         }
-        val protectionDuration = plugin.config.getInt("mechanics.spawn-protection-duration", 3) * 20L
-        task.runTaskLater(plugin, protectionDuration)
-        spawnProtectionTasks[player.uniqueId] = task
+        taskScheduler.schedulePlayerTask(GameTaskScheduler.SPAWN_PROTECTION, player.uniqueId, protectionDuration, protectionTask)
         
         // スポーン地点に転送
         teleportToSpawn(player, team)
@@ -3425,94 +3018,17 @@ class Game(
     fun removeSpawnProtection(player: Player) {
         if (spawnProtection.remove(player.uniqueId) != null) {
             player.isGlowing = false
-            spawnProtectionTasks[player.uniqueId]?.cancel()
-            spawnProtectionTasks.remove(player.uniqueId)
+            taskScheduler.cancelPlayerTask(GameTaskScheduler.SPAWN_PROTECTION, player.uniqueId)
             player.sendMessage(plugin.languageManager.getMessageAsComponent("spawn.protection-cancelled"))
         }
     }
     
-    private fun formatTime(seconds: Int): String {
-        val min = seconds / 60
-        val sec = seconds % 60
-        return String.format("%d:%02d", min, sec)
-    }
-    
-    /**
-     * アクションバーにエラーメッセージを表示（優先度付き）
-     */
-    fun showActionBarError(player: Player, message: String, duration: Long = 3000L) {
-        val now = System.currentTimeMillis()
-        actionBarErrorDisplay[player.uniqueId] = Pair(message, now + duration)
-        actionBarPriority[player.uniqueId] = 100 // エラーメッセージは最高優先度
-        player.sendActionBar(Component.text(message, NamedTextColor.RED))
-    }
-    
-    private fun updateActionBarGuides() {
-        getAllPlayers().forEach { player ->
-            val team = getPlayerTeam(player.uniqueId) ?: return@forEach
-            
-            // エラーメッセージが表示期間中の場合は優先して表示
-            val now = System.currentTimeMillis()
-            val errorData = actionBarErrorDisplay[player.uniqueId]
-            if (errorData != null && now < errorData.second) {
-                player.sendActionBar(Component.text(errorData.first, NamedTextColor.RED))
-                return@forEach
-            } else if (errorData != null) {
-                // 期限切れのエラーメッセージを削除
-                actionBarErrorDisplay.remove(player.uniqueId)
-                actionBarPriority.remove(player.uniqueId)
-            }
-            
-            val message = when (phase) {
-                GamePhase.BUILD -> {
-                    // 建築フェーズ
-                    plugin.languageManager.getMessageAsComponent("action-bar.build-phase-guide")
-                }
-                
-                GamePhase.COMBAT -> {
-                    // 戦闘フェーズ
-                    val enemyTeam = if (team == Team.RED) Team.BLUE else Team.RED
-                    
-                    when {
-                        // 自分が旗を持っている
-                        player.uniqueId == redFlagCarrier || player.uniqueId == blueFlagCarrier -> {
-                            plugin.languageManager.getMessageAsComponent("action-bar.return-to-base")
-                        }
-                        
-                        // 自チームの旗が敵に取られている
-                        (team == Team.RED && redFlagCarrier != null) || 
-                        (team == Team.BLUE && blueFlagCarrier != null) -> {
-                            val carrierName = when (team) {
-                                Team.RED -> redFlagCarrier?.let { Bukkit.getPlayer(it)?.name } ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")
-                                Team.BLUE -> blueFlagCarrier?.let { Bukkit.getPlayer(it)?.name } ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")
-                                Team.SPECTATOR -> plugin.languageManager.getMessage("flag.flag-carrier-unknown") // 観戦者用（到達しないはず）
-                            }
-                            plugin.languageManager.getMessageAsComponent("flag.enemy-has-flag", "carrier" to carrierName)
-                        }
-                        
-                        // 自チームの旗がドロップしている
-                        (team == Team.RED && droppedFlags.any { it.value.first == Team.RED }) ||
-                        (team == Team.BLUE && droppedFlags.any { it.value.first == Team.BLUE }) -> {
-                            plugin.languageManager.getMessageAsComponent("flag.team-flag-dropped", 
-                                "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}"))
-                        }
-                        
-                        // 通常状態（敵の旗を取りに行く）
-                        else -> {
-                            plugin.languageManager.getMessageAsComponent("flag.retrieve-enemy-flag",
-                                "color" to enemyTeam.getChatColor(),
-                                "team" to plugin.languageManager.getMessage("teams.${enemyTeam.name.lowercase()}")
-                            )
-                        }
-                    }
-                }
-                
+    fun formatTime(seconds: Int): String = scoreboardManager.formatTime(seconds)
 
-            }
-            
-            player.sendActionBar(message)
-        }
-    }
+    fun showActionBarError(player: Player, message: String, duration: Long = 3000L) =
+        scoreboardManager.showActionBarError(player, message, duration)
+    
+    private fun updateActionBarGuides() = scoreboardManager.updateActionBarGuides()
     
     // 通貨管理メソッド（マッチがない場合用）
     fun getTeamCurrency(team: Team): Int {
@@ -4419,21 +3935,17 @@ class Game(
      * 敵陣シールドシステムタスクを開始
      */
     private fun startSuffocationTask() {
-        // 既存のタスクがあればキャンセル
-        suffocationTask?.cancel()
-        suffocationTask = null
-        
         // プレイヤーごとのシールド値を管理（最大値: 100）
         val playerShield = mutableMapOf<UUID, Float>()
         val lastDamageTime = mutableMapOf<UUID, Long>()
         val lastFoodRecoveryTime = mutableMapOf<UUID, Long>() // 空腹度回復のタイマー
-        
-        suffocationTask = object : BukkitRunnable() {
+
+        val task = object : BukkitRunnable() {
             override fun run() {
                 // ゲームまたはフェーズが終了したらタスクを停止
                 if (state != GameState.RUNNING || phase != GamePhase.COMBAT) {
                     cancel()
-                    suffocationTask = null
+                    taskScheduler.cancelNamed(GameTaskScheduler.SUFFOCATION)
                     return
                 }
                 
@@ -4645,7 +4157,7 @@ class Game(
         }
         
         // 10ティック（0.5秒）ごとに実行
-        suffocationTask?.runTaskTimer(plugin, 0L, 10L)
+        taskScheduler.scheduleRepeating(GameTaskScheduler.SUFFOCATION, 0L, 10L, task)
     }
     
     /**
@@ -4782,27 +4294,26 @@ class Game(
      */
     private fun startEventChestTimer() {
         // 既存のタスクをキャンセル
-        eventChestTasks.forEach { it.cancel() }
-        eventChestTasks.clear()
+        taskScheduler.cancelAllListTasks(GameTaskScheduler.EVENT_CHEST)
         eventChestLocations.clear()
         eventChestSpawnCount = 0
-        
+
         // 設定から有効かチェック
         val enabled = plugin.config.getBoolean("event-chest.enabled", true)
         if (!enabled) return
-        
+
         // スポーン回数を取得（デフォルト: 1回）
         val spawnCount = plugin.config.getInt("event-chest.spawn-count", 1)
         if (spawnCount <= 0) return
-        
+
         // 戦闘フェーズを等分してスポーンタイミングを計算
         val segments = spawnCount + 1  // n回スポーンする場合、フェーズをn+1等分
         val segmentDuration = combatDuration / segments
-        
+
         // 各スポーンタイミングでタスクを作成
         for (i in 1..spawnCount) {
             val spawnDelay = segmentDuration * i  // i番目のセグメントの終わりでスポーン
-            
+
             val task = object : BukkitRunnable() {
                 override fun run() {
                     if (phase != GamePhase.COMBAT || state != GameState.RUNNING) {
@@ -4812,9 +4323,8 @@ class Game(
                     spawnEventChest(i)
                 }
             }
-            task.runTaskLater(plugin, (spawnDelay * 20L))
-            eventChestTasks.add(task)
-            
+            taskScheduler.addListTask(GameTaskScheduler.EVENT_CHEST, spawnDelay * 20L, task)
+
             plugin.logger.info("Event chest #$i scheduled at $spawnDelay seconds")
         }
     }
@@ -5127,8 +4637,7 @@ class Game(
      */
     private fun cleanupEventChest() {
         // 全てのタスクをキャンセル
-        eventChestTasks.forEach { it.cancel() }
-        eventChestTasks.clear()
+        taskScheduler.cancelAllListTasks(GameTaskScheduler.EVENT_CHEST)
         
         // 全てのチェストを削除
         eventChestLocations.forEach { loc ->
