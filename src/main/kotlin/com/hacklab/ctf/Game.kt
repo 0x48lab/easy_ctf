@@ -26,6 +26,7 @@ import org.bukkit.scheduler.BukkitRunnable
 import com.hacklab.ctf.managers.GameTaskScheduler
 import com.hacklab.ctf.managers.GameScoreboardManager
 import com.hacklab.ctf.combat.DamageHealingSystem
+import com.hacklab.ctf.managers.CurrencyManager
 import com.hacklab.ctf.block.BlockConnectionSystem
 import com.hacklab.ctf.flag.FlagSystem
 import org.bukkit.scoreboard.DisplaySlot
@@ -83,7 +84,7 @@ class Game(
     var autoStartCountdown = -1
     
     // 通貨管理（マッチがない場合用）
-    private val teamCurrency = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
+    val teamCurrency = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
     
     // 旗管理
     var redFlagCarrier: UUID? = null
@@ -142,6 +143,9 @@ class Game(
     // 旗システム
     val damageHealingSystem = DamageHealingSystem(this, plugin)
     val flagSystem = FlagSystem(this, plugin)
+
+    // 通貨管理
+    val currencyManager = CurrencyManager(this, plugin)
     
     // イベントチェスト関連
     private val eventChestLocations = mutableListOf<Location>()
@@ -2587,125 +2591,16 @@ class Game(
     
     private fun updateActionBarGuides() = scoreboardManager.updateActionBarGuides()
     
-    // 通貨管理メソッド（マッチがない場合用）
-    fun getTeamCurrency(team: Team): Int {
-        return matchWrapper?.getTeamCurrency(team) ?: teamCurrency[team] ?: 0
-    }
-
-    
-    fun removeTeamCurrency(team: Team, amount: Int) {
-        if (matchWrapper != null) {
-            matchWrapper!!.removeTeamCurrency(team, amount)
-        } else {
-            val current = teamCurrency[team] ?: 0
-            teamCurrency[team] = maxOf(0, current - amount)
-        }
-    }
-    
-    fun getDiscountRate(team: Team): Double {
-        val redScore = score[Team.RED] ?: 0
-        val blueScore = score[Team.BLUE] ?: 0
-        val difference = when (team) {
-            Team.RED -> blueScore - redScore
-            Team.BLUE -> redScore - blueScore
-            else -> 0
-        }
-        
-        return when {
-            difference >= 4 -> plugin.config.getDouble("shop.discount.4-point-plus", 0.4)
-            difference == 3 -> plugin.config.getDouble("shop.discount.3-point", 0.3)
-            difference == 2 -> plugin.config.getDouble("shop.discount.2-point", 0.2)
-            difference == 1 -> plugin.config.getDouble("shop.discount.1-point", 0.1)
-            else -> 0.0
-        }
-    }
-
-    
-    fun createShopItem(): ItemStack {
-        val emerald = ItemStack(Material.EMERALD)
-        val meta = emerald.itemMeta
-        meta.displayName(plugin.languageManager.getMessageAsComponent("shop.item.emerald.name"))
-        
-        val lore = mutableListOf<Component>()
-        lore.add(plugin.languageManager.getMessageAsComponent("shop.item.emerald.lore1"))
-        lore.add(plugin.languageManager.getMessageAsComponent("shop.item.emerald.lore2"))
-        meta.lore(lore)
-        
-        // NBTタグを設定してショップアイテムであることを識別
-        meta.persistentDataContainer.set(
-            NamespacedKey(plugin, "is_shop_item"),
-            PersistentDataType.BYTE,
-            1
-        )
-        
-        emerald.itemMeta = meta
-        return emerald
-    }
-    
-    fun isShopItem(item: ItemStack?): Boolean {
-        if (item == null || item.type != Material.EMERALD) return false
-        val meta = item.itemMeta ?: return false
-        return meta.persistentDataContainer.has(
-            NamespacedKey(plugin, "is_shop_item"),
-            PersistentDataType.BYTE
-        )
-    }
-    
-    fun resetGamePurchases() {
-        plugin.shopManager.clearPurchaseHistory(gameName)
-    }
-    
-    fun addTeamCurrency(team: Team, amount: Int, reason: String = "") {
-        if (matchWrapper != null) {
-            matchWrapper!!.addTeamCurrency(team, amount)
-        } else {
-            val current = teamCurrency[team] ?: 0
-            teamCurrency[team] = current + amount
-        }
-        
-        // チームメンバーに通知
-        if (reason.isNotEmpty()) {
-            getTeamPlayers(team).forEach { player ->
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("currency.team-notification",
-                    "reason" to reason,
-                    "amount" to amount.toString()
-                ))
-            }
-        }
-        
-        updateScoreboard()
-    }
-    
-    fun spendTeamCurrency(team: Team, amount: Int, player: Player, itemName: String): Boolean {
-        if (matchWrapper != null) {
-            return matchWrapper!!.useTeamCurrency(team, amount)
-        } else {
-            val current = teamCurrency[team] ?: 0
-            if (current < amount) return false
-            
-            teamCurrency[team] = current - amount
-            
-            // チームメンバーに通知
-            getTeamPlayers(team).forEach { p ->
-                p.sendMessage(plugin.languageManager.getMessageAsComponent("currency.purchase-notification",
-                    "player" to player.name,
-                    "item" to itemName,
-                    "amount" to amount.toString()
-                ))
-                p.sendMessage(plugin.languageManager.getMessageAsComponent("currency.balance-notification",
-                    "balance" to teamCurrency[team].toString()
-                ))
-            }
-            
-            return true
-        }
-    }
-    
-    fun initializeCurrency() {
-        val initialAmount = plugin.config.getInt("currency.initial", 50)
-        teamCurrency[Team.RED] = initialAmount
-        teamCurrency[Team.BLUE] = initialAmount
-    }
+    // --- 通貨管理メソッド（currencyManager に委譲） ---
+    fun getTeamCurrency(team: Team): Int = currencyManager.getTeamCurrency(team)
+    fun removeTeamCurrency(team: Team, amount: Int) = currencyManager.removeTeamCurrency(team, amount)
+    fun getDiscountRate(team: Team): Double = currencyManager.getDiscountRate(team)
+    fun createShopItem(): ItemStack = currencyManager.createShopItem()
+    fun isShopItem(item: ItemStack?): Boolean = currencyManager.isShopItem(item)
+    fun resetGamePurchases() = currencyManager.resetGamePurchases()
+    fun addTeamCurrency(team: Team, amount: Int, reason: String = "") = currencyManager.addTeamCurrency(team, amount, reason)
+    fun spendTeamCurrency(team: Team, amount: Int, player: Player, itemName: String): Boolean = currencyManager.spendTeamCurrency(team, amount, player, itemName)
+    fun initializeCurrency() = currencyManager.initializeCurrency()
     
     private fun displayGameReport(winner: Team?) {
         // ゲームの詳細レポート
