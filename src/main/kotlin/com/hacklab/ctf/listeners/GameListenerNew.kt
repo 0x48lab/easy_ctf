@@ -153,12 +153,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     enemyFlagLocation.block.type = Material.AIR
                     val glassLoc = enemyFlagLocation.clone().add(0.0, 1.0, 0.0)
                     glassLoc.block.type = Material.AIR
-                    
+
+                    // バナーを除去（ステンドグラスの上）
+                    game.flagSystem.removeBannerFromBeacon(enemyFlagLocation)
+
                     // スポーン保護を解除（旗を取った時点で保護解除）
                     game.removeSpawnProtection(player)
-                    
+
                     // プレイヤーに発光効果
                     player.isGlowing = true
+
+                    // 旗キャリアにバナーをヘルメットとして装備
+                    game.flagSystem.equipBannerHelmet(player, enemyTeam)
                     
                     // キャプチャーアシストリストに追加（旗を取った人をリストに追加）
                     game.captureAssists.getOrPut(playerTeam) { mutableSetOf() }.add(player.uniqueId)
@@ -507,8 +513,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
             val deathLocation = player.location.clone()
             
             // 旗を持っていた場合の処理
-            if (player.uniqueId == game.redFlagCarrier || player.uniqueId == game.blueFlagCarrier) {
-                val flagTeam = if (player.uniqueId == game.redFlagCarrier) Team.RED else Team.BLUE
+            val flagTeamCarrying = game.flagCarriers.entries.firstOrNull { it.value == player.uniqueId }?.key
+            if (flagTeamCarrying != null) {
+                val flagTeam = flagTeamCarrying
                 
                 // 奈落死の判定（Y座標が-64以下、または0以下、または死因がVOID）
                 val isVoidDeath = deathLocation.y <= -64 || 
@@ -530,6 +537,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     // グロー効果を解除
                     player.isGlowing = false
 
+                    // ヘルメットを元の革帽子に戻す
+                    game.flagSystem.restoreHelmet(player)
+
                     // 旗を元の位置に戻す
                     val flagLocation = when (flagTeam) {
                         Team.RED -> game.redFlagLocation
@@ -537,7 +547,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         Team.SPECTATOR -> return  // Spectators don't have flags
                         else -> game.flagLocations[flagTeam]
                     } ?: return
-                    
+
                     game.setupFlagBeacon(flagLocation, flagTeam)
                     
                     game.getAllPlayers().forEach {
