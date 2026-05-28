@@ -365,11 +365,14 @@ class Game(
                 else -> {}
             }
             
-            // ゲームモードを設定
-            player.gameMode = if (phase == GamePhase.BUILD) {
-                GameMode.valueOf(buildPhaseGameMode)
+            // ゲームモードと飛行設定
+            if (phase == GamePhase.BUILD) {
+                player.gameMode = GameMode.valueOf(buildPhaseGameMode)
+                player.allowFlight = true
             } else {
-                org.bukkit.GameMode.SURVIVAL
+                player.gameMode = org.bukkit.GameMode.SURVIVAL
+                player.allowFlight = false
+                player.isFlying = false
             }
 
             // 途中参加を全プレイヤーに通知
@@ -679,16 +682,21 @@ class Game(
         setupScoreboard(player)
         scoreboardManager.addPlayerToBossBar(player)
         
-        // 現在のフェーズに応じた装備を配布
+        // 現在のフェーズに応じた装備・ゲームモード・飛行設定
         when (phase) {
-            GamePhase.BUILD -> giveBuildPhaseItems(player, team)
-            GamePhase.COMBAT -> {
-                // 戦闘フェーズ中の途中参加の場合は初期装備を配布
-                giveCombatPhaseItems(player, team)
+            GamePhase.BUILD -> {
+                giveBuildPhaseItems(player, team)
+                player.gameMode = GameMode.valueOf(buildPhaseGameMode)
+                player.allowFlight = true
             }
-
+            GamePhase.COMBAT -> {
+                giveCombatPhaseItems(player, team)
+                player.gameMode = GameMode.SURVIVAL
+                player.allowFlight = false
+                player.isFlying = false
+            }
         }
-        
+
         // スポーン地点に転送
         teleportToSpawn(player, team)
     }
