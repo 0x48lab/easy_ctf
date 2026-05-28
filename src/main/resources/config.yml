@@ -32,7 +32,7 @@ default-phases:
   # ADVENTURE: Limited interaction, prevents most building
   # SURVIVAL: Normal building/breaking with tools (default)
   # CREATIVE: Unlimited building, flying, instant break
-  build-phase-gamemode: "ADVENTURE"
+  build-phase-gamemode: "SURVIVAL"
   
   # Phase 2: Combat phase duration in seconds (default: 2 minutes)
   combat-duration: 120

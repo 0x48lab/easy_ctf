@@ -369,7 +369,7 @@ class Game(
             player.gameMode = if (phase == GamePhase.BUILD) {
                 GameMode.valueOf(buildPhaseGameMode)
             } else {
-                org.bukkit.GameMode.ADVENTURE
+                org.bukkit.GameMode.SURVIVAL
             }
 
             // 途中参加を全プレイヤーに通知
@@ -497,7 +497,7 @@ class Game(
                 player.gameMode = if (phase == GamePhase.BUILD) {
                     GameMode.valueOf(buildPhaseGameMode)
                 } else {
-                    org.bukkit.GameMode.ADVENTURE
+                    org.bukkit.GameMode.SURVIVAL
                 }
             }
             
