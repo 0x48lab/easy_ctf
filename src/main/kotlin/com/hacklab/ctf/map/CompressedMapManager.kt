@@ -257,7 +257,7 @@ class CompressedMapManager(private val plugin: Main) {
      */
     private fun setupBeaconColors(world: org.bukkit.World, game: com.hacklab.ctf.Game) {
         // 赤チームの旗位置にビーコンと赤ガラスを設置
-        game.getRedFlagLocation()?.let { flagLoc ->
+        game.redFlagLocation?.let { flagLoc ->
             val beaconBlock = world.getBlockAt(flagLoc)
             if (beaconBlock.type == Material.BEACON) {
                 // ビーコンの上に赤ガラスを設置
@@ -271,7 +271,7 @@ class CompressedMapManager(private val plugin: Main) {
         }
 
         // 青チームの旗位置にビーコンと青ガラスを設置
-        game.getBlueFlagLocation()?.let { flagLoc ->
+        game.blueFlagLocation?.let { flagLoc ->
             val beaconBlock = world.getBlockAt(flagLoc)
             if (beaconBlock.type == Material.BEACON) {
                 // ビーコンの上に青ガラスを設置

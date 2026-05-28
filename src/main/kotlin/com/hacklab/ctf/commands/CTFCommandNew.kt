@@ -149,7 +149,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         games.entries.forEachIndexed { index, (name, game) ->
             val status = when {
-                game.state == GameState.WAITING && game.getRedFlagLocation() == null -> plugin.languageManager.getMessage("command.status-configuring")
+                game.state == GameState.WAITING && game.redFlagLocation == null -> plugin.languageManager.getMessage("command.status-configuring")
                 game.state == GameState.WAITING -> plugin.languageManager.getMessage("command.status-waiting")
                 game.state == GameState.RUNNING -> plugin.languageManager.getMessage("command.status-running")
                 else -> plugin.languageManager.getMessage("command.status-ending")
@@ -174,7 +174,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                     .append(Component.text(plugin.languageManager.getMessage("command.list-blue-count", "count" to blueSize.toString()), NamedTextColor.BLUE))
             )
             
-            if (game.getRedFlagLocation() == null || game.getBlueFlagLocation() == null) {
+            if (game.redFlagLocation == null || game.blueFlagLocation == null) {
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.flags-not-set-warning"), NamedTextColor.YELLOW))
             }
         }
@@ -440,6 +440,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                 com.hacklab.ctf.utils.Team.RED -> currentGame.redTeam.remove(sender.uniqueId)
                 com.hacklab.ctf.utils.Team.BLUE -> currentGame.blueTeam.remove(sender.uniqueId)
                 com.hacklab.ctf.utils.Team.SPECTATOR -> currentGame.spectators.remove(sender.uniqueId)
+                else -> currentGame.teams[currentTeam]?.remove(sender.uniqueId)
             }
         }
         
@@ -448,6 +449,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             com.hacklab.ctf.utils.Team.RED -> currentGame.redTeam.add(sender.uniqueId)
             com.hacklab.ctf.utils.Team.BLUE -> currentGame.blueTeam.add(sender.uniqueId)
             com.hacklab.ctf.utils.Team.SPECTATOR -> {} // 観戦者への変更はspectatorコマンドで行う
+            else -> currentGame.teams.getOrPut(newTeam) { mutableSetOf() }.add(sender.uniqueId)
         }
         
         // メッセージ送信
@@ -556,11 +558,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args[2].lowercase()) {
             "red" -> {
-                game.setRedFlagLocation(location)
+                game.redFlagLocation = location
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-flag-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
             }
             "blue" -> {
-                game.setBlueFlagLocation(location)
+                game.blueFlagLocation = location
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-flag-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
             }
             else -> {
@@ -610,11 +612,11 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args[2].lowercase()) {
             "red" -> {
-                game.setRedSpawnLocation(location)
+                game.redSpawnLocation = location
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
             }
             "blue" -> {
-                game.setBlueSpawnLocation(location)
+                game.blueSpawnLocation = location
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-set", "x" to location.blockX.toString(), "y" to location.blockY.toString(), "z" to location.blockZ.toString()), NamedTextColor.GREEN))
             }
             else -> {
@@ -708,7 +710,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("", NamedTextColor.WHITE))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-position-settings")).color(NamedTextColor.YELLOW))
         
-        val redFlag = game.getRedFlagLocation()
+        val redFlag = game.redFlagLocation
         if (redFlag != null) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag", "x" to redFlag.blockX.toString(), "y" to redFlag.blockY.toString(), "z" to redFlag.blockZ.toString()), NamedTextColor.RED))
         } else {
@@ -729,7 +731,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-multiple", "count" to redSpawnLocations.size.toString()), NamedTextColor.RED))
         }
         
-        val blueFlag = game.getBlueFlagLocation()
+        val blueFlag = game.blueFlagLocation
         if (blueFlag != null) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-blue-flag", "x" to blueFlag.blockX.toString(), "y" to blueFlag.blockY.toString(), "z" to blueFlag.blockZ.toString()), NamedTextColor.BLUE))
         } else {

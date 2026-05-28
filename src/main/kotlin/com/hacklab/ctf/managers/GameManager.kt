@@ -369,10 +369,10 @@ class GameManager(private val plugin: Main) {
     private fun createGameFromConfig(config: GameConfig) {
         val game = Game(config.name, plugin, config.world).apply {
             // 位置設定
-            config.redFlagLocation?.let { setRedFlagLocation(it) }
-            config.redSpawnLocation?.let { setRedSpawnLocation(it) }
-            config.blueFlagLocation?.let { setBlueFlagLocation(it) }
-            config.blueSpawnLocation?.let { setBlueSpawnLocation(it) }
+            config.redFlagLocation?.let { redFlagLocation = it }
+            config.redSpawnLocation?.let { redSpawnLocation = it }
+            config.blueFlagLocation?.let { blueFlagLocation = it }
+            config.blueSpawnLocation?.let { blueSpawnLocation = it }
             
             // ゲーム設定
             autoStartEnabled = config.autoStartEnabled
@@ -440,6 +440,7 @@ class GameManager(private val plugin: Main) {
             Team.BLUE -> plugin.languageManager.getMessage("match.blue-wins")
             Team.SPECTATOR -> plugin.languageManager.getMessage("match.draw")  // Spectators cannot win, treat as draw
             null -> plugin.languageManager.getMessage("match.draw")
+            else -> plugin.languageManager.getMessage("match.draw")
         }
         
         game.getAllPlayers().forEach { player ->
@@ -455,6 +456,7 @@ class GameManager(private val plugin: Main) {
                     Team.BLUE -> plugin.languageManager.getMessage("match.blue-wins-match")
                     Team.SPECTATOR -> plugin.languageManager.getMessage("match.draw-match")  // Spectators cannot win, treat as draw
                     null -> plugin.languageManager.getMessage("match.draw-match")
+                    else -> plugin.languageManager.getMessage("match.draw-match")
                 }
                 player.sendMessage("")
                 player.sendMessage(plugin.languageManager.getMessage("match.match-end-header"))

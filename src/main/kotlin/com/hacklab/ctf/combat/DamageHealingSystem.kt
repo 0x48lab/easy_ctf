@@ -61,13 +61,14 @@ class DamageHealingSystem(
                             Team.RED -> blockBelow.type == Material.BLUE_CONCRETE
                             Team.BLUE -> blockBelow.type == Material.RED_CONCRETE
                             Team.SPECTATOR -> false // 観戦者は敵ブロックでダメージを受けない
+                            else -> blockBelow.type != playerTeam.getConcreteMaterial() && Team.playableTeams().any { blockBelow.type == it.getConcreteMaterial() }
                         }
 
                         // ビーコン周囲9マス（3x3）のダメージエリアチェック
                         val isInEnemyBeaconArea = when (playerTeam) {
                             Team.RED -> {
                                 // 青チームのビーコン周囲かチェック
-                                game.getBlueFlagLocation()?.let { beaconLoc ->
+                                game.blueFlagLocation?.let { beaconLoc ->
                                     if (playerLoc.world == beaconLoc.world) {
                                         val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
                                         val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
@@ -79,7 +80,7 @@ class DamageHealingSystem(
                             }
                             Team.BLUE -> {
                                 // 赤チームのビーコン周囲かチェック
-                                game.getRedFlagLocation()?.let { beaconLoc ->
+                                game.redFlagLocation?.let { beaconLoc ->
                                     if (playerLoc.world == beaconLoc.world) {
                                         val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
                                         val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
@@ -90,6 +91,19 @@ class DamageHealingSystem(
                                 } ?: false
                             }
                             Team.SPECTATOR -> false
+                            else -> {
+                                // 敵チームのビーコン周囲かチェック（自チーム以外の全チーム）
+                                game.flagLocations.entries
+                                    .filter { it.key != playerTeam && it.key != Team.SPECTATOR }
+                                    .any { (_, beaconLoc) ->
+                                        if (playerLoc.world == beaconLoc.world) {
+                                            val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
+                                            val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
+                                            val dy = kotlin.math.abs(playerLoc.blockY - (beaconLoc.blockY - 1))
+                                            dx <= 1 && dz <= 1 && dy <= 2
+                                        } else false
+                                    }
+                            }
                         }
 
                         // 敵陣ブロック上またはビーコン周囲にいる場合
@@ -165,12 +179,13 @@ class DamageHealingSystem(
                                 Team.RED -> blockBelow.type == Material.RED_CONCRETE
                                 Team.BLUE -> blockBelow.type == Material.BLUE_CONCRETE
                                 Team.SPECTATOR -> false
+                                else -> blockBelow.type == playerTeam.getConcreteMaterial()
                             }
 
                             // 自陣ビーコン周囲のチェック
                             val isInOwnBeaconArea = when (playerTeam) {
                                 Team.RED -> {
-                                    game.getRedFlagLocation()?.let { beaconLoc ->
+                                    game.redFlagLocation?.let { beaconLoc ->
                                         if (playerLoc.world == beaconLoc.world) {
                                             val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
                                             val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
@@ -180,7 +195,7 @@ class DamageHealingSystem(
                                     } ?: false
                                 }
                                 Team.BLUE -> {
-                                    game.getBlueFlagLocation()?.let { beaconLoc ->
+                                    game.blueFlagLocation?.let { beaconLoc ->
                                         if (playerLoc.world == beaconLoc.world) {
                                             val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
                                             val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
@@ -190,6 +205,16 @@ class DamageHealingSystem(
                                     } ?: false
                                 }
                                 Team.SPECTATOR -> false
+                                else -> {
+                                    game.flagLocations[playerTeam]?.let { beaconLoc ->
+                                        if (playerLoc.world == beaconLoc.world) {
+                                            val dx = kotlin.math.abs(playerLoc.blockX - beaconLoc.blockX)
+                                            val dz = kotlin.math.abs(playerLoc.blockZ - beaconLoc.blockZ)
+                                            val dy = kotlin.math.abs(playerLoc.blockY - (beaconLoc.blockY - 1))
+                                            dx <= 1 && dz <= 1 && dy <= 2
+                                        } else false
+                                    } ?: false
+                                }
                             }
 
                             // 自陣ブロックまたは自陣ビーコン周囲にいる場合のみ処理

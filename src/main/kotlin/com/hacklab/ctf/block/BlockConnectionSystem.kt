@@ -33,7 +33,7 @@ class BlockConnectionSystem(
 
         // スポーン地点と旗周辺の建築制限チェック（3x3、Y座標全て）
         // 赤チームの旗周辺チェック
-        game.getRedFlagLocation()?.let { flagLoc ->
+        game.redFlagLocation?.let { flagLoc ->
             if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
                 game.showActionBarError(player, plugin.languageManager.getMessage("action-bar.cannot-place-flag"))
@@ -42,7 +42,7 @@ class BlockConnectionSystem(
         }
 
         // 青チームの旗周辺チェック
-        game.getBlueFlagLocation()?.let { flagLoc ->
+        game.blueFlagLocation?.let { flagLoc ->
             if (kotlin.math.abs(location.blockX - flagLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - flagLoc.blockZ) <= 1) {
                 game.showActionBarError(player, plugin.languageManager.getMessage("action-bar.cannot-place-flag"))
@@ -55,7 +55,7 @@ class BlockConnectionSystem(
         val config = gameManager?.getGameConfig(game.gameName)
 
         // 赤チームのスポーン地点周辺チェック（複数対応）
-        val redSpawnLocations = config?.getAllRedSpawnLocations() ?: listOfNotNull(game.getRedSpawnLocation())
+        val redSpawnLocations = config?.getAllRedSpawnLocations() ?: listOfNotNull(game.redSpawnLocation)
         for (spawnLoc in redSpawnLocations) {
             if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
@@ -65,7 +65,7 @@ class BlockConnectionSystem(
         }
 
         // 青チームのスポーン地点周辺チェック（複数対応）
-        val blueSpawnLocations = config?.getAllBlueSpawnLocations() ?: listOfNotNull(game.getBlueSpawnLocation())
+        val blueSpawnLocations = config?.getAllBlueSpawnLocations() ?: listOfNotNull(game.blueSpawnLocation)
         for (spawnLoc in blueSpawnLocations) {
             if (kotlin.math.abs(location.blockX - spawnLoc.blockX) <= 1 &&
                 kotlin.math.abs(location.blockZ - spawnLoc.blockZ) <= 1) {
@@ -91,16 +91,18 @@ class BlockConnectionSystem(
 
         // 自チームの旗位置を取得
         val teamFlagLocation = when (team) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
             Team.SPECTATOR -> null
+            else -> game.flagLocations[team]
         } ?: return null
 
         // 自チームのスポーン地点を取得（複数対応）
         val teamSpawnLocations = when (team) {
-            Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(game.getRedSpawnLocation())
-            Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(game.getBlueSpawnLocation())
+            Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(game.redSpawnLocation)
+            Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(game.blueSpawnLocation)
             Team.SPECTATOR -> emptyList()
+            else -> listOfNotNull(game.spawnLocations[team])
         }
 
         // 既に設置したブロックを取得
@@ -175,6 +177,7 @@ class BlockConnectionSystem(
                         Team.RED -> blockType == Material.RED_CONCRETE
                         Team.BLUE -> blockType == Material.BLUE_CONCRETE
                         Team.SPECTATOR -> false
+                        else -> blockType == team.getConcreteMaterial()
                     }
 
                     if (isTeamBlock) {
@@ -185,9 +188,10 @@ class BlockConnectionSystem(
                     // ビーコン（旗）も自チームのブロックとして扱う
                     if (blockType == Material.BEACON) {
                         val flagLocation = when (team) {
-                            Team.RED -> game.getRedFlagLocation()
-                            Team.BLUE -> game.getBlueFlagLocation()
+                            Team.RED -> game.redFlagLocation
+                            Team.BLUE -> game.blueFlagLocation
                             Team.SPECTATOR -> null
+                            else -> game.flagLocations[team]
                         }
 
                         if (flagLocation != null &&
@@ -390,18 +394,20 @@ class BlockConnectionSystem(
 
         // ビーコンの位置を起点として追加
         val beaconLocation = when (team) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
             Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+            else -> game.flagLocations[team]
         } ?: return emptySet()
 
         // スポーン地点を取得（複数対応）
         val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
         val config = gameManager?.getGameConfig(game.gameName)
         val spawnLocations = when (team) {
-            Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(game.getRedSpawnLocation() ?: game.getRedFlagLocation())
-            Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(game.getBlueSpawnLocation() ?: game.getBlueFlagLocation())
+            Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(game.redSpawnLocation ?: game.redFlagLocation)
+            Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(game.blueSpawnLocation ?: game.blueFlagLocation)
             Team.SPECTATOR -> emptyList()
+            else -> listOfNotNull(game.spawnLocations[team] ?: game.flagLocations[team])
         }.map { loc ->
             // 一時ワールドで実行している場合は座標を変換
             if (beaconLocation.world != null && loc.world != beaconLocation.world) {

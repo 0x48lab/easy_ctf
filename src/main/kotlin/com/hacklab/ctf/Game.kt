@@ -54,18 +54,37 @@ class Game(
     var matchWrapper: MatchWrapper? = null
     private var gameEndCallback: ((Team?) -> Unit)? = null
     
-    // チーム管理
-    val redTeam = mutableSetOf<UUID>()
-    val blueTeam = mutableSetOf<UUID>()
+    // チーム管理（汎化: 最大4チーム対応）
+    var teamCount = 2 // ゲーム作成時に設定（2〜4）
+    val teams = mutableMapOf<Team, MutableSet<UUID>>() // チーム -> プレイヤーUUID
     val spectators = mutableSetOf<UUID>() // 観戦者リスト
     val disconnectedPlayers = mutableMapOf<UUID, Team>() // 切断中のプレイヤー
-    
-    // 位置設定
-    private var redFlagLocation: Location? = null
-    private var blueSpawnLocation: Location? = null
-    private var redSpawnLocation: Location? = null
-    private var blueFlagLocation: Location? = null
+
+    // 後方互換プロパティ（既存コードとの互換性を保つ）
+    val redTeam: MutableSet<UUID> get() = teams.getOrPut(Team.RED) { mutableSetOf() }
+    val blueTeam: MutableSet<UUID> get() = teams.getOrPut(Team.BLUE) { mutableSetOf() }
+
+    /** このゲームで有効なチーム一覧 */
+    fun getActiveTeams(): List<Team> = Team.getActiveTeams(teamCount)
+
+    // 位置設定（汎化）
+    val flagLocations = mutableMapOf<Team, Location>() // チーム -> 旗位置
+    val spawnLocations = mutableMapOf<Team, Location>() // チーム -> スポーン位置
     private var mapCenterLocation: Location? = null
+
+    // 後方互換プロパティ（位置）
+    var redFlagLocation: Location?
+        get() = flagLocations[Team.RED]
+        set(value) { if (value != null) flagLocations[Team.RED] = value else flagLocations.remove(Team.RED) }
+    var blueFlagLocation: Location?
+        get() = flagLocations[Team.BLUE]
+        set(value) { if (value != null) flagLocations[Team.BLUE] = value else flagLocations.remove(Team.BLUE) }
+    var redSpawnLocation: Location?
+        get() = spawnLocations[Team.RED]
+        set(value) { if (value != null) spawnLocations[Team.RED] = value else spawnLocations.remove(Team.RED) }
+    var blueSpawnLocation: Location?
+        get() = spawnLocations[Team.BLUE]
+        set(value) { if (value != null) spawnLocations[Team.BLUE] = value else spawnLocations.remove(Team.BLUE) }
     
     
     // 設定
@@ -84,20 +103,30 @@ class Game(
     var score = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
     var currentPhaseTime = 0
     var autoStartCountdown = -1
-    
+
     // 通貨管理（マッチがない場合用）
     val teamCurrency = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
-    
-    // 旗管理
-    var redFlagCarrier: UUID? = null
-    var blueFlagCarrier: UUID? = null
+
+    // 旗管理（汎化）
+    val flagCarriers = mutableMapOf<Team, UUID?>() // チーム -> キャリアUUID
     val droppedFlags = mutableMapOf<Location, Pair<Team, Long>>() // 位置 -> (チーム, ドロップ時刻)
-    
+
+    // 後方互換プロパティ（旗キャリア）
+    var redFlagCarrier: UUID?
+        get() = flagCarriers[Team.RED]
+        set(value) { flagCarriers[Team.RED] = value }
+    var blueFlagCarrier: UUID?
+        get() = flagCarriers[Team.BLUE]
+        set(value) { flagCarriers[Team.BLUE] = value }
+
     // 旗がドロップされているかどうか
     val isRedFlagDropped: Boolean
         get() = droppedFlags.any { it.value.first == Team.RED }
     val isBlueFlagDropped: Boolean
         get() = droppedFlags.any { it.value.first == Team.BLUE }
+
+    /** 指定チームの旗がドロップされているか */
+    fun isFlagDropped(team: Team): Boolean = droppedFlags.any { it.value.first == team }
     
     // UI要素は scoreboardManager に委譲
     val bossBar: BossBar? get() = scoreboardManager.bossBar
@@ -159,15 +188,8 @@ class Game(
     
     // チームカラーのブロック定義
     companion object {
-        val TEAM_BLOCKS = mapOf(
-            Team.RED to setOf(
-                Material.RED_CONCRETE
-            ),
-            Team.BLUE to setOf(
-                Material.BLUE_CONCRETE
-            )
-        )
-        
+        val TEAM_BLOCKS = Team.playableTeams().associateWith { setOf(it.getConcreteMaterial()) }
+
         val NEUTRAL_BLOCK = Material.WHITE_CONCRETE // 接続が切れたブロック
     }
     
@@ -182,51 +204,52 @@ class Game(
     fun getPlayers(): Set<Player> = getAllPlayers()
     fun getPlayerTeam(player: Player): Team? = getPlayerTeam(player.uniqueId)
     fun getTeamPlayers(team: Team): Set<Player> {
-        val uuids = when (team) {
-            Team.RED -> redTeam
-            Team.BLUE -> blueTeam
-            Team.SPECTATOR -> spectators
-        }
+        val uuids = if (team == Team.SPECTATOR) spectators else teams[team] ?: emptySet()
         return uuids.mapNotNull { Bukkit.getPlayer(it) }.toSet()
     }
-    
+
+    fun getTeamSize(team: Team): Int = teams[team]?.size ?: 0
+
     fun getRedScore(): Int = score[Team.RED] ?: 0
     fun getBlueScore(): Int = score[Team.BLUE] ?: 0
+    fun getTeamScore(team: Team): Int = score[team] ?: 0
+
     fun getWinner(): Team? {
-        return when {
-            getRedScore() > getBlueScore() -> Team.RED
-            getBlueScore() > getRedScore() -> Team.BLUE
-            else -> null
-        }
+        val activeTeams = getActiveTeams()
+        val maxScore = activeTeams.maxOfOrNull { score[it] ?: 0 } ?: return null
+        val winners = activeTeams.filter { (score[it] ?: 0) == maxScore }
+        return if (winners.size == 1) winners.first() else null // 同点なら引き分け
     }
-    
-    fun getRedFlagLocation(): Location? = redFlagLocation
-    fun getBlueFlagLocation(): Location? = blueFlagLocation
-    fun getRedSpawnLocation(): Location? = redSpawnLocation
-    fun getBlueSpawnLocation(): Location? = blueSpawnLocation
+
+    /** 汎用ゲッター */
+    fun getFlagLocation(team: Team): Location? = flagLocations[team]
+    fun getSpawnLocation(team: Team): Location? = spawnLocations[team]
     
     fun getRandomSpawnLocation(team: Team): Location? {
         val gameManager = plugin.gameManager as? com.hacklab.ctf.managers.GameManager
         val config = gameManager?.getGameConfig(gameName)
-        
+
         return when (team) {
             Team.RED -> {
-                val locations = config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
+                val locations = config?.getAllRedSpawnLocations() ?: listOfNotNull(spawnLocations[Team.RED])
                 if (locations.isNotEmpty()) locations.random() else null
             }
             Team.BLUE -> {
-                val locations = config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
+                val locations = config?.getAllBlueSpawnLocations() ?: listOfNotNull(spawnLocations[Team.BLUE])
                 if (locations.isNotEmpty()) locations.random() else null
             }
             Team.SPECTATOR -> null
+            else -> {
+                val locations = listOfNotNull(spawnLocations[team])
+                if (locations.isNotEmpty()) locations.random() else null
+            }
         }
     }
     fun getCenterLocation(): Location? = mapCenterLocation
     
-    fun setRedFlagLocation(location: Location) { redFlagLocation = location }
-    fun setBlueFlagLocation(location: Location) { blueFlagLocation = location }
-    fun setRedSpawnLocation(location: Location) { redSpawnLocation = location }
-    fun setBlueSpawnLocation(location: Location) { blueSpawnLocation = location }
+    /** 汎用セッター */
+    fun setFlagLocation(team: Team, location: Location) { flagLocations[team] = location }
+    fun setSpawnLocation(team: Team, location: Location) { spawnLocations[team] = location }
     
     fun updateFromConfig(config: com.hacklab.ctf.config.GameConfig) {
         // 位置情報は後でワールド変換が必要なので、座標のみ保持
@@ -293,6 +316,7 @@ class Game(
             Team.RED -> "&c"
             Team.BLUE -> "&9"
             Team.SPECTATOR -> "&7"
+            else -> selectedTeam.colorCode
         }
         player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-joined", 
             "game" to gameName,
@@ -383,6 +407,7 @@ class Game(
             Team.RED -> redTeam.size
             Team.BLUE -> blueTeam.size
             Team.SPECTATOR -> 0 // 観戦者は人数制限なし
+            else -> 0 // 未実装チーム
         }
         
         if (newTeam != Team.SPECTATOR && targetTeamSize >= maxPlayersPerTeam) {
@@ -413,6 +438,7 @@ class Game(
             Team.RED -> redTeam.remove(player.uniqueId)
             Team.BLUE -> blueTeam.remove(player.uniqueId)
             Team.SPECTATOR -> spectators.remove(player.uniqueId)
+            else -> {} // GREEN/YELLOW: 未実装
         }
         
         // 新しいチームに追加
@@ -420,6 +446,7 @@ class Game(
             Team.RED -> redTeam.add(player.uniqueId)
             Team.BLUE -> blueTeam.add(player.uniqueId)
             Team.SPECTATOR -> spectators.add(player.uniqueId)
+            else -> {} // GREEN/YELLOW: 未実装
         }
         
         // ゲーム実行中の場合の処理
@@ -456,6 +483,11 @@ class Game(
                     val spawnLoc = redSpawnLocation ?: blueSpawnLocation ?: mapCenterLocation
                     spawnLoc?.let { loc ->
                         player.teleport(findSafeSpectatorLocation(loc))
+                    }
+                }
+                else -> {
+                    spawnLocations[newTeam]?.let { spawn ->
+                        player.teleport(spawn)
                     }
                 }
             }
@@ -639,6 +671,7 @@ class Game(
             Team.RED -> redTeam.add(player.uniqueId)
             Team.BLUE -> blueTeam.add(player.uniqueId)
             Team.SPECTATOR -> spectators.add(player.uniqueId)
+            else -> {} // GREEN/YELLOW: 未実装
         }
         
         // スコアボードを更新
@@ -669,16 +702,17 @@ class Game(
     }
     
     fun getPlayerTeam(uuid: UUID): Team? {
-        return when {
-            redTeam.contains(uuid) -> Team.RED
-            blueTeam.contains(uuid) -> Team.BLUE
-            spectators.contains(uuid) -> Team.SPECTATOR
-            else -> null
+        for ((team, members) in teams) {
+            if (members.contains(uuid)) return team
         }
+        if (spectators.contains(uuid)) return Team.SPECTATOR
+        return null
     }
-    
+
     fun getAllPlayers(): Set<Player> {
-        return (redTeam + blueTeam + spectators).mapNotNull { Bukkit.getPlayer(it) }.toSet()
+        val allUuids = teams.values.flatten().toMutableSet()
+        allUuids.addAll(spectators)
+        return allUuids.mapNotNull { Bukkit.getPlayer(it) }.toSet()
     }
     
     fun getTeamPlayers(): Set<Player> {
@@ -1413,6 +1447,7 @@ class Game(
                         Team.RED -> redSpawnLocation ?: redFlagLocation
                         Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
                         Team.SPECTATOR -> mapCenterLocation ?: redFlagLocation
+                        else -> spawnLocations[team] ?: flagLocations[team]
                     }
                     if (spawnLocation != null && spawnLocation.world == tempWorld) {
                         // テンポラリワールド内でテレポート
@@ -1832,6 +1867,7 @@ class Game(
             Team.RED -> redSpawnLocation ?: redFlagLocation
             Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
             Team.SPECTATOR -> mapCenterLocation ?: redFlagLocation
+            else -> spawnLocations[team] ?: flagLocations[team]
         } ?: throw IllegalStateException("No spawn location for team $team")
         
         plugin.logger.info("[SafeSpawn] Base location for $team: $baseLocation (world: ${baseLocation.world?.name})")
@@ -1876,6 +1912,7 @@ class Game(
                         Team.RED -> blueFlagLocation
                         Team.BLUE -> redFlagLocation
                         Team.SPECTATOR -> null
+                        else -> null
                     }
                     
                     if (enemyFlagLocation != null) {
@@ -1908,6 +1945,7 @@ class Game(
             Team.RED -> blueFlagLocation
             Team.BLUE -> redFlagLocation
             Team.SPECTATOR -> null
+            else -> null
         }
         
         if (enemyFlagLocation != null) {
@@ -1992,6 +2030,7 @@ class Game(
                 Team.RED -> Material.RED_CONCRETE
                 Team.BLUE -> Material.BLUE_CONCRETE
                 Team.SPECTATOR -> Material.WHITE_CONCRETE // 観戦者用（到達しないはず）
+                else -> team.getConcreteMaterial()
             },
             blocksToGive
         ).apply {
@@ -2179,6 +2218,7 @@ class Game(
                     Team.RED -> Material.RED_CONCRETE
                     Team.BLUE -> Material.BLUE_CONCRETE
                     Team.SPECTATOR -> Material.WHITE_CONCRETE
+                    else -> team.getConcreteMaterial()
                 },
                 combatPhaseBlocks
             ).apply {
@@ -2330,6 +2370,7 @@ class Game(
             Team.RED -> org.bukkit.Color.RED
             Team.BLUE -> org.bukkit.Color.BLUE
             Team.SPECTATOR -> org.bukkit.Color.GRAY // 観戦者用（到達しないはず）
+            else -> team.getArmorColor()
         }
         
         // 革のヘルメット
@@ -2389,6 +2430,7 @@ class Game(
                 Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
                 Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
                 Team.SPECTATOR -> emptyList()
+                else -> listOfNotNull(spawnLocations[team])
             }
             
             // テンポラリワールドの場合は、位置をそのワールドに更新
@@ -2416,6 +2458,7 @@ class Game(
             Team.RED -> Material.RED_CONCRETE
             Team.BLUE -> Material.BLUE_CONCRETE
             Team.SPECTATOR -> Material.WHITE_CONCRETE // 観戦者用（到達しないはず）
+            else -> team.getConcreteMaterial()
         }
         
         // スポーン地点のコンクリートを設置し、チームの配置ブロックとして記録
@@ -2451,6 +2494,7 @@ class Game(
                 Team.RED -> redFlagLocation
                 Team.BLUE -> blueFlagLocation
                 Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+                else -> flagLocations[team]
             } ?: return@forEach
             
             // ビーコンと色付きガラスを削除
@@ -2474,6 +2518,7 @@ class Game(
                 Team.RED -> config?.getAllRedSpawnLocations() ?: listOfNotNull(redSpawnLocation)
                 Team.BLUE -> config?.getAllBlueSpawnLocations() ?: listOfNotNull(blueSpawnLocation)
                 Team.SPECTATOR -> emptyList()
+                else -> listOfNotNull(this.spawnLocations[team])
             }
             
             // すべてのスポーン地点のコンクリート床を削除
@@ -3518,24 +3563,14 @@ class Game(
         val rewardPerEnemy = plugin.config.getInt("economy.reward-per-enemy", 100).toDouble()
         if (rewardPerEnemy <= 0) return
 
-        // 敵チームの人数を計算
-        val loserTeam = if (winner == Team.RED) Team.BLUE else Team.RED
-        val enemyCount = when (loserTeam) {
-            Team.RED -> redTeam.size
-            Team.BLUE -> blueTeam.size
-            else -> 0
-        }
-
+        // 敵チームの合計人数を計算
+        val enemyCount = getActiveTeams().filter { it != winner }.sumOf { teams[it]?.size ?: 0 }
         if (enemyCount == 0) return
 
         val totalReward = rewardPerEnemy * enemyCount
 
         // 勝利チームの全プレイヤーに報酬を付与
-        val winnerPlayers = when (winner) {
-            Team.RED -> redTeam
-            Team.BLUE -> blueTeam
-            else -> return
-        }
+        val winnerPlayers = teams[winner] ?: return
 
         winnerPlayers.forEach { uuid ->
             val player = org.bukkit.Bukkit.getPlayer(uuid)

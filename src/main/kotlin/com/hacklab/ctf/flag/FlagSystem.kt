@@ -25,9 +25,10 @@ class FlagSystem(
         // 旗の設置（ビーコン）
         Team.values().filter { it != Team.SPECTATOR }.forEach { team ->
             val flagLocation = when (team) {
-                Team.RED -> game.getRedFlagLocation()
-                Team.BLUE -> game.getBlueFlagLocation()
+                Team.RED -> game.redFlagLocation
+                Team.BLUE -> game.blueFlagLocation
                 Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+                else -> game.flagLocations[team]
             } ?: return@forEach
 
             setupFlagBeacon(flagLocation, team)
@@ -69,9 +70,10 @@ class FlagSystem(
 
         // 旗位置を記録
         when (team) {
-            Team.RED -> game.setRedFlagLocation(location)
-            Team.BLUE -> game.setBlueFlagLocation(location)
+            Team.RED -> game.redFlagLocation = location
+            Team.BLUE -> game.blueFlagLocation = location
             Team.SPECTATOR -> {} // 観戦者は旗位置を記録しない
+            else -> game.flagLocations[team] = location
         }
     }
 
@@ -83,6 +85,7 @@ class FlagSystem(
             Team.RED -> game.redFlagCarrier
             Team.BLUE -> game.blueFlagCarrier
             Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+            else -> game.flagCarriers[team]
         }
 
         if (carrier != player.uniqueId) return
@@ -92,6 +95,7 @@ class FlagSystem(
             Team.RED -> game.redFlagCarrier = null
             Team.BLUE -> game.blueFlagCarrier = null
             Team.SPECTATOR -> {} // 観戦者は旗キャリアではない
+            else -> game.flagCarriers[team] = null
         }
 
         // グロー効果を解除
@@ -123,9 +127,10 @@ class FlagSystem(
         if (isUnrecoverable) {
             // 回収不可能な場合は即座に旗を返却
             val flagLocation = when (team) {
-                Team.RED -> game.getRedFlagLocation()
-                Team.BLUE -> game.getBlueFlagLocation()
+                Team.RED -> game.redFlagLocation
+                Team.BLUE -> game.blueFlagLocation
                 Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+                else -> game.flagLocations[team]
             } ?: return
 
             setupFlagBeacon(flagLocation, team)
@@ -187,9 +192,10 @@ class FlagSystem(
 
                 // 旗を元の位置に再設置
                 val flagLocation = when (team) {
-                    Team.RED -> game.getRedFlagLocation()
-                    Team.BLUE -> game.getBlueFlagLocation()
+                    Team.RED -> game.redFlagLocation
+                    Team.BLUE -> game.blueFlagLocation
                     Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+                    else -> game.flagLocations[team]
                 } ?: continue
 
                 setupFlagBeacon(flagLocation, team)
@@ -242,9 +248,10 @@ class FlagSystem(
 
             // 旗を元の位置に戻す
             val flagLocation = when (flagTeam) {
-                Team.RED -> game.getRedFlagLocation()
-                Team.BLUE -> game.getBlueFlagLocation()
+                Team.RED -> game.redFlagLocation
+                Team.BLUE -> game.blueFlagLocation
                 Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+                else -> game.flagLocations[team]
             } ?: return false
 
             setupFlagBeacon(flagLocation, flagTeam)
@@ -271,6 +278,7 @@ class FlagSystem(
             Team.RED -> game.redFlagCarrier = player.uniqueId
             Team.BLUE -> game.blueFlagCarrier = player.uniqueId
             Team.SPECTATOR -> {} // 観戦者は旗を持てない
+            else -> game.flagCarriers[flagTeam] = player.uniqueId
         }
 
         // ドロップフラグから削除
@@ -283,9 +291,10 @@ class FlagSystem(
 
         // ビーコン上のバナーを除去（ベースから直接取得した場合）
         val flagLocation = when (flagTeam) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
             Team.SPECTATOR -> null
+            else -> game.flagLocations[flagTeam]
         }
         if (flagLocation != null) {
             removeBannerFromBeacon(flagLocation)
@@ -310,7 +319,7 @@ class FlagSystem(
 
     fun checkDroppedFlagTouch() {
         // ドロップされている旗の位置を確認
-        val world = game.getRedFlagLocation()?.world ?: return
+        val world = game.redFlagLocation?.world ?: return
 
         // 全プレイヤーをチェック
         game.getAllPlayers().forEach { player ->
@@ -346,9 +355,10 @@ class FlagSystem(
 
                         // 旗を元の位置に戻す
                         val flagLocation = when (flagTeam) {
-                            Team.RED -> game.getRedFlagLocation()
-                            Team.BLUE -> game.getBlueFlagLocation()
+                            Team.RED -> game.redFlagLocation
+                            Team.BLUE -> game.blueFlagLocation
                             Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+                            else -> game.flagLocations[flagTeam]
                         } ?: return@forEach
 
                         setupFlagBeacon(flagLocation, flagTeam)
@@ -367,6 +377,7 @@ class FlagSystem(
                             Team.RED -> game.redFlagCarrier = player.uniqueId
                             Team.BLUE -> game.blueFlagCarrier = player.uniqueId
                             Team.SPECTATOR -> {} // 観戦者は旗を持てない
+                            else -> game.flagCarriers[flagTeam] = player.uniqueId
                         }
 
                         // ドロップフラグから削除
@@ -417,9 +428,10 @@ class FlagSystem(
 
         // 自分のチームの旗拠点にいるかチェック
         val ownFlagLocation = when (team) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
             Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+            else -> game.flagLocations[team]
         } ?: return false
 
         if (player.location.distance(ownFlagLocation) > 3.0) {
@@ -431,6 +443,7 @@ class FlagSystem(
             Team.RED -> game.redFlagCarrier == null && !game.droppedFlags.any { it.value.first == Team.RED }
             Team.BLUE -> game.blueFlagCarrier == null && !game.droppedFlags.any { it.value.first == Team.BLUE }
             Team.SPECTATOR -> false // 観戦者用（到達しないはず）
+            else -> game.flagCarriers[team] == null && !game.droppedFlags.any { it.value.first == team }
         }
 
         if (!ownFlagIsAtBase) {
@@ -477,6 +490,7 @@ class FlagSystem(
             Team.RED -> game.redFlagCarrier = null
             Team.BLUE -> game.blueFlagCarrier = null
             Team.SPECTATOR -> {} // 観戦者は旗を持てない
+            else -> game.flagCarriers[carriedFlagTeam] = null
         }
 
         // グロー効果を解除
@@ -487,9 +501,10 @@ class FlagSystem(
 
         // 敵の旗を元の位置に戻す
         val enemyFlagLocation = when (carriedFlagTeam) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
             Team.SPECTATOR -> null // 観戦者用（到達しないはず）
+            else -> game.flagLocations[carriedFlagTeam]
         } ?: return false
 
         setupFlagBeacon(enemyFlagLocation, carriedFlagTeam)
@@ -666,6 +681,7 @@ class FlagSystem(
             Team.RED -> Material.RED_BANNER
             Team.BLUE -> Material.BLUE_BANNER
             Team.SPECTATOR -> Material.WHITE_BANNER
+            else -> team.getBannerMaterial()
         }
     }
 
@@ -677,6 +693,7 @@ class FlagSystem(
             Team.RED -> Material.RED_WALL_BANNER
             Team.BLUE -> Material.BLUE_WALL_BANNER
             Team.SPECTATOR -> Material.WHITE_WALL_BANNER
+            else -> team.getBannerMaterial() // fallback to standing banner
         }
     }
 

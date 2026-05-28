@@ -119,11 +119,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 敵の旗の位置をチェック
             val enemyTeam = if (playerTeam == Team.RED) Team.BLUE else Team.RED
             val enemyFlagLocation = when (enemyTeam) {
-                Team.RED -> game.getRedFlagLocation()
-                Team.BLUE -> game.getBlueFlagLocation()
+                Team.RED -> game.redFlagLocation
+                Team.BLUE -> game.blueFlagLocation
                 Team.SPECTATOR -> return  // Spectators cannot pick up flags
+                else -> game.flagLocations[enemyTeam]
             } ?: return
-            
+
             // 敵の旗に近づいたら取得（1.5ブロック以内）
             if (playerLoc.world == enemyFlagLocation.world && playerLoc.distance(enemyFlagLocation) < 1.5) {
                 // 旗がまだ誰も持っていない場合
@@ -131,14 +132,16 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     Team.RED -> game.redFlagCarrier
                     Team.BLUE -> game.blueFlagCarrier
                     Team.SPECTATOR -> return  // Spectators cannot pick up flags
+                    else -> game.flagCarriers[enemyTeam]
                 }
-                
+
                 if (enemyCarrier == null) {
                     // 旗を取得
                     when (enemyTeam) {
                         Team.RED -> game.redFlagCarrier = player.uniqueId
                         Team.BLUE -> game.blueFlagCarrier = player.uniqueId
                         Team.SPECTATOR -> return  // Spectators cannot pick up flags
+                        else -> game.flagCarriers[enemyTeam] = player.uniqueId
                     }
                 
                     // ビーコンと色付きガラスを削除
@@ -187,9 +190,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         // 自陣の旗位置で敵の旗を持っている場合、キャプチャー
         val ownFlagLocation = when (playerTeam) {
-            Team.RED -> game.getRedFlagLocation()
-            Team.BLUE -> game.getBlueFlagLocation()
+            Team.RED -> game.redFlagLocation
+            Team.BLUE -> game.blueFlagLocation
             Team.SPECTATOR -> return  // Spectators cannot capture flags
+            else -> game.flagLocations[playerTeam]
         } ?: return
         
         // 同じワールドでない場合は距離計算をスキップ
@@ -222,6 +226,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         Team.RED -> Material.RED_CONCRETE
                         Team.BLUE -> Material.BLUE_CONCRETE
                         Team.SPECTATOR -> return
+                        else -> team.getConcreteMaterial()
                     }
                 }
                 else -> null
@@ -514,16 +519,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         Team.RED -> game.redFlagCarrier = null
                         Team.BLUE -> game.blueFlagCarrier = null
                         Team.SPECTATOR -> {}  // No-op for spectators
+                        else -> game.flagCarriers[flagTeam] = null
                     }
-                    
+
                     // グロー効果を解除
                     player.isGlowing = false
-                    
+
                     // 旗を元の位置に戻す
                     val flagLocation = when (flagTeam) {
-                        Team.RED -> game.getRedFlagLocation()
-                        Team.BLUE -> game.getBlueFlagLocation()
+                        Team.RED -> game.redFlagLocation
+                        Team.BLUE -> game.blueFlagLocation
                         Team.SPECTATOR -> return  // Spectators don't have flags
+                        else -> game.flagLocations[flagTeam]
                     } ?: return
                     
                     game.setupFlagBeacon(flagLocation, flagTeam)
@@ -752,8 +759,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                     
                                     // 自チームの旗（ビーコン）からの距離をチェック
                                     val teamFlagLocation = when (playerTeam) {
-                                        Team.RED -> game.getRedFlagLocation()
-                                        Team.BLUE -> game.getBlueFlagLocation()
+                                        Team.RED -> game.redFlagLocation
+                                        Team.BLUE -> game.blueFlagLocation
                                         else -> null
                                     }
                                     if (teamFlagLocation != null && blockLocation.distance(teamFlagLocation) <= 7.0) {
@@ -764,8 +771,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                     // 自チームのスポーン地点からの距離をチェック
                                     if (!canBreakWithoutRestriction) {
                                         val teamSpawnLocation = when (playerTeam) {
-                                            Team.RED -> game.getRedSpawnLocation()
-                                            Team.BLUE -> game.getBlueSpawnLocation()
+                                            Team.RED -> game.redSpawnLocation
+                                            Team.BLUE -> game.blueSpawnLocation
                                             else -> null
                                         }
                                         if (teamSpawnLocation != null && blockLocation.distance(teamSpawnLocation) <= 7.0) {
@@ -857,8 +864,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             
                             // 自チームの旗（ビーコン）からの距離をチェック
                             val teamFlagLocation = when (playerTeam) {
-                                Team.RED -> game.getRedFlagLocation()
-                                Team.BLUE -> game.getBlueFlagLocation()
+                                Team.RED -> game.redFlagLocation
+                                Team.BLUE -> game.blueFlagLocation
                                 else -> null
                             }
                             if (teamFlagLocation != null && blockLocation.distance(teamFlagLocation) <= 7.0) {
@@ -869,8 +876,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             // 自チームのスポーン地点からの距離をチェック
                             if (!canBreakWithoutRestriction) {
                                 val teamSpawnLocation = when (playerTeam) {
-                                    Team.RED -> game.getRedSpawnLocation()
-                                    Team.BLUE -> game.getBlueSpawnLocation()
+                                    Team.RED -> game.redSpawnLocation
+                                    Team.BLUE -> game.blueSpawnLocation
                                     else -> null
                                 }
                                 if (teamSpawnLocation != null && blockLocation.distance(teamSpawnLocation) <= 7.0) {
@@ -1006,16 +1013,18 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 val team = game.getPlayerTeam(player.uniqueId) ?: return
                 val enemyTeam = if (team == Team.RED) Team.BLUE else Team.RED
                 val enemySpawn = when (enemyTeam) {
-                    Team.RED -> game.getRedSpawnLocation() ?: game.getRedFlagLocation()
-                    Team.BLUE -> game.getBlueSpawnLocation() ?: game.getBlueFlagLocation()
+                    Team.RED -> game.redSpawnLocation ?: game.redFlagLocation
+                    Team.BLUE -> game.blueSpawnLocation ?: game.blueFlagLocation
                     Team.SPECTATOR -> null
+                    else -> game.spawnLocations[enemyTeam] ?: game.flagLocations[enemyTeam]
                 }
-                
+
                 // チームカラーブロック（戦略的建築）は敵スポーン近くでも許可
                 val isTeamColorBlock = when (team) {
                     Team.RED -> itemInHand.type == Material.RED_CONCRETE
                     Team.BLUE -> itemInHand.type == Material.BLUE_CONCRETE
                     Team.SPECTATOR -> false
+                    else -> itemInHand.type == team.getConcreteMaterial()
                 }
                 
                 // 設定ファイルから敵スポーン保護半径を取得（デフォルト: 5ブロック）
@@ -1061,10 +1070,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     val blockLoc = clickedBlock.location
                     
                     // 旗の位置かチェック
-                    val isRedFlag = game.getRedFlagLocation()?.let { 
+                    val isRedFlag = game.redFlagLocation?.let { 
                         it.world == blockLoc.world && it.distance(blockLoc) < 1.0 
                     } ?: false
-                    val isBlueFlag = game.getBlueFlagLocation()?.let { 
+                    val isBlueFlag = game.blueFlagLocation?.let { 
                         it.world == blockLoc.world && it.distance(blockLoc) < 1.0 
                     } ?: false
                     
@@ -1258,13 +1267,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             }
                             game.isRedFlagDropped -> {
                                 // ドロップされた旗の位置にテレポート
-                                game.getRedFlagLocation()?.let { loc ->
+                                game.redFlagLocation?.let { loc ->
                                     player.teleport(loc)
                                     player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.dropped_red_flag"), NamedTextColor.RED))
                                 }
                             }
                             else -> {
-                                game.getRedFlagLocation()?.let { loc ->
+                                game.redFlagLocation?.let { loc ->
                                     player.teleport(loc)
                                     player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.red_flag_base"), NamedTextColor.RED))
                                 }
@@ -1282,13 +1291,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             }
                             game.isBlueFlagDropped -> {
                                 // ドロップされた旗の位置にテレポート
-                                game.getBlueFlagLocation()?.let { loc ->
+                                game.blueFlagLocation?.let { loc ->
                                     player.teleport(loc)
                                     player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.dropped_blue_flag"), NamedTextColor.BLUE))
                                 }
                             }
                             else -> {
-                                game.getBlueFlagLocation()?.let { loc ->
+                                game.blueFlagLocation?.let { loc ->
                                     player.teleport(loc)
                                     player.sendMessage(Component.text(plugin.languageManager.getMessage("game_events.teleport.blue_flag_base"), NamedTextColor.BLUE))
                                 }
@@ -1654,9 +1663,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // チームのスポーン地点へ即座にリスポーン
             val team = game.getPlayerTeam(player.uniqueId) ?: return
             val spawnLocation = when (team) {
-                Team.RED -> game.getRedSpawnLocation()
-                Team.BLUE -> game.getBlueSpawnLocation()
+                Team.RED -> game.redSpawnLocation
+                Team.BLUE -> game.blueSpawnLocation
                 Team.SPECTATOR -> game.getCenterLocation()
+                else -> game.spawnLocations[team]
             }
             if (spawnLocation != null) {
                 event.respawnLocation = spawnLocation
@@ -1672,9 +1682,10 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 建築フェーズ中のリスポーン
             val team = game.getPlayerTeam(player.uniqueId) ?: return
             val spawnLocation = when (team) {
-                Team.RED -> game.getRedSpawnLocation()
-                Team.BLUE -> game.getBlueSpawnLocation()
+                Team.RED -> game.redSpawnLocation
+                Team.BLUE -> game.blueSpawnLocation
                 Team.SPECTATOR -> game.getCenterLocation()
+                else -> game.spawnLocations[team]
             }
             if (spawnLocation != null) {
                 event.respawnLocation = spawnLocation
@@ -1730,7 +1741,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
                     // 該当するゲームを探す
                     gameManager.getAllGames().values.forEach { game ->
                         if (game.state == GameState.RUNNING) {
-                            val flagLocation = if (team == Team.RED) game.getRedFlagLocation() else game.getBlueFlagLocation()
+                            val flagLocation = if (team == Team.RED) game.redFlagLocation else game.blueFlagLocation
                             if (flagLocation != null) {
                                 game.setupFlagBeacon(flagLocation, team)
                                 game.getAllPlayers().forEach { player ->
@@ -1792,7 +1803,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
             // 該当するゲームを探す
             gameManager.getAllGames().values.forEach { game ->
                 if (game.state == GameState.RUNNING) {
-                    val flagLocation = if (team == Team.RED) game.getRedFlagLocation() else game.getBlueFlagLocation()
+                    val flagLocation = if (team == Team.RED) game.redFlagLocation else game.blueFlagLocation
                     if (flagLocation != null) {
                         game.setupFlagBeacon(flagLocation, team)
                         game.getAllPlayers().forEach { player ->
@@ -1931,7 +1942,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         }
         
         // 旗の位置チェック
-        val flagLocations = listOf(game.getRedFlagLocation(), game.getBlueFlagLocation()).filterNotNull()
+        val flagLocations = listOf(game.redFlagLocation, game.blueFlagLocation).filterNotNull()
         for (flagLoc in flagLocations) {
             // 旗本体（ビーコン）
             if (location.blockX == flagLoc.blockX && 
@@ -1966,7 +1977,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         }
         
         // スポーン装飾チェック（スポーン地点が設定されている場合のみ）
-        val spawnLocations = listOf(game.getRedSpawnLocation(), game.getBlueSpawnLocation()).filterNotNull()
+        val spawnLocations = listOf(game.redSpawnLocation, game.blueSpawnLocation).filterNotNull()
         
         for (spawnLoc in spawnLocations) {
             // コンクリート床（スポーン地点の下3x3）

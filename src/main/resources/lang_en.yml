@@ -755,6 +755,8 @@ team:
 teams:
   blue: 'Blue'
   red: 'Red'
+  green: 'Green'
+  yellow: 'Yellow'
   spectator: 'Spectator'
 time:
   $action: '[time.$action]'

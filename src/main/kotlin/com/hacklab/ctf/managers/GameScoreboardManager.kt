@@ -407,6 +407,8 @@ class GameScoreboardManager(
                                 Team.BLUE -> game.blueFlagCarrier?.let { Bukkit.getPlayer(it)?.name }
                                     ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")
                                 Team.SPECTATOR -> plugin.languageManager.getMessage("flag.flag-carrier-unknown")
+                                else -> game.flagCarriers[team]?.let { Bukkit.getPlayer(it)?.name }
+                                    ?: plugin.languageManager.getMessage("flag.flag-carrier-unknown")
                             }
                             plugin.languageManager.getMessageAsComponent("flag.enemy-has-flag", "carrier" to carrierName)
                         }
