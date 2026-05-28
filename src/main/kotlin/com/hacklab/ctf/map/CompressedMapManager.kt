@@ -263,10 +263,13 @@ class CompressedMapManager(private val plugin: Main) {
                 // ビーコンの上に赤ガラスを設置
                 val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
                 glassBlock.type = Material.RED_STAINED_GLASS
-                plugin.logger.info("[CompressedMapManager] 赤チームのビーコンに赤ガラスを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
+                // バナーをガラスの上に設置
+                val bannerBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 2, flagLoc.blockZ)
+                bannerBlock.type = Material.RED_BANNER
+                plugin.logger.info("[CompressedMapManager] 赤チームのビーコンに赤ガラスと赤バナーを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
             }
         }
-        
+
         // 青チームの旗位置にビーコンと青ガラスを設置
         game.getBlueFlagLocation()?.let { flagLoc ->
             val beaconBlock = world.getBlockAt(flagLoc)
@@ -274,7 +277,10 @@ class CompressedMapManager(private val plugin: Main) {
                 // ビーコンの上に青ガラスを設置
                 val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
                 glassBlock.type = Material.BLUE_STAINED_GLASS
-                plugin.logger.info("[CompressedMapManager] 青チームのビーコンに青ガラスを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
+                // バナーをガラスの上に設置
+                val bannerBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 2, flagLoc.blockZ)
+                bannerBlock.type = Material.BLUE_BANNER
+                plugin.logger.info("[CompressedMapManager] 青チームのビーコンに青ガラスと青バナーを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
             }
         }
     }

@@ -8,6 +8,7 @@ import net.kyori.adventure.title.Title
 import org.bukkit.*
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.LeatherArmorMeta
 import java.time.Duration
 import java.util.*
 
@@ -63,6 +64,9 @@ class FlagSystem(
         }
         location.clone().add(0.0, 1.0, 0.0).block.type = glassType
 
+        // バナーをステンドグラスの上に設置
+        placeBannerOnBeacon(location, team)
+
         // 旗位置を記録
         when (team) {
             Team.RED -> game.setRedFlagLocation(location)
@@ -92,6 +96,9 @@ class FlagSystem(
 
         // グロー効果を解除
         player.isGlowing = false
+
+        // ヘルメットを元の革帽子に戻す
+        restoreHelmet(player)
 
         // ドロップ位置を決定（死亡位置が指定されている場合はそれを使用）
         val baseLocation = deathLocation ?: player.location
@@ -152,6 +159,9 @@ class FlagSystem(
         // ドロップ情報を記録
         game.droppedFlags[dropLocation] = Pair(team, System.currentTimeMillis())
 
+        // ドロップ位置にバナーブロックを設置
+        placeDroppedBanner(dropLocation, team)
+
         // メッセージ
         game.getAllPlayers().forEach {
             it.sendMessage(plugin.languageManager.getMessageAsComponent("flag.flag-dropped", "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}")))
@@ -171,6 +181,9 @@ class FlagSystem(
                     .filterIsInstance<org.bukkit.entity.Item>()
                     .find { it.itemStack.type == Material.BEACON }
                     ?.remove()
+
+                // ドロップ位置のバナーブロックを除去
+                removeDroppedBanner(location)
 
                 // 旗を元の位置に再設置
                 val flagLocation = when (team) {
@@ -221,6 +234,9 @@ class FlagSystem(
                 data.first == flagTeam && location.distance(item.location) < 2.0
             }
 
+            // ドロップ位置のバナーブロックを除去
+            removeDroppedBanner(item.location)
+
             // アイテムを削除
             item.remove()
 
@@ -265,8 +281,21 @@ class FlagSystem(
         // アイテムを削除
         item.remove()
 
+        // ビーコン上のバナーを除去（ベースから直接取得した場合）
+        val flagLocation = when (flagTeam) {
+            Team.RED -> game.getRedFlagLocation()
+            Team.BLUE -> game.getBlueFlagLocation()
+            Team.SPECTATOR -> null
+        }
+        if (flagLocation != null) {
+            removeBannerFromBeacon(flagLocation)
+        }
+
         // プレイヤーに発光効果
         player.isGlowing = true
+
+        // 旗キャリアにバナーをヘルメットとして装備
+        equipBannerHelmet(player, flagTeam)
 
         // メッセージ
         game.getAllPlayers().forEach {
@@ -309,6 +338,9 @@ class FlagSystem(
                             data.first == flagTeam && location.distance(item.location) < 2.0
                         }
 
+                        // ドロップ位置のバナーブロックを除去
+                        removeDroppedBanner(item.location)
+
                         // アイテムを削除
                         item.remove()
 
@@ -342,6 +374,9 @@ class FlagSystem(
                             data.first == flagTeam && location.distance(item.location) < 2.0
                         }
 
+                        // ドロップ位置のバナーブロックを除去
+                        removeDroppedBanner(item.location)
+
                         // アイテムを削除
                         item.remove()
 
@@ -350,6 +385,9 @@ class FlagSystem(
 
                         // プレイヤーに発光効果
                         player.isGlowing = true
+
+                        // 旗キャリアにバナーをヘルメットとして装備
+                        equipBannerHelmet(player, flagTeam)
 
                         // メッセージ
                         game.getAllPlayers().forEach { p ->
@@ -443,6 +481,9 @@ class FlagSystem(
 
         // グロー効果を解除
         player.isGlowing = false
+
+        // ヘルメットを元の革帽子に戻す
+        restoreHelmet(player)
 
         // 敵の旗を元の位置に戻す
         val enemyFlagLocation = when (carriedFlagTeam) {
@@ -613,5 +654,113 @@ class FlagSystem(
                !blockAbove2.type.isSolid &&
                block.type != Material.LAVA &&
                block.type != Material.WATER
+    }
+
+    // ========== バナー関連ヘルパー ==========
+
+    /**
+     * チームに対応するバナーのMaterialを取得
+     */
+    fun getTeamBannerMaterial(team: Team): Material {
+        return when (team) {
+            Team.RED -> Material.RED_BANNER
+            Team.BLUE -> Material.BLUE_BANNER
+            Team.SPECTATOR -> Material.WHITE_BANNER
+        }
+    }
+
+    /**
+     * チームに対応するウォールバナーのMaterialを取得
+     */
+    fun getTeamWallBannerMaterial(team: Team): Material {
+        return when (team) {
+            Team.RED -> Material.RED_WALL_BANNER
+            Team.BLUE -> Material.BLUE_WALL_BANNER
+            Team.SPECTATOR -> Material.WHITE_WALL_BANNER
+        }
+    }
+
+    /**
+     * チームバナーのItemStackを作成
+     */
+    fun createTeamBannerItem(team: Team): ItemStack {
+        return ItemStack(getTeamBannerMaterial(team))
+    }
+
+    /**
+     * ビーコンの上にバナーブロックを設置
+     * ステンドグラスの上（ビーコン+2）に立てバナーを設置
+     */
+    fun placeBannerOnBeacon(beaconLocation: Location, team: Team) {
+        val bannerLoc = beaconLocation.clone().add(0.0, 2.0, 0.0)
+        bannerLoc.block.type = getTeamBannerMaterial(team)
+    }
+
+    /**
+     * ビーコン上のバナーを除去
+     */
+    fun removeBannerFromBeacon(beaconLocation: Location) {
+        val bannerLoc = beaconLocation.clone().add(0.0, 2.0, 0.0)
+        val block = bannerLoc.block
+        if (block.type.name.contains("BANNER")) {
+            block.type = Material.AIR
+        }
+    }
+
+    /**
+     * ドロップ位置にバナーブロックを設置
+     */
+    fun placeDroppedBanner(location: Location, team: Team) {
+        val bannerLoc = location.clone()
+        val block = bannerLoc.block
+        // 設置先が空気ブロックの場合のみ設置
+        if (!block.type.isSolid) {
+            block.type = getTeamBannerMaterial(team)
+        }
+    }
+
+    /**
+     * ドロップ位置のバナーブロックを除去
+     */
+    fun removeDroppedBanner(location: Location) {
+        // 周囲のバナーブロックを探して削除
+        for (dx in -1..1) {
+            for (dy in -1..1) {
+                for (dz in -1..1) {
+                    val checkLoc = location.clone().add(dx.toDouble(), dy.toDouble(), dz.toDouble())
+                    if (checkLoc.block.type.name.contains("BANNER")) {
+                        checkLoc.block.type = Material.AIR
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 旗キャリアにバナーをヘルメットとして装備させる
+     */
+    fun equipBannerHelmet(player: Player, flagTeam: Team) {
+        val banner = createTeamBannerItem(flagTeam)
+        player.equipment?.helmet = banner
+    }
+
+    /**
+     * 旗キャリアのヘルメットを元のチーム色の革帽子に戻す
+     */
+    fun restoreHelmet(player: Player) {
+        val playerTeam = game.getPlayerTeam(player.uniqueId) ?: return
+        val teamColor = if (playerTeam == Team.RED) Color.RED else Color.BLUE
+        val unbreakable = plugin.config.getBoolean("equipment.combat-phase.armor.unbreakable", true)
+        val helmet = ItemStack(Material.LEATHER_HELMET).apply {
+            val meta = itemMeta
+            if (meta is LeatherArmorMeta) {
+                meta.setColor(teamColor)
+            }
+            if (unbreakable) {
+                meta?.isUnbreakable = true
+            }
+            itemMeta = meta
+        }
+        player.equipment?.helmet = helmet
     }
 }
