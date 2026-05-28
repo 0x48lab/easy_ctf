@@ -779,6 +779,7 @@ ui:
   separator-short: ==================
 join-leave:
   game-joined: Joined the game
+  mid-game-join: '§e{player} §fhas joined {color}{team} §fmid-game!'
   game-left: Left the game
   team-full-red: Red team is full
   team-full-blue: Blue team is full

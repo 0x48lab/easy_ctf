@@ -768,6 +768,7 @@ ui:
   separator-short: ==================
 join-leave:
   game-joined: ゲームに参加しました
+  mid-game-join: '§e{player} §fが {color}{team} §fに途中参加しました！'
   game-left: ゲームから離脱しました
   team-full-red: 赤チームは満員です
   team-full-blue: 青チームは満員です

@@ -258,20 +258,9 @@ class Game(
     }
     
     fun addPlayer(player: Player, team: Team? = null, isAdminAction: Boolean = false): Boolean {
-        // 管理者権限の場合はゲーム状態チェックをスキップ
-        if (!isAdminAction && state != GameState.WAITING) {
-            plugin.logger.warning(plugin.languageManager.getMessage("log.player-cannot-join", "player" to player.name, "game" to name, "state" to state.toString()))
-            when (state) {
-                GameState.STARTING, GameState.RUNNING -> {
-                    player.sendMessage(plugin.languageManager.getMessageAsComponent("game-states.already-started"))
-                }
-                GameState.ENDING -> {
-                    player.sendMessage(plugin.languageManager.getMessageAsComponent("game-states.already-ending"))
-                }
-                GameState.WAITING -> {
-                    // このケースは発生しないはず
-                }
-            }
+        // ENDING状態では参加不可
+        if (state == GameState.ENDING) {
+            player.sendMessage(plugin.languageManager.getMessageAsComponent("game-states.already-ending"))
             return false
         }
         
@@ -314,8 +303,8 @@ class Game(
         // マッチに追加
         matchWrapper?.players?.put(player.uniqueId, player)
         
-        // ゲーム実行中の場合の処理（管理者による追加時）
-        if (isAdminAction && (state == GameState.RUNNING || state == GameState.STARTING)) {
+        // ゲーム実行中の場合の処理（途中参加）
+        if (state == GameState.RUNNING || state == GameState.STARTING) {
             // インベントリをクリア（重要：途中参加時のアイテム持ち込みを防ぐ）
             player.inventory.clear()
             
@@ -347,10 +336,18 @@ class Game(
             } else {
                 org.bukkit.GameMode.ADVENTURE
             }
+
+            // 途中参加を全プレイヤーに通知
+            getAllPlayers().filter { it.uniqueId != player.uniqueId }.forEach { p ->
+                p.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.mid-game-join",
+                    "player" to player.name,
+                    "color" to colorCode,
+                    "team" to teamName))
+            }
         }
-        
-        // 自動開始チェック（管理者による追加時はスキップ）
-        if (!isAdminAction) {
+
+        // 自動開始チェック（ゲーム実行中ではない場合のみ）
+        if (state == GameState.WAITING) {
             checkAutoStart()
         }
         
