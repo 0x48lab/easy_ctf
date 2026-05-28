@@ -188,6 +188,7 @@ class GameTaskScheduler(private val plugin: JavaPlugin) {
         const val SCOREBOARD_UPDATE = "scoreboardUpdate"
         const val ACTION_BAR = "actionBar"
         const val AUTO_START = "autoStart"
+        const val STARTING_LOOP = "startingLoop"
 
         // プレイヤー別タスクカテゴリ定数
         const val SPAWN_PROTECTION = "spawnProtection"

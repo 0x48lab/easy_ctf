@@ -875,4 +875,9 @@ notification:
   join-button: '&a&l[参加する]'
   join-hover: 'クリックして {game} に参加'
   game-info: '&7マップ: {game} | 建築: {build}秒 | 戦闘: {combat}秒'
+  starting-countdown: '&eゲーム開始まで &c{seconds}秒 &e- /ctf join {game} で参加！'
+  starting-cancelled: '&c参加者が足りないためゲームを中止しました'
+  starting-spectator: '&aマップを偵察中... ゲーム開始まで待機してください'
+  starting-players-count: '&e現在 &c{count}人 &eが参加中'
+  starting-bossbar: '開始まで {time} - 参加者: {count}人'
 

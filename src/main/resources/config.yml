@@ -24,8 +24,11 @@ default-game:
 
 # Default Phase Settings
 default-phases:
-  # Phase 1: Build phase duration in seconds (default: 2 minutes)
-  build-duration: 120
+  # Starting phase duration - time for players to join before game begins (default: 30 seconds)
+  starting-duration: 30
+
+  # Phase 1: Build phase duration in seconds (default: 3 minutes)
+  build-duration: 180
   
   # Build phase game mode for players
   # Options: ADVENTURE, SURVIVAL, CREATIVE
@@ -35,7 +38,7 @@ default-phases:
   build-phase-gamemode: "SURVIVAL"
   
   # Phase 2: Combat phase duration in seconds (default: 2 minutes)
-  combat-duration: 120
+  combat-duration: 420
   
   
   # Phase 3: Result phase duration in seconds (default: 15 seconds)

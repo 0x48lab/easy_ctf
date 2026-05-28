@@ -58,6 +58,7 @@ class Game(
     var teamCount = 2 // ゲーム作成時に設定（2〜4）
     val teams = mutableMapOf<Team, MutableSet<UUID>>() // チーム -> プレイヤーUUID
     val spectators = mutableSetOf<UUID>() // 観戦者リスト
+    val pendingPlayers = mutableSetOf<UUID>() // STARTING中の参加待ちプレイヤー
     val disconnectedPlayers = mutableMapOf<UUID, Team>() // 切断中のプレイヤー
 
     // 後方互換プロパティ（既存コードとの互換性を保つ）
@@ -100,6 +101,7 @@ class Game(
     var autoStartEnabled = plugin.config.getBoolean("default-game.auto-start-enabled", false)
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
+    var startingDuration = plugin.config.getInt("default-phases.starting-duration", 30)
     var buildDuration = plugin.config.getInt("default-phases.build-duration", 120)
     var combatDuration = plugin.config.getInt("default-phases.combat-duration", 120)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 15)
@@ -302,9 +304,39 @@ class Game(
             player.sendMessage(plugin.languageManager.getMessageAsComponent("game-states.already-ending"))
             return false
         }
-        
+
+        // STARTING状態の場合: pendingPlayersに追加してSPECTATORモードでマップへテレポート
+        if (state == GameState.STARTING) {
+            // 人数上限チェック
+            if (pendingPlayers.size >= maxPlayersPerTeam * getActiveTeams().size) {
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.team-full",
+                    "team" to plugin.languageManager.getMessage("teams.red")))
+                return false
+            }
+
+            pendingPlayers.add(player.uniqueId)
+
+            // マッチに追加
+            matchWrapper?.players?.put(player.uniqueId, player)
+
+            // テンポラリワールドにSPECTATORモードでテレポート
+            teleportPendingPlayerToMap(player)
+
+            // 参加者数の通知
+            getAllPlayersIncludingPending().forEach { p ->
+                p.sendMessage(plugin.languageManager.getMessageAsComponent("notification.starting-players-count",
+                    "count" to pendingPlayers.size.toString()))
+            }
+
+            // スコアボードを更新
+            updateScoreboard()
+
+            return true
+        }
+
+        // WAITING状態 または RUNNING状態（途中参加）
         val selectedTeam = team ?: selectTeamForPlayer(player)
-        
+
         val teamMembers = teams.getOrPut(selectedTeam) { mutableSetOf() }
         if (teamMembers.size >= maxPlayersPerTeam) {
             player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.team-full",
@@ -313,13 +345,13 @@ class Game(
             return false
         }
         teamMembers.add(player.uniqueId)
-        
+
         // スコアボード表示
         setupScoreboard(player)
-        
+
         // タブリストの色を更新（チーム参加時）
         updatePlayerTabColor(player)
-        
+
         // メッセージを構築（レガシーカラーコードを適切に処理）
         val teamName = plugin.languageManager.getMessage("teams.${selectedTeam.name.lowercase()}")
         // カラーコードは&形式で渡す
@@ -329,27 +361,27 @@ class Game(
             Team.SPECTATOR -> "&7"
             else -> selectedTeam.colorCode
         }
-        player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-joined", 
+        player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-joined",
             "game" to gameName,
             "color" to colorCode,
             "team" to teamName
         ))
-        
+
         // マッチに追加
         matchWrapper?.players?.put(player.uniqueId, player)
-        
+
         // ゲーム実行中の場合の処理（途中参加）
-        if (state == GameState.RUNNING || state == GameState.STARTING) {
+        if (state == GameState.RUNNING) {
             // インベントリをクリア（重要：途中参加時のアイテム持ち込みを防ぐ）
             player.inventory.clear()
-            
+
             // 現在のフェーズに応じて装備を付与
             if (phase == GamePhase.BUILD) {
                 plugin.equipmentManager.giveBuildPhaseEquipment(player)
             } else {
                 plugin.equipmentManager.giveCombatPhaseEquipment(player, selectedTeam)
             }
-            
+
             // スポーン地点にテレポート
             when (selectedTeam) {
                 Team.RED -> {
@@ -364,7 +396,7 @@ class Game(
                 }
                 else -> {}
             }
-            
+
             // ゲームモードと飛行設定
             if (phase == GamePhase.BUILD) {
                 player.gameMode = GameMode.valueOf(buildPhaseGameMode)
@@ -388,10 +420,10 @@ class Game(
         if (state == GameState.WAITING) {
             checkAutoStart()
         }
-        
+
         // スコアボードを更新（人数表示のため）
         updateScoreboard()
-        
+
         return true
     }
 
@@ -578,6 +610,7 @@ class Game(
         // 全チームから削除
         teams.values.forEach { it.remove(player.uniqueId) }
         spectators.remove(player.uniqueId)
+        pendingPlayers.remove(player.uniqueId)
         disconnectedPlayers.remove(player.uniqueId)
 
         // 他のプレイヤーのスコアボードからこのプレイヤーを削除
@@ -604,12 +637,12 @@ class Game(
         
         player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-left", "game" to gameName))
 
-        // ゲーム中に離脱した場合、テンポラリワールドから元のワールドに戻してCREATIVEに復帰
-        if (state == GameState.RUNNING && tempWorld != null && player.world == tempWorld) {
+        // ゲーム中またはSTARTING中に離脱した場合、テンポラリワールドから元のワールドに戻してCREATIVEに復帰
+        if ((state == GameState.RUNNING || state == GameState.STARTING) && tempWorld != null && player.world == tempWorld) {
             player.inventory.clear()
             player.gameMode = GameMode.CREATIVE
             player.teleport(originalWorld.spawnLocation)
-        } else if (state == GameState.RUNNING) {
+        } else if (state == GameState.RUNNING || state == GameState.STARTING) {
             // テンポラリワールド外でもゲーム中ならCREATIVEに設定
             player.gameMode = GameMode.CREATIVE
         }
@@ -713,12 +746,22 @@ class Game(
             if (members.contains(uuid)) return team
         }
         if (spectators.contains(uuid)) return Team.SPECTATOR
+        // pendingPlayersはSTARTING中にまだチーム未割り当てだが、SPECTATORとして扱う
+        if (pendingPlayers.contains(uuid)) return Team.SPECTATOR
         return null
     }
 
     fun getAllPlayers(): Set<Player> {
         val allUuids = teams.values.flatten().toMutableSet()
         allUuids.addAll(spectators)
+        return allUuids.mapNotNull { Bukkit.getPlayer(it) }.toSet()
+    }
+
+    /** チームプレイヤー + 観戦者 + STARTING中のpendingPlayersを含む全プレイヤー */
+    fun getAllPlayersIncludingPending(): Set<Player> {
+        val allUuids = teams.values.flatten().toMutableSet()
+        allUuids.addAll(spectators)
+        allUuids.addAll(pendingPlayers)
         return allUuids.mapNotNull { Bukkit.getPlayer(it) }.toSet()
     }
     
@@ -792,7 +835,7 @@ class Game(
         // 自動開始タスクをキャンセル（手動開始の場合も含む）
         taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
         autoStartCountdown = -1
-        
+
         if (state != GameState.WAITING) {
             plugin.logger.warning(plugin.languageManager.getMessage("log.game-cannot-start", "game" to name, "state" to state.toString()))
             getAllPlayers().forEach {
@@ -800,15 +843,7 @@ class Game(
             }
             return false
         }
-        
-        // 最小人数チェック（マッチの場合は最小人数チェックをスキップ）
-        if (matchWrapper == null && getActiveTeams().sumOf { getTeamSize(it) } < minPlayers) {
-            getAllPlayers().forEach {
-                it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.min-players-required", "min" to minPlayers.toString()))
-            }
-            return false
-        }
-        
+
         // 必須設定チェック
         if (redFlagLocation == null || blueFlagLocation == null) {
             getAllPlayers().forEach {
@@ -816,34 +851,17 @@ class Game(
             }
             return false
         }
-        
+
         state = GameState.STARTING
-        phase = GamePhase.BUILD
-        currentPhaseTime = buildDuration
-
-        // 非参加プレイヤーへのゲーム開始通知（クリック可能な参加ボタン付き）
-        val gamePlayers = (redTeam + blueTeam + spectators)
-        Bukkit.getOnlinePlayers().filter { it.uniqueId !in gamePlayers }.forEach { onlinePlayer ->
-            val announcement = plugin.languageManager.getMessageAsComponent("notification.game-starting", "game" to gameName)
-            val gameInfo = plugin.languageManager.getMessageAsComponent("notification.game-info",
-                "game" to gameName, "build" to buildDuration.toString(), "combat" to combatDuration.toString())
-            val joinButton = plugin.languageManager.getMessageAsComponent("notification.join-button")
-                .clickEvent(ClickEvent.runCommand("/ctf join $gameName"))
-                .hoverEvent(HoverEvent.showText(
-                    plugin.languageManager.getMessageAsComponent("notification.join-hover", "game" to gameName)
-                ))
-
-            onlinePlayer.sendMessage(announcement)
-            onlinePlayer.sendMessage(gameInfo.append(Component.text(" ")).append(joinButton))
-        }
+        currentPhaseTime = startingDuration
 
         // 初回のゲーム開始時、またはマッチの最初のゲーム、またはテンポラリワールドが無効な場合は新規作成
         plugin.logger.info("[Game] Checking if new world needed: tempWorld=${tempWorld?.name}, matchWrapper=${matchWrapper != null}, gameNumber=${matchWrapper?.currentGameNumber}")
-        val needNewWorld = tempWorld == null || 
+        val needNewWorld = tempWorld == null ||
                           (matchWrapper == null && tempWorld != null) || // 通常ゲームの再開始時
                           (matchWrapper != null && matchWrapper!!.currentGameNumber == 1) // マッチの最初のゲーム
         plugin.logger.info("[Game] needNewWorld=$needNewWorld")
-        
+
         if (needNewWorld) {
             // 既存のテンポラリワールドがあれば削除
             if (tempWorld != null) {
@@ -852,11 +870,11 @@ class Game(
                 worldManager.deleteWorld(tempWorld!!.name)
                 tempWorld = null
             }
-            
+
             // テンポラリワールドを作成
             val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
             tempWorld = worldManager.createTempWorld(gameName)
-            
+
             if (tempWorld == null) {
                 plugin.logger.warning(plugin.languageManager.getMessage("log.temp-world-failed"))
                 getAllPlayers().forEach {
@@ -866,11 +884,11 @@ class Game(
                 return false
             }
             plugin.logger.info("[Game] Created new temporary world: ${tempWorld!!.name}")
-            
+
         } else {
             plugin.logger.info("[Game] Reusing existing temporary world for match game ${matchWrapper?.currentGameNumber}")
         }
-        
+
         // ワールドを切り替え（nullチェック付き）
         if (tempWorld == null) {
             plugin.logger.severe("[Game] Critical error: tempWorld is null after creation/reuse attempt")
@@ -878,12 +896,12 @@ class Game(
             return false
         }
         world = tempWorld!!
-        
+
         // マップを復元（マッチの最初のゲームのみ）
         if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
             val gameManager = plugin.gameManager
             val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
-            
+
             // 保存されたマップがある場合は復元
             if (mapManager.hasMap(gameName)) {
                 if (!gameManager.resetGameMap(gameName, tempWorld, this)) {
@@ -895,7 +913,7 @@ class Game(
                 // マップが保存されていない場合、元のワールドから範囲をコピー
                 plugin.logger.info(plugin.languageManager.getMessage("log.no-saved-map"))
                 plugin.logger.info("Copying game area from original world to temporary world...")
-                
+
                 // 旗の位置から適切な範囲を決定（両チームの旗を含む範囲）
                 if (redFlagLocation != null && blueFlagLocation != null) {
                     val minX = kotlin.math.min(redFlagLocation!!.blockX, blueFlagLocation!!.blockX) - 50
@@ -906,12 +924,12 @@ class Game(
                     val flagY = (redFlagLocation!!.blockY + blueFlagLocation!!.blockY) / 2
                     val minY = kotlin.math.max(flagY - 30, -64)  // 1.18以降の最小Y座標
                     val maxY = kotlin.math.min(flagY + 30, 319)  // 1.18以降の最大Y座標
-                    
+
                     // 元のワールドからテンポラリワールドにブロックをコピー
                     plugin.logger.info("Starting block copy from original world to temporary world...")
                     var copiedBlocks = 0
                     val startTime = System.currentTimeMillis()
-                    
+
                     for (x in minX..maxX) {
                         for (z in minZ..maxZ) {
                             for (y in minY..maxY) {
@@ -931,7 +949,7 @@ class Game(
                             plugin.logger.info("Block copy progress: $progress%")
                         }
                     }
-                    
+
                     val elapsed = System.currentTimeMillis() - startTime
                     plugin.logger.info("Block copy completed: $copiedBlocks blocks in ${elapsed}ms")
                     plugin.logger.info("Copied area from ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
@@ -942,21 +960,13 @@ class Game(
         } else {
             plugin.logger.info(plugin.languageManager.getMessage("log.skip-map-restore"))
         }
-        
+
         // 位置情報をテンポラリワールドに更新
         plugin.logger.info("[Game] Updating locations to temporary world: ${tempWorld!!.name}")
         plugin.logger.info("[Game] Before update - Red flag world: ${redFlagLocation?.world?.name}")
         updateLocationsToWorld(tempWorld!!)
         plugin.logger.info("[Game] After update - Red flag world: ${redFlagLocation?.world?.name}")
-        
-        // 通貨を初期化
-        initializeCurrency()
-        
-        // BossBar作成
-        scoreboardManager.createBossBar()
-        scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to formatTime(currentPhaseTime)))
-        scoreboardManager.bossBar?.color = BarColor.GREEN
-        
+
         // プレイヤー統計をリセット
         playerDeaths.clear()
         playerKills.clear()
@@ -967,67 +977,227 @@ class Game(
         playerMoneySpent.clear()
         playerBlocksPlaced.clear()
         playerAssists.clear()
-        
+
         // チャンクの事前読み込み
         preloadSpawnChunks()
-        
-        // プレイヤーの準備（バッチ処理で安全にテレポート）
-        val allPlayers = getAllPlayers().toList()
 
-        // 全プレイヤーのインベントリをクリア（アイテム持ち込みを防ぐ）
-        allPlayers.forEach { player ->
-            player.inventory.clear()
-            // エフェクトもクリア
-            player.activePotionEffects.forEach { effect ->
-                player.removePotionEffect(effect.type)
+        // マッチモードでない場合、またはマッチの最初のゲームの場合のみブロック記録をクリア
+        if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
+            // ブロック設置記録をクリア
+            teamPlacedBlocks.clear()
+            getActiveTeams().forEach { teamPlacedBlocks[it] = mutableSetOf() }
+
+            // ブロックツリーをクリア
+            teamBlockTrees.clear()
+            getActiveTeams().forEach { teamBlockTrees[it] = mutableMapOf() }
+        }
+
+        // 旗とスポーン地点の設置（ブロック記録クリア後に実行）
+        plugin.logger.info("[Game] Setting up flags and spawns in world: ${world.name}")
+        plugin.logger.info("[Game] Current world variable: ${world.name}, tempWorld: ${tempWorld?.name}")
+        setupFlags()
+        setupSpawnAreas()
+
+        // BossBar作成
+        scoreboardManager.createBossBar()
+        scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("notification.starting-bossbar",
+            "time" to formatTime(currentPhaseTime), "count" to pendingPlayers.size.toString()))
+        scoreboardManager.bossBar?.color = BarColor.YELLOW
+
+        // 既に参加しているプレイヤーをpendingPlayersに移動してテンポラリワールドにテレポート
+        val existingPlayers = (redTeam.toList() + blueTeam.toList())
+        existingPlayers.forEach { uuid ->
+            // チームから削除してpendingPlayersに追加
+            teams.values.forEach { it.remove(uuid) }
+            pendingPlayers.add(uuid)
+
+            Bukkit.getPlayer(uuid)?.let { player ->
+                teleportPendingPlayerToMap(player)
             }
-            // 体力と満腹度をリセット
-            player.health = player.maxHealth
-            player.foodLevel = 20
-            player.saturation = 5.0f
         }
-        
-        val redPlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.RED }
-        val bluePlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.BLUE }
-        val spectatorPlayers = allPlayers.filter { getPlayerTeam(it.uniqueId) == Team.SPECTATOR }
-        
-        // チームごとに即座にテレポート実行
-        // まず、スポーン地点に確実に地面があることを保証
+
+        // 全オンラインプレイヤーへのゲーム開始通知（クリック可能な参加ボタン付き）
+        Bukkit.getOnlinePlayers().filter { it.uniqueId !in pendingPlayers && it.uniqueId !in spectators }.forEach { onlinePlayer ->
+            val announcement = plugin.languageManager.getMessageAsComponent("notification.game-starting", "game" to gameName)
+            val gameInfo = plugin.languageManager.getMessageAsComponent("notification.game-info",
+                "game" to gameName, "build" to buildDuration.toString(), "combat" to combatDuration.toString())
+            val joinButton = plugin.languageManager.getMessageAsComponent("notification.join-button")
+                .clickEvent(ClickEvent.runCommand("/ctf join $gameName"))
+                .hoverEvent(HoverEvent.showText(
+                    plugin.languageManager.getMessageAsComponent("notification.join-hover", "game" to gameName)
+                ))
+
+            onlinePlayer.sendMessage(announcement)
+            onlinePlayer.sendMessage(gameInfo.append(Component.text(" ")).append(joinButton))
+        }
+
+        plugin.logger.info("[Game] Starting phase begun, waiting ${startingDuration}s for players to join")
+
+        // STARTINGフェーズのカウントダウンループ開始
+        startStartingLoop()
+
+        return true
+    }
+
+    /**
+     * STARTINGフェーズ中にプレイヤーをテンポラリワールドのマップ中央にSPECTATORモードでテレポート
+     */
+    private fun teleportPendingPlayerToMap(player: Player) {
+        player.inventory.clear()
+        player.activePotionEffects.forEach { effect ->
+            player.removePotionEffect(effect.type)
+        }
+        player.health = player.maxHealth
+        player.foodLevel = 20
+        player.saturation = 5.0f
+
+        val centerLocation = getCenterLocation() ?: getSafeSpawnLocation(Team.RED)
+        player.teleport(centerLocation)
+        player.gameMode = GameMode.SPECTATOR
+
+        // BossBarに追加
+        scoreboardManager.addPlayerToBossBar(player)
+
+        // スコアボード表示
+        setupScoreboard(player)
+
+        // 偵察中メッセージ
+        player.sendMessage(plugin.languageManager.getMessageAsComponent("notification.starting-spectator"))
+    }
+
+    /**
+     * STARTINGフェーズのカウントダウンループ
+     */
+    private fun startStartingLoop() {
+        val startingLoopTask = object : BukkitRunnable() {
+            override fun run() {
+                if (state != GameState.STARTING) {
+                    cancel()
+                    return
+                }
+
+                currentPhaseTime--
+
+                // BossBar更新
+                scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("notification.starting-bossbar",
+                    "time" to formatTime(currentPhaseTime), "count" to pendingPlayers.size.toString()))
+                val maxTime = startingDuration.toDouble()
+                scoreboardManager.bossBar?.progress = if (maxTime > 0) (currentPhaseTime.toDouble() / maxTime).coerceIn(0.0, 1.0) else 0.0
+
+                // カウントダウン通知（10, 5, 4, 3, 2, 1秒）
+                if (currentPhaseTime in listOf(10, 5, 4, 3, 2, 1)) {
+                    // ゲーム内プレイヤーに通知
+                    getAllPlayersIncludingPending().forEach { player ->
+                        player.sendMessage(plugin.languageManager.getMessageAsComponent("notification.starting-countdown",
+                            "seconds" to currentPhaseTime.toString(), "game" to gameName))
+                        player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f)
+                    }
+                    // 全オンラインプレイヤーにも通知（5秒以下のみ）
+                    if (currentPhaseTime <= 5) {
+                        Bukkit.getOnlinePlayers().filter { it.uniqueId !in pendingPlayers && it.uniqueId !in spectators }.forEach { onlinePlayer ->
+                            onlinePlayer.sendMessage(plugin.languageManager.getMessageAsComponent("notification.starting-countdown",
+                                "seconds" to currentPhaseTime.toString(), "game" to gameName))
+                        }
+                    }
+                }
+
+                // スコアボード更新
+                updateScoreboard()
+
+                // カウントダウン終了
+                if (currentPhaseTime <= 0) {
+                    cancel()
+                    handleStartingPhaseEnd()
+                }
+            }
+        }
+        taskScheduler.scheduleRepeating(GameTaskScheduler.STARTING_LOOP, 0L, 20L, startingLoopTask)
+    }
+
+    /**
+     * STARTINGフェーズ終了時の処理
+     * プレイヤー数チェック → チーム振り分け → BUILDフェーズへ移行
+     */
+    private fun handleStartingPhaseEnd() {
+        val totalPlayers = pendingPlayers.size
+        plugin.logger.info("[Game] Starting phase ended. Total pending players: $totalPlayers, minPlayers: $minPlayers")
+
+        if (totalPlayers < minPlayers) {
+            // プレイヤー不足 → ゲーム中止
+            plugin.logger.info("[Game] Not enough players ($totalPlayers < $minPlayers), cancelling game")
+
+            getAllPlayersIncludingPending().forEach { player ->
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("notification.starting-cancelled"))
+            }
+
+            // pendingPlayersをクリアしてstopで処理
+            pendingPlayers.clear()
+            stop(forceStop = true)
+            return
+        }
+
+        // チーム振り分け（TeamBalancerを使用）
+        val players = pendingPlayers.mapNotNull { Bukkit.getPlayer(it) }
+        val balancedResult = plugin.teamBalancer.balanceTeams(players, getActiveTeams())
+
+        // チームにプレイヤーを割り当て
+        balancedResult.teams.forEach { (team, teamPlayers) ->
+            teamPlayers.forEach { player ->
+                teams.getOrPut(team) { mutableSetOf() }.add(player.uniqueId)
+            }
+        }
+        pendingPlayers.clear()
+
+        // 通貨を初期化
+        initializeCurrency()
+
+        // BUILDフェーズへ移行
+        phase = GamePhase.BUILD
+        currentPhaseTime = buildDuration
+
+        // BossBar更新
+        scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to formatTime(currentPhaseTime)))
+        scoreboardManager.bossBar?.color = BarColor.GREEN
+
+        // スポーン地点の確保
         ensureSpawnPlatforms()
-        
-        plugin.logger.info("[Game] Starting immediate teleportation for ${redPlayers.size} red players")
-        redPlayers.forEach { player ->
-            val safeLocation = getSafeSpawnLocation(Team.RED)
-            plugin.logger.info("[Game] Teleporting ${player.name} immediately to ${safeLocation}")
-            player.teleport(safeLocation)
-            player.gameMode = GameMode.valueOf(buildPhaseGameMode)
-            player.allowFlight = true
-            player.isFlying = false
-            giveBuildPhaseItems(player, Team.RED)
-            scoreboardManager.addPlayerToBossBar(player)
+
+        // プレイヤーをチームスポーンにテレポートし装備を付与
+        getActiveTeams().forEach { team ->
+            val teamPlayers = (teams[team] ?: emptySet()).mapNotNull { Bukkit.getPlayer(it) }
+            teamPlayers.forEach { player ->
+                player.inventory.clear()
+                val safeLocation = getSafeSpawnLocation(team)
+                plugin.logger.info("[Game] Teleporting ${player.name} to ${team.name} spawn at $safeLocation")
+                player.teleport(safeLocation)
+                player.gameMode = GameMode.valueOf(buildPhaseGameMode)
+                player.allowFlight = true
+                player.isFlying = false
+                giveBuildPhaseItems(player, team)
+
+                // タブリストの色を更新
+                updatePlayerTabColor(player)
+
+                // チーム参加メッセージ
+                val teamName = plugin.languageManager.getMessage("teams.${team.name.lowercase()}")
+                val colorCode = when (team) {
+                    Team.RED -> "&c"
+                    Team.BLUE -> "&9"
+                    Team.SPECTATOR -> "&7"
+                    else -> team.colorCode
+                }
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-joined",
+                    "game" to gameName, "color" to colorCode, "team" to teamName))
+            }
         }
-        
-        plugin.logger.info("[Game] Starting immediate teleportation for ${bluePlayers.size} blue players")
-        bluePlayers.forEach { player ->
-            val safeLocation = getSafeSpawnLocation(Team.BLUE)
-            plugin.logger.info("[Game] Teleporting ${player.name} immediately to ${safeLocation}")
-            player.teleport(safeLocation)
-            player.gameMode = GameMode.valueOf(buildPhaseGameMode)
-            player.allowFlight = true
-            player.isFlying = false
-            giveBuildPhaseItems(player, Team.BLUE)
-            scoreboardManager.addPlayerToBossBar(player)
-        }
-        
-        plugin.logger.info("[Game] Starting immediate teleportation for ${spectatorPlayers.size} spectator players")
-        spectatorPlayers.forEach { player ->
+
+        // 観戦者の処理
+        spectators.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
             val centerLocation = getCenterLocation() ?: getSafeSpawnLocation(Team.RED)
-            plugin.logger.info("[Game] Teleporting spectator ${player.name} immediately to ${centerLocation}")
             player.teleport(centerLocation)
             player.gameMode = GameMode.SPECTATOR
-            scoreboardManager.addPlayerToBossBar(player)
         }
-        
+
         // 全プレイヤーの初期化処理（テレポート後に実行）
         plugin.server.scheduler.runTaskLater(plugin, Runnable {
             getAllPlayers().forEach { player ->
@@ -1043,35 +1213,16 @@ class Game(
             ))
             }
         }, 10L) // 0.5秒後に実行
-        
-        // マッチモードでない場合、またはマッチの最初のゲームの場合のみブロック記録をクリア
-        if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
-            // ブロック設置記録をクリア
-            teamPlacedBlocks.clear()
-            getActiveTeams().forEach { teamPlacedBlocks[it] = mutableSetOf() }
 
-            // ブロックツリーをクリア
-            teamBlockTrees.clear()
-            getActiveTeams().forEach { teamBlockTrees[it] = mutableMapOf() }
-        }
-        
-        // 旗とスポーン地点の設置（ブロック記録クリア後に実行）
-        plugin.logger.info("[Game] Setting up flags and spawns in world: ${world.name}")
-        plugin.logger.info("[Game] Current world variable: ${world.name}, tempWorld: ${tempWorld?.name}")
-        setupFlags()
-        setupSpawnAreas()
-        
         // ショップの購入履歴をリセット
         plugin.shopManager.clearPurchaseHistory(gameName)
-        
+
         state = GameState.RUNNING
-        
+
         plugin.logger.info(plugin.languageManager.getMessage("log.game-loop-started", "game" to name))
-        
+
         // ゲームループ開始
         startGameLoop()
-        
-        return true
     }
     
     private fun startGameLoop() {
@@ -1402,8 +1553,8 @@ class Game(
         // マッチモードかどうかチェック（強制終了の場合はマッチモードを無視）
         val isMatchMode = !forceStop && matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()
         
-        // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）観戦者も含む
-        val playerUUIDs = (redTeam + blueTeam + spectators).toList()
+        // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）観戦者・pendingPlayersも含む
+        val playerUUIDs = (redTeam + blueTeam + spectators + pendingPlayers).toList()
         
         // プレイヤー処理
         playerUUIDs.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
@@ -1486,6 +1637,7 @@ class Game(
             // データクリア
             redTeam.clear()
             blueTeam.clear()
+            pendingPlayers.clear()
             disconnectedPlayers.clear()
         }
         

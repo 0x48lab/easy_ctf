@@ -128,10 +128,20 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 Team.BLUE -> game.blueFlagLocation
                 Team.SPECTATOR -> return  // Spectators cannot pick up flags
                 else -> game.flagLocations[enemyTeam]
-            } ?: return
+            }
+
+            if (enemyFlagLocation == null) {
+                // 旗位置が未設定 — デバッグ出力
+                if (System.currentTimeMillis() % 5000 < 50) { // 5秒ごとに1回だけログ
+                    plugin.logger.warning("[Flag Debug] enemyFlagLocation is null for team $enemyTeam. redFlag=${game.redFlagLocation}, blueFlag=${game.blueFlagLocation}, flagLocations=${game.flagLocations}")
+                }
+                return
+            }
 
             // 敵の旗に近づいたら取得（1.5ブロック以内）
-            if (playerLoc.world == enemyFlagLocation.world && playerLoc.distance(enemyFlagLocation) < 1.5) {
+            val sameWorld = playerLoc.world == enemyFlagLocation.world
+            val distance = if (sameWorld) playerLoc.distance(enemyFlagLocation) else Double.MAX_VALUE
+            if (sameWorld && distance < 1.5) {
                 // 旗がまだ誰も持っていない場合
                 val enemyCarrier = when (enemyTeam) {
                     Team.RED -> game.redFlagCarrier
@@ -725,13 +735,13 @@ class GameListenerNew(private val plugin: Main) : Listener {
         // デバッグログ
         plugin.logger.info("[BlockBreak] Player: ${player.name}, GameState: ${game.state}, Phase: ${game.phase}, BuildPhaseGameMode: ${game.buildPhaseGameMode}, PlayerGameMode: ${player.gameMode}")
         
-        // ゲーム中でない場合は禁止（STARTINGとRUNNINGの両方を許可）
-        if (game.state != GameState.RUNNING && game.state != GameState.STARTING) {
+        // ゲーム中でない場合は禁止（RUNNINGのみ許可、STARTING中はSPECTATORなので不要）
+        if (game.state != GameState.RUNNING) {
             event.isCancelled = true
             plugin.logger.info("[BlockBreak] Cancelled: Game state is ${game.state}")
             return
         }
-        
+
         when (game.phase) {
             GamePhase.BUILD -> {
                 // 建築フェーズ：ゲームモードに応じた制限
@@ -958,8 +968,8 @@ class GameListenerNew(private val plugin: Main) : Listener {
         // デバッグログ
         plugin.logger.info("[BlockPlace] Player: ${player.name}, GameState: ${game.state}, Phase: ${game.phase}, BuildPhaseGameMode: ${game.buildPhaseGameMode}, PlayerGameMode: ${player.gameMode}")
         
-        // ゲーム中でない場合は禁止（STARTINGとRUNNINGの両方を許可）
-        if (game.state != GameState.RUNNING && game.state != GameState.STARTING) {
+        // ゲーム中でない場合は禁止（RUNNINGのみ許可、STARTING中はSPECTATORなので不要）
+        if (game.state != GameState.RUNNING) {
             event.isCancelled = true
             plugin.logger.info("[BlockPlace] Cancelled: Game state is ${game.state}")
             return

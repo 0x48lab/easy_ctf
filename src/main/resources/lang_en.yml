@@ -886,4 +886,9 @@ notification:
   join-button: '&a&l[Join Game]'
   join-hover: 'Click to join {game}'
   game-info: '&7Map: {game} | Build: {build}s | Combat: {combat}s'
+  starting-countdown: '&eGame starts in &c{seconds}s &e- /ctf join {game} to join!'
+  starting-cancelled: '&cGame cancelled - not enough players'
+  starting-spectator: '&aScouting the map... Please wait for the game to start'
+  starting-players-count: '&eCurrent players: &c{count}'
+  starting-bossbar: 'Starting in {time} - Players: {count}'
 

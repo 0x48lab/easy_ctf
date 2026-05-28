@@ -354,8 +354,10 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                     sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.game-not-found", "name" to gameName))
                 } else if (game.state == GameState.ENDING) {
                     sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.cannot-join-state", "state" to game.state.toString()))
-                } else if (game.redTeam.size + game.blueTeam.size >= game.maxPlayersPerTeam * 2) {
+                } else if (game.state == GameState.RUNNING && game.redTeam.size + game.blueTeam.size >= game.maxPlayersPerTeam * 2) {
                     sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.game-full", "max" to (game.maxPlayersPerTeam * 2).toString()))
+                } else if (game.state == GameState.STARTING && game.pendingPlayers.size >= game.maxPlayersPerTeam * game.getActiveTeams().size) {
+                    sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.game-full", "max" to (game.maxPlayersPerTeam * game.getActiveTeams().size).toString()))
                 } else {
                     sender.sendMessage(plugin.languageManager.getMessageAsComponent("command.join-failed"))
                 }

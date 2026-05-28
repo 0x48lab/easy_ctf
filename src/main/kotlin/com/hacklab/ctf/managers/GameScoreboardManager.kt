@@ -229,16 +229,28 @@ class GameScoreboardManager(
         var line = 15
 
         if (game.state == GameState.WAITING || game.state == GameState.STARTING) {
-            val redCount = game.redTeam.size
-            val blueCount = game.blueTeam.size
-            val spectatorCount = game.spectators.size
+            if (game.state == GameState.STARTING) {
+                // STARTING中: pendingPlayersの人数と残り時間を表示
+                val pendingCount = game.pendingPlayers.size
+                obj.getScore(plugin.languageManager.getMessage("notification.starting-players-count",
+                    "count" to pendingCount.toString())).score = line--
 
-            if (spectatorCount > 0) {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.team-players-spectator",
-                    "red" to redCount.toString(), "blue" to blueCount.toString(), "spectator" to spectatorCount.toString())).score = line--
+                if (game.currentPhaseTime > 0) {
+                    obj.getScore(plugin.languageManager.getMessage("notification.starting-countdown",
+                        "seconds" to game.currentPhaseTime.toString(), "game" to game.gameName)).score = line--
+                }
             } else {
-                obj.getScore(plugin.languageManager.getMessage("scoreboard.team-players",
-                    "red" to redCount.toString(), "blue" to blueCount.toString())).score = line--
+                val redCount = game.redTeam.size
+                val blueCount = game.blueTeam.size
+                val spectatorCount = game.spectators.size
+
+                if (spectatorCount > 0) {
+                    obj.getScore(plugin.languageManager.getMessage("scoreboard.team-players-spectator",
+                        "red" to redCount.toString(), "blue" to blueCount.toString(), "spectator" to spectatorCount.toString())).score = line--
+                } else {
+                    obj.getScore(plugin.languageManager.getMessage("scoreboard.team-players",
+                        "red" to redCount.toString(), "blue" to blueCount.toString())).score = line--
+                }
             }
 
             val match = game.matchWrapper
@@ -260,7 +272,7 @@ class GameScoreboardManager(
                 "build" to (game.buildDuration / 60).toString(), "combat" to (game.combatDuration / 60).toString())).score = line--
             obj.getScore(plugin.languageManager.getMessage("scoreboard.min-players", "min" to game.minPlayers.toString())).score = line--
 
-            if (game.state == GameState.STARTING && game.autoStartCountdown > 0) {
+            if (game.state == GameState.WAITING && game.autoStartCountdown > 0) {
                 obj.getScore(plugin.languageManager.getMessage("scoreboard.start-countdown", "seconds" to game.autoStartCountdown.toString())).score = line--
             }
 
