@@ -62,6 +62,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "resetstats" -> return handleResetStatsCommand(sender, args)
             "balance" -> return handleBalanceCommand(sender, args)
             "rules" -> return handleRulesCommand(sender)
+            // 看板ランキング関連
+            "setsign" -> return handleSetSignCommand(sender, args)
+            "removesign" -> return handleRemoveSignCommand(sender, args)
             else -> {
                 sendHelpMessage(sender)
                 return true
@@ -810,8 +813,8 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             1 -> {
                 val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info", "stats", "leaderboard", "rules")
                 if (sender.hasPermission("ctf.admin")) {
-                    subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap", 
-                        "addspawn", "removespawn", "listspawns", "addplayer", "changeteam", "resetstats", "balance"))
+                    subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap",
+                        "addspawn", "removespawn", "listspawns", "addplayer", "changeteam", "resetstats", "balance", "setsign", "removesign"))
                 }
                 completions.addAll(subcommands.filter { it.startsWith(args[0].lowercase()) })
             }
@@ -829,6 +832,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                     }
                     "leaderboard" -> {
                         completions.addAll(listOf("score", "kills", "captures", "winrate").filter { it.startsWith(args[1].lowercase()) })
+                    }
+                    "setsign" -> {
+                        completions.addAll(listOf("score", "kills", "captures", "winrate", "kd").filter { it.startsWith(args[1].lowercase()) })
                     }
                 }
             }
@@ -1519,6 +1525,78 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(lang.getMessageAsComponent("rules.commands"))
         sender.sendMessage(lang.getMessageAsComponent("rules.commands-text"))
         sender.sendMessage(lang.getMessageAsComponent("rules.footer"))
+        return true
+    }
+
+    private fun handleSetSignCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
+            return true
+        }
+
+        if (sender !is org.bukkit.entity.Player) {
+            sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED))
+            return true
+        }
+
+        // /ctf setsign <category> <rank>
+        if (args.size < 3) {
+            sender.sendMessage(Component.text("§e使い方: /ctf setsign <カテゴリ> <順位>", NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text("§7カテゴリ: score, kills, captures, winrate, kd", NamedTextColor.GRAY))
+            sender.sendMessage(Component.text("§7見ている看板にランキング情報を紐付けます", NamedTextColor.GRAY))
+            return true
+        }
+
+        val category = args[1].lowercase()
+        val rank = args[2].toIntOrNull()
+
+        if (rank == null || rank < 1) {
+            sender.sendMessage(Component.text("§c順位は1以上の数値で指定してください", NamedTextColor.RED))
+            return true
+        }
+
+        val validCategories = listOf("score", "kills", "captures", "winrate", "kd")
+        if (category !in validCategories) {
+            sender.sendMessage(Component.text("§c無効なカテゴリです。使用可能: ${validCategories.joinToString(", ")}", NamedTextColor.RED))
+            return true
+        }
+
+        // プレイヤーが見ている看板を取得
+        val targetBlock = sender.getTargetBlockExact(5)
+        if (targetBlock == null || targetBlock.state !is org.bukkit.block.Sign) {
+            sender.sendMessage(Component.text("§c看板を見ながらコマンドを実行してください", NamedTextColor.RED))
+            return true
+        }
+
+        plugin.signManager.addSign(targetBlock.location, category, rank)
+        sender.sendMessage(Component.text("§aランキング看板を設定しました: $category #$rank", NamedTextColor.GREEN))
+
+        return true
+    }
+
+    private fun handleRemoveSignCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
+            return true
+        }
+
+        if (sender !is org.bukkit.entity.Player) {
+            sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED))
+            return true
+        }
+
+        val targetBlock = sender.getTargetBlockExact(5)
+        if (targetBlock == null || targetBlock.state !is org.bukkit.block.Sign) {
+            sender.sendMessage(Component.text("§c看板を見ながらコマンドを実行してください", NamedTextColor.RED))
+            return true
+        }
+
+        if (plugin.signManager.removeSign(targetBlock.location)) {
+            sender.sendMessage(Component.text("§aランキング看板を解除しました", NamedTextColor.GREEN))
+        } else {
+            sender.sendMessage(Component.text("§cこの看板にはランキングが設定されていません", NamedTextColor.RED))
+        }
+
         return true
     }
 

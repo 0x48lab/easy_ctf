@@ -33,6 +33,8 @@ class Main : JavaPlugin() {
         private set
     lateinit var vaultIntegration: VaultIntegration
         private set
+    lateinit var signManager: com.hacklab.ctf.managers.SignManager
+        private set
 
     override fun onEnable() {
         instance = this
@@ -50,6 +52,7 @@ class Main : JavaPlugin() {
         teamBalancer = TeamBalancer(this)
         vaultIntegration = VaultIntegration(this)
         vaultIntegration.setup()
+        signManager = com.hacklab.ctf.managers.SignManager(this)
         gameManager = GameManager(this)
         
         getCommand("ctf")?.setExecutor(CTFCommandNew(this))

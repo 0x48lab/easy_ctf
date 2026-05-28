@@ -3503,6 +3503,9 @@ class Game(
 
         // Vault経済報酬の付与
         distributeEconomyRewards(winner)
+
+        // ランキング看板を更新
+        plugin.signManager.updateAllSigns()
     }
 
     /**
