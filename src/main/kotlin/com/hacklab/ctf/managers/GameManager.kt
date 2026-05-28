@@ -331,13 +331,15 @@ class GameManager(private val plugin: Main) {
     /**
      * プレイヤー再接続処理
      */
-    fun handlePlayerReconnect(player: Player) {
-        val gameName = playerGames[player.uniqueId] ?: return
-        val game = games[gameName] ?: return
-        
+    fun handlePlayerReconnect(player: Player): Boolean {
+        val gameName = playerGames[player.uniqueId] ?: return false
+        val game = games[gameName] ?: return false
+
         if (game.disconnectedPlayers.containsKey(player.uniqueId)) {
             game.handleReconnect(player)
+            return true
         }
+        return false
     }
     
     /**

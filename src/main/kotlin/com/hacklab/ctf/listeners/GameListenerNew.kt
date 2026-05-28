@@ -57,7 +57,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         // 少し遅延させてからreconnect処理とウェルカムメッセージを実行
         plugin.server.scheduler.runTaskLater(plugin, Runnable {
-            gameManager.handlePlayerReconnect(event.player)
+            val reconnected = gameManager.handlePlayerReconnect(event.player)
+
+            // ゲームに復帰しなかった場合はクリエイティブモード（ロビー）
+            if (!reconnected) {
+                event.player.gameMode = org.bukkit.GameMode.CREATIVE
+            }
 
             // ルール案内を送信
             val player = event.player
