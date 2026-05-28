@@ -150,7 +150,7 @@ command:
   status-waiting: Status waiting
   team-change-usage: Team change usage
   team-changed: Team changed
-  team-full: Team full
+  team-full: '{team} team is full'
   usage-addspawn: Usage addspawn
   usage-create: Usage create
   usage-delete: Usage delete
@@ -196,7 +196,7 @@ death:
   kill-streak-notification: Kill streak notification
 flag:
   scored-title: SCORED!
-  score-subtitle: '{team} scored a point (Red {red} - {blue} Blue)'
+  score-subtitle: '{team} scored a point ({scores})'
   cannot-capture-no-flag: Cannot capture - your flag is not at base
   flag-carrier-unknown: Unknown
   picked-up: '{player} picked up the {team} flag'
@@ -207,7 +207,7 @@ flag:
   dropped-admin-team-change: '{flag} flag was dropped due to {player} team change'
   captured-by: '{player} captured the flag'
   concrete-name: '{team} concrete'
-  current-score: 'Current score: Red {red} - Blue {blue}'
+  current-score: 'Current score: {scores}'
   enemy-has-flag: Enemy has the flag
   flag-dropped: Flag dropped
   flag-name: '{team} flag'
@@ -408,7 +408,7 @@ phase-extended:
   combat-time-format: 'Combat Phase - Time Left: {time}'
   intermission-time-format: 'Strategy Meeting - Time Left: {time}'
   phase-end-bonus: 'Phase End Bonus'
-  score-display: 'Score: Red {red} - Blue {blue}'
+  score-display: 'Score: {scores}'
   game-ended: 'Game Ended'
   wait-next-game: 'Please wait for the next game'
   next-round-countdown: 'Next round in: {seconds} seconds'

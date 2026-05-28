@@ -67,6 +67,15 @@ class Game(
     /** このゲームで有効なチーム一覧 */
     fun getActiveTeams(): List<Team> = Team.getActiveTeams(teamCount)
 
+    /** チーム関連のマップを動的に初期化 */
+    fun initTeams() {
+        getActiveTeams().forEach { team ->
+            teams.getOrPut(team) { mutableSetOf() }
+            score.getOrPut(team) { 0 }
+            teamCurrency.getOrPut(team) { 0 }
+        }
+    }
+
     // 位置設定（汎化）
     val flagLocations = mutableMapOf<Team, Location>() // チーム -> 旗位置
     val spawnLocations = mutableMapOf<Team, Location>() // チーム -> スポーン位置
@@ -100,12 +109,12 @@ class Game(
     var combatPhaseBlocks = 16
     
     // ゲーム状態
-    var score = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
+    var score = mutableMapOf<Team, Int>()
     var currentPhaseTime = 0
     var autoStartCountdown = -1
 
     // 通貨管理（マッチがない場合用）
-    val teamCurrency = mutableMapOf(Team.RED to 0, Team.BLUE to 0)
+    val teamCurrency = mutableMapOf<Team, Int>()
 
     // 旗管理（汎化）
     val flagCarriers = mutableMapOf<Team, UUID?>() // チーム -> キャリアUUID
@@ -214,6 +223,13 @@ class Game(
     fun getBlueScore(): Int = score[Team.BLUE] ?: 0
     fun getTeamScore(team: Team): Int = score[team] ?: 0
 
+    /** 全チームのスコアを "赤:2 青:1 緑:0" のような文字列で取得 */
+    fun getScoreDisplayText(): String {
+        return getActiveTeams().joinToString(" ") { team ->
+            "${plugin.languageManager.getMessage("teams.${team.name.lowercase()}")}:${score[team] ?: 0}"
+        }
+    }
+
     fun getWinner(): Team? {
         val activeTeams = getActiveTeams()
         val maxScore = activeTeams.maxOfOrNull { score[it] ?: 0 } ?: return null
@@ -289,19 +305,14 @@ class Game(
         
         val selectedTeam = team ?: selectTeamForPlayer(player)
         
-        if (selectedTeam == Team.RED) {
-            if (redTeam.size >= maxPlayersPerTeam) {
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.team-full-red"))
-                return false
-            }
-            redTeam.add(player.uniqueId)
-        } else {
-            if (blueTeam.size >= maxPlayersPerTeam) {
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.team-full-blue"))
-                return false
-            }
-            blueTeam.add(player.uniqueId)
+        val teamMembers = teams.getOrPut(selectedTeam) { mutableSetOf() }
+        if (teamMembers.size >= maxPlayersPerTeam) {
+            player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.team-full",
+                "team" to plugin.languageManager.getMessage("teams.${selectedTeam.name.lowercase()}")
+            ))
+            return false
         }
+        teamMembers.add(player.uniqueId)
         
         // スコアボード表示
         setupScoreboard(player)
@@ -403,50 +414,39 @@ class Game(
         }
         
         // 新チームの人数チェック
-        val targetTeamSize = when (newTeam) {
-            Team.RED -> redTeam.size
-            Team.BLUE -> blueTeam.size
-            Team.SPECTATOR -> 0 // 観戦者は人数制限なし
-            else -> 0 // 未実装チーム
-        }
-        
+        val targetTeamSize = if (newTeam == Team.SPECTATOR) 0 else getTeamSize(newTeam)
+
         if (newTeam != Team.SPECTATOR && targetTeamSize >= maxPlayersPerTeam) {
             return false
         }
-        
+
         // 旗を持っている場合はドロップ
-        if (redFlagCarrier == player.uniqueId || blueFlagCarrier == player.uniqueId) {
-            val carrierTeam = if (redFlagCarrier == player.uniqueId) Team.RED else Team.BLUE
-            dropFlag(player, carrierTeam, player.location)
-            if (carrierTeam == Team.RED) {
-                redFlagCarrier = null
-            } else {
-                blueFlagCarrier = null
-            }
-            
+        val carriedFlagTeam = flagCarriers.entries.firstOrNull { it.value == player.uniqueId }?.key
+        if (carriedFlagTeam != null) {
+            dropFlag(player, carriedFlagTeam, player.location)
+            flagCarriers[carriedFlagTeam] = null
+
             // 旗ドロップメッセージ
             getAllPlayers().forEach { p ->
                 p.sendMessage(plugin.languageManager.getMessageAsComponent("flags.dropped-admin-team-change",
                     "player" to player.name,
-                    "flag" to plugin.languageManager.getMessage("teams.${carrierTeam.name.lowercase()}")
+                    "flag" to plugin.languageManager.getMessage("teams.${carriedFlagTeam.name.lowercase()}")
                 ))
             }
         }
-        
+
         // 現在のチームから削除
-        when (currentTeam) {
-            Team.RED -> redTeam.remove(player.uniqueId)
-            Team.BLUE -> blueTeam.remove(player.uniqueId)
-            Team.SPECTATOR -> spectators.remove(player.uniqueId)
-            else -> {} // GREEN/YELLOW: 未実装
+        if (currentTeam == Team.SPECTATOR) {
+            spectators.remove(player.uniqueId)
+        } else {
+            teams[currentTeam]?.remove(player.uniqueId)
         }
-        
+
         // 新しいチームに追加
-        when (newTeam) {
-            Team.RED -> redTeam.add(player.uniqueId)
-            Team.BLUE -> blueTeam.add(player.uniqueId)
-            Team.SPECTATOR -> spectators.add(player.uniqueId)
-            else -> {} // GREEN/YELLOW: 未実装
+        if (newTeam == Team.SPECTATOR) {
+            spectators.add(player.uniqueId)
+        } else {
+            teams.getOrPut(newTeam) { mutableSetOf() }.add(player.uniqueId)
         }
         
         // ゲーム実行中の場合の処理
@@ -546,14 +546,13 @@ class Game(
     
     fun switchToSpectator(player: Player) {
         // 既存のチームから削除
-        redTeam.remove(player.uniqueId)
-        blueTeam.remove(player.uniqueId)
-        
+        val team = getPlayerTeam(player.uniqueId)
+        teams[team]?.remove(player.uniqueId)
+
         // 旗を持っていた場合
-        if (redFlagCarrier == player.uniqueId) {
-            dropFlag(player, Team.RED)
-        } else if (blueFlagCarrier == player.uniqueId) {
-            dropFlag(player, Team.BLUE)
+        val carriedFlagTeam = flagCarriers.entries.firstOrNull { it.value == player.uniqueId }?.key
+        if (carriedFlagTeam != null) {
+            dropFlag(player, carriedFlagTeam)
         }
         
         // 観戦者として追加
@@ -573,11 +572,11 @@ class Game(
     }
     
     fun removePlayer(player: Player) {
-        redTeam.remove(player.uniqueId)
-        blueTeam.remove(player.uniqueId)
+        // 全チームから削除
+        teams.values.forEach { it.remove(player.uniqueId) }
         spectators.remove(player.uniqueId)
         disconnectedPlayers.remove(player.uniqueId)
-        
+
         // 他のプレイヤーのスコアボードからこのプレイヤーを削除
         getAllPlayers().forEach { otherPlayer ->
             val scoreboard = otherPlayer.scoreboard
@@ -589,16 +588,15 @@ class Game(
                 }
             }
         }
-        
+
         // UI削除
         scoreboardManager.resetScoreboard(player)
         scoreboardManager.removePlayerFromBossBar(player)
-        
+
         // 旗を持っていた場合
-        if (redFlagCarrier == player.uniqueId) {
-            dropFlag(player, Team.RED)
-        } else if (blueFlagCarrier == player.uniqueId) {
-            dropFlag(player, Team.BLUE)
+        val carriedFlagTeam = flagCarriers.entries.firstOrNull { it.value == player.uniqueId }?.key
+        if (carriedFlagTeam != null) {
+            dropFlag(player, carriedFlagTeam)
         }
         
         player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-left", "game" to gameName))
@@ -621,7 +619,8 @@ class Game(
         
         // 自動開始のチェック（プレイヤー数が減った場合、カウントダウンをキャンセル）
         if (state == GameState.WAITING && autoStartEnabled) {
-            if (redTeam.size + blueTeam.size < minPlayers && autoStartCountdown > 0) {
+            val totalPlayers = getActiveTeams().sumOf { getTeamSize(it) }
+            if (totalPlayers < minPlayers && autoStartCountdown > 0) {
                 autoStartCountdown = -1
                 taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                 getAllPlayers().forEach {
@@ -638,14 +637,12 @@ class Game(
         disconnectedPlayers[player.uniqueId] = team
 
         // チームから一時的に除外（スコアボードの人数に含まれないように）
-        redTeam.remove(player.uniqueId)
-        blueTeam.remove(player.uniqueId)
+        teams[team]?.remove(player.uniqueId)
 
         // 旗を持っていた場合
-        if (redFlagCarrier == player.uniqueId) {
-            dropFlag(player, Team.RED)
-        } else if (blueFlagCarrier == player.uniqueId) {
-            dropFlag(player, Team.BLUE)
+        val carriedFlagTeam = flagCarriers.entries.firstOrNull { it.value == player.uniqueId }?.key
+        if (carriedFlagTeam != null) {
+            dropFlag(player, carriedFlagTeam)
         }
 
         // スコアボードを更新
@@ -653,7 +650,8 @@ class Game(
 
         // 自動開始のチェック（プレイヤー数が減った場合、カウントダウンをキャンセル）
         if (state == GameState.WAITING && autoStartEnabled) {
-            if (redTeam.size + blueTeam.size < minPlayers && autoStartCountdown > 0) {
+            val totalPlayers = getActiveTeams().sumOf { getTeamSize(it) }
+            if (totalPlayers < minPlayers && autoStartCountdown > 0) {
                 autoStartCountdown = -1
                 taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                 getAllPlayers().forEach {
@@ -696,9 +694,10 @@ class Game(
     }
     
     private fun selectTeamForPlayer(player: Player): Team {
-        val redPlayers = redTeam.mapNotNull { plugin.server.getPlayer(it) }
-        val bluePlayers = blueTeam.mapNotNull { plugin.server.getPlayer(it) }
-        return plugin.teamBalancer.selectTeamForPlayer(player, redPlayers, bluePlayers)
+        val teamPlayers = getActiveTeams().associateWith { team ->
+            (teams[team] ?: emptySet()).mapNotNull { plugin.server.getPlayer(it) }
+        }
+        return plugin.teamBalancer.selectTeamForPlayer(player, teamPlayers)
     }
     
     fun getPlayerTeam(uuid: UUID): Team? {
@@ -725,7 +724,7 @@ class Game(
         if (!autoStartEnabled) return
 
         if (state != GameState.WAITING) return
-        if (redTeam.size + blueTeam.size < minPlayers) {
+        if (getActiveTeams().sumOf { getTeamSize(it) } < minPlayers) {
             if (autoStartCountdown > 0) {
                 autoStartCountdown = -1
                 taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
@@ -744,13 +743,13 @@ class Game(
                         cancel()
                         taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
                         // プレイヤー数を再チェックしてから開始
-                        if (autoStartCountdown == 0 && redTeam.size + blueTeam.size >= minPlayers) {
+                        if (autoStartCountdown == 0 && getActiveTeams().sumOf { getTeamSize(it) } >= minPlayers) {
                             start()
                         }
                         return
                     }
 
-                    if (redTeam.size + blueTeam.size < minPlayers) {
+                    if (getActiveTeams().sumOf { getTeamSize(it) } < minPlayers) {
                         autoStartCountdown = -1
                         cancel()
                         taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
@@ -778,7 +777,10 @@ class Game(
     
     fun start(): Boolean {
         plugin.logger.info(plugin.languageManager.getMessage("log.game-starting", "game" to name, "state" to state.toString(), "phase" to phase.toString()))
-        
+
+        // チーム関連マップを動的に初期化
+        initTeams()
+
         // 自動開始タスクをキャンセル（手動開始の場合も含む）
         taskScheduler.cancelNamed(GameTaskScheduler.AUTO_START)
         autoStartCountdown = -1
@@ -792,7 +794,7 @@ class Game(
         }
         
         // 最小人数チェック（マッチの場合は最小人数チェックをスキップ）
-        if (matchWrapper == null && redTeam.size + blueTeam.size < minPlayers) {
+        if (matchWrapper == null && getActiveTeams().sumOf { getTeamSize(it) } < minPlayers) {
             getAllPlayers().forEach {
                 it.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.min-players-required", "min" to minPlayers.toString()))
             }
@@ -1038,13 +1040,11 @@ class Game(
         if (matchWrapper == null || matchWrapper!!.currentGameNumber == 1) {
             // ブロック設置記録をクリア
             teamPlacedBlocks.clear()
-            teamPlacedBlocks[Team.RED] = mutableSetOf()
-            teamPlacedBlocks[Team.BLUE] = mutableSetOf()
-            
+            getActiveTeams().forEach { teamPlacedBlocks[it] = mutableSetOf() }
+
             // ブロックツリーをクリア
             teamBlockTrees.clear()
-            teamBlockTrees[Team.RED] = mutableMapOf()
-            teamBlockTrees[Team.BLUE] = mutableMapOf()
+            getActiveTeams().forEach { teamBlockTrees[it] = mutableMapOf() }
         }
         
         // 旗とスポーン地点の設置（ブロック記録クリア後に実行）
@@ -1214,14 +1214,9 @@ class Game(
         // 戦闘フェーズ終了ボーナス
         val phaseEndBonus = plugin.config.getInt("currency.phase-end-bonus", 100)
         val bonusReason = plugin.languageManager.getMessage("phase-extended.phase-end-bonus")
-        addTeamCurrency(Team.RED, phaseEndBonus, bonusReason)
-        addTeamCurrency(Team.BLUE, phaseEndBonus, bonusReason)
+        getActiveTeams().forEach { addTeamCurrency(it, phaseEndBonus, bonusReason) }
         
-        val winner = when {
-            score[Team.RED]!! > score[Team.BLUE]!! -> Team.RED
-            score[Team.BLUE]!! > score[Team.RED]!! -> Team.BLUE
-            else -> null
-        }
+        val winner = getWinner()
         
         // ゲームレポートを表示（テキストログのみ）
         displayGameReport(winner)
@@ -1230,13 +1225,11 @@ class Game(
         val resultMessage = if (winner != null) {
             plugin.languageManager.getMessage("phase-extended.round-result-winner",
                 "team" to plugin.languageManager.getMessage("teams.${winner.name.lowercase()}"),
-                "red" to score[Team.RED].toString(),
-                "blue" to score[Team.BLUE].toString()
+                "scores" to getScoreDisplayText()
             )
         } else {
             plugin.languageManager.getMessage("phase-extended.round-result-draw",
-                "red" to score[Team.RED].toString(),
-                "blue" to score[Team.BLUE].toString()
+                "scores" to getScoreDisplayText()
             )
         }
         
@@ -1270,21 +1263,20 @@ class Game(
      */
     private fun resetForNextRound() {
         // スコアをリセット
-        score[Team.RED] = 0
-        score[Team.BLUE] = 0
-        
+        score.clear()
+
         // 旗の状態をリセット
-        redFlagCarrier = null
-        blueFlagCarrier = null
+        flagCarriers.clear()
         droppedFlags.clear()
-        
+
         // チームブロックをクリア
         teamPlacedBlocks.clear()
-        
+
         // 通貨をリセット
         teamCurrency.clear()
-        teamCurrency[Team.RED] = 0
-        teamCurrency[Team.BLUE] = 0
+
+        // チーム関連マップを動的に再初期化
+        initTeams()
         
         // 建築フェーズを開始
         phase = GamePhase.BUILD
@@ -1545,8 +1537,7 @@ class Game(
                             "team" to plugin.languageManager.getMessage("teams.${winner.name.lowercase()}")
                         ),
                         plugin.languageManager.getMessageAsComponent("phase-extended.score-display",
-                            "red" to score[Team.RED].toString(),
-                            "blue" to score[Team.BLUE].toString()
+                            "scores" to getScoreDisplayText()
                         ),
                         Title.Times.times(
                             Duration.ofMillis(500),
@@ -1559,8 +1550,7 @@ class Game(
                     player.showTitle(Title.title(
                         plugin.languageManager.getMessageAsComponent("phase-extended.draw-title"),
                         plugin.languageManager.getMessageAsComponent("phase-extended.score-display",
-                            "red" to score[Team.RED].toString(),
-                            "blue" to score[Team.BLUE].toString()
+                            "scores" to getScoreDisplayText()
                         ),
                         Title.Times.times(
                             Duration.ofMillis(500),
@@ -2703,8 +2693,7 @@ class Game(
             }
             player.sendMessage(plugin.languageManager.getMessageAsComponent("report.score-header")
                 .append(plugin.languageManager.getMessageAsComponent("report.match-score-format",
-                    "red" to score[Team.RED].toString(),
-                    "blue" to score[Team.BLUE].toString()
+                    "scores" to getScoreDisplayText()
                 )))
             
             // チーム統計

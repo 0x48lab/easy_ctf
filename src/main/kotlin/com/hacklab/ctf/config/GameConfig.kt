@@ -1,6 +1,7 @@
 package com.hacklab.ctf.config
 
 import com.hacklab.ctf.utils.MatchMode
+import com.hacklab.ctf.utils.Team
 import org.bukkit.Location
 import org.bukkit.World
 
@@ -21,6 +22,19 @@ data class GameConfig(
     // 複数スポーン地点
     var redSpawnLocations: MutableList<Location> = mutableListOf(),
     var blueSpawnLocations: MutableList<Location> = mutableListOf(),
+
+    // 緑チーム位置設定
+    var greenFlagLocation: Location? = null,
+    var greenSpawnLocation: Location? = null,
+    var greenSpawnLocations: MutableList<Location> = mutableListOf(),
+
+    // 黄チーム位置設定
+    var yellowFlagLocation: Location? = null,
+    var yellowSpawnLocation: Location? = null,
+    var yellowSpawnLocations: MutableList<Location> = mutableListOf(),
+
+    // チーム数設定（2〜4）
+    var teamCount: Int = 2,
     
     // ゲーム設定
     var autoStartEnabled: Boolean = false,
@@ -54,7 +68,53 @@ data class GameConfig(
      * 必須設定が完了しているかチェック
      */
     fun isValid(): Boolean {
-        return redFlagLocation != null && blueFlagLocation != null
+        val teamsToCheck = Team.getActiveTeams(teamCount)
+        return teamsToCheck.all { getFlagLocation(it) != null }
+    }
+
+    /**
+     * チームに対応する旗の位置を取得
+     */
+    fun getFlagLocation(team: Team): Location? = when(team) {
+        Team.RED -> redFlagLocation
+        Team.BLUE -> blueFlagLocation
+        Team.GREEN -> greenFlagLocation
+        Team.YELLOW -> yellowFlagLocation
+        else -> null
+    }
+
+    /**
+     * チームに対応する有効なスポーン地点を取得
+     */
+    fun getEffectiveSpawn(team: Team): Location? = when(team) {
+        Team.RED -> getEffectiveRedSpawn()
+        Team.BLUE -> getEffectiveBlueSpawn()
+        Team.GREEN -> greenSpawnLocations.randomOrNull() ?: greenSpawnLocation ?: greenFlagLocation
+        Team.YELLOW -> yellowSpawnLocations.randomOrNull() ?: yellowSpawnLocation ?: yellowFlagLocation
+        else -> null
+    }
+
+    /**
+     * チームに対応するすべてのスポーン地点を取得
+     */
+    fun getAllSpawnLocations(team: Team): List<Location> = when(team) {
+        Team.RED -> getAllRedSpawnLocations()
+        Team.BLUE -> getAllBlueSpawnLocations()
+        Team.GREEN -> {
+            val locs = mutableListOf<Location>()
+            locs.addAll(greenSpawnLocations)
+            greenSpawnLocation?.let { if (it !in locs) locs.add(it) }
+            if (locs.isEmpty()) greenFlagLocation?.let { locs.add(it) }
+            locs
+        }
+        Team.YELLOW -> {
+            val locs = mutableListOf<Location>()
+            locs.addAll(yellowSpawnLocations)
+            yellowSpawnLocation?.let { if (it !in locs) locs.add(it) }
+            if (locs.isEmpty()) yellowFlagLocation?.let { locs.add(it) }
+            locs
+        }
+        else -> emptyList()
     }
     
     /**
@@ -134,6 +194,13 @@ data class GameConfig(
         blueSpawnLocation = blueSpawnLocation?.clone(),
         redSpawnLocations = redSpawnLocations.map { it.clone() }.toMutableList(),
         blueSpawnLocations = blueSpawnLocations.map { it.clone() }.toMutableList(),
+        greenFlagLocation = greenFlagLocation?.clone(),
+        greenSpawnLocation = greenSpawnLocation?.clone(),
+        greenSpawnLocations = greenSpawnLocations.map { it.clone() }.toMutableList(),
+        yellowFlagLocation = yellowFlagLocation?.clone(),
+        yellowSpawnLocation = yellowSpawnLocation?.clone(),
+        yellowSpawnLocations = yellowSpawnLocations.map { it.clone() }.toMutableList(),
+        teamCount = teamCount,
         autoStartEnabled = autoStartEnabled,
         minPlayers = minPlayers,
         maxPlayersPerTeam = maxPlayersPerTeam,

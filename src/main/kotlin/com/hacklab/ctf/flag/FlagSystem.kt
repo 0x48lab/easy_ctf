@@ -516,8 +516,7 @@ class FlagSystem(
                 "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}"),
                 "player" to player.name))
             p.sendMessage(plugin.languageManager.getMessageAsComponent("flag.current-score",
-                "red" to (game.score[Team.RED] ?: 0).toString(),
-                "blue" to (game.score[Team.BLUE] ?: 0).toString()))
+                "scores" to game.getScoreDisplayText()))
 
             // 効果音を再生
             p.playSound(p.location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f)
@@ -530,8 +529,7 @@ class FlagSystem(
                 plugin.languageManager.getMessageAsComponent("flag.scored-title", "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}")),
                 plugin.languageManager.getMessageAsComponent("flag.score-subtitle",
                     "team" to plugin.languageManager.getMessage("teams.${team.name.lowercase()}"),
-                    "red" to (game.score[Team.RED] ?: 0).toString(),
-                    "blue" to (game.score[Team.BLUE] ?: 0).toString()),
+                    "scores" to game.getScoreDisplayText()),
                 Title.Times.times(
                     Duration.ofMillis(250),
                     Duration.ofSeconds(2),

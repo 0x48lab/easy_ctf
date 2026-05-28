@@ -146,6 +146,65 @@ class TeamBalancer(private val plugin: Main) {
         return balanceRatio < (1.0 - threshold)
     }
     
+    data class BalancedNTeams(
+        val teams: Map<Team, List<Player>>,
+        val teamScores: Map<Team, Double>
+    ) {
+        fun getMaxScoreDifference(): Double {
+            val scores = teamScores.values
+            return (scores.maxOrNull() ?: 0.0) - (scores.minOrNull() ?: 0.0)
+        }
+    }
+
+    /**
+     * 新しいプレイヤーが参加する際、N チーム対応でスキルバランスを考慮してチームを選択
+     */
+    fun selectTeamForPlayer(player: Player, teamPlayers: Map<Team, List<Player>>): Team {
+        // Find team with fewest players
+        val minSize = teamPlayers.values.minOfOrNull { it.size } ?: 0
+        val smallestTeams = teamPlayers.filter { it.value.size == minSize }
+
+        if (smallestTeams.size == 1) return smallestTeams.keys.first()
+
+        // If multiple teams have same size, pick one with lowest total skill score
+        val stats = plugin.playerStatisticsManager
+        return smallestTeams.minByOrNull { (_, players) ->
+            players.sumOf { stats.getPlayerStats(it.uniqueId).calculateSkillScore() }
+        }?.key ?: smallestTeams.keys.first()
+    }
+
+    /**
+     * N チーム対応のバランシング（スネークドラフト方式）
+     */
+    fun balanceTeams(players: List<Player>, activeTeams: List<Team>): BalancedNTeams {
+        if (activeTeams.size == 2) {
+            // Use existing 2-team balance logic
+            val result = balanceTeams(players)
+            return BalancedNTeams(
+                teams = mapOf(Team.RED to result.redTeam, Team.BLUE to result.blueTeam),
+                teamScores = mapOf(Team.RED to result.redTeamTotalScore, Team.BLUE to result.blueTeamTotalScore)
+            )
+        }
+
+        // N-team balancing: sort players by skill, distribute snake-draft style
+        val stats = plugin.playerStatisticsManager
+        val sorted = players.sortedByDescending { stats.getPlayerStats(it.uniqueId).calculateSkillScore() }
+
+        val teamLists = activeTeams.associateWith { mutableListOf<Player>() }
+        val teamScores = activeTeams.associateWith { 0.0 }.toMutableMap()
+
+        // Snake draft: distribute best players across teams
+        sorted.forEach { player ->
+            val score = stats.getPlayerStats(player.uniqueId).calculateSkillScore()
+            // Pick team with lowest total score
+            val targetTeam = activeTeams.minByOrNull { teamScores[it]!! }!!
+            teamLists[targetTeam]!!.add(player)
+            teamScores[targetTeam] = teamScores[targetTeam]!! + score
+        }
+
+        return BalancedNTeams(teams = teamLists.mapValues { it.value.toList() }, teamScores = teamScores)
+    }
+
     /**
      * プレイヤーの移動によるバランス改善のシミュレーション
      */

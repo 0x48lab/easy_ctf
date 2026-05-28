@@ -414,20 +414,28 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val newTeam = when (args[1].lowercase()) {
             "red" -> com.hacklab.ctf.utils.Team.RED
             "blue" -> com.hacklab.ctf.utils.Team.BLUE
+            "green" -> com.hacklab.ctf.utils.Team.GREEN
+            "yellow" -> com.hacklab.ctf.utils.Team.YELLOW
             else -> {
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.invalid-team"), NamedTextColor.RED))
                 return true
             }
         }
-        
+
+        // 有効なチームかチェック
+        if (newTeam !in currentGame.getActiveTeams()) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.invalid-team"), NamedTextColor.RED))
+            return true
+        }
+
         val currentTeam = currentGame.getPlayerTeam(sender.uniqueId)
         if (currentTeam == newTeam) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.already-in-team", "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}")), newTeam.color))
             return true
         }
-        
+
         // チーム人数チェック
-        val targetTeamSize = if (newTeam == com.hacklab.ctf.utils.Team.RED) currentGame.redTeam.size else currentGame.blueTeam.size
+        val targetTeamSize = currentGame.getTeamSize(newTeam)
         if (targetTeamSize >= currentGame.maxPlayersPerTeam) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.team-full", "team" to plugin.languageManager.getMessage("teams.${newTeam.name.lowercase()}"), "max" to currentGame.maxPlayersPerTeam.toString()), NamedTextColor.RED))
             return true
@@ -657,7 +665,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-blue-team", "count" to game.blueTeam.size.toString()), NamedTextColor.BLUE))
         
         if (game.state == GameState.RUNNING) {
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-score", "red" to (game.score[com.hacklab.ctf.utils.Team.RED] ?: 0).toString(), "blue" to (game.score[com.hacklab.ctf.utils.Team.BLUE] ?: 0).toString()), NamedTextColor.WHITE))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-score", "scores" to game.getScoreDisplayText()), NamedTextColor.WHITE))
         }
         
         // マッチ情報（ある場合）
@@ -827,7 +835,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                         completions.addAll(gameManager.getAllGames().keys.filter { it.startsWith(args[1].lowercase()) })
                     }
                     "team" -> {
-                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[1].lowercase()) })
+                        completions.addAll(listOf("red", "blue", "green", "yellow").filter { it.startsWith(args[1].lowercase()) })
                     }
                     "stats", "resetstats", "changeteam" -> {
                         completions.addAll(plugin.server.onlinePlayers.map { it.name }.filter { it.startsWith(args[1], ignoreCase = true) })
@@ -843,16 +851,16 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             3 -> {
                 when (args[0].lowercase()) {
                     "setflag", "setspawn", "addspawn" -> {
-                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
+                        completions.addAll(listOf("red", "blue", "green", "yellow").filter { it.startsWith(args[2].lowercase()) })
                     }
                     "addplayer" -> {
                         completions.addAll(plugin.server.onlinePlayers.map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) })
                     }
                     "changeteam" -> {
-                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
+                        completions.addAll(listOf("red", "blue", "green", "yellow").filter { it.startsWith(args[2].lowercase()) })
                     }
                     "removespawn" -> {
-                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[2].lowercase()) })
+                        completions.addAll(listOf("red", "blue", "green", "yellow").filter { it.startsWith(args[2].lowercase()) })
                     }
                     "start" -> {
                         completions.addAll(listOf("single", "match").filter { it.startsWith(args[2].lowercase()) })
@@ -870,7 +878,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                         }
                     }
                     "addplayer" -> {
-                        completions.addAll(listOf("red", "blue").filter { it.startsWith(args[3].lowercase()) })
+                        completions.addAll(listOf("red", "blue", "green", "yellow").filter { it.startsWith(args[3].lowercase()) })
                     }
                     "removespawn" -> {
                         // 番号の補完（1-10）
@@ -1035,7 +1043,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val gameName = args[1]
         val team = args[2].lowercase()
         
-        if (team !in listOf("red", "blue")) {
+        if (team !in listOf("red", "blue", "green", "yellow")) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.invalid-team"), NamedTextColor.RED))
             return true
         }
@@ -1089,7 +1097,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         val team = args[2].lowercase()
         val index = args[3].toIntOrNull()
         
-        if (team !in listOf("red", "blue")) {
+        if (team !in listOf("red", "blue", "green", "yellow")) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.invalid-team"), NamedTextColor.RED))
             return true
         }

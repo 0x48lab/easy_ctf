@@ -150,7 +150,7 @@ command:
   status-waiting: '待機中'
   team-change-usage: '使用法: /ctf team [red|blue]'
   team-changed: 'チームを変更しました'
-  team-full: 'チームが満員です'
+  team-full: '{team}チームが満員です'
   usage-addspawn: '使用法: /ctf addspawn <ゲーム名> <red|blue>'
   usage-create: '使用法: /ctf create <ゲーム名>'
   usage-delete: '使用法: /ctf delete <ゲーム名>'
@@ -196,7 +196,7 @@ death:
   kill-streak-notification: '連続キル通知'
 flag:
   scored-title: 得点！
-  score-subtitle: '{team}が得点しました (赤 {red} - {blue} 青)'
+  score-subtitle: '{team}が得点しました ({scores})'
   cannot-capture-no-flag: 自陣の旗がないため得点できません
   flag-carrier-unknown: 不明
   picked-up: '{player}が{team}の旗を取得しました'
@@ -207,7 +207,7 @@ flag:
   dropped-admin-team-change: '{player}のチーム変更により{flag}の旗がドロップしました'
   captured-by: '{player}が旗をキャプチャしました'
   concrete-name: '{team}のコンクリート'
-  current-score: '現在のスコア: 赤{red} - 青{blue}'
+  current-score: '現在のスコア: {scores}'
   enemy-has-flag: 敵が旗を持っています
   flag-dropped: 旗がドロップしました
   flag-name: '{team}の旗'
@@ -360,7 +360,7 @@ match:
   block-count: 'ブロック数'
   blue-wins: '青チームの勝利'
   blue-wins-match: 青チームがマッチに勝利！
-  current-score: '現在のスコア: 赤{red} - 青{blue}'
+  current-score: '現在のスコア: {scores}'
   draw: 引き分け！
   draw-match: Draw マッチ
   game-number: 'ゲーム番号'
@@ -408,7 +408,7 @@ phase-extended:
   combat-time-format: '戦闘フェーズ - 残り時間: {time}'
   intermission-time-format: '作戦会議 - 残り時間: {time}'
   phase-end-bonus: 'フェーズ終了ボーナス'
-  score-display: 'スコア: 赤 {red} - 青 {blue}'
+  score-display: 'スコア: {scores}'
   game-ended: 'ゲーム終了'
   wait-next-game: '次のゲームをお待ちください'
   next-round-countdown: '次のラウンドまで: {seconds}秒'

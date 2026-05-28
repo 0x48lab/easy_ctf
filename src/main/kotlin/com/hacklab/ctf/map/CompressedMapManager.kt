@@ -256,31 +256,17 @@ class CompressedMapManager(private val plugin: Main) {
      * ビーコンの上に適切な色のガラスを設置
      */
     private fun setupBeaconColors(world: org.bukkit.World, game: com.hacklab.ctf.Game) {
-        // 赤チームの旗位置にビーコンと赤ガラスを設置
-        game.redFlagLocation?.let { flagLoc ->
-            val beaconBlock = world.getBlockAt(flagLoc)
-            if (beaconBlock.type == Material.BEACON) {
-                // ビーコンの上に赤ガラスを設置
-                val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
-                glassBlock.type = Material.RED_STAINED_GLASS
-                // バナーをガラスの上に設置
-                val bannerBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 2, flagLoc.blockZ)
-                bannerBlock.type = Material.RED_BANNER
-                plugin.logger.info("[CompressedMapManager] 赤チームのビーコンに赤ガラスと赤バナーを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
-            }
-        }
-
-        // 青チームの旗位置にビーコンと青ガラスを設置
-        game.blueFlagLocation?.let { flagLoc ->
-            val beaconBlock = world.getBlockAt(flagLoc)
-            if (beaconBlock.type == Material.BEACON) {
-                // ビーコンの上に青ガラスを設置
-                val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
-                glassBlock.type = Material.BLUE_STAINED_GLASS
-                // バナーをガラスの上に設置
-                val bannerBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 2, flagLoc.blockZ)
-                bannerBlock.type = Material.BLUE_BANNER
-                plugin.logger.info("[CompressedMapManager] 青チームのビーコンに青ガラスと青バナーを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
+        // 全チームの旗位置にビーコン、ガラス、バナーを設置
+        game.getActiveTeams().forEach { team ->
+            game.flagLocations[team]?.let { flagLoc ->
+                val beaconBlock = world.getBlockAt(flagLoc)
+                if (beaconBlock.type == Material.BEACON) {
+                    val glassBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 1, flagLoc.blockZ)
+                    glassBlock.type = team.getStainedGlassMaterial()
+                    val bannerBlock = world.getBlockAt(flagLoc.blockX, flagLoc.blockY + 2, flagLoc.blockZ)
+                    bannerBlock.type = team.getBannerMaterial()
+                    plugin.logger.info("[CompressedMapManager] ${team.displayName}のビーコンにガラスとバナーを設置: ${flagLoc.blockX}, ${flagLoc.blockY + 1}, ${flagLoc.blockZ}")
+                }
             }
         }
     }
