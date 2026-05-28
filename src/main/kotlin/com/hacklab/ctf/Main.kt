@@ -9,6 +9,7 @@ import com.hacklab.ctf.managers.EquipmentManager
 import com.hacklab.ctf.managers.PlayerStatisticsManager
 import com.hacklab.ctf.managers.TeamBalancer
 import com.hacklab.ctf.shop.ShopManager
+import com.hacklab.ctf.economy.VaultIntegration
 import org.bukkit.plugin.java.JavaPlugin
 
 class Main : JavaPlugin() {
@@ -30,6 +31,8 @@ class Main : JavaPlugin() {
         private set
     lateinit var teamBalancer: TeamBalancer
         private set
+    lateinit var vaultIntegration: VaultIntegration
+        private set
 
     override fun onEnable() {
         instance = this
@@ -45,6 +48,8 @@ class Main : JavaPlugin() {
         shopManager = ShopManager(this)
         playerStatisticsManager = PlayerStatisticsManager(this)
         teamBalancer = TeamBalancer(this)
+        vaultIntegration = VaultIntegration(this)
+        vaultIntegration.setup()
         gameManager = GameManager(this)
         
         getCommand("ctf")?.setExecutor(CTFCommandNew(this))

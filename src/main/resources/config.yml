@@ -122,6 +122,11 @@ event-chest:
   enabled: true                     # Enable/disable event chest system
   spawn-count: 1                     # Number of times chests spawn during combat phase (1=middle, 2=1/3 and 2/3, etc.)
 
+# Economy Settings (Vault integration)
+economy:
+  # Reward per enemy player given to each winner
+  reward-per-enemy: 100  # e.g., 4v4 = 400G per winner
+
 # Debug Settings
 debug:
   # Enable debug messages

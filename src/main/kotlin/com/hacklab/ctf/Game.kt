@@ -3485,7 +3485,7 @@ class Game(
      */
     private fun updatePlayerStatistics() {
         val winner = getWinner()
-        
+
         getAllPlayers().forEach { player ->
             val uuid = player.uniqueId
             val kills = playerKills[uuid] ?: 0
@@ -3493,7 +3493,7 @@ class Game(
             val captures = playerCaptures[uuid] ?: 0
             val playerTeam = getPlayerTeam(uuid)
             val gameWon = playerTeam == winner
-            
+
             plugin.playerStatisticsManager.updatePlayerStats(
                 uuid = uuid,
                 kills = kills,
@@ -3503,5 +3503,49 @@ class Game(
                 gameWon = gameWon
             )
         }
+
+        // Vault経済報酬の付与
+        distributeEconomyRewards(winner)
+    }
+
+    /**
+     * 勝利チームにVault経済報酬を付与
+     */
+    private fun distributeEconomyRewards(winner: Team?) {
+        if (!plugin.vaultIntegration.isAvailable()) return
+        if (winner == null) return // 引き分けは報酬なし
+
+        val rewardPerEnemy = plugin.config.getInt("economy.reward-per-enemy", 100).toDouble()
+        if (rewardPerEnemy <= 0) return
+
+        // 敵チームの人数を計算
+        val loserTeam = if (winner == Team.RED) Team.BLUE else Team.RED
+        val enemyCount = when (loserTeam) {
+            Team.RED -> redTeam.size
+            Team.BLUE -> blueTeam.size
+            else -> 0
+        }
+
+        if (enemyCount == 0) return
+
+        val totalReward = rewardPerEnemy * enemyCount
+
+        // 勝利チームの全プレイヤーに報酬を付与
+        val winnerPlayers = when (winner) {
+            Team.RED -> redTeam
+            Team.BLUE -> blueTeam
+            else -> return
+        }
+
+        winnerPlayers.forEach { uuid ->
+            val player = org.bukkit.Bukkit.getPlayer(uuid)
+            if (player != null && player.isOnline) {
+                plugin.vaultIntegration.deposit(player, totalReward)
+                player.sendMessage(plugin.languageManager.getMessageAsComponent("economy.victory-reward",
+                    "amount" to totalReward.toInt().toString()))
+            }
+        }
+
+        plugin.logger.info("[EasyCTF] Victory rewards: ${totalReward.toInt()}G to each winner (${enemyCount} enemies × ${rewardPerEnemy.toInt()}G)")
     }
 }

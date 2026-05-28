@@ -186,6 +186,8 @@ currency:
   capture-assist-message: キャプチャアシスト +{amount}G
   purchase-notification: '{player}が{item}を購入しました'
   team-notification: チーム全体で{amount}G獲得しました
+economy:
+  victory-reward: '§a§l勝利報酬: §e{amount}G §aを獲得しました！'
 death:
   cause-damage: 'ダメージが原因'
   cause-fire: '炎上ダメージが原因'

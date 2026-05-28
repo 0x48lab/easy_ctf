@@ -186,6 +186,8 @@ currency:
   capture-assist-message: Capture assist +{amount}G
   purchase-notification: '{player} purchased {item}'
   team-notification: Team earned {amount}G
+economy:
+  victory-reward: '§a§lVictory Reward: §e{amount}G §aearned!'
 death:
   cause-damage: Cause damage
   cause-fire: Cause fire
