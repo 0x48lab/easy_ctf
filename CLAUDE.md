@@ -247,6 +247,7 @@ src/main/resources/
 | `/ctf spectator [ゲーム名]` | `ctf.use` | 観戦者として参加 |
 | `/ctf status [ゲーム名]` | `ctf.use` | ゲーム状態確認 |
 | `/ctf info <ゲーム名>` | `ctf.use` | ゲーム詳細情報表示 |
+| `/ctf rules` | `ctf.use` | ゲームルール表示 |
 
 ### マップ設定コマンド
 | コマンド | 権限 | 説明 |
@@ -364,6 +365,8 @@ shop:
 ## Active Technologies
 - Kotlin 1.9.22 + Minecraft Paper API 1.21.5, Gradle with Kotlin DSL (001-balance-bow-shop)
 - YAML configuration files (shop.yml, lang_ja.yml, lang_en.yml) (001-balance-bow-shop)
+- Kotlin 1.9.22 + Paper API 1.21.11, Adventure API (Paper内蔵) (002-creative-game-mode)
+- YAML (config.yml, lang_ja.yml, lang_en.yml) (002-creative-game-mode)
 
 ## Recent Changes
 - 001-balance-bow-shop: Added Kotlin 1.9.22 + Minecraft Paper API 1.21.5, Gradle with Kotlin DSL

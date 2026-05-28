@@ -835,3 +835,39 @@ balance:
   applied: 'チームバランスを適用しました'
   team-assigned: 'あなたは{team}に配属されました'
 
+# サーバー参加時のルール案内（短縮版）
+welcome:
+  header: '&6&l========== EasyCTF へようこそ！ =========='
+  rules:
+    - '&e▸ &fこのサーバーでは &bCapture The Flag &f(CTF) ゲームが遊べます'
+    - '&e▸ &f赤チームと青チームに分かれて、相手の &c旗（ビーコン）&fを奪いましょう'
+    - '&e▸ &f建築フェーズで &a自陣を強化 &f→ 戦闘フェーズで &c敵陣に攻め込む &fの2段階!'
+    - '&e▸ &fステージはクリエイティブモードで自由に建築できます'
+  footer: '&7詳しいルールは &a/ctf rules &7で確認できます'
+  footer-click: '&a[ルールを見る]'
+  footer-hover: 'クリックしてルールを表示'
+
+# /ctf rules コマンドの詳細版
+rules:
+  header: '&6&l============ EasyCTF ルール ============'
+  overview: '&e■ ゲーム概要'
+  overview-text: '&f赤チームと青チームに分かれて、相手チームの旗（ビーコン）を奪い合うゲームです。先に多く旗を取ったチームが勝利します。'
+  build-phase: '&e■ 建築フェーズ'
+  build-phase-text: '&f制限時間内に自陣を強化するブロックを設置します。ブロックは自チームのビーコンまたは既存ブロックに接続する必要があります。'
+  combat-phase: '&e■ 戦闘フェーズ'
+  combat-phase-text: '&f敵陣に攻め込み、敵のビーコン（旗）に接近して旗を奪います。旗を持って自陣のビーコンに戻るとスコア獲得！'
+  flag-system: '&e■ 旗システム'
+  flag-system-text: '&f・敵ビーコンに1.5ブロック以内で接近すると旗を取得\n&f・旗を持つと発光して移動制限がかかります\n&f・自陣の旗がある状態で敵旗を持ち帰ると得点\n&f・死亡時は旗がその場にドロップ（30秒で自動復帰）'
+  shop-system: '&e■ ショップシステム'
+  shop-system-text: '&f・エメラルドアイテムでショップを開けます\n&f・チーム共有通貨で武器・防具・建築ブロック等を購入\n&f・キルやキャプチャで通貨を獲得'
+  commands: '&e■ 基本コマンド'
+  commands-text: '&a/ctf join <名前> &7- ゲームに参加\n&a/ctf leave &7- ゲームから離脱\n&a/ctf list &7- ゲーム一覧\n&a/ctf spectator <名前> &7- 観戦モード\n&a/ctf status &7- ゲーム状態確認'
+  footer: '&6&l======================================='
+
+# ゲーム参加通知
+notification:
+  game-starting: '&6&l[CTF] &eゲーム &b{game} &eの参加者を募集中！'
+  join-button: '&a&l[参加する]'
+  join-hover: 'クリックして {game} に参加'
+  game-info: '&7マップ: {game} | 建築: {build}秒 | 戦闘: {combat}秒'
+

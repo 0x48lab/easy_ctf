@@ -846,3 +846,39 @@ balance:
   applied: 'Team balance has been applied'
   team-assigned: 'You have been assigned to {team}'
 
+# Welcome message on server join (short version)
+welcome:
+  header: '&6&l========== Welcome to EasyCTF! =========='
+  rules:
+    - '&e▸ &fPlay &bCapture The Flag &f(CTF) on this server!'
+    - '&e▸ &fSplit into Red and Blue teams, capture the enemy &cflag (beacon)&f!'
+    - '&e▸ &aBuild phase &fto fortify your base → &cCombat phase &fto raid the enemy!'
+    - '&e▸ &fBuild stages freely in Creative mode'
+  footer: '&7For detailed rules, type &a/ctf rules'
+  footer-click: '&a[View Rules]'
+  footer-hover: 'Click to view rules'
+
+# /ctf rules command (detailed version)
+rules:
+  header: '&6&l============ EasyCTF Rules ============'
+  overview: '&e■ Game Overview'
+  overview-text: '&fTwo teams (Red & Blue) compete to capture the enemy flag (beacon). The team with the most captures wins!'
+  build-phase: '&e■ Build Phase'
+  build-phase-text: '&fPlace blocks to fortify your base within the time limit. Blocks must connect to your beacon or existing team blocks.'
+  combat-phase: '&e■ Combat Phase'
+  combat-phase-text: '&fRaid the enemy base and approach their beacon to grab their flag. Return it to your own beacon to score!'
+  flag-system: '&e■ Flag System'
+  flag-system-text: '&f- Approach enemy beacon within 1.5 blocks to grab flag\n&f- Carrying a flag makes you glow with movement restrictions\n&f- Return the enemy flag while your own flag is at base to score\n&f- Dropped flags auto-return after 30 seconds'
+  shop-system: '&e■ Shop System'
+  shop-system-text: '&f- Use the emerald item to open the shop\n&f- Buy weapons, armor, and building blocks with team currency\n&f- Earn currency from kills and captures'
+  commands: '&e■ Basic Commands'
+  commands-text: '&a/ctf join <name> &7- Join a game\n&a/ctf leave &7- Leave the game\n&a/ctf list &7- List all games\n&a/ctf spectator <name> &7- Spectate a game\n&a/ctf status &7- Check game status'
+  footer: '&6&l======================================='
+
+# Game join notification
+notification:
+  game-starting: '&6&l[CTF] &eGame &b{game} &eis looking for players!'
+  join-button: '&a&l[Join Game]'
+  join-hover: 'Click to join {game}'
+  game-info: '&7Map: {game} | Build: {build}s | Combat: {combat}s'
+

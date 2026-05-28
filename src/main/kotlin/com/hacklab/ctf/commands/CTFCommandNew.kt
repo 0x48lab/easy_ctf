@@ -61,6 +61,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "leaderboard" -> return handleLeaderboardCommand(sender, args)
             "resetstats" -> return handleResetStatsCommand(sender, args)
             "balance" -> return handleBalanceCommand(sender, args)
+            "rules" -> return handleRulesCommand(sender)
             else -> {
                 sendHelpMessage(sender)
                 return true
@@ -807,7 +808,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         when (args.size) {
             1 -> {
-                val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info", "stats", "leaderboard")
+                val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info", "stats", "leaderboard", "rules")
                 if (sender.hasPermission("ctf.admin")) {
                     subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap", 
                         "addspawn", "removespawn", "listspawns", "addplayer", "changeteam", "resetstats", "balance"))
@@ -1499,6 +1500,25 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.apply-hint"), NamedTextColor.GRAY))
         }
         
+        return true
+    }
+
+    private fun handleRulesCommand(sender: CommandSender): Boolean {
+        val lang = plugin.languageManager
+        sender.sendMessage(lang.getMessageAsComponent("rules.header"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.overview"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.overview-text"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.build-phase"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.build-phase-text"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.combat-phase"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.combat-phase-text"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.flag-system"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.flag-system-text"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.shop-system"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.shop-system-text"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.commands"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.commands-text"))
+        sender.sendMessage(lang.getMessageAsComponent("rules.footer"))
         return true
     }
 

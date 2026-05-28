@@ -7,6 +7,8 @@ import com.hacklab.ctf.utils.MatchMode
 import com.hacklab.ctf.shop.ShopCategory
 import com.hacklab.ctf.shop.ShopItem
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.*
@@ -571,7 +573,17 @@ class Game(
         }
         
         player.sendMessage(plugin.languageManager.getMessageAsComponent("join-leave.game-left", "game" to gameName))
-        
+
+        // ゲーム中に離脱した場合、テンポラリワールドから元のワールドに戻してCREATIVEに復帰
+        if (state == GameState.RUNNING && tempWorld != null && player.world == tempWorld) {
+            player.inventory.clear()
+            player.gameMode = GameMode.CREATIVE
+            player.teleport(originalWorld.spawnLocation)
+        } else if (state == GameState.RUNNING) {
+            // テンポラリワールド外でもゲーム中ならCREATIVEに設定
+            player.gameMode = GameMode.CREATIVE
+        }
+
         // マッチから削除
         matchWrapper?.players?.remove(player.uniqueId)
         
@@ -767,7 +779,23 @@ class Game(
         state = GameState.STARTING
         phase = GamePhase.BUILD
         currentPhaseTime = buildDuration
-        
+
+        // 非参加プレイヤーへのゲーム開始通知（クリック可能な参加ボタン付き）
+        val gamePlayers = (redTeam + blueTeam + spectators)
+        Bukkit.getOnlinePlayers().filter { it.uniqueId !in gamePlayers }.forEach { onlinePlayer ->
+            val announcement = plugin.languageManager.getMessageAsComponent("notification.game-starting", "game" to gameName)
+            val gameInfo = plugin.languageManager.getMessageAsComponent("notification.game-info",
+                "game" to gameName, "build" to buildDuration.toString(), "combat" to combatDuration.toString())
+            val joinButton = plugin.languageManager.getMessageAsComponent("notification.join-button")
+                .clickEvent(ClickEvent.runCommand("/ctf join $gameName"))
+                .hoverEvent(HoverEvent.showText(
+                    plugin.languageManager.getMessageAsComponent("notification.join-hover", "game" to gameName)
+                ))
+
+            onlinePlayer.sendMessage(announcement)
+            onlinePlayer.sendMessage(gameInfo.append(Component.text(" ")).append(joinButton))
+        }
+
         // 初回のゲーム開始時、またはマッチの最初のゲーム、またはテンポラリワールドが無効な場合は新規作成
         plugin.logger.info("[Game] Checking if new world needed: tempWorld=${tempWorld?.name}, matchWrapper=${matchWrapper != null}, gameNumber=${matchWrapper?.currentGameNumber}")
         val needNewWorld = tempWorld == null || 
@@ -1343,8 +1371,8 @@ class Game(
         // マッチモードかどうかチェック（強制終了の場合はマッチモードを無視）
         val isMatchMode = !forceStop && matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()
         
-        // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）
-        val playerUUIDs = (redTeam + blueTeam).toList()
+        // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）観戦者も含む
+        val playerUUIDs = (redTeam + blueTeam + spectators).toList()
         
         // プレイヤー処理
         playerUUIDs.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
@@ -1361,7 +1389,7 @@ class Game(
             if (!isMatchMode || forceStop) {
                 // マッチモードでない場合、または強制終了の場合
                 player.inventory.clear()
-                player.gameMode = GameMode.SURVIVAL
+                player.gameMode = GameMode.CREATIVE
                 
                 // 元のワールドに確実に転送
                 val mainWorld = originalWorld

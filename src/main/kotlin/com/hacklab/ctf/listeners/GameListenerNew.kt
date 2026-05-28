@@ -55,9 +55,24 @@ class GameListenerNew(private val plugin: Main) : Listener {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        // 少し遅延させてからreconnect処理を実行
+        // 少し遅延させてからreconnect処理とウェルカムメッセージを実行
         plugin.server.scheduler.runTaskLater(plugin, Runnable {
             gameManager.handlePlayerReconnect(event.player)
+
+            // ルール案内を送信
+            val player = event.player
+            player.sendMessage(plugin.languageManager.getMessageAsComponent("welcome.header"))
+            plugin.languageManager.getMessageListAsComponents("welcome.rules").forEach { line ->
+                player.sendMessage(line)
+            }
+            // /ctf rules へのクリック可能なリンク
+            val footerText = plugin.languageManager.getMessageAsComponent("welcome.footer")
+            val footerButton = plugin.languageManager.getMessageAsComponent("welcome.footer-click")
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand("/ctf rules"))
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
+                    plugin.languageManager.getMessageAsComponent("welcome.footer-hover")
+                ))
+            player.sendMessage(footerText.append(net.kyori.adventure.text.Component.text(" ")).append(footerButton))
         }, 20L) // 1秒後
     }
 

@@ -138,4 +138,35 @@ class LanguageManager(private val plugin: Main) {
         // &でエンコードされたレガシーカラーコードをComponentに変換
         return LegacyComponentSerializer.legacyAmpersand().deserialize(message)
     }
+
+    /**
+     * YAML のリスト形式メッセージを取得
+     */
+    fun getMessageList(key: String, vararg replacements: Pair<String, String>): List<String> {
+        val list = languageConfig.getStringList(key)
+        if (list.isEmpty()) return listOf("MissingList: $key")
+        return list.map { line ->
+            var result = line
+            for ((placeholder, value) in replacements) {
+                result = result.replace("{$placeholder}", value)
+            }
+            org.bukkit.ChatColor.translateAlternateColorCodes('&', result)
+        }
+    }
+
+    /**
+     * YAML のリスト形式メッセージを Component のリストとして取得
+     */
+    fun getMessageListAsComponents(key: String, vararg replacements: Pair<String, String>): List<Component> {
+        val list = languageConfig.getStringList(key)
+        if (list.isEmpty()) return listOf(Component.text("MissingList: $key"))
+        return list.map { line ->
+            var result = line
+            for ((placeholder, value) in replacements) {
+                result = result.replace("{$placeholder}", value)
+            }
+            result = result.replace('§', '&')
+            LegacyComponentSerializer.legacyAmpersand().deserialize(result)
+        }
+    }
 }
