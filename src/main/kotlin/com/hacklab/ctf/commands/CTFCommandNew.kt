@@ -258,6 +258,14 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             } else {
                 sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-started"), NamedTextColor.GREEN))
             }
+
+            // スタートした人を自動参加
+            if (sender is Player) {
+                val currentGame = gameManager.getPlayerGame(sender)
+                if (currentGame == null) {
+                    gameManager.addPlayerToGame(sender, gameName)
+                }
+            }
         } else {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.game-start-failed"), NamedTextColor.RED))
         }

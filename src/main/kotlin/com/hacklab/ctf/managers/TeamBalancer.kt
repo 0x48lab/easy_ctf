@@ -49,9 +49,14 @@ class TeamBalancer(private val plugin: Main) {
         var redTeamScore = 0.0
         var blueTeamScore = 0.0
         
-        // グリーディアルゴリズムでチーム分け
+        // グリーディアルゴリズムでチーム分け（同スコアの場合は人数が少ない方に）
         for (playerWithScore in playersWithScores) {
-            if (redTeamScore <= blueTeamScore) {
+            val assignToRed = when {
+                redTeam.size < blueTeam.size -> true
+                blueTeam.size < redTeam.size -> false
+                else -> redTeamScore <= blueTeamScore
+            }
+            if (assignToRed) {
                 redTeam.add(playerWithScore.player)
                 redTeamScore += playerWithScore.skillScore
             } else {

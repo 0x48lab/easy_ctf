@@ -315,6 +315,7 @@ class Game(
             }
 
             pendingPlayers.add(player.uniqueId)
+            plugin.logger.info("[Game] Player ${player.name} added to pendingPlayers. Total pending: ${pendingPlayers.size}")
 
             // マッチに追加
             matchWrapper?.players?.put(player.uniqueId, player)
@@ -1120,7 +1121,9 @@ class Game(
      */
     private fun handleStartingPhaseEnd() {
         val totalPlayers = pendingPlayers.size
-        plugin.logger.info("[Game] Starting phase ended. Total pending players: $totalPlayers, minPlayers: $minPlayers")
+        val pendingUuids = pendingPlayers.toList()
+        val onlinePending = pendingUuids.mapNotNull { Bukkit.getPlayer(it) }
+        plugin.logger.info("[Game] Starting phase ended. Total pending players: $totalPlayers, minPlayers: $minPlayers, online pending: ${onlinePending.size}, UUIDs: $pendingUuids")
 
         if (totalPlayers < minPlayers) {
             // プレイヤー不足 → ゲーム中止
