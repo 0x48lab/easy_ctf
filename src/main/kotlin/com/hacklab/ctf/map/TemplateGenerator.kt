@@ -58,11 +58,11 @@ class TemplateGenerator(private val plugin: Main) {
 
         plugin.logger.info("[Template] Generating ${size.name} template at ($baseX, $baseY, $baseZ), dir=$dir, size: ${width}x${depth}x${height}")
 
-        // 羊毛マーカー（pos1: プレイヤー位置=左下、pos2: 右上奥の天井）
-        val (pos1X, pos1Z) = toWorld(baseX, baseZ, 0, 0, dir)
-        val (pos2X, pos2Z) = toWorld(baseX, baseZ, width - 1, depth - 1, dir)
-        world.getBlockAt(pos1X, baseY, pos1Z).type = Material.WHITE_WOOL
-        world.getBlockAt(pos2X, baseY + height - 1, pos2Z).type = Material.ORANGE_WOOL
+        // 羊毛マーカー（ステージの1ブロック外側に配置）
+        val (pos1X, pos1Z) = toWorld(baseX, baseZ, -1, -1, dir)
+        val (pos2X, pos2Z) = toWorld(baseX, baseZ, width, depth, dir)
+        world.getBlockAt(pos1X, baseY - 1, pos1Z).type = Material.WHITE_WOOL
+        world.getBlockAt(pos2X, baseY + height, pos2Z).type = Material.ORANGE_WOOL
 
         // 中央エントランス（石レンガの床）
         val centralSize = when (size) {
