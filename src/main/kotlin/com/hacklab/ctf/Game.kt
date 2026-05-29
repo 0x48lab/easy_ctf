@@ -102,8 +102,8 @@ class Game(
     var minPlayers = plugin.config.getInt("default-game.min-players", 2)
     var maxPlayersPerTeam = plugin.config.getInt("default-game.max-players-per-team", 10)
     var startingDuration = plugin.config.getInt("default-phases.starting-duration", 30)
-    var buildDuration = plugin.config.getInt("default-phases.build-duration", 120)
-    var combatDuration = plugin.config.getInt("default-phases.combat-duration", 120)
+    var buildDuration = plugin.config.getInt("default-phases.build-duration", 180)
+    var combatDuration = plugin.config.getInt("default-phases.combat-duration", 420)
     var resultDuration = plugin.config.getInt("default-phases.result-duration", 15)
     var intermediateDuration = plugin.config.getInt("default-phases.intermediate-result-duration", 15)
     var buildPhaseGameMode = plugin.config.getString("default-phases.build-phase-gamemode", "SURVIVAL")!!
