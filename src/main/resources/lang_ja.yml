@@ -83,19 +83,19 @@ command:
   info-max-players: '最大プレイヤー数: チームあたり{max}人'
   info-min-players: '最小プレイヤー数: {min}人'
   info-other-settings: 'その他の設定:'
-  info-phase-settings: info フェーズtings 設定されました
-  info-position-settings: info positiontings 設定されました
-  info-red-flag: Info 赤 旗
-  info-red-flag-not-set: info 赤 旗 not 設定されました
+  info-phase-settings: 'フェーズ設定:'
+  info-position-settings: '位置設定:'
+  info-red-flag: '赤チームの旗: {location}'
+  info-red-flag-not-set: '赤チームの旗: 未設定'
   info-red-spawn: '赤チームスポーン: {location}'
   info-red-spawn-multiple: '赤チームスポーン（複数）: {count}箇所'
   info-red-spawn-same: '赤チームスポーン（旗と同じ位置）'
-  info-respawn-time: Info reスポーン time
-  info-result-phase: Info result フェーズ
+  info-respawn-time: 'リスポーン時間: {time}秒'
+  info-result-phase: '結果フェーズ: {duration}秒'
   info-world: 'ワールド: {world}'
-  invalid-game-count: Invalid ゲーム count
-  invalid-spawn-number: Invalid スポーン number
-  invalid-team: Invalid チーム
+  invalid-game-count: '無効なゲーム数です'
+  invalid-spawn-number: '無効なスポーン番号です'
+  invalid-team: '無効なチームです'
   invalid-usage: '使用方法が間違っています'
   join-confirm: 'ゲーム{game}に参加しました'
   join-confirm-time: 'ゲーム{game}に参加しました（{seconds}秒後に開始）'
@@ -104,22 +104,22 @@ command:
   list-item: '{index}. {name} '
   list-red-count: '赤{count}人'
   list-status: '状態: {status}'
-  map-end-set: map end 設定されました
-  map-end-set-game: map end ゲーム 設定されました
-  map-save-failed: Map Save Failed 失敗しました
+  map-end-set: 'マップ終点を設定しました'
+  map-end-set-game: 'ゲーム {game} のマップ終点を設定しました'
+  map-save-failed: 'マップの保存に失敗しました'
   map-saved: 'マップを保存しました: {map}'
-  map-start-set: map start 設定されました
-  map-start-set-game: map start ゲーム 設定されました
+  map-start-set: 'マップ始点を設定しました'
+  map-start-set-game: 'ゲーム {game} のマップ始点を設定しました'
   map-temp-hint: '一時ワールドを使用します'
-  match-info-header: === Match Info ===
+  match-info-header: '=== マッチ情報 ==='
   match-mode: 'マッチモード'
   match-progress: 'マッチ進行状況'
   match-score: 'マッチスコア'
   match-start-config: 'マッチ設定: {count}ゲーム'
   match-started: 'マッチを開始しました（{count}ゲーム）'
   match-stopped: 'マッチを停止しました'
-  no-block-found: No ブロック found
-  no-games: No ゲームs
+  no-block-found: 'ブロックが見つかりません'
+  no-games: 'ゲームがありません'
   no-permission: 'このコマンドを実行する権限がありません'
   not-in-game: 'ゲームに参加していません'
   player-changed-team: '{player}がチームを変更しました'
@@ -136,7 +136,7 @@ command:
   spawn-list-header: === Spawn List ===
   spawn-location: 'スポーン地点'
   spawn-not-found: 'スポーン地点が見つかりません'
-  spawn-not-set: スポーン not 設定されました
+  spawn-not-set: 'スポーン地点が設定されていません'
   start-mode-hint: 'マッチモードで開始するには: /ctf start <ゲーム名> match <ゲーム数>'
   status-blue-team: '青チーム: {count}人'
   status-configuring: '設定中'
@@ -308,15 +308,15 @@ event-chest:
   spawn-message: '[イベント] マップ中央にレアアイテムが入ったチェストが出現しました！'
 
 log:
-  block-restore-failed: Block Restore Failed 失敗しました
+  block-restore-failed: 'ブロック復元に失敗しました: ({x}, {y}, {z}) {error}'
   game-cannot-start: Cannot ゲーム start
   game-loop-started: 'ゲームループを開始しました'
   game-starting: 'ゲーム開始中'
-  map-restore-error: Map Restore Error 失敗しました
-  map-restore-failed: Map Restore Failed 失敗しました
-  map-restored: Map resto赤
-  map-restored-blocks: Map resto赤 ブロックs
-  map-save-failed: Map Save Failed 失敗しました
+  map-restore-error: 'マップ復元エラー: {error}'
+  map-restore-failed: 'マップの復元に失敗しました'
+  map-restored: 'マップを復元しました'
+  map-restored-blocks: 'マップを復元しました ({count}ブロック)'
+  map-save-failed: 'マップの保存に失敗しました: {game} ({error})'
   map-saved: 'マップを保存しました: {map}'
   no-saved-map: '[no saved map]'
   player-cannot-join: Cannot プレイヤー join
@@ -324,12 +324,12 @@ log:
   respawn-task-cancel-match: Reスポーン task cancel マッチ
   respawn-task-cancel-phase: Reスポーン task cancel フェーズ
   respawn-task-cancel-stop: Reスポーン task cancel stop
-  shop-available-items: Shop available アイテムs
-  shop-item-list: Shop アイテム list
-  shop-item-not-found: Shop Item Not Found 見つかりません
-  shop-purchase-called: Shop purchase called
+  shop-available-items: 'ショップアイテム一覧'
+  shop-item-list: 'ショップアイテム一覧'
+  shop-item-not-found: 'ショップアイテムが見つかりません: {item}'
+  shop-purchase-called: 'ショップ購入処理'
   skip-map-restore: 'マップ復元をスキップ'
-  temp-world-failed: Temp World Failed 失敗しました
+  temp-world-failed: 'テンポラリワールドの作成に失敗しました'
   explosion-protected: '&c重要なエリアは爆発から保護されています！'
 admin:
   player-not-found: 'プレイヤー {player} が見つかりません'
@@ -344,21 +344,21 @@ admin:
   player-team-changed-by-admin: '{player} が管理者 {admin} によって {team} チームに変更されました'
   change-team-failed: 'チーム変更に失敗しました'
 manager:
-  auto-detect-failed: Auto Detect Failed 失敗しました
+  auto-detect-failed: '自動検出に失敗しました'
   cannot-save-running: '実行中のゲームは保存できません'
   cannot-update-running: '実行中のゲームは更新できません'
-  config-not-found: Config Not Found 見つかりません
+  config-not-found: '設定ファイルが見つかりません: {game}'
   game-name-exists: 'そのゲーム名はすでに存在します'
-  map-area-not-set: map area not 設定されました
-  map-range-not-set: map range not 設定されました
-  map-save-failed: Map Save Failed 失敗しました
+  map-area-not-set: 'マップ範囲が設定されていません'
+  map-range-not-set: 'マップ範囲が設定されていません'
+  map-save-failed: 'マップの保存に失敗しました'
   method-ctf-commands: '[method ctf commands]'
   method-worldedit: '[method worldedit]'
   multiple-locations: '[multiple locations]'
-  place-required-blocks: Place requi赤 ブロックs
-  pos1-not-set: pos1 not 設定されました
-  pos2-not-set: pos2 not 設定されました
-  set-range-methods: set range methods 設定されました
+  place-required-blocks: '必要なブロックを配置してください'
+  pos1-not-set: 'pos1が設定されていません'
+  pos2-not-set: 'pos2が設定されていません'
+  set-range-methods: 'マップ範囲の設定方法'
   using-existing-map: '既存のマップを使用中'
   using-worldedit: 'WorldEdit領域を使用中'
   required-blocks: 必要なブロック
@@ -453,12 +453,12 @@ result:
   $action: '[$action]'
 scanner:
   blue-flag-multiple: 青チームの旗が複数検出されました
-  blue-flag-not-found: Blue Flag Not Found 見つかりません
+  blue-flag-not-found: '青チームの旗が見つかりません'
   blue-flag-spawn-too-close: 青チームの旗とスポーン地点が近すぎます
   blue-spawn-not-found: '青チームのスポーン地点が見つかりません'
   blue-spawns-too-close: 青チームのスポーン地点が近すぎます
   red-flag-multiple: 赤チームの旗が複数検出されました
-  red-flag-not-found: Red Flag Not Found 見つかりません
+  red-flag-not-found: '赤チームの旗が見つかりません'
   red-flag-spawn-too-close: 赤チームの旗とスポーン地点が近すぎます
   red-spawn-not-found: '赤チームのスポーン地点が見つかりません'
   red-spawns-too-close: 赤チームのスポーン地点が近すぎます
@@ -494,17 +494,17 @@ setup:
   blocks_range_error: ブロック数は0〜64の範囲で入力してください
   blue-flag-location: 青チームの旗の位置
   blue-flag-menu: 青チームの旗メニュー
-  blue-flag-prompt: Please 青 旗
+  blue-flag-prompt: '青チームの旗の位置を設定してください'
   blue-flag-set: 青 旗 設定されました
   blue-spawn-location: 青チームのスポーン地点
   blue-spawn-menu: 青チームのスポーンメニュー
-  blue-spawn-prompt: Please 青 スポーン
+  blue-spawn-prompt: '青チームのスポーン地点を設定してください'
   blue-spawn-set: 青 スポーン 設定されました
   build-mode-menu: '建築モードメニュー'
-  build-mode-prompt: Please 建築 mode
+  build-mode-prompt: '建築フェーズのゲームモードを選択してください'
   build-mode-set: 建築 mode 設定されました
   build-time-menu: '建築時間メニュー'
-  build-time-prompt: Please 建築 time
+  build-time-prompt: '建築フェーズの時間（秒）を入力してください'
   build-time-set: 建築 time 設定されました
   build_blocks_menu: '10. 建築フェーズのブロック数を更新 (現在: {blocks}個)'
   build_blocks_prompt: 建築フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)
@@ -514,7 +514,7 @@ setup:
   build_blocks_updated: 建築フェーズのブロック数を更新しました
   cancelled: キャンセルしました
   combat-time-menu: '戦闘時間メニュー'
-  combat-time-prompt: Please 戦闘 time
+  combat-time-prompt: '戦闘フェーズの時間（秒）を入力してください'
   combat-time-set: 戦闘 time 設定されました
   combat_blocks_menu: '11. 戦闘フェーズのブロック数を更新 (現在: {blocks}個)'
   combat_blocks_prompt: 戦闘フェーズで配布するブロック数を入力してください (コンクリートとガラスそれぞれ)
@@ -528,7 +528,7 @@ setup:
   fixed-rounds-mode: '[fixed rounds mode]'
   flag-position-required: '旗の位置設定が必要です'
   flag-required: '旗の設定が必要です'
-  game-count-prompt: Please ゲーム count
+  game-count-prompt: 'マッチのゲーム数を入力してください'
   game-created: 'ゲームを作成しました'
   intermediate_time_menu: '9. マッチ中間の作戦会議時間を更新 (現在: {time}秒)'
   intermediate_time_prompt: 'マッチ中間の作戦会議時間を秒単位で入力してください (例: 15)'
@@ -538,22 +538,22 @@ setup:
   intermediate_time_update_prompt: 'マッチ中間の作戦会議時間を秒単位で入力してください (現在: {current}秒)'
   intermediate_time_updated: マッチ中間の作戦会議時間を更新しました
   invalid-answer: '無効な回答です'
-  invalid-game-name: Invalid ゲーム name
+  invalid-game-name: '無効なゲーム名です'
   invalid-mode: '無効なモードです'
   invalid-selection: '無効な選択です'
   map-auto-detect-hint: '[map auto detect hint]'
-  map-auto-detect-prompt: Please map auto detect
-  match-mode-prompt: Please マッチ mode
+  map-auto-detect-prompt: 'マップを自動検出しますか？'
+  match-mode-prompt: 'マッチモードを選択してください'
   match-mode-set: マッチ mode 設定されました
   match-range-error: 'マッチ数の範囲エラー'
   match-target-set: マッチ target 設定されました
   red-flag-location: 赤チームの旗の位置
   red-flag-menu: 赤チームの旗メニュー
-  red-flag-prompt: Please 赤 旗
+  red-flag-prompt: '赤チームの旗の位置を設定してください'
   red-flag-set: 赤 旗 設定されました
   red-spawn-location: 赤チームのスポーン地点
   red-spawn-menu: 赤チームのスポーンメニュー
-  red-spawn-prompt: Please 赤 スポーン
+  red-spawn-prompt: '赤チームのスポーン地点を設定してください'
   red-spawn-set: 赤 スポーン 設定されました
   respawn_base_menu: '12. 基本リスポーン時間を更新 (現在: {time}秒)'
   respawn_base_prompt: '基本リスポーン時間を秒単位で入力してください (例: 10)'
@@ -606,9 +606,9 @@ shop:
   inventory-full: '[inventory full]'
   phase-restricted: 'フェーズ制限中です'
   purchase-limit: '[purchase limit]'
-  purchase-success: Purchase Success 成功しました
+  purchase-success: '購入しました: {item} ({price}G)'
   shop-only-during-game: 'ショップはゲーム中のみ使用可能です'
-  team-not-found: Team Not Found 見つかりません
+  team-not-found: 'チームが見つかりません'
   title: ショップ - {currency}G (ページ {page})
   categories:
     blocks: ブロック

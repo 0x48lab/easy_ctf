@@ -172,9 +172,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                 Component.text(plugin.languageManager.getMessage("command.list-item", "index" to (index + 1).toString(), "name" to name), NamedTextColor.WHITE)
                     .append(Component.text(plugin.languageManager.getMessage("command.list-status", "status" to status), statusColor))
                     .append(Component.text(plugin.languageManager.getMessage("ui.separator-dash"), NamedTextColor.GRAY))
-                    .append(Component.text(plugin.languageManager.getMessage("command.list-red-count", "count" to redSize.toString()), NamedTextColor.RED))
+                    .append(Component.text(plugin.languageManager.getMessage("command.list-red-count", "count" to redSize.toString()), NamedTextColor.GOLD))
                     .append(Component.text(plugin.languageManager.getMessage("ui.separator-comma"), NamedTextColor.GRAY))
-                    .append(Component.text(plugin.languageManager.getMessage("command.list-blue-count", "count" to blueSize.toString()), NamedTextColor.BLUE))
+                    .append(Component.text(plugin.languageManager.getMessage("command.list-blue-count", "count" to blueSize.toString()), NamedTextColor.AQUA))
             )
             
             if (game.redFlagLocation == null || game.blueFlagLocation == null) {
@@ -674,7 +674,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-header", "name" to gameName), NamedTextColor.GOLD))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-state", "state" to game.state.toString()), NamedTextColor.WHITE))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-phase", "phase" to game.phase.toString()), NamedTextColor.WHITE))
-        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-red-team", "count" to game.redTeam.size.toString()), NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-red-team", "count" to game.redTeam.size.toString()), NamedTextColor.GOLD))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.status-blue-team", "count" to game.blueTeam.size.toString()), NamedTextColor.BLUE))
         
         if (game.state == GameState.RUNNING) {
@@ -733,9 +733,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         
         val redFlag = game.redFlagLocation
         if (redFlag != null) {
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag", "x" to redFlag.blockX.toString(), "y" to redFlag.blockY.toString(), "z" to redFlag.blockZ.toString()), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag", "x" to redFlag.blockX.toString(), "y" to redFlag.blockY.toString(), "z" to redFlag.blockZ.toString()), NamedTextColor.GOLD))
         } else {
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag-not-set"), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-flag-not-set"), NamedTextColor.GOLD))
         }
         
         // GameConfigを取得
@@ -744,12 +744,12 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         // スポーン地点情報（複数対応）
         val redSpawnLocations = config?.getAllRedSpawnLocations() ?: emptyList()
         if (redSpawnLocations.isEmpty()) {
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-same"), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-same"), NamedTextColor.GOLD))
         } else if (redSpawnLocations.size == 1) {
             val spawn = redSpawnLocations[0]
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn", "x" to spawn.blockX.toString(), "y" to spawn.blockY.toString(), "z" to spawn.blockZ.toString()), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn", "x" to spawn.blockX.toString(), "y" to spawn.blockY.toString(), "z" to spawn.blockZ.toString()), NamedTextColor.GOLD))
         } else {
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-multiple", "count" to redSpawnLocations.size.toString()), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.info-red-spawn-multiple", "count" to redSpawnLocations.size.toString()), NamedTextColor.GOLD))
         }
         
         val blueFlag = game.blueFlagLocation
@@ -1027,9 +1027,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         if (result.success) {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-saved"), NamedTextColor.GREEN))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.detection-result"), NamedTextColor.AQUA))
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-detected", "location" to (result.redSpawn ?: "unknown")), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-spawn-detected", "location" to (result.redSpawn ?: "unknown")), NamedTextColor.GOLD))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-spawn-detected", "location" to (result.blueSpawn ?: "unknown")), NamedTextColor.BLUE))
-            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-flag-detected", "location" to (result.redFlag ?: "unknown")), NamedTextColor.RED))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-flag-detected", "location" to (result.redFlag ?: "unknown")), NamedTextColor.GOLD))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.blue-flag-detected", "location" to (result.blueFlag ?: "unknown")), NamedTextColor.BLUE))
         } else {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.map-save-failed"), NamedTextColor.RED))
@@ -1173,7 +1173,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-list-header", "name" to gameName), NamedTextColor.GOLD))
         
         // 赤チームのスポーン地点
-        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-team-label"), NamedTextColor.RED))
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.red-team-label"), NamedTextColor.GOLD))
         if (config.redSpawnLocation != null) {
             val loc = config.redSpawnLocation!!
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.spawn-legacy", "x" to loc.blockX.toString(), "y" to loc.blockY.toString(), "z" to loc.blockZ.toString()), NamedTextColor.GRAY))
@@ -1490,7 +1490,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.current-balance"), NamedTextColor.GOLD))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.red-team", 
             "size" to currentBalance["redTeamSize"].toString(),
-            "score" to String.format("%.1f", currentBalance["redTeamScore"] as Double)), NamedTextColor.RED))
+            "score" to String.format("%.1f", currentBalance["redTeamScore"] as Double)), NamedTextColor.GOLD))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.blue-team",
             "size" to currentBalance["blueTeamSize"].toString(), 
             "score" to String.format("%.1f", currentBalance["blueTeamScore"] as Double)), NamedTextColor.BLUE))
@@ -1503,7 +1503,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.proposed-balance"), NamedTextColor.GOLD))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.red-team",
             "size" to balancedTeams.redTeam.size.toString(),
-            "score" to String.format("%.1f", balancedTeams.redTeamTotalScore)), NamedTextColor.RED))
+            "score" to String.format("%.1f", balancedTeams.redTeamTotalScore)), NamedTextColor.GOLD))
         sender.sendMessage(Component.text(plugin.languageManager.getMessage("balance.blue-team",
             "size" to balancedTeams.blueTeam.size.toString(),
             "score" to String.format("%.1f", balancedTeams.blueTeamTotalScore)), NamedTextColor.BLUE))
