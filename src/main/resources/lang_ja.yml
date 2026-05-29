@@ -100,9 +100,9 @@ command:
   join-confirm: 'ゲーム{game}に参加しました'
   join-confirm-time: 'ゲーム{game}に参加しました（{seconds}秒後に開始）'
   join-failed: 'ゲームへの参加に失敗しました'
-  list-blue-count: List 青 count
-  list-item: List アイテム
-  list-red-count: List 赤 count
+  list-blue-count: '青{count}人'
+  list-item: '{index}. {name} '
+  list-red-count: '赤{count}人'
   list-status: '状態: {status}'
   map-end-set: map end 設定されました
   map-end-set-game: map end ゲーム 設定されました

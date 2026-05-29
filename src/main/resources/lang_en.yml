@@ -100,9 +100,9 @@ command:
   join-confirm: Join confirm
   join-confirm-time: Join confirm time
   join-failed: Join Failed failed
-  list-blue-count: List blue count
-  list-item: List item
-  list-red-count: List red count
+  list-blue-count: 'Blue {count}'
+  list-item: '{index}. {name} '
+  list-red-count: 'Red {count}'
   list-status: List status
   map-end-set: map end has been set
   map-end-set-game: map end game has been set
