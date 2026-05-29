@@ -736,10 +736,22 @@ class Game(
     }
     
     private fun selectTeamForPlayer(player: Player): Team {
-        val teamPlayers = getActiveTeams().associateWith { team ->
-            (teams[team] ?: emptySet()).mapNotNull { plugin.server.getPlayer(it) }
-        }
-        return plugin.teamBalancer.selectTeamForPlayer(player, teamPlayers)
+        val activeTeams = getActiveTeams()
+
+        // 1. 人数が最少のチームを選ぶ
+        val minSize = activeTeams.minOf { getTeamSize(it) }
+        val smallestTeams = activeTeams.filter { getTeamSize(it) == minSize }
+
+        if (smallestTeams.size == 1) return smallestTeams.first()
+
+        // 2. 人数同じなら、スコアが最も低い（負けてる）チームに入れる
+        val lowestScore = smallestTeams.minOf { score[it] ?: 0 }
+        val losingTeams = smallestTeams.filter { (score[it] ?: 0) == lowestScore }
+
+        if (losingTeams.size == 1) return losingTeams.first()
+
+        // 3. それでも同じなら最初のチーム
+        return losingTeams.first()
     }
     
     fun getPlayerTeam(uuid: UUID): Team? {
