@@ -600,8 +600,24 @@ class GameManager(private val plugin: Main) {
         
         // ブロックをスキャンして特定の位置を検出
         val scanResult = mapScanner.scan(region)
-        
-        if (!scanResult.isValid()) {
+
+        // 自動検出が失敗した場合、既存の設定にフォールバック
+        val existingConfig = configManager.loadConfig(gameName)
+        if (!scanResult.isValid() && existingConfig != null && existingConfig.isValid()) {
+            // 既存設定があるので自動検出なしでマップだけ保存
+            plugin.logger.info("[GameManager] Auto-detect failed but existing config is valid, saving map with existing settings")
+            val mapManager = com.hacklab.ctf.map.CompressedMapManager(plugin)
+            return if (mapManager.saveMap(gameName, region)) {
+                MapSaveResult(true,
+                    redSpawn = existingConfig.redSpawnLocation?.let { "${it.blockX}, ${it.blockY}, ${it.blockZ}" },
+                    blueSpawn = existingConfig.blueSpawnLocation?.let { "${it.blockX}, ${it.blockY}, ${it.blockZ}" },
+                    redFlag = existingConfig.redFlagLocation?.let { "${it.blockX}, ${it.blockY}, ${it.blockZ}" },
+                    blueFlag = existingConfig.blueFlagLocation?.let { "${it.blockX}, ${it.blockY}, ${it.blockZ}" }
+                )
+            } else {
+                MapSaveResult(false, listOf(plugin.languageManager.getMessage("manager.map-save-failed")))
+            }
+        } else if (!scanResult.isValid()) {
             return MapSaveResult(false, scanResult.errors)
         }
         
