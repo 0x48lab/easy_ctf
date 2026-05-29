@@ -122,7 +122,7 @@ class GameSetupSession(private val plugin: Main) {
             return false
         }
         
-        val config = GameConfig(gameName, world)
+        val config = GameConfig.createWithDefaults(gameName, world, plugin)
         val session = CreateSession(player, config, plugin = plugin)
         activeSessions[player.uniqueId] = session
         

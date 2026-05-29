@@ -624,7 +624,7 @@ class GameManager(private val plugin: Main) {
         // 新規ゲームの場合は設定を作成、既存ゲームの場合は更新
         if (isNewGame) {
             // 新規ゲーム作成
-            val config = GameConfig(gameName, pos1.world).apply {
+            val config = GameConfig.createWithDefaults(gameName, pos1.world, plugin).apply {
                 redFlagLocation = scanResult.redFlags[0]
                 blueFlagLocation = scanResult.blueFlags[0]
                 // 複数スポーン地点の処理

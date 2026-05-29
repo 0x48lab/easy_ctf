@@ -218,4 +218,30 @@ data class GameConfig(
         matchTarget = matchTarget,
         createdAt = createdAt
     )
+
+    companion object {
+        /**
+         * config.ymlのデフォルト値を使ってGameConfigを生成
+         */
+        fun createWithDefaults(name: String, world: World, plugin: org.bukkit.plugin.java.JavaPlugin): GameConfig {
+            val cfg = plugin.config
+            return GameConfig(
+                name = name,
+                world = world,
+                autoStartEnabled = cfg.getBoolean("default-game.auto-start-enabled", false),
+                minPlayers = cfg.getInt("default-game.min-players", 2),
+                maxPlayersPerTeam = cfg.getInt("default-game.max-players-per-team", 10),
+                respawnDelayBase = cfg.getInt("default-game.respawn-delay-base", 0),
+                respawnDelayPerDeath = cfg.getInt("default-game.respawn-delay-per-death", 0),
+                respawnDelayMax = cfg.getInt("default-game.respawn-delay-max", 0),
+                buildDuration = cfg.getInt("default-phases.build-duration", 180),
+                buildPhaseGameMode = cfg.getString("default-phases.build-phase-gamemode", "SURVIVAL") ?: "SURVIVAL",
+                combatDuration = cfg.getInt("default-phases.combat-duration", 420),
+                resultDuration = cfg.getInt("default-phases.result-duration", 15),
+                intermediateDuration = cfg.getInt("default-phases.intermediate-result-duration", 15),
+                buildPhaseBlocks = cfg.getInt("default-phases.build-phase-blocks", 16),
+                combatPhaseBlocks = cfg.getInt("default-phases.combat-phase-blocks", 16)
+            )
+        }
+    }
 }
