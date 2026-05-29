@@ -324,6 +324,7 @@ class FlagSystem(
         // 全プレイヤーをチェック
         game.getAllPlayers().forEach { player ->
             val team = game.getPlayerTeam(player.uniqueId) ?: return@forEach
+            if (team == Team.SPECTATOR) return@forEach // 観戦者はスキップ
 
             // 既に旗を持っているプレイヤーはスキップ
             if (player.uniqueId == game.redFlagCarrier || player.uniqueId == game.blueFlagCarrier) {

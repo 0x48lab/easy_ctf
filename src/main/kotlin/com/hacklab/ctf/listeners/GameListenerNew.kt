@@ -117,6 +117,7 @@ class GameListenerNew(private val plugin: Main) : Listener {
         if (game.state != GameState.RUNNING) return
         
         val playerTeam = game.getPlayerTeam(player.uniqueId) ?: return
+        if (playerTeam == Team.SPECTATOR) return // 観戦者はゲームロジックに参加しない
         val playerLoc = player.location
         
         // 戦闘フェーズ中の旗取得チェック

@@ -716,6 +716,15 @@ class Game(
         setupScoreboard(player)
         scoreboardManager.addPlayerToBossBar(player)
         
+        // 観戦者の場合はSPECTATORモードで中央にテレポート
+        if (team == Team.SPECTATOR) {
+            player.gameMode = GameMode.SPECTATOR
+            val centerLocation = getCenterLocation() ?: getSafeSpawnLocation(Team.RED)
+            player.teleport(centerLocation)
+            giveSpectatorItems(player)
+            return
+        }
+
         // 現在のフェーズに応じた装備・ゲームモード・飛行設定
         when (phase) {
             GamePhase.BUILD -> {
@@ -780,7 +789,7 @@ class Game(
     
     fun getTeamPlayers(): Set<Player> {
         // チームプレイヤーのみ（観戦者を除外）
-        return (redTeam + blueTeam).mapNotNull { Bukkit.getPlayer(it) }.toSet()
+        return teams.values.flatten().mapNotNull { Bukkit.getPlayer(it) }.toSet()
     }
     
     private fun checkAutoStart() {
@@ -2371,8 +2380,9 @@ class Game(
     
     
     private fun giveCombatPhaseItems(player: Player, team: Team) {
+        if (team == Team.SPECTATOR) return // 観戦者には装備を付与しない
         val inv = player.inventory
-        
+
         // 革の防具（チームカラー）を再装備（防具をリセットして確実に着用）
         giveColoredLeatherArmor(player, team)
         
