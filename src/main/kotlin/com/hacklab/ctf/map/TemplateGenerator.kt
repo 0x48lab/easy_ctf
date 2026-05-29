@@ -61,22 +61,22 @@ class TemplateGenerator(private val plugin: Main) {
     }
 
     private fun getBasePositions(size: TemplateSize, baseX: Int, baseZ: Int, width: Int, depth: Int): List<Pair<Int, Int>> {
-        val margin = 8
+        val margin = 5 // 端からの距離（四隅配置）
         return when (size) {
             TemplateSize.SMALL -> listOf(
-                Pair(baseX + width / 2, baseZ + margin),
-                Pair(baseX + width / 2, baseZ + depth - margin)
+                Pair(baseX + margin, baseZ + margin),                     // RED: 左上
+                Pair(baseX + width - margin, baseZ + depth - margin)      // BLUE: 右下
             )
             TemplateSize.MEDIUM -> listOf(
-                Pair(baseX + width / 2, baseZ + margin),
-                Pair(baseX + margin, baseZ + depth - margin),
-                Pair(baseX + width - margin, baseZ + depth - margin)
+                Pair(baseX + margin, baseZ + margin),                     // RED: 左上
+                Pair(baseX + width - margin, baseZ + depth - margin),     // BLUE: 右下
+                Pair(baseX + width - margin, baseZ + margin)              // GREEN: 右上
             )
             TemplateSize.LARGE -> listOf(
-                Pair(baseX + margin, baseZ + margin),
-                Pair(baseX + width - margin, baseZ + margin),
-                Pair(baseX + width - margin, baseZ + depth - margin),
-                Pair(baseX + margin, baseZ + depth - margin)
+                Pair(baseX + margin, baseZ + margin),                     // RED: 左上
+                Pair(baseX + width - margin, baseZ + margin),             // BLUE: 右上
+                Pair(baseX + width - margin, baseZ + depth - margin),     // GREEN: 右下
+                Pair(baseX + margin, baseZ + depth - margin)              // YELLOW: 左下
             )
         }
     }
