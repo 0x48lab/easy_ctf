@@ -2,7 +2,6 @@ package com.hacklab.ctf.map
 
 import com.hacklab.ctf.Main
 import com.hacklab.ctf.utils.Team
-import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
 
@@ -14,23 +13,56 @@ class TemplateGenerator(private val plugin: Main) {
         LARGE(80, 80, 48, 4, "大")
     }
 
+    /**
+     * 向き情報: forward=前方, right=右手方向
+     */
+    data class Direction(val fwdX: Int, val fwdZ: Int, val rightX: Int, val rightZ: Int)
+
+    /**
+     * プレイヤーのyawから4方位を判定し、forward/right方向を返す
+     */
+    private fun getDirection(yaw: Float): Direction {
+        val normalized = ((yaw % 360) + 360) % 360
+        return when {
+            normalized in 315.0..360.0 || normalized in 0.0..45.0 ->
+                Direction(0, 1, -1, 0)    // 南向き: 前=+Z, 右=-X
+            normalized in 45.0..135.0 ->
+                Direction(-1, 0, 0, -1)   // 西向き: 前=-X, 右=-Z
+            normalized in 135.0..225.0 ->
+                Direction(0, -1, 1, 0)    // 北向き: 前=-Z, 右=+X
+            else ->
+                Direction(1, 0, 0, 1)     // 東向き: 前=+X, 右=+Z
+        }
+    }
+
+    /**
+     * 相対座標（右方向=r, 前方向=f）をワールド座標に変換
+     */
+    private fun toWorld(baseX: Int, baseZ: Int, r: Int, f: Int, dir: Direction): Pair<Int, Int> {
+        return Pair(
+            baseX + r * dir.rightX + f * dir.fwdX,
+            baseZ + r * dir.rightZ + f * dir.fwdZ
+        )
+    }
+
     fun generate(player: Player, size: TemplateSize): Boolean {
         val world = player.world
-        val loc = player.location
+        val baseX = player.location.blockX
+        val baseY = player.location.blockY
+        val baseZ = player.location.blockZ
+        val dir = getDirection(player.location.yaw)
 
-        val baseX = loc.blockX
-        val baseY = loc.blockY
-        val baseZ = loc.blockZ
-
-        val width = size.width
-        val depth = size.depth
+        val width = size.width   // 右方向の幅
+        val depth = size.depth   // 前方向の奥行き
         val height = size.height
 
-        plugin.logger.info("[Template] Generating ${size.name} template at ($baseX, $baseY, $baseZ), size: ${width}x${depth}x${height}")
+        plugin.logger.info("[Template] Generating ${size.name} template at ($baseX, $baseY, $baseZ), dir=$dir, size: ${width}x${depth}x${height}")
 
-        // 羊毛マーカー（pos1/pos2 クリップ用）
-        world.getBlockAt(baseX, baseY, baseZ).type = Material.WHITE_WOOL  // pos1
-        world.getBlockAt(baseX + width - 1, baseY + height - 1, baseZ + depth - 1).type = Material.ORANGE_WOOL  // pos2
+        // 羊毛マーカー（pos1: プレイヤー位置=左下、pos2: 右上奥の天井）
+        val (pos1X, pos1Z) = toWorld(baseX, baseZ, 0, 0, dir)
+        val (pos2X, pos2Z) = toWorld(baseX, baseZ, width - 1, depth - 1, dir)
+        world.getBlockAt(pos1X, baseY, pos1Z).type = Material.WHITE_WOOL
+        world.getBlockAt(pos2X, baseY + height - 1, pos2Z).type = Material.ORANGE_WOOL
 
         // 中央エントランス（石レンガの床）
         val centralSize = when (size) {
@@ -38,45 +70,50 @@ class TemplateGenerator(private val plugin: Main) {
             TemplateSize.MEDIUM -> 16
             TemplateSize.LARGE -> 20
         }
-        val centralStartX = (width - centralSize) / 2
-        val centralStartZ = (depth - centralSize) / 2
-        for (x in centralStartX until centralStartX + centralSize) {
-            for (z in centralStartZ until centralStartZ + centralSize) {
-                world.getBlockAt(baseX + x, baseY, baseZ + z).type = Material.STONE_BRICKS
+        val centralStartR = (width - centralSize) / 2
+        val centralStartF = (depth - centralSize) / 2
+        for (r in centralStartR until centralStartR + centralSize) {
+            for (f in centralStartF until centralStartF + centralSize) {
+                val (wx, wz) = toWorld(baseX, baseZ, r, f, dir)
+                world.getBlockAt(wx, baseY, wz).type = Material.STONE_BRICKS
             }
         }
 
         // チームベースの配置
         val activeTeams = Team.getActiveTeams(size.teamCount)
-        val basePositions = getBasePositions(size, baseX, baseZ, width, depth)
+        val basePositions = getBasePositions(size, width, depth)
 
         activeTeams.forEachIndexed { index, team ->
             if (index < basePositions.size) {
-                val (bx, bz) = basePositions[index]
-                placeTeamBase(world, bx, baseY, bz, team)
+                val (relR, relF) = basePositions[index]
+                val (wx, wz) = toWorld(baseX, baseZ, relR, relF, dir)
+                placeTeamBase(world, wx, baseY, wz, team)
             }
         }
 
         return true
     }
 
-    private fun getBasePositions(size: TemplateSize, baseX: Int, baseZ: Int, width: Int, depth: Int): List<Pair<Int, Int>> {
-        val margin = 5 // 端からの距離（四隅配置）
+    /**
+     * 各チームベースの相対座標（右方向, 前方向）を返す。四隅配置。
+     */
+    private fun getBasePositions(size: TemplateSize, width: Int, depth: Int): List<Pair<Int, Int>> {
+        val margin = 5
         return when (size) {
             TemplateSize.SMALL -> listOf(
-                Pair(baseX + margin, baseZ + margin),                     // RED: 左上
-                Pair(baseX + width - margin, baseZ + depth - margin)      // BLUE: 右下
+                Pair(margin, margin),                         // RED: 左下（プレイヤー側）
+                Pair(width - margin, depth - margin)          // BLUE: 右上（対角）
             )
             TemplateSize.MEDIUM -> listOf(
-                Pair(baseX + margin, baseZ + margin),                     // RED: 左上
-                Pair(baseX + width - margin, baseZ + depth - margin),     // BLUE: 右下
-                Pair(baseX + width - margin, baseZ + margin)              // GREEN: 右上
+                Pair(margin, margin),                         // RED: 左下
+                Pair(width - margin, depth - margin),         // BLUE: 右上
+                Pair(width - margin, margin)                  // GREEN: 右下
             )
             TemplateSize.LARGE -> listOf(
-                Pair(baseX + margin, baseZ + margin),                     // RED: 左上
-                Pair(baseX + width - margin, baseZ + margin),             // BLUE: 右上
-                Pair(baseX + width - margin, baseZ + depth - margin),     // GREEN: 右下
-                Pair(baseX + margin, baseZ + depth - margin)              // YELLOW: 左下
+                Pair(margin, margin),                         // RED: 左下
+                Pair(width - margin, margin),                 // BLUE: 右下
+                Pair(width - margin, depth - margin),         // GREEN: 右上
+                Pair(margin, depth - margin)                  // YELLOW: 左上
             )
         }
     }
