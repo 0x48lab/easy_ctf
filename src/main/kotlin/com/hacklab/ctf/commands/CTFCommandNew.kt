@@ -2,6 +2,7 @@ package com.hacklab.ctf.commands
 
 import com.hacklab.ctf.Main
 import com.hacklab.ctf.managers.GameManager
+import com.hacklab.ctf.map.TemplateGenerator
 import com.hacklab.ctf.utils.GameState
 import com.hacklab.ctf.utils.MatchMode
 import net.kyori.adventure.text.Component
@@ -62,6 +63,8 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             "resetstats" -> return handleResetStatsCommand(sender, args)
             "balance" -> return handleBalanceCommand(sender, args)
             "rules" -> return handleRulesCommand(sender)
+            // テンプレート生成
+            "template" -> return handleTemplateCommand(sender, args)
             // 看板ランキング関連
             "setsign" -> return handleSetSignCommand(sender, args)
             "removesign" -> return handleRemoveSignCommand(sender, args)
@@ -807,6 +810,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-setpos1"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-setpos2"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.usage-savemap"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-template"), NamedTextColor.YELLOW))
             // 管理者用プレイヤー管理コマンド
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-addplayer"), NamedTextColor.YELLOW))
             sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.help-changeteam"), NamedTextColor.YELLOW))
@@ -834,7 +838,7 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                 val subcommands = mutableListOf("list", "join", "leave", "team", "spectator", "status", "info", "stats", "leaderboard", "rules")
                 if (sender.hasPermission("ctf.admin")) {
                     subcommands.addAll(listOf("create", "update", "delete", "start", "stop", "setflag", "setspawn", "setpos1", "setpos2", "savemap",
-                        "addspawn", "removespawn", "listspawns", "addplayer", "changeteam", "resetstats", "balance", "setsign", "removesign"))
+                        "addspawn", "removespawn", "listspawns", "addplayer", "changeteam", "resetstats", "balance", "setsign", "removesign", "template"))
                 }
                 completions.addAll(subcommands.filter { it.startsWith(args[0].lowercase()) })
             }
@@ -852,6 +856,9 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
                     }
                     "leaderboard" -> {
                         completions.addAll(listOf("score", "kills", "captures", "winrate").filter { it.startsWith(args[1].lowercase()) })
+                    }
+                    "template" -> {
+                        completions.addAll(listOf("small", "medium", "large").filter { it.startsWith(args[1].lowercase()) })
                     }
                     "setsign" -> {
                         completions.addAll(listOf("score", "kills", "captures", "winrate", "kd").filter { it.startsWith(args[1].lowercase()) })
@@ -1615,6 +1622,54 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("§aランキング看板を解除しました", NamedTextColor.GREEN))
         } else {
             sender.sendMessage(Component.text("§cこの看板にはランキングが設定されていません", NamedTextColor.RED))
+        }
+
+        return true
+    }
+
+    private fun handleTemplateCommand(sender: CommandSender, args: Array<String>): Boolean {
+        if (!sender.hasPermission("ctf.admin")) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.no-permission"), NamedTextColor.RED))
+            return true
+        }
+
+        if (sender !is Player) {
+            sender.sendMessage(plugin.languageManager.getMessage("command.player-only"))
+            return true
+        }
+
+        if (args.size < 2) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-usage"), NamedTextColor.YELLOW))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-size-small"), NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-size-medium"), NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-size-large"), NamedTextColor.GRAY))
+            return true
+        }
+
+        val size = when (args[1].lowercase()) {
+            "small", "s", "小" -> TemplateGenerator.TemplateSize.SMALL
+            "medium", "m", "中" -> TemplateGenerator.TemplateSize.MEDIUM
+            "large", "l", "大" -> TemplateGenerator.TemplateSize.LARGE
+            else -> {
+                sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-invalid-size"), NamedTextColor.RED))
+                return true
+            }
+        }
+
+        sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-generating",
+            "size" to size.displayName,
+            "width" to size.width.toString(),
+            "depth" to size.depth.toString(),
+            "height" to size.height.toString()), NamedTextColor.YELLOW))
+
+        val generator = TemplateGenerator(plugin)
+
+        if (generator.generate(sender, size)) {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-complete"), NamedTextColor.GREEN))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-pos-hint"), NamedTextColor.GRAY))
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-usage-hint"), NamedTextColor.GRAY))
+        } else {
+            sender.sendMessage(Component.text(plugin.languageManager.getMessage("command.template-failed"), NamedTextColor.RED))
         }
 
         return true

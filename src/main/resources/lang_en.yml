@@ -171,6 +171,17 @@ command:
   using-worldedit: Using worldedit
   cannot-join-state: Cannot join game in current state
   game-full: This game is full
+  help-template: '/ctf template <small|medium|large> - Generate a stage template'
+  template-usage: 'Usage: /ctf template <small|medium|large>'
+  template-size-small: '  small: 48x40x32, 2 teams'
+  template-size-medium: '  medium: 64x48x48, 3 teams'
+  template-size-large: '  large: 80x80x48, 4 teams'
+  template-invalid-size: 'Invalid size. Choose from small/medium/large'
+  template-generating: 'Generating template... ({size}: {width}x{depth}x{height})'
+  template-complete: 'Template generated!'
+  template-pos-hint: 'White wool = pos1, Orange wool = pos2'
+  template-usage-hint: 'Use /ctf setpos1 and /ctf setpos2 to set the region'
+  template-failed: 'Template generation failed'
 command-extended:
   $action: '[command-extended.$action]'
 countdown:

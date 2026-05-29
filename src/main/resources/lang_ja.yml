@@ -171,6 +171,17 @@ command:
   using-worldedit: 'WorldEdit領域を使用中'
   cannot-join-state: 現在の状態ではゲームに参加できません
   game-full: このゲームは満員です
+  help-template: '/ctf template <small|medium|large> - ステージテンプレートを生成'
+  template-usage: '使用法: /ctf template <small|medium|large>'
+  template-size-small: '  small (小): 48x40x32, 2チーム'
+  template-size-medium: '  medium (中): 64x48x48, 3チーム'
+  template-size-large: '  large (大): 80x80x48, 4チーム'
+  template-invalid-size: '無効なサイズです。small/medium/large から選択してください'
+  template-generating: 'テンプレート生成中... ({size}: {width}x{depth}x{height})'
+  template-complete: 'テンプレート生成完了！'
+  template-pos-hint: '白羊毛 = pos1, オレンジ羊毛 = pos2'
+  template-usage-hint: '/ctf setpos1 と /ctf setpos2 で範囲を設定してください'
+  template-failed: 'テンプレート生成に失敗しました'
 command-extended:
   $action: '[$action]'
 countdown:
