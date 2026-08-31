@@ -297,15 +297,6 @@ items:
     available-phases: [BUILD]
     display-name: "lang:shop.items.water_bucket"
     
-  lava_bucket:
-    material: LAVA_BUCKET
-    amount: 1
-    price: 50
-    category: BLOCKS
-    death-behavior: DROP
-    available-phases: [BUILD]
-    display-name: "lang:shop.items.lava_bucket"
-    
   # ===== レッドストーン =====
   redstone_dust:
     material: REDSTONE
