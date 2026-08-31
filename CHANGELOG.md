@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-31
+
+### Added
+- **Build phase territory restriction (zone system)** — the map is split into HOME / NEUTRAL / ENEMY zones by the distance ratio between the two beacons. During the build phase, no block of any type can be placed in enemy territory, so build time goes into constructing routes through the neutral zone instead of griefing the enemy base.
+  - `mechanics.build-phase.territory-restriction`, `enemy-territory-ratio`, `enemy-beacon-no-build-radius`
+- **Home core safe area** — inside `mechanics.home-safe-radius` of your own beacon/spawn, enemy colored blocks no longer drain shield, preventing the "enemy carpets your own base and turns it into their territory" exploit.
+- **Fast removal of enemy blocks in the home core** — enemy-placed blocks inside the home core break instantly and bypass the adjacent-block restriction, fixing the asymmetry between placing (one click) and removing (pickaxe time).
+  - `mechanics.fast-remove-in-home`
+- **Cleanup refund** — removing an enemy-placed block inside the home core refunds team currency, making griefing a transfer of resources to the defender.
+  - `mechanics.home-cleanup-reward`, `home-cleanup-reward-cap`
+- Non-team block placements (shop-bought blocks such as obsidian) are now tracked with their placing team, which previously was not recorded at all.
+- Zone-based block placement statistics logged at phase end (`[ZoneStats]`) for balance tuning.
+- New message key `action-bar.cannot-place-enemy-territory` (ja/en).
+
+### Changed
+- Spawn locations used for territory checks are cached in `TerritorySystem`; `GameManager.getGameConfig()` reads YAML from disk on every call and must not be hit from the per-tick shield task.
+
 ### Added
 - Initial release of EasyCTF plugin
 - Multiple concurrent CTF games support
