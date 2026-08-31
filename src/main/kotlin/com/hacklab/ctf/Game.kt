@@ -30,6 +30,8 @@ import com.hacklab.ctf.managers.GameScoreboardManager
 import com.hacklab.ctf.combat.DamageHealingSystem
 import com.hacklab.ctf.managers.CurrencyManager
 import com.hacklab.ctf.block.BlockConnectionSystem
+import com.hacklab.ctf.block.TerritorySystem
+import com.hacklab.ctf.block.Zone
 import com.hacklab.ctf.flag.FlagSystem
 import org.bukkit.scoreboard.DisplaySlot
 import org.bukkit.scoreboard.Objective
@@ -164,6 +166,16 @@ class Game(
     
     // ブロック設置制限管理
     val teamPlacedBlocks = mutableMapOf<Team, MutableSet<Location>>() // チーム -> 設置したブロックの座標
+
+    // 非チームブロック（ショップで購入した黒曜石など）の設置者記録
+    // 自陣に置かれた敵ブロックの即時撤去判定に使う
+    val placedNonTeamBlocks = mutableMapOf<Location, Team>() // 座標 -> 設置したチーム
+
+    // 自陣清掃報酬の累計（上限管理用）
+    val homeCleanupRewardGiven = mutableMapOf<Team, Int>() // チーム -> 支給済み額
+
+    // ゾーン別ブロック設置数（バランス調整の実測用）
+    val blocksPlacedByZone = mutableMapOf<Team, MutableMap<Zone, Int>>() // チーム -> (ゾーン -> 設置数)
     
     // ブロック接続ツリー管理
     data class BlockNode(
@@ -181,6 +193,9 @@ class Game(
 
     // ブロック接続システム
     val blockSystem = BlockConnectionSystem(this, plugin)
+
+    // 領域（テリトリー）判定システム
+    val territorySystem = TerritorySystem(this, plugin)
 
     // 旗システム
     val damageHealingSystem = DamageHealingSystem(this, plugin)
@@ -376,11 +391,11 @@ class Game(
             // インベントリをクリア（重要：途中参加時のアイテム持ち込みを防ぐ）
             player.inventory.clear()
 
-            // 現在のフェーズに応じて装備を付与
+            // 現在のフェーズに応じて装備を付与（ブロック含む）
             if (phase == GamePhase.BUILD) {
-                plugin.equipmentManager.giveBuildPhaseEquipment(player)
+                giveBuildPhaseItems(player, selectedTeam)
             } else {
-                plugin.equipmentManager.giveCombatPhaseEquipment(player, selectedTeam)
+                giveCombatPhaseItems(player, selectedTeam)
             }
 
             // スポーン地点にテレポート
@@ -999,6 +1014,11 @@ class Game(
         playerMoneySpent.clear()
         playerBlocksPlaced.clear()
         playerAssists.clear()
+        homeCleanupRewardGiven.clear()
+        blocksPlacedByZone.clear()
+
+        // 領域判定のスポーン地点キャッシュを破棄（設定変更を反映するため）
+        territorySystem.invalidateCache()
 
         // チャンクの事前読み込み
         preloadSpawnChunks()
@@ -1008,6 +1028,7 @@ class Game(
             // ブロック設置記録をクリア
             teamPlacedBlocks.clear()
             getActiveTeams().forEach { teamPlacedBlocks[it] = mutableSetOf() }
+            placedNonTeamBlocks.clear()
 
             // ブロックツリーをクリア
             teamBlockTrees.clear()
@@ -1019,6 +1040,87 @@ class Game(
         plugin.logger.info("[Game] Current world variable: ${world.name}, tempWorld: ${tempWorld?.name}")
         setupFlags()
         setupSpawnAreas()
+
+        // マッチモード2セット目以降：STARTINGフェーズをスキップして直接BUILDフェーズへ
+        val isMatchContinuation = matchWrapper != null && matchWrapper!!.currentGameNumber > 1
+        if (isMatchContinuation) {
+            plugin.logger.info("[Game] Match continuation (game ${matchWrapper!!.currentGameNumber}), skipping STARTING phase")
+
+            // 通貨を初期化（マッチ全体で保持するのでスキップ）
+            // initializeCurrency() はマッチ初回のみ
+
+            // BUILDフェーズへ直接移行
+            state = GameState.RUNNING
+            phase = GamePhase.BUILD
+            currentPhaseTime = buildDuration
+
+            // BossBar作成
+            scoreboardManager.createBossBar()
+            scoreboardManager.bossBar?.setTitle(plugin.languageManager.getMessage("phase-extended.build-time-format", "time" to formatTime(currentPhaseTime)))
+            scoreboardManager.bossBar?.color = BarColor.GREEN
+
+            // スポーン地点の確保
+            ensureSpawnPlatforms()
+
+            // プレイヤーをチームスポーンにテレポートし装備を付与（チームはそのまま保持）
+            getActiveTeams().forEach { team ->
+                val teamPlayers = (teams[team] ?: emptySet()).mapNotNull { Bukkit.getPlayer(it) }
+                teamPlayers.forEach { player ->
+                    player.inventory.clear()
+                    val safeLocation = getSafeSpawnLocation(team)
+                    plugin.logger.info("[Game] Match: Teleporting ${player.name} to ${team.name} spawn at $safeLocation")
+                    player.teleport(safeLocation)
+                    player.gameMode = GameMode.valueOf(buildPhaseGameMode)
+                    player.allowFlight = true
+                    player.isFlying = false
+                    giveBuildPhaseItems(player, team)
+
+                    // タブリストの色を更新
+                    updatePlayerTabColor(player)
+
+                    // スコアボードを設定
+                    setupScoreboard(player)
+                    scoreboardManager.addPlayerToBossBar(player)
+                }
+            }
+
+            // 観戦者の処理
+            spectators.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
+                val centerLocation = getCenterLocation() ?: getSafeSpawnLocation(Team.RED)
+                player.teleport(centerLocation)
+                player.gameMode = GameMode.SPECTATOR
+                scoreboardManager.addPlayerToBossBar(player)
+            }
+
+            // タイトル表示
+            plugin.server.scheduler.runTaskLater(plugin, Runnable {
+                getAllPlayers().forEach { player ->
+                    player.showTitle(Title.title(
+                        plugin.languageManager.getMessageAsComponent("phase-extended.game-start-title"),
+                        plugin.languageManager.getMessageAsComponent("match.match-game-number",
+                            "current" to matchWrapper!!.currentGameNumber.toString(),
+                            "total" to matchWrapper!!.config.matchTarget.toString()),
+                        Title.Times.times(
+                            Duration.ofMillis(500),
+                            Duration.ofSeconds(3),
+                            Duration.ofMillis(500)
+                        )
+                    ))
+                }
+            }, 10L)
+
+            // ショップの購入履歴をリセット
+            plugin.shopManager.clearPurchaseHistory(gameName)
+
+            plugin.logger.info(plugin.languageManager.getMessage("log.game-loop-started", "game" to name))
+
+            // ゲームループ開始
+            startGameLoop()
+
+            return true
+        }
+
+        // 初回ゲーム（または通常モード）：STARTINGフェーズでプレイヤーを待つ
 
         // BossBar作成
         scoreboardManager.createBossBar()
@@ -1299,6 +1401,9 @@ class Game(
     }
     
     private fun transitionToCombatPhase() {
+        // 建築フェーズのゾーン別設置統計をログ出力（バランス調整用）
+        logZoneBlockStats("BUILD")
+
         phase = GamePhase.COMBAT
         currentPhaseTime = combatDuration
         
@@ -1369,6 +1474,9 @@ class Game(
      * 戦闘フェーズ終了処理
      */
     private fun handleCombatPhaseEnd() {
+        // ゾーン別設置統計をログ出力（バランス調整用）
+        logZoneBlockStats("COMBAT")
+
         // ゲームタスクを一時停止
         taskScheduler.cancelNamed(GameTaskScheduler.GAME_LOOP)
 
@@ -1454,6 +1562,10 @@ class Game(
 
         // チームブロックをクリア
         teamPlacedBlocks.clear()
+        placedNonTeamBlocks.clear()
+        homeCleanupRewardGiven.clear()
+        blocksPlacedByZone.clear()
+        territorySystem.invalidateCache()
 
         // 通貨をリセット
         teamCurrency.clear()
@@ -1569,128 +1681,153 @@ class Game(
     fun stop(forceStop: Boolean = false) {
         plugin.logger.info("Stopping game: $gameName, current state: $state, forceStop: $forceStop, matchWrapper: ${matchWrapper != null}")
         state = GameState.ENDING
-        
+
         // 全てのタスクをキャンセル
         plugin.logger.info(plugin.languageManager.getMessage("log.respawn-task-cancel-stop"))
         taskScheduler.cancelAll()
-        
+
         // マッチモードかどうかチェック（強制終了の場合はマッチモードを無視）
         val isMatchMode = !forceStop && matchWrapper != null && matchWrapper!!.isActive && !matchWrapper!!.isMatchComplete()
-        
-        // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）観戦者・pendingPlayersも含む
-        val playerUUIDs = (redTeam + blueTeam + spectators + pendingPlayers).toList()
-        
-        // プレイヤー処理
-        playerUUIDs.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
-            // 発光効果を解除
-            player.isGlowing = false
-            
-            // 敵陣メタデータを削除
-            player.removeMetadata("on_enemy_block", plugin)
-            
-            // UIを必ず削除（強制終了時も含む）
-            scoreboardManager.resetScoreboard(player)
-            scoreboardManager.removePlayerFromBossBar(player)
-            
-            if (!isMatchMode || forceStop) {
-                // マッチモードでない場合、または強制終了の場合
-                player.inventory.clear()
-                player.gameMode = GameMode.CREATIVE
-                
-                // 元のワールドに確実に転送
-                val mainWorld = originalWorld
-                if (mainWorld != null && mainWorld != tempWorld) {
-                    player.teleport(mainWorld.spawnLocation)
-                    plugin.logger.info("[Game] Teleporting ${player.name} back to original world: ${mainWorld.name}")
-                } else {
-                    // フォールバック：メインワールドに転送
-                    val fallbackWorld = Bukkit.getWorlds()[0]
-                    player.teleport(fallbackWorld.spawnLocation)
-                    plugin.logger.warning("[Game] Original world not available, teleporting ${player.name} to main world: ${fallbackWorld.name}")
-                }
-                
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("phase-extended.game-ended"))
-                
-                // GameManagerからプレイヤーを削除
-                val gameManager = plugin.gameManager
-                gameManager.removePlayerFromGame(player)
-            } else {
-                // マッチモードの場合は、テンポラリワールド内でスポーン地点に戻してアドベンチャーモードに
-                val team = getPlayerTeam(player.uniqueId)
-                if (team != null && tempWorld != null) {
-                    val spawnLocation = when (team) {
-                        Team.RED -> redSpawnLocation ?: redFlagLocation
-                        Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
-                        Team.SPECTATOR -> mapCenterLocation ?: redFlagLocation
-                        else -> spawnLocations[team] ?: flagLocations[team]
-                    }
-                    if (spawnLocation != null && spawnLocation.world == tempWorld) {
-                        // テンポラリワールド内でテレポート
-                        player.teleport(spawnLocation)
-                        plugin.logger.info("[Game] Teleporting ${player.name} to spawn in temp world: ${tempWorld!!.name}")
-                    } else {
-                        // スポーン地点が正しく設定されていない場合は、ワールドの中心にテレポート
-                        val centerLocation = Location(tempWorld, 0.0, 64.0, 0.0)
-                        player.teleport(centerLocation)
-                        plugin.logger.warning("[Game] Spawn location not in temp world, teleporting ${player.name} to center")
-                    }
-                }
-                player.gameMode = GameMode.ADVENTURE
-                player.sendMessage(plugin.languageManager.getMessageAsComponent("phase-extended.wait-next-game"))
-            }
-        }
-        
-        // BossBar削除
-        scoreboardManager.destroyBossBar()
-        
-        // スコアボード状態クリア
-        scoreboardManager.clearState()
-        
-        // 旗とスポーン装飾を削除（マッチモードでもクリアする）
-        // ただし、マッチ継続中はプレイヤーが設置したブロックは保持
-        cleanupGameBlocks()
-        
-        // データクリアの前に状態をリセット
-        state = GameState.WAITING
-        phase = GamePhase.BUILD
-        currentPhaseTime = 0
-        autoStartCountdown = -1
-        
-        // マッチモードの場合、プレイヤーデータは保持
-        if (!isMatchMode) {
-            // データクリア
-            redTeam.clear()
-            blueTeam.clear()
-            pendingPlayers.clear()
-            disconnectedPlayers.clear()
-        }
-        
-        // イベントチェストをクリーンアップ
-        cleanupEventChest()
-        
-        // ゲーム状態データはリセット
-        score.clear()
-        score[Team.RED] = 0
-        score[Team.BLUE] = 0
-        droppedFlags.clear()
-        spawnProtection.clear()
-        scoreboardManager.clearState()
-        redFlagCarrier = null
-        blueFlagCarrier = null
 
-        // テンポラリワールドをクリーンアップ（マッチモードでは削除しない、ただし強制終了時は削除）
-        if ((!isMatchMode || forceStop) && tempWorld != null) {
-            val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
-            worldManager.cleanupTempWorld(gameName)
-            tempWorld = null
-            
-            // ワールドを元に戻す
-            world = originalWorld
-        }
-        
-        // マッチモードでもワールド参照は保持する（強制終了でない場合）
-        if (isMatchMode && tempWorld != null && !forceStop) {
-            plugin.logger.info("[Game] Keeping temp world for match continuation: ${tempWorld!!.name}")
+        try {
+            // プレイヤーのUUIDリストをコピー（forEach中の変更を避けるため）観戦者・pendingPlayersも含む
+            val playerUUIDs = (redTeam + blueTeam + spectators + pendingPlayers).toList()
+
+            // プレイヤー処理
+            playerUUIDs.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
+                try {
+                    // 発光効果を解除
+                    player.isGlowing = false
+
+                    // 敵陣メタデータを削除
+                    player.removeMetadata("on_enemy_block", plugin)
+
+                    // UIを必ず削除（強制終了時も含む）
+                    scoreboardManager.resetScoreboard(player)
+                    scoreboardManager.removePlayerFromBossBar(player)
+
+                    if (!isMatchMode || forceStop) {
+                        // マッチモードでない場合、または強制終了の場合
+                        player.inventory.clear()
+                        player.gameMode = GameMode.CREATIVE
+
+                        // 元のワールドに確実に転送
+                        val mainWorld = originalWorld
+                        if (mainWorld != null && mainWorld != tempWorld) {
+                            player.teleport(mainWorld.spawnLocation)
+                            plugin.logger.info("[Game] Teleporting ${player.name} back to original world: ${mainWorld.name}")
+                        } else {
+                            // フォールバック：メインワールドに転送
+                            val fallbackWorld = Bukkit.getWorlds()[0]
+                            player.teleport(fallbackWorld.spawnLocation)
+                            plugin.logger.warning("[Game] Original world not available, teleporting ${player.name} to main world: ${fallbackWorld.name}")
+                        }
+
+                        player.sendMessage(plugin.languageManager.getMessageAsComponent("phase-extended.game-ended"))
+
+                        // GameManagerからプレイヤーを削除
+                        val gameManager = plugin.gameManager
+                        gameManager.removePlayerFromGame(player)
+                    } else {
+                        // マッチモードの場合は、テンポラリワールド内でスポーン地点に戻してアドベンチャーモードに
+                        val team = getPlayerTeam(player.uniqueId)
+                        if (team != null && tempWorld != null) {
+                            val spawnLocation = when (team) {
+                                Team.RED -> redSpawnLocation ?: redFlagLocation
+                                Team.BLUE -> blueSpawnLocation ?: blueFlagLocation
+                                Team.SPECTATOR -> mapCenterLocation ?: redFlagLocation
+                                else -> spawnLocations[team] ?: flagLocations[team]
+                            }
+                            if (spawnLocation != null && spawnLocation.world == tempWorld) {
+                                // テンポラリワールド内でテレポート
+                                player.teleport(spawnLocation)
+                                plugin.logger.info("[Game] Teleporting ${player.name} to spawn in temp world: ${tempWorld!!.name}")
+                            } else {
+                                // スポーン地点が正しく設定されていない場合は、ワールドの中心にテレポート
+                                val centerLocation = Location(tempWorld, 0.0, 64.0, 0.0)
+                                player.teleport(centerLocation)
+                                plugin.logger.warning("[Game] Spawn location not in temp world, teleporting ${player.name} to center")
+                            }
+                        }
+                        player.gameMode = GameMode.ADVENTURE
+                        player.sendMessage(plugin.languageManager.getMessageAsComponent("phase-extended.wait-next-game"))
+                    }
+                } catch (e: Exception) {
+                    plugin.logger.warning("[Game] Error processing player ${player.name} during stop: ${e.message}")
+                }
+            }
+
+            // BossBar削除
+            scoreboardManager.destroyBossBar()
+
+            // スコアボード状態クリア
+            scoreboardManager.clearState()
+
+            // 旗とスポーン装飾を削除（マッチモードでもクリアする）
+            // ただし、マッチ継続中はプレイヤーが設置したブロックは保持
+            try {
+                cleanupGameBlocks()
+            } catch (e: Exception) {
+                plugin.logger.warning("[Game] Error cleaning up game blocks: ${e.message}")
+            }
+
+            // イベントチェストをクリーンアップ
+            try {
+                cleanupEventChest()
+            } catch (e: Exception) {
+                plugin.logger.warning("[Game] Error cleaning up event chest: ${e.message}")
+            }
+
+            // ゲーム状態データはリセット
+            score.clear()
+            score[Team.RED] = 0
+            score[Team.BLUE] = 0
+            droppedFlags.clear()
+            spawnProtection.clear()
+            scoreboardManager.clearState()
+            redFlagCarrier = null
+            blueFlagCarrier = null
+
+            // テンポラリワールドをクリーンアップ（マッチモードでは削除しない、ただし強制終了時は削除）
+            if ((!isMatchMode || forceStop) && tempWorld != null) {
+                val worldManager = com.hacklab.ctf.world.WorldManager(plugin)
+                worldManager.cleanupTempWorld(gameName)
+                tempWorld = null
+
+                // ワールドを元に戻す
+                world = originalWorld
+
+                // 位置情報をoriginalWorldに戻す
+                updateLocationsToWorld(originalWorld)
+            }
+
+            // マッチモードでもワールド参照は保持する（強制終了でない場合）
+            if (isMatchMode && tempWorld != null && !forceStop) {
+                plugin.logger.info("[Game] Keeping temp world for match continuation: ${tempWorld!!.name}")
+            }
+        } catch (e: Exception) {
+            plugin.logger.severe("[Game] Critical error during stop: ${e.message}")
+            e.printStackTrace()
+        } finally {
+            // 状態は必ずリセット（例外が発生しても確実にWAITINGに戻す）
+            state = GameState.WAITING
+            phase = GamePhase.BUILD
+            currentPhaseTime = 0
+            autoStartCountdown = -1
+
+            // マッチモードの場合、プレイヤーデータは保持
+            if (!isMatchMode) {
+                // データクリア
+                redTeam.clear()
+                blueTeam.clear()
+                spectators.clear()
+                pendingPlayers.clear()
+                disconnectedPlayers.clear()
+
+                // マッチ関連のリセット（強制終了時）
+                matchWrapper = null
+                gameEndCallback = null
+            }
         }
     }
     
@@ -3164,6 +3301,61 @@ class Game(
     
     fun recordBlockBreak(location: Location) =
         blockSystem.recordBlockBreak(location)
+
+    /**
+     * ゾーン別のブロック設置数を記録（バランス調整の実測用）
+     */
+    fun recordZoneBlockPlacement(team: Team, location: Location) {
+        val zone = territorySystem.getZone(location, team)
+        val stats = blocksPlacedByZone.getOrPut(team) { mutableMapOf() }
+        stats[zone] = (stats[zone] ?: 0) + 1
+    }
+
+    /**
+     * ゾーン別ブロック設置数をログ出力
+     */
+    fun logZoneBlockStats(label: String) {
+        if (blocksPlacedByZone.isEmpty()) return
+        for ((team, stats) in blocksPlacedByZone) {
+            val home = stats[Zone.HOME] ?: 0
+            val neutral = stats[Zone.NEUTRAL] ?: 0
+            val enemy = stats[Zone.ENEMY] ?: 0
+            plugin.logger.info("[ZoneStats][$label] $team - HOME:$home NEUTRAL:$neutral ENEMY:$enemy")
+        }
+    }
+
+    /**
+     * 指定位置のブロックが敵チームによって設置されたものかを判定する。
+     * 敵チーム色のコンクリート、切断された白コンクリート、
+     * 敵が設置した非チームブロック（黒曜石など）が対象。
+     */
+    fun isEnemyPlacedBlock(location: Location, playerTeam: Team, type: Material): Boolean {
+        if (playerTeam == Team.SPECTATOR) return false
+
+        // 敵チーム色のコンクリート
+        if (Team.playableTeams().any { it != playerTeam && type == it.getConcreteMaterial() }) return true
+
+        // 敵が設置した非チームブロック
+        val owner = placedNonTeamBlocks[location] ?: placedNonTeamBlocks[location.block.location]
+        return owner != null && owner != playerTeam
+    }
+
+    /**
+     * 自陣に置かれた敵ブロックを撤去した際の通貨還元。
+     * 設定された上限まで支給する。
+     */
+    fun rewardHomeCleanup(team: Team) {
+        val amount = plugin.config.getInt("mechanics.home-cleanup-reward", 2)
+        if (amount <= 0) return
+
+        val cap = plugin.config.getInt("mechanics.home-cleanup-reward-cap", 60)
+        val given = homeCleanupRewardGiven[team] ?: 0
+        if (cap > 0 && given >= cap) return
+
+        val grant = if (cap > 0) minOf(amount, cap - given) else amount
+        homeCleanupRewardGiven[team] = given + grant
+        currencyManager.addTeamCurrency(team, grant)
+    }
     
     /**
      * 敵陣シールドシステムタスクを開始

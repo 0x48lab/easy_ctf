@@ -22,6 +22,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockDamageEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityPickupItemEvent
@@ -807,6 +808,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                         }
                                     }
                                     
+                                    // 自陣コア内の敵ブロックは無条件で撤去可能
+                                    if (!canBreakWithoutRestriction && playerTeam != null &&
+                                        game.territorySystem.isInHomeArea(blockLocation, playerTeam)) {
+                                        canBreakWithoutRestriction = true
+                                    }
+                                    
                                     // 制限なしで破壊できない場合は、隣接チェック
                                     if (!canBreakWithoutRestriction) {
                                         // 隣接する自陣ブロックがあるかチェック
@@ -849,6 +856,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
                             // 明示的に許可
                             event.isCancelled = false
                             plugin.logger.info("[BlockBreak] Allowing block break in $gameMode mode")
+                            
+                            // 自陣に置かれた敵ブロックの撤去に対する通貨還元
+                            rewardHomeCleanup(game, player, event.block)
                             
                             // ブロック破壊を記録から削除
                             game.recordBlockBreak(event.block.location)
@@ -912,6 +922,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                                 }
                             }
                             
+                            // 自陣コア内の敵ブロックは無条件で撤去可能
+                            if (!canBreakWithoutRestriction && playerTeam != null &&
+                                game.territorySystem.isInHomeArea(blockLocation, playerTeam)) {
+                                canBreakWithoutRestriction = true
+                            }
+                            
                             // 制限なしで破壊できない場合は、隣接チェック
                             if (!canBreakWithoutRestriction) {
                                 // 隣接する自陣ブロックがあるかチェック
@@ -947,12 +963,54 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         event.isDropItems = true
                     }
                     
+                    // 自陣に置かれた敵ブロックの撤去に対する通貨還元
+                    rewardHomeCleanup(game, player, event.block)
+                    
                     // ブロック破壊を記録し、切断されたブロックを白く変換
                     game.recordBlockBreak(event.block.location)
                 }
             }
 
         }
+    }
+
+    /**
+     * 自陣コアに置かれた敵ブロックは即時破壊できるようにする。
+     * 「設置は1クリック、撤去はツルハシ時間」という攻守の非対称を是正するための処理。
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onBlockDamage(event: BlockDamageEvent) {
+        if (!plugin.config.getBoolean("mechanics.fast-remove-in-home", true)) return
+
+        val player = event.player
+        val game = gameManager.getPlayerGame(player) ?: return
+        if (game.state != GameState.RUNNING) return
+
+        val team = game.getPlayerTeam(player.uniqueId) ?: return
+        if (team == Team.SPECTATOR) return
+
+        // 建築フェーズのADVENTUREモードではそもそも破壊禁止
+        if (game.phase == GamePhase.BUILD && GameMode.valueOf(game.buildPhaseGameMode) == GameMode.ADVENTURE) return
+
+        val block = event.block
+        if (isProtectedBlock(game, block.location)) return
+        if (!game.territorySystem.isInHomeArea(block.location, team)) return
+        if (!game.isEnemyPlacedBlock(block.location, team, block.type)) return
+
+        event.instaBreak = true
+    }
+
+    /**
+     * 自陣コア内の敵ブロックを撤去した際の通貨還元。
+     * 妨害目的の設置を「相手にリソースを渡す行為」にするためのインセンティブ設計。
+     */
+    private fun rewardHomeCleanup(game: Game, player: Player, block: Block) {
+        val team = game.getPlayerTeam(player.uniqueId) ?: return
+        if (team == Team.SPECTATOR) return
+        if (!game.territorySystem.isInHomeArea(block.location, team)) return
+        if (!game.isEnemyPlacedBlock(block.location, team, block.type)) return
+
+        game.rewardHomeCleanup(team)
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -1013,9 +1071,14 @@ class GameListenerNew(private val plugin: Main) : Listener {
                         
                         // ブロック設置を記録（チームカラーブロックのみツリー構造で記録）
                         val team = game.getPlayerTeam(player.uniqueId)
-                        if (team != null && parent != block.location) {
-                            // parentがblock.locationと同じ場合は非チームブロックなので記録しない
-                            game.recordBlockPlacement(team, block.location, parent)
+                        if (team != null) {
+                            if (parent != block.location) {
+                                game.recordBlockPlacement(team, block.location, parent)
+                            } else {
+                                // 非チームブロック（ショップ購入ブロック等）は設置者のみ記録する
+                                game.placedNonTeamBlocks[block.location.clone()] = team
+                            }
+                            game.recordZoneBlockPlacement(team, block.location)
                         }
                         
                         // ブロック設置統計を記録
@@ -1068,9 +1131,12 @@ class GameListenerNew(private val plugin: Main) : Listener {
                 
                 // ブロック設置を記録（チームカラーブロックのみツリー構造で記録）
                 if (parent != block.location) {
-                    // parentがblock.locationと同じ場合は非チームブロックなので記録しない
                     game.recordBlockPlacement(team, block.location, parent)
+                } else {
+                    // 非チームブロック（ショップ購入ブロック等）は設置者のみ記録する
+                    game.placedNonTeamBlocks[block.location.clone()] = team
                 }
+                game.recordZoneBlockPlacement(team, block.location)
                 
                 // ブロック設置統計を記録
                 game.playerBlocksPlaced[player.uniqueId] = (game.playerBlocksPlaced[player.uniqueId] ?: 0) + 1
@@ -1869,6 +1935,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
         // 保護されたブロックを破壊リストから除外
         event.blockList().removeAll(blocksToRemove)
         
+        // 爆発で消えるブロックの設置記録を削除（撤去報酬の誤判定を防ぐ）
+        event.blockList().forEach { game.placedNonTeamBlocks.remove(it.location) }
+        
         // 除外したブロックがある場合はメッセージを表示
         if (blocksToRemove.isNotEmpty()) {
             // TNTを設置したプレイヤーを特定（難しいため、近くのプレイヤーに通知）
@@ -1907,6 +1976,9 @@ class GameListenerNew(private val plugin: Main) : Listener {
         
         // 保護されたブロックを破壊リストから除外
         event.blockList().removeAll(blocksToRemove)
+        
+        // 爆発で消えるブロックの設置記録を削除（撤去報酬の誤判定を防ぐ）
+        event.blockList().forEach { game.placedNonTeamBlocks.remove(it.location) }
         
         // 除外したブロックがある場合はメッセージを表示
         if (blocksToRemove.isNotEmpty()) {

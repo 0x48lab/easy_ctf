@@ -2,6 +2,7 @@ action-bar:
   build-phase-guide: 建築フェーズ - ブロックを配置して防御を構築
   return-to-base: 旗を持ち帰ってください！
   cannot-place-block: 'ブロックを設置できません'
+  cannot-place-enemy-territory: '建築フェーズ中は敵陣に設置できません'
   cannot-place-flag: '旗を設置できません'
   cannot-place-spawn: 'スポーン地点を設置できません'
   place-restriction-flag: '旗の近くには設置できません'
@@ -876,7 +877,8 @@ rules:
   build-phase-text:
     - '&f制限時間内に&aチームカラーのコンクリート&fで自陣を強化します。'
     - '&f・ブロックは自チームの&6ビーコン&fまたは&6既存ブロック&fに隣接して設置する必要があります'
-    - '&f・コンクリート以外のブロック（フェンス、TNT等）は制限なく設置できます'
+    - '&f・コンクリート以外のブロック（フェンス、TNT等）は接続制限なく設置できます'
+    - '&f・&c敵陣側には一切設置できません&f（自陣～中立地帯に通路を作りましょう）'
     - '&f・建築中の&cPvPは禁止&fです'
   combat-phase: '&e&l■ 戦闘フェーズ'
   combat-phase-text:

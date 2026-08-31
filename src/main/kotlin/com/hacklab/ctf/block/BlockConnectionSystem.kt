@@ -2,6 +2,7 @@ package com.hacklab.ctf.block
 
 import com.hacklab.ctf.Game
 import com.hacklab.ctf.Main
+import com.hacklab.ctf.utils.GamePhase
 import com.hacklab.ctf.utils.Team
 import org.bukkit.Location
 import org.bukkit.Material
@@ -30,6 +31,17 @@ class BlockConnectionSystem(
         if (team == Team.SPECTATOR) return null
 
         val location = block.location
+
+        // 建築フェーズ中の敵陣建築制限（ゾーン制）
+        // チームカラーブロックか否かを問わず、敵陣側には一切設置できない。
+        // 建築フェーズを「敵陣への妨害」ではなく「自陣～中立地帯での通路構築」に集中させるための制限。
+        if (game.phase == GamePhase.BUILD &&
+            game.territorySystem.restrictionEnabled &&
+            game.territorySystem.isInEnemyTerritory(location, team)
+        ) {
+            game.showActionBarError(player, plugin.languageManager.getMessage("action-bar.cannot-place-enemy-territory"))
+            return null
+        }
 
         // スポーン地点と旗周辺の建築制限チェック（3x3、Y座標全て）
         // 赤チームの旗周辺チェック
@@ -337,6 +349,9 @@ class BlockConnectionSystem(
      * ブロック破壊を記録し、切断されたブロックを処理
      */
     fun recordBlockBreak(location: Location) {
+        // 非チームブロックの設置記録を削除
+        game.placedNonTeamBlocks.remove(location)
+
         // 破壊されたブロックがどのチームのものか特定
         var ownerTeam: Team? = null
         for ((team, blocks) in game.teamPlacedBlocks) {

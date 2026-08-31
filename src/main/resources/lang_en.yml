@@ -2,6 +2,7 @@ action-bar:
   build-phase-guide: Build Phase - Place blocks to build defenses
   return-to-base: Return the flag to base!
   cannot-place-block: Cannot place block
+  cannot-place-enemy-territory: Cannot build in enemy territory during the build phase
   cannot-place-flag: Cannot place flag
   cannot-place-spawn: Cannot place spawn
   place-restriction-flag: Place restriction flag
@@ -887,7 +888,8 @@ rules:
   build-phase-text:
     - '&fFortify your base with &ateam-colored concrete&f within the time limit.'
     - '&f- Blocks must be placed adjacent to your &6beacon&f or &6existing team blocks'
-    - '&f- Non-concrete blocks (fences, TNT, etc.) can be placed freely'
+    - '&f- Non-concrete blocks (fences, TNT, etc.) have no connection requirement'
+    - '&f- &cNothing can be placed in enemy territory&f - build your routes through the neutral zone'
     - '&f- &cPvP is disabled&f during this phase'
   combat-phase: '&e&l■ Combat Phase'
   combat-phase-text:

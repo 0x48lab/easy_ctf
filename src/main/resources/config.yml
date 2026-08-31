@@ -55,6 +55,36 @@ mechanics:
   # Enemy spawn area protection radius in blocks
   # Prevents placing non-team blocks near enemy spawn
   enemy-spawn-protection-radius: 5
+
+  # Build phase territory restriction (zone system)
+  # Blocks the "rush to the enemy base and grief during build phase" strategy,
+  # so build time is spent creating routes through the neutral zone instead.
+  build-phase:
+    # Enable/disable the restriction
+    territory-restriction: true
+
+    # Distance ratio threshold: distEnemy / (distOwn + distEnemy)
+    # 1.0 = at own beacon, 0.5 = map center, 0.0 = at enemy beacon
+    # Below this value the location is treated as enemy territory (no building during build phase)
+    enemy-territory-ratio: 0.45
+
+    # Blocks within this radius of an enemy beacon/spawn are always enemy territory
+    # (only applied when the location is closer to the enemy base than to your own)
+    enemy-beacon-no-build-radius: 20
+
+  # Home core radius in blocks (horizontal distance from own beacon/spawn)
+  # Inside this radius, enemy colored blocks deal no shield damage,
+  # and enemy-placed blocks can be removed without the adjacency restriction.
+  home-safe-radius: 8
+
+  # Instantly break enemy-placed blocks inside the home core radius
+  fast-remove-in-home: true
+
+  # Currency refund per enemy-placed block removed inside the home core (0 = disabled)
+  home-cleanup-reward: 2
+
+  # Maximum total refund per team per game (0 = unlimited)
+  home-cleanup-reward-cap: 60
   
   # NOT IMPLEMENTED YET:
   # flag-drop-timeout: 30  # Flag auto-return timeout in seconds

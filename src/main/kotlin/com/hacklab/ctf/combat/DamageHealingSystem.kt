@@ -57,12 +57,17 @@ class DamageHealingSystem(
                         val playerLoc = player.location
 
                         // プレイヤーの下のブロックが敵チームの色ブロックかチェック
-                        val isOnEnemyBlock = when (playerTeam) {
+                        val isOnEnemyBlockRaw = when (playerTeam) {
                             Team.RED -> blockBelow.type == Material.BLUE_CONCRETE
                             Team.BLUE -> blockBelow.type == Material.RED_CONCRETE
                             Team.SPECTATOR -> false // 観戦者は敵ブロックでダメージを受けない
                             else -> blockBelow.type != playerTeam.getConcreteMaterial() && Team.playableTeams().any { blockBelow.type == it.getConcreteMaterial() }
                         }
+
+                        // 自陣コア（自ビーコン・自スポーン周辺）では敵ブロックのダメージを無効化する。
+                        // 敵に自陣周辺を敵色ブロックで敷き詰められて「自陣が敵陣化する」のを防ぐ。
+                        val isInHomeArea = game.territorySystem.isInHomeArea(playerLoc, playerTeam)
+                        val isOnEnemyBlock = isOnEnemyBlockRaw && !isInHomeArea
 
                         // ビーコン周囲9マス（3x3）のダメージエリアチェック
                         val isInEnemyBeaconArea = when (playerTeam) {
