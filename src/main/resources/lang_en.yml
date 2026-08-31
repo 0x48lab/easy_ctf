@@ -876,20 +876,63 @@ welcome:
 
 # /ctf rules command (detailed version)
 rules:
-  header: '&6&l============ EasyCTF Rules ============'
-  overview: '&e■ Game Overview'
-  overview-text: '&fTwo teams (Red & Blue) compete to capture the enemy flag (beacon). The team with the most captures wins!'
-  build-phase: '&e■ Build Phase'
-  build-phase-text: '&fPlace blocks to fortify your base within the time limit. Blocks must connect to your beacon or existing team blocks.'
-  combat-phase: '&e■ Combat Phase'
-  combat-phase-text: '&fRaid the enemy base and approach their beacon to grab their flag. Return it to your own beacon to score!'
-  flag-system: '&e■ Flag System'
-  flag-system-text: '&f- Approach enemy beacon within 1.5 blocks to grab flag\n&f- Carrying a flag makes you glow with movement restrictions\n&f- Return the enemy flag while your own flag is at base to score\n&f- Dropped flags auto-return after 30 seconds'
-  shop-system: '&e■ Shop System'
-  shop-system-text: '&f- Use the emerald item to open the shop\n&f- Buy weapons, armor, and building blocks with team currency\n&f- Earn currency from kills and captures'
-  commands: '&e■ Basic Commands'
-  commands-text: '&a/ctf join <name> &7- Join a game\n&a/ctf leave &7- Leave the game\n&a/ctf list &7- List all games\n&a/ctf spectator <name> &7- Spectate a game\n&a/ctf status &7- Check game status'
-  footer: '&6&l======================================='
+  header: '&6&l============= EasyCTF Rules ============='
+  overview: '&e&l■ Game Overview'
+  overview-text:
+    - '&fTwo teams (Red & Blue) compete to capture the enemy &cflag (beacon)&f.'
+    - '&fThe team with the most captures wins! Match mode plays multiple games for overall victory.'
+    - '&fBuild a stage in advance and save it — everyone can play it over and over!'
+    - '&fStages are copied to a dedicated world, so &athe original world stays safe&f.'
+  build-phase: '&e&l■ Build Phase'
+  build-phase-text:
+    - '&fFortify your base with &ateam-colored concrete&f within the time limit.'
+    - '&f- Blocks must be placed adjacent to your &6beacon&f or &6existing team blocks'
+    - '&f- Non-concrete blocks (fences, TNT, etc.) can be placed freely'
+    - '&f- &cPvP is disabled&f during this phase'
+  combat-phase: '&e&l■ Combat Phase'
+  combat-phase-text:
+    - '&fRaid the enemy base and approach their beacon to grab their flag.'
+    - '&fReturn it to your own beacon to &ascore&f! The shop remains available.'
+  flag-system: '&e&l■ Flag System'
+  flag-system-text:
+    - '&f- Approach enemy beacon within &e1.5 blocks&f to grab the flag'
+    - '&f- Carrying the flag makes you &eglow&f, revealing your position'
+    - '&f- Score by returning the enemy flag &cwhile your own flag is at base&f'
+    - '&f- Dropped flags auto-return after &e30 seconds'
+  shield-system: '&e&l■ Shield System'
+  shield-system-text:
+    - '&fEach player has a &bshield (max 100)&f.'
+    - '&cEnemy territory&f (enemy blocks / within 3 blocks of enemy beacon):'
+    - '&f  &7→ &cShield decreases by 2.0/sec'
+    - '&f  &7→ At shield 0: &c1.5 damage/sec&f + hunger drain'
+    - '&aFriendly territory&f (team blocks / within 3 blocks of your beacon):'
+    - '&f  &7→ &aShield recovers by 5.0/sec'
+    - '&f  &7→ &aHunger restores 1/sec&f (saturation also recovers)'
+  currency-system: '&e&l■ Currency System'
+  currency-system-text:
+    - '&fBuy gear and blocks with shared team currency &6G&f.'
+    - '&f- Starting funds: &e50G'
+    - '&f- Kill reward: &e15G&f (flag carrier kill: &e25G&f)'
+    - '&f- Capture reward: &e50G'
+    - '&f- Phase end bonus: &e100G'
+    - '&f- Kill streak bonuses (2 kills: +5G ... 5+ kills: +20G)'
+    - '&f- Losing team gets &ashop discounts&f based on score gap (up to 40% off)'
+  death-system: '&e&l■ On Death'
+  death-system-text:
+    - '&f- &aLeather armor&f and shop item (emerald) are &aalways kept'
+    - '&f- All items kept during build phase'
+    - '&f- Other items are &cdropped&f during combat phase'
+    - '&f- Starting gear is re-issued on respawn'
+  commands: '&e&l■ Basic Commands'
+  commands-text:
+    - '&a/ctf join <name> &7- Join a game'
+    - '&a/ctf leave &7- Leave the game'
+    - '&a/ctf list &7- List all games'
+    - '&a/ctf spectator <name> &7- Spectate a game'
+    - '&a/ctf status &7- Check game status'
+    - '&a/ctf team [red|blue] &7- Check or change team'
+    - '&a/ctf rules &7- Show these rules'
+  footer: '&6&l==========================================='
 
 # Game join notification
 notification:

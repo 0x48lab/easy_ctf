@@ -1538,19 +1538,26 @@ class CTFCommandNew(private val plugin: Main) : CommandExecutor, TabCompleter {
 
     private fun handleRulesCommand(sender: CommandSender): Boolean {
         val lang = plugin.languageManager
+
+        // セクション定義: タイトルキーとテキストリストキーのペア
+        val sections = listOf(
+            "rules.overview" to "rules.overview-text",
+            "rules.build-phase" to "rules.build-phase-text",
+            "rules.combat-phase" to "rules.combat-phase-text",
+            "rules.flag-system" to "rules.flag-system-text",
+            "rules.shield-system" to "rules.shield-system-text",
+            "rules.currency-system" to "rules.currency-system-text",
+            "rules.death-system" to "rules.death-system-text",
+            "rules.commands" to "rules.commands-text",
+        )
+
         sender.sendMessage(lang.getMessageAsComponent("rules.header"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.overview"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.overview-text"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.build-phase"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.build-phase-text"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.combat-phase"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.combat-phase-text"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.flag-system"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.flag-system-text"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.shop-system"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.shop-system-text"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.commands"))
-        sender.sendMessage(lang.getMessageAsComponent("rules.commands-text"))
+        for ((titleKey, textKey) in sections) {
+            sender.sendMessage(lang.getMessageAsComponent(titleKey))
+            lang.getMessageListAsComponents(textKey).forEach { line ->
+                sender.sendMessage(line)
+            }
+        }
         sender.sendMessage(lang.getMessageAsComponent("rules.footer"))
         return true
     }
