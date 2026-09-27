@@ -282,6 +282,7 @@ game_events:
     to_player: Teleported to {player}
 gameplay:
   cannot-attack-teammate: Cannot attack teammate
+  team-door-locked: "Enemy team door: cannot open it (break it instead)"
   cannot-break-adventure: Cannot break adventure
   cannot-break-game-blocks: Cannot break game blocks
   cannot-fight-build-phase: Cannot fight build phase
@@ -691,16 +692,26 @@ shop:
     glass: Glass x16
     golden_apple: Golden Apple
     hay_block: Hay Bale x8
+    honey_block: Honey Block x4
+    honey_block_lore:
+      lore1: "Heavily slows anyone on it and blocks jumping"
+      lore2: "Affects both teams"
     hopper: Hopper x1
     iron_axe: Iron Axe
     iron_bars: Iron Bars x16
     iron_boots: Iron Boots
     iron_chestplate: Iron Chestplate
     iron_door: Iron Door x1
+    iron_door_lore:
+      lore1: "Team door: only the placing team can open it"
+      lore2: "Anyone can break it in a few seconds. Redstone disabled"
     iron_helmet: Iron Helmet
     iron_leggings: Iron Leggings
     iron_sword: Iron Sword
     iron_trapdoor: Iron Trapdoor x2
+    iron_trapdoor_lore:
+      lore1: "Team door: only the placing team can open it"
+      lore2: "Anyone can break it in a few seconds. Redstone disabled"
     ladder: Ladder x16
     lava_bucket: Lava Bucket
     lever: Lever x4

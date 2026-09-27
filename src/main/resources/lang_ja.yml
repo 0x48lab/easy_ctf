@@ -282,6 +282,7 @@ game_events:
     to_player: '{player}にテレポートしました'
 gameplay:
   cannot-attack-teammate: 'チームメイトを攻撃できません'
+  team-door-locked: "敵チームのドアは開けられません（殴れば壊せます）"
   cannot-break-adventure: 'アドベンチャーモードではブロックを破壊できません'
   cannot-break-game-blocks: 'ゲーム用ブロックは破壊できません'
   cannot-fight-build-phase: '建築フェーズ中は戦闘できません'
@@ -680,16 +681,26 @@ shop:
     glass: ガラス x16
     golden_apple: 金のリンゴ
     hay_block: 干草の俵 x8
+    honey_block: ハチミツブロック x4
+    honey_block_lore:
+      lore1: "乗った相手を大幅に減速しジャンプ不可に"
+      lore2: "敵味方の区別なし"
     hopper: ホッパー x1
     iron_axe: 鉄の斧
     iron_bars: 鉄格子 x16
     iron_boots: 鉄のブーツ
     iron_chestplate: 鉄のチェストプレート
     iron_door: 鉄のドア x1
+    iron_door_lore:
+      lore1: "チーム専用：設置したチームだけが右クリックで開閉"
+      lore2: "殴れば数秒で壊せる。レッドストーン無効"
     iron_helmet: 鉄のヘルメット
     iron_leggings: 鉄のレギンス
     iron_sword: 鉄の剣
     iron_trapdoor: 鉄のトラップドア x2
+    iron_trapdoor_lore:
+      lore1: "チーム専用：設置したチームだけが右クリックで開閉"
+      lore2: "殴れば数秒で壊せる。レッドストーン無効"
     ladder: はしご x16
     lava_bucket: 溶岩バケツ
     lever: レバー x4

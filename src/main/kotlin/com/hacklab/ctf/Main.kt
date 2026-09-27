@@ -3,6 +3,7 @@ package com.hacklab.ctf
 import com.hacklab.ctf.commands.CTFCommandNew
 import com.hacklab.ctf.listeners.GameListenerNew
 import com.hacklab.ctf.listeners.ChatListener
+import com.hacklab.ctf.listeners.TeamDoorListener
 import com.hacklab.ctf.managers.GameManager
 import com.hacklab.ctf.managers.LanguageManager
 import com.hacklab.ctf.managers.EquipmentManager
@@ -59,6 +60,7 @@ class Main : JavaPlugin() {
         
         server.pluginManager.registerEvents(GameListenerNew(this), this)
         server.pluginManager.registerEvents(ChatListener(this), this)
+        server.pluginManager.registerEvents(TeamDoorListener(this), this)
         
         logger.info(languageManager.getGeneralMessage("enabled"))
     }

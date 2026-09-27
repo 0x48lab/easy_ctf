@@ -155,6 +155,14 @@ slime-block:
   launch-horizontal: 0.6            # Push in the movement direction (0 = straight up)
   cooldown-ms: 500                  # Minimum interval between launches per player
 
+# Team Door Settings
+# Iron doors / iron trapdoors placed during a game can only be opened by the
+# team that placed them (right-click). Redstone does not move them.
+# To avoid unbreakable stalemates, anyone can break them by hand in break-seconds.
+team-door:
+  enabled: true
+  break-seconds: 3.0
+
 # Shield Settings
 shield:
   enabled: true                     # Enable/disable shield system

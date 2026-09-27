@@ -285,6 +285,17 @@ items:
       - "lang:shop.items.blue_ice_lore.lore1"
       - "lang:shop.items.blue_ice_lore.lore2"
     
+  honey_block:
+    material: HONEY_BLOCK
+    amount: 4
+    price: 25
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.honey_block"
+    lore:
+      - "lang:shop.items.honey_block_lore.lore1"
+      - "lang:shop.items.honey_block_lore.lore2"
+    
   ladder:
     material: LADDER
     amount: 16
@@ -441,6 +452,10 @@ items:
     category: BLOCKS
     death-behavior: DROP
     display-name: "lang:shop.items.iron_door"
+    # チーム専用ドア：設置チームのみ開閉可。挙動は TeamDoorListener / config.yml team-door
+    lore:
+      - "lang:shop.items.iron_door_lore.lore1"
+      - "lang:shop.items.iron_door_lore.lore2"
     
   oak_trapdoor:
     material: OAK_TRAPDOOR
@@ -457,6 +472,10 @@ items:
     category: BLOCKS
     death-behavior: DROP
     display-name: "lang:shop.items.iron_trapdoor"
+    # チーム専用ドア：設置チームのみ開閉可。挙動は TeamDoorListener / config.yml team-door
+    lore:
+      - "lang:shop.items.iron_trapdoor_lore.lore1"
+      - "lang:shop.items.iron_trapdoor_lore.lore2"
     
   oak_fence:
     material: OAK_FENCE
