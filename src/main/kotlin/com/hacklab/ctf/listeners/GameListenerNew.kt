@@ -25,6 +25,12 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockDamageEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.ProjectileHitEvent
+import org.bukkit.entity.Snowball
+import com.hacklab.ctf.utils.SnowballKnockback
+import com.hacklab.ctf.utils.SlimeLaunch
+import org.bukkit.util.Vector
+import java.util.UUID
 import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -50,6 +56,10 @@ import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.block.Block
 
 class GameListenerNew(private val plugin: Main) : Listener {
+
+    companion object {
+        const val KNOCKBACK_SNOWBALL_ID = "knockback_snowball"
+    }
     
     private val gameManager = plugin.gameManager
     private val shopManager = plugin.shopManager
@@ -84,7 +94,49 @@ class GameListenerNew(private val plugin: Main) : Listener {
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
+        slimeLaunchCooldown.remove(event.player.uniqueId)
         gameManager.handlePlayerDisconnect(event.player)
+    }
+
+    // ===== スライムブロック（ジャンプ台） =====
+    // 乗った瞬間に上向きへ打ち上げる。連続発動を防ぐため短いクールダウンを持つ。
+    private val slimeLaunchCooldown = mutableMapOf<UUID, Long>()
+
+    @EventHandler(ignoreCancelled = true)
+    fun onPlayerMoveSlimeLaunch(event: PlayerMoveEvent) {
+        if (!event.hasChangedPosition()) return
+        val player = event.player
+        if (player.isSneaking) return  // スニーク中は発動しない（バニラの反動キャンセルと同じ感覚）
+
+        // 足元がスライムブロックか（to の直下）
+        val to = event.to
+        val below = to.clone().subtract(0.0, 0.05, 0.0).block
+        if (below.type != Material.SLIME_BLOCK) return
+
+        // 接地している、または落下から反転した瞬間だけ
+        val dy = to.y - event.from.y
+        @Suppress("DEPRECATION")
+        if (!player.isOnGround && dy > 0.0) return
+
+        val game = gameManager.getPlayerGame(player) ?: return
+        if (game.state != GameState.RUNNING) return
+        if (game.getPlayerTeam(player.uniqueId) == Team.SPECTATOR) return
+        if (!plugin.config.getBoolean("slime-block.enabled", true)) return
+
+        val now = System.currentTimeMillis()
+        val cooldownMs = plugin.config.getLong("slime-block.cooldown-ms", 500L)
+        val last = slimeLaunchCooldown[player.uniqueId] ?: 0L
+        if (now - last < cooldownMs) return
+        slimeLaunchCooldown[player.uniqueId] = now
+
+        val launch = SlimeLaunch.compute(
+            moveX = to.x - event.from.x,
+            moveZ = to.z - event.from.z,
+            vertical = plugin.config.getDouble("slime-block.launch-vertical", 1.4),
+            horizontal = plugin.config.getDouble("slime-block.launch-horizontal", 0.6)
+        )
+        player.velocity = launch
+        player.world.playSound(to, org.bukkit.Sound.BLOCK_SLIME_BLOCK_FALL, 1.0f, 0.6f)
     }
 
     @EventHandler
@@ -635,6 +687,53 @@ class GameListenerNew(private val plugin: Main) : Listener {
             game.taskScheduler.schedulePlayerTask(com.hacklab.ctf.managers.GameTaskScheduler.RESPAWN, player.uniqueId, 1L, respawnTask)
             }
         }
+    }
+
+    // ===== ノックバック雪玉 =====
+    // バニラの Knockback エンチャントは近接攻撃にしか乗らないため、
+    // 投擲ヒット時にプラグイン側で吹き飛ばしを適用する。
+    private val shopItemKey = NamespacedKey(plugin, "shop_item")
+
+    private fun isKnockbackSnowball(snowball: Snowball): Boolean {
+        val id = snowball.item.itemMeta?.persistentDataContainer
+            ?.get(shopItemKey, PersistentDataType.STRING)
+        return id == KNOCKBACK_SNOWBALL_ID
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun onProjectileHit(event: ProjectileHitEvent) {
+        val snowball = event.entity as? Snowball ?: return
+        val victim = event.hitEntity as? Player ?: return
+        val shooter = snowball.shooter as? Player ?: return
+        if (!isKnockbackSnowball(snowball)) return
+        if (!plugin.config.getBoolean("snowball-knockback.enabled", true)) return
+
+        // onEntityDamageByEntity と同じ条件で判定する（同ゲーム・戦闘フェーズ・敵チーム・保護なし）
+        val game = gameManager.getPlayerGame(victim) ?: return
+        if (gameManager.getPlayerGame(shooter) != game) return
+        if (game.state != GameState.RUNNING || game.phase != GamePhase.COMBAT) return
+        val victimTeam = game.getPlayerTeam(victim.uniqueId) ?: return
+        val shooterTeam = game.getPlayerTeam(shooter.uniqueId) ?: return
+        if (victimTeam == shooterTeam) return
+        if (victimTeam == Team.SPECTATOR || shooterTeam == Team.SPECTATOR) return
+        if (game.isUnderSpawnProtection(victim)) return
+
+        val horizontal = plugin.config.getDouble("snowball-knockback.horizontal", 1.2)
+        val vertical = plugin.config.getDouble("snowball-knockback.vertical", 0.4)
+        val knockback = SnowballKnockback.compute(
+            snowball.velocity,
+            shooter.location.toVector(),
+            victim.location.toVector(),
+            horizontal,
+            vertical
+        )
+
+        // バニラのヒット処理（微弱なノックバック）が同tick内で走るため、1tick後に上書きする
+        plugin.server.scheduler.runTask(plugin, Runnable {
+            if (victim.isOnline && !victim.isDead) {
+                victim.velocity = knockback
+            }
+        })
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

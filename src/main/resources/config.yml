@@ -139,6 +139,22 @@ shop:
     3-point: 0.3    # 30% off
     4-point-plus: 0.4  # 40% off
 
+# Knockback Snowball Settings
+# Vanilla Knockback enchantment only applies to melee hits, so the plugin
+# applies knockback itself when a shop knockback snowball hits an enemy.
+snowball-knockback:
+  enabled: true
+  horizontal: 1.2                   # Horizontal push strength (blocks/tick)
+  vertical: 0.4                     # Upward push strength
+
+# Slime Block (Jump Pad) Settings
+# Stepping on a slime block launches the player upward.
+slime-block:
+  enabled: true
+  launch-vertical: 1.4              # Upward speed (blocks/tick). 1.0 ≈ 6 blocks, 1.4 ≈ 11 blocks
+  launch-horizontal: 0.6            # Push in the movement direction (0 = straight up)
+  cooldown-ms: 500                  # Minimum interval between launches per player
+
 # Shield Settings
 shield:
   enabled: true                     # Enable/disable shield system

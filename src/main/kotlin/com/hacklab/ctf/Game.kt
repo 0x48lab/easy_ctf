@@ -3737,6 +3737,11 @@ class Game(
                         meta.isUnbreakable = true
                     }
                     
+                    // 光沢のみ付与
+                    if (selectedItem.glint) {
+                        meta.setEnchantmentGlintOverride(true)
+                    }
+                    
                     itemStack.itemMeta = meta
                 }
                 

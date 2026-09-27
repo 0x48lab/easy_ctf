@@ -660,10 +660,14 @@ shop:
       drop: Drop
       keep: Keep
   items:
+    knockback_stick: Knockback Stick
+    knockback_stick_lore:
+      lore1: Knockback II (melee)
+      lore2: Low damage, but sends enemies flying
     knockback_snowball: Knockback Snowball x4
     knockback_snowball_lore:
-      lore1: Powerful knockback effect
-      lore2: Blow enemies away!
+      lore1: Knocks back enemies on hit
+      lore2: Throwable ranged weapon (no damage)
     bow: Bow
     bow_lore:
       lore1: Requires arrows (no Infinity)
@@ -725,6 +729,14 @@ shop:
     stone_button: Stone Button x4
     stone_pressure_plate: Stone Pressure Plate x4
     stone_sword: Stone Sword
+    slime_block: Slime Block x4
+    slime_block_lore:
+      lore1: "Jump pad: launches you high when stepped on"
+      lore2: Does not trigger while sneaking
+    blue_ice: Blue Ice x8
+    blue_ice_lore:
+      lore1: Extremely slippery floor block
+      lore2: Slow down enemies or slide fast
     tnt: TNT
     torch: Torch x16
     water_bucket: Water Bucket
@@ -732,8 +744,8 @@ shop:
     wooden_axe: Wooden Axe
     wooden_sword: Wooden Sword
     knockback_snowball_lore:
-      lore1: Knockback II
-      lore2: Throwable item to knock enemies away
+      lore1: Knocks back enemies on hit
+      lore2: Throwable ranged weapon (no damage)
     enchanted_golden_apple: Enchanted Golden Apple
     enchanted_golden_apple_lore:
       lore: Max 2 per player

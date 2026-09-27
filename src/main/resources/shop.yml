@@ -131,11 +131,26 @@ items:
     category: WEAPONS
     death-behavior: DROP
     display-name: "lang:shop.items.knockback_snowball"
-    enchantments:
-      KNOCKBACK: 2
+    # ノックバックは config.yml の snowball-knockback でプラグインが付与する
+    # （バニラの Knockback エンチャントは投擲物に乗らないため）
+    glint: true
     lore:
       - "lang:shop.items.knockback_snowball_lore.lore1"
       - "lang:shop.items.knockback_snowball_lore.lore2"
+
+  knockback_stick:
+    material: STICK
+    amount: 1
+    price: 25
+    category: WEAPONS
+    death-behavior: DROP
+    display-name: "lang:shop.items.knockback_stick"
+    # 近接攻撃なのでバニラの Knockback エンチャントがそのまま効く
+    enchantments:
+      KNOCKBACK: 2
+    lore:
+      - "lang:shop.items.knockback_stick_lore.lore1"
+      - "lang:shop.items.knockback_stick_lore.lore2"
 
   # ===== 消耗品 (CONSUMABLES) =====
   bread:
@@ -245,6 +260,30 @@ items:
     category: BLOCKS
     death-behavior: DROP
     display-name: "lang:shop.items.tnt"
+    
+  slime_block:
+    material: SLIME_BLOCK
+    amount: 4
+    price: 30
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.slime_block"
+    # 反動の強さは config.yml の slime-block で調整
+    lore:
+      - "lang:shop.items.slime_block_lore.lore1"
+      - "lang:shop.items.slime_block_lore.lore2"
+    
+  blue_ice:
+    material: BLUE_ICE
+    amount: 8
+    price: 20
+    category: BLOCKS
+    death-behavior: DROP
+    display-name: "lang:shop.items.blue_ice"
+    # 青氷はバニラで最も滑りやすく、光で溶けない
+    lore:
+      - "lang:shop.items.blue_ice_lore.lore1"
+      - "lang:shop.items.blue_ice_lore.lore2"
     
   ladder:
     material: LADDER

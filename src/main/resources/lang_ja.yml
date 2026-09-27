@@ -649,10 +649,14 @@ shop:
       drop: ドロップ
       keep: 保持
   items:
+    knockback_stick: ノックバック棒
+    knockback_stick_lore:
+      lore1: ノックバック II（近接）
+      lore2: ダメージは低いが敵を大きく吹き飛ばす
     knockback_snowball: ノックバック雪玉 x4
     knockback_snowball_lore:
-      lore1: 強力なノックバック効果
-      lore2: 敵を吹き飛ばす！
+      lore1: 当てた敵を吹き飛ばす
+      lore2: 投げて使う遠距離武器（ダメージなし）
     bow: 弓
     bow_lore:
       lore1: 矢が必要です（無限なし）
@@ -714,6 +718,14 @@ shop:
     stone_button: 石のボタン x4
     stone_pressure_plate: 石の感圧板 x4
     stone_sword: 石の剣
+    slime_block: スライムブロック x4
+    slime_block_lore:
+      lore1: ジャンプ台：乗ると大きく打ち上げられる
+      lore2: スニーク中は発動しない
+    blue_ice: 青氷 x8
+    blue_ice_lore:
+      lore1: つるつる滑る足場ブロック
+      lore2: 敵の足止めや自軍の高速移動に
     tnt: TNT
     torch: 松明 x16
     water_bucket: 水バケツ
@@ -721,8 +733,8 @@ shop:
     wooden_axe: 木の斧
     wooden_sword: 木の剣
     knockback_snowball_lore:
-      lore1: ノックバック II
-      lore2: 敵を吹き飛ばす投擲アイテム
+      lore1: 当てた敵を吹き飛ばす
+      lore2: 投げて使う遠距離武器（ダメージなし）
     enchanted_golden_apple: エンチャント金リンゴ
     enchanted_golden_apple_lore:
       lore: 一人2個まで

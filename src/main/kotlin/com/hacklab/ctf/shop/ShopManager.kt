@@ -130,6 +130,9 @@ class ShopManager(private val plugin: Main) {
                 // 耐久無限
                 val unbreakable = itemConfig.getBoolean("unbreakable", false)
                 
+                // 光沢のみ付与
+                val glint = itemConfig.getBoolean("glint", false)
+                
                 // ShopItemを作成して追加
                 val shopItem = ShopItem(
                     id = itemId,
@@ -142,6 +145,7 @@ class ShopManager(private val plugin: Main) {
                     lore = lore,
                     enchantments = enchantments,
                     unbreakable = unbreakable,
+                    glint = glint,
                     maxPurchasePerPlayer = maxPerPlayer,
                     maxPurchasePerTeam = maxPerTeam,
                     availablePhases = availablePhases

@@ -22,6 +22,7 @@ data class ShopItem(
     val lore: List<String> = emptyList(),
     val enchantments: Map<Enchantment, Int> = emptyMap(),
     val unbreakable: Boolean = false,
+    val glint: Boolean = false,               // エンチャントなしで光沢のみ付与
     val maxPurchasePerPlayer: Int = -1,  // -1 = 無制限
     val maxPurchasePerTeam: Int = -1,    // -1 = 無制限
     val availablePhases: Set<GamePhase> = setOf(GamePhase.BUILD, GamePhase.COMBAT)
@@ -41,6 +42,11 @@ data class ShopItem(
                 // 耐久無限設定
                 if (this@ShopItem.unbreakable) {
                     isUnbreakable = true
+                }
+                
+                // 光沢のみ（実効果のないエンチャントを付けない）
+                if (this@ShopItem.glint) {
+                    setEnchantmentGlintOverride(true)
                 }
                 
                 // ショップアイテムマーカーを追加（NBTタグ）
